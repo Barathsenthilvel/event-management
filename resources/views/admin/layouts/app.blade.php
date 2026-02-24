@@ -206,8 +206,8 @@
             @endif
 
             {{-- Menu Management --}}
-            @if($admin && $admin->hasPermission('menu.view'))
-            <a href="{{ route('admin.menus.index') }}"
+            @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
+            <a href="{{ \Illuminate\Support\Facades\Route::has('admin.menus.index') ? route('admin.menus.index') : '#' }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
