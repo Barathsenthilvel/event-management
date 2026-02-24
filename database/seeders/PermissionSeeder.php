@@ -49,16 +49,26 @@ class PermissionSeeder extends Seeder
             ['name' => 'Edit Report', 'slug' => 'report.edit', 'module' => 'Reports'],
             ['name' => 'Delete Report', 'slug' => 'report.delete', 'module' => 'Reports'],
             ['name' => 'View Report', 'slug' => 'report.view', 'module' => 'Reports'],
-            
+
             // API Tokens
             ['name' => 'Create API Token', 'slug' => 'api.create', 'module' => 'API Tokens'],
             ['name' => 'Edit API Token', 'slug' => 'api.edit', 'module' => 'API Tokens'],
             ['name' => 'Delete API Token', 'slug' => 'api.delete', 'module' => 'API Tokens'],
             ['name' => 'View API Token', 'slug' => 'api.view', 'module' => 'API Tokens'],
+
+            // Menu Management
+            ['name' => 'Create Menu', 'slug' => 'menu.create', 'module' => 'Menu Management'],
+            ['name' => 'Edit Menu',   'slug' => 'menu.edit',   'module' => 'Menu Management'],
+            ['name' => 'Delete Menu', 'slug' => 'menu.delete', 'module' => 'Menu Management'],
+            ['name' => 'View Menu',   'slug' => 'menu.view',   'module' => 'Menu Management'],
         ];
 
+        // Make seeding idempotent – don't fail on duplicates
         foreach ($permissions as $permission) {
-            Permission::create($permission);
+            Permission::updateOrCreate(
+                ['slug' => $permission['slug']], // unique key
+                $permission                      // fields to set/update
+            );
         }
     }
 }

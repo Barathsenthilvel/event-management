@@ -1,11 +1,20 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div x-data="{
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('rolesPage', () => ({
+    destroyUrl: '',
+    init() {
+      this.destroyUrl = this.$el.dataset.destroyUrl || '';
+    },
     viewType: 'list',
     showAddPanel: false,
     showEditModal: false,
     showPermissionModal: false,
+    showDeleteModal: false,
+    deleteRoleId: null,
+    deleteRoleName: '',
     selectedRole: '',
     selectedRoleId: null,
     selectedRoleData: null,
@@ -15,124 +24,255 @@
     loadingPermissions: false,
     searchQuery: '',
     addToast(msg) {
-        const id = Date.now();
-        this.toasts = this.toasts || [];
-        this.toasts.push({ id, msg });
-        setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 3000);
+      const id = Date.now();
+      this.toasts = this.toasts || [];
+      this.toasts.push({ id, msg });
+      setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 3000);
     },
     toasts: [],
-    async refreshRoles() {
-        // Access parent Alpine component (layout) to show global loader
-        const parentData = this.$root?.$data;
-        if (parentData && typeof parentData.showLoader === 'function') {
-            parentData.showLoader();
+    escapeAttr(s) {
+      if (!s) return '';
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML.replace(/"/g, '&quot;');
+    },
+    buildTableRows(roles, destroyUrl, csrfToken) {
+      if (!roles || roles.length === 0) {
+        return '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400"><p>No roles found. <a href="/admin/roles/create" class="text-indigo-600 hover:underline">Create one</a></p></td></tr>';
+      }
+      return roles.map(r => {
+        const nameAttr = this.escapeAttr(r.name);
+        return '<tr class="group transition-all">' +
+          '<td class="px-6 py-4 bg-white border-y border-l border-slate-100 first:rounded-l-2xl"><div class="flex items-center gap-3">' +
+          '<div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
+          '<div><p class="font-bold text-slate-800">' + this.escapeAttr(r.name) + '</p><div class="flex items-center gap-1 mt-0.5">' +
+          '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[9px] text-emerald-600 font-bold uppercase">Access Provided</span></div></div></td>' +
+          '<td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-400 font-medium">' + (r.created_at || '') + '</td>' +
+          '<td class="px-6 py-4 bg-white border-y border-slate-100 text-center"><span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span></td>' +
+          '<td class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">' +
+          '<div class="flex items-center justify-end gap-1">' +
+          '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Set Permissions"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></button>' +
+          '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Edit Role"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
+          '<button type="button" data-action="delete" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Delete Role"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>' +
+          '</div></td></tr>';
+      }).join('');
+    },
+    buildGridRows(roles) {
+      if (!roles || roles.length === 0) return '';
+      return roles.map(r => {
+        const desc = (r.description || 'Manages access levels and permissions for this specific user group.').substring(0, 80);
+        const nameAttr = this.escapeAttr(r.name);
+        return '<div class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">' +
+          '<div class="flex justify-between items-start mb-4"><div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
+          '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase">Active</span></div>' +
+          '<h4 class="font-bold text-slate-800 mb-1">' + this.escapeAttr(r.name) + '</h4>' +
+          '<p class="text-xs text-slate-400 mb-4 line-clamp-2">' + this.escapeAttr(desc) + '</p>' +
+          '<div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">' +
+          '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Permissions</button>' +
+          '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
+          '<button type="button" data-action="delete" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>' +
+          '</div></div>';
+      }).join('');
+    },
+    async refreshRoles(resetToFirstPage = false) {
+      const parentData = this.$root?.$data;
+      if (parentData && typeof parentData.showLoader === 'function') {
+        parentData.showLoader();
+      } else if (parentData && parentData.refreshing !== undefined) {
+        parentData.refreshing = true;
+      }
+      try {
+        const url = resetToFirstPage
+          ? (window.location.pathname + '?page=1')
+          : window.location.href;
+        const response = await fetch(url, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const roles = data.roles || [];
+        const pagination = data.pagination || {};
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const destroyUrl = this.destroyUrl || '';
+
+        const tbody = document.querySelector('table.island-row tbody');
+        if (tbody) {
+          tbody.innerHTML = this.buildTableRows(roles, destroyUrl, csrfToken);
+        }
+        const contentArea = document.getElementById('roles-list-content');
+        const gridEl = contentArea ? contentArea.querySelector('.grid') : null;
+        if (gridEl) gridEl.innerHTML = this.buildGridRows(roles);
+        const paginationWrap = document.getElementById('roles-pagination-wrap');
+        if (paginationWrap) {
+          const total = pagination.total != null ? pagination.total : roles.length;
+          const firstItem = pagination.first_item != null ? pagination.first_item : (total ? 1 : 0);
+          const lastItem = pagination.last_item != null ? pagination.last_item : roles.length;
+          const info = total === 0 ? 'Showing 0 Roles' : ('Showing ' + firstItem + ' to ' + lastItem + ' of ' + total + ' Roles');
+          paginationWrap.innerHTML = '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">' + info + '</p>' +
+            (pagination.has_pages && pagination.links_html ? '<div class="flex gap-1">' + pagination.links_html + '</div>' : '');
+        }
+      } catch (error) {
+        console.error('Error refreshing roles:', error);
+      } finally {
+        if (parentData && typeof parentData.hideLoader === 'function') {
+          parentData.hideLoader();
         } else if (parentData && parentData.refreshing !== undefined) {
-            parentData.refreshing = true;
+          parentData.refreshing = false;
         }
-
-        try {
-            // Fetch updated content
-            const response = await fetch(window.location.href, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html'
-                }
-            });
-            if (response.ok) {
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // Find the content area container
-                const contentArea = document.querySelector('.flex-1.overflow-y-auto.custom-scroll');
-
-                // Get new content from the fetched HTML
-                const newContentArea = doc.querySelector('.flex-1.overflow-y-auto.custom-scroll');
-
-                if (contentArea && newContentArea) {
-                    // Update entire content area (table, grid, pagination) - no page reload
-                    contentArea.innerHTML = newContentArea.innerHTML;
-                } else {
-                    // Fallback: update individual elements
-                    const newTableBody = doc.querySelector('table.island-row tbody');
-                    const newGridContent = doc.querySelector('.grid.grid-cols-1');
-                    const newPagination = doc.querySelector('.mt-4.pt-4.border-t');
-
-                    if (newTableBody) {
-                        const currentTableBody = document.querySelector('table.island-row tbody');
-                        if (currentTableBody) {
-                            currentTableBody.innerHTML = newTableBody.innerHTML;
-                        }
-                    }
-
-                    if (newGridContent) {
-                        const currentGrid = document.querySelector('.grid.grid-cols-1');
-                        if (currentGrid) {
-                            currentGrid.innerHTML = newGridContent.innerHTML;
-                        }
-                    }
-
-                    if (newPagination) {
-                        const currentPagination = document.querySelector('.mt-4.pt-4.border-t');
-                        if (currentPagination && currentPagination.parentElement) {
-                            currentPagination.outerHTML = newPagination.outerHTML;
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error refreshing roles:', error);
-            // Don't reload on error, just hide loader
-        } finally {
-            // Hide global loader
-            if (parentData && typeof parentData.hideLoader === 'function') {
-                parentData.hideLoader();
-            } else if (parentData && parentData.refreshing !== undefined) {
-                parentData.refreshing = false;
-            }
-        }
+      }
+    },
+    handleTableClick(e) {
+      const delBtn = e.target.closest('[data-action="delete"]');
+      if (delBtn) { e.preventDefault(); this.openDeleteConfirm(delBtn.dataset.roleId, delBtn.dataset.roleName || ''); return; }
+      const editBtn = e.target.closest('[data-action="edit"]');
+      if (editBtn) { e.preventDefault(); this.openEditModal(editBtn.dataset.roleId); return; }
+      const permBtn = e.target.closest('[data-action="permissions"]');
+      if (permBtn) { e.preventDefault(); this.openPermissionModal(permBtn.dataset.roleId, permBtn.dataset.roleName || ''); }
+    },
+    openDeleteConfirm(roleId, roleName) {
+      this.deleteRoleId = roleId;
+      this.deleteRoleName = roleName || '';
+      this.showDeleteModal = true;
+    },
+    async confirmDelete() {
+      if (!this.deleteRoleId) return;
+      const url = (this.destroyUrl || '').replace(/\/$/, '') + '/' + this.deleteRoleId;
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      try {
+        const formData = new URLSearchParams({ _method: 'DELETE', _token: csrf });
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' }
+        });
+        const data = response.ok ? await response.json().catch(() => ({})) : {};
+        this.showDeleteModal = false;
+        this.deleteRoleId = null;
+        this.deleteRoleName = '';
+        this.addToast(data.message || 'Role deleted successfully.');
+        await this.refreshRoles();
+      } catch (err) {
+        console.error(err);
+        this.addToast('Error: Failed to delete role.');
+      }
     },
     async openEditModal(roleId) {
-        this.loading = true;
-        this.showEditModal = true;
-        this.selectedRoleData = null; // Reset first
-        try {
-            const response = await fetch(`/admin/roles/${roleId}/edit`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-            const data = await response.json();
-            this.selectedRoleData = data.role || {};
-        } catch (error) {
-            console.error('Error loading role data:', error);
-            this.selectedRoleData = {};
-        } finally {
-            this.loading = false;
-        }
+      this.loading = true;
+      this.showEditModal = true;
+      this.selectedRoleData = null;
+      try {
+        const response = await fetch('/admin/roles/' + roleId + '/edit', {
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        this.selectedRoleData = data.role || {};
+      } catch (error) {
+        console.error('Error loading role data:', error);
+        this.selectedRoleData = {};
+      } finally {
+        this.loading = false;
+      }
     },
     async openPermissionModal(roleId, roleName) {
-        this.selectedRole = roleName;
-        this.selectedRoleId = roleId;
-        this.loadingPermissions = true;
-        this.showPermissionModal = true;
-        try {
-            const response = await fetch(`/admin/roles/${roleId}/permissions-data`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-            const data = await response.json();
-            this.rolePermissions = data.permissions || [];
-        } catch (error) {
-            console.error('Error loading permissions:', error);
-        } finally {
-            this.loadingPermissions = false;
+      this.selectedRole = roleName;
+      this.selectedRoleId = roleId;
+      this.loadingPermissions = true;
+      this.showPermissionModal = true;
+      try {
+        const response = await fetch('/admin/roles/' + roleId + '/permissions-data', {
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        this.rolePermissions = data.permissions || [];
+      } catch (error) {
+        console.error('Error loading permissions:', error);
+      } finally {
+        this.loadingPermissions = false;
+      }
+    },
+    async submitCreateRole(form) {
+      const formData = new FormData(form);
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+        });
+        const contentType = response.headers.get('content-type');
+        if (response.ok) {
+          const data = await response.json();
+          this.showAddPanel = false;
+          form.reset();
+          this.addToast(data.message || 'New Role Created Successfully');
+          await this.refreshRoles(true);
+        } else if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          let errorMsg = 'Failed to create role';
+          if (data.errors) {
+            const firstError = Object.values(data.errors)[0];
+            errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
+          } else if (data.message) errorMsg = data.message;
+          this.addToast('Error: ' + errorMsg);
+        } else {
+          this.addToast('Error: Failed to create role');
         }
+      } catch (error) {
+        console.error(error);
+        this.addToast('Error: Failed to create role');
+      }
+    },
+    async submitEditRole(form) {
+      const formData = new FormData(form);
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          this.showEditModal = false;
+          this.addToast(data.message || 'Role Updated Successfully');
+          await this.refreshRoles();
+        } else {
+          const data = await response.json();
+          let errorMsg = (data.errors && Object.values(data.errors)[0]) ? Object.values(data.errors)[0][0] : (data.message || 'Failed to update role');
+          this.addToast('Error: ' + errorMsg);
+        }
+      } catch (error) {
+        console.error(error);
+        this.addToast('Error: Failed to update role');
+      }
+    },
+    async submitPermissions() {
+      const form = document.getElementById('permissionForm');
+      if (!form) return;
+      const formData = new FormData(form);
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf }
+        });
+        if (response.ok) {
+          this.showPermissionModal = false;
+          this.addToast('Success: Permissions Updated for ' + this.selectedRole);
+          await this.refreshRoles();
+        } else {
+          this.addToast('Error: Failed to update permissions');
+        }
+      } catch (error) {
+        console.error(error);
+        this.addToast('Error: Failed to update permissions');
+      }
     }
-}" class="h-full flex gap-3 workspace-transition relative p-6" :class="showAddPanel ? '' : ''">
+  }));
+});
+</script>
+<div x-data="rolesPage()" data-destroy-url="{{ url('/admin/roles') }}" class="h-full flex gap-3 workspace-transition relative p-6" :class="showAddPanel ? '' : ''">
 <div class="flex flex-col gap-3 workspace-transition flex-1" :class="showAddPanel ? 'w-2/3' : 'w-full'">
     <!-- Tools Bar -->
     <div class="flex items-center justify-between mb-6 shrink-0">
@@ -169,7 +309,7 @@
     </div>
 
     <!-- Content Area (Scrollable) -->
-    <div class="flex-1 overflow-y-auto custom-scroll pr-2 pb-4">
+    <div id="roles-list-content" class="flex-1 overflow-y-auto custom-scroll pr-2 pb-4">
 
         @if(session('success'))
         <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
@@ -178,7 +318,7 @@
         @endif
 
         <!-- List View (Roles Table) -->
-        <table x-show="viewType === 'list'" class="w-full text-left island-row">
+        <table x-show="viewType === 'list'" class="w-full text-left island-row" @click="handleTableClick($event)">
             <thead
                 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 bg-white z-10">
                 <tr>
@@ -213,9 +353,8 @@
                     </td>
                     <td
                         class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">
-                        <div
-                            class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click="openPermissionModal({{ $role->id }}, '{{ $role->name }}')"
+                        <div class="flex items-center justify-end gap-1">
+                            <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
                                 class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
                                 title="Set Permissions">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
@@ -224,7 +363,7 @@
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                             </button>
-                            <button @click="openEditModal({{ $role->id }})"
+                            <button type="button" data-action="edit" data-role-id="{{ $role->id }}"
                                 class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
                                 title="Edit Role">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
@@ -233,20 +372,15 @@
                                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
-                            <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" class="inline"
-                                onsubmit="return confirm('Are you sure you want to delete this role?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
-                                    title="Delete Role">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                        viewBox="0 0 24 24">
-                                        <path
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </form>
+                            <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
+                                class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+                                title="Delete Role">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -261,21 +395,19 @@
         </table>
 
         <!-- Pagination -->
+        <div id="roles-pagination-wrap" class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between shrink-0">
         @if($roles->hasPages())
-        <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between shrink-0">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Showing {{ $roles->firstItem() }} to {{ $roles->lastItem() }} of {{ $roles->total() }} Roles</p>
             <div class="flex gap-1">
                 {{ $roles->links('pagination.simple-tailwind') }}
             </div>
-        </div>
         @else
-        <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between shrink-0">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Showing {{ $roles->count() }} Roles</p>
-        </div>
         @endif
+        </div>
 
         <!-- Grid View (Roles) -->
-        <div x-show="viewType === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div x-show="viewType === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" @click="handleTableClick($event)">
             @foreach($roles as $role)
             <div
                 class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">
@@ -289,14 +421,10 @@
                 <p class="text-xs text-slate-400 mb-4 line-clamp-2">{{ $role->description ?? 'Manages access levels and permissions for this specific user group.' }}</p>
 
                 <div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">
-                    <button @click="openPermissionModal({{ $role->id }}, '{{ $role->name }}')"
+                    <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
                         class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Permissions</button>
-                    <button @click="openEditModal({{ $role->id }})" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600"><svg
-                            class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg></button>
+                    <button type="button" data-action="edit" data-role-id="{{ $role->id }}" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                    <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                 </div>
             </div>
             @endforeach
@@ -319,47 +447,7 @@
                 </svg></button>
         </div>
 
-        <form method="POST" action="{{ route('admin.roles.store') }}" @submit.prevent="
-            const form = $event.target;
-            const formData = new FormData(form);
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.content || '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(async response => {
-                const contentType = response.headers.get('content-type');
-                if (response.ok) {
-                    const data = await response.json();
-                    showAddPanel = false;
-                    form.reset(); // Clear form
-                    addToast(data.message || 'New Role Created Successfully');
-                    // Refresh with loader - no page shake
-                    await refreshRoles();
-                } else if (contentType && contentType.includes('application/json')) {
-                    const data = await response.json();
-                    console.error('Validation errors:', data);
-                    let errorMsg = 'Failed to create role';
-                    if (data.errors) {
-                        const firstError = Object.values(data.errors)[0];
-                        errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
-                    } else if (data.message) {
-                        errorMsg = data.message;
-                    }
-                    addToast('Error: ' + errorMsg);
-                } else {
-                    addToast('Error: Failed to create role');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                addToast('Error: Failed to create role');
-            });
-        " class="p-8 space-y-6 flex-1 overflow-y-auto custom-scroll">
+        <form method="POST" action="{{ route('admin.roles.store') }}" @submit.prevent="submitCreateRole($event.target)" class="p-8 space-y-6 flex-1 overflow-y-auto custom-scroll">
             @csrf
             <div>
                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Role Name</label>
@@ -410,43 +498,7 @@
 
             <div class="flex-1 overflow-y-auto p-6 custom-scroll" x-show="!loading">
                 <form method="POST" :action="selectedRoleData ? `/admin/roles/${selectedRoleData.id}` : '#'"
-                    @submit.prevent="
-                        const form = $event.target;
-                        const formData = new FormData(form);
-                        fetch(form.action, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.content || '{{ csrf_token() }}',
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(async response => {
-                            if (response.ok) {
-                                const data = await response.json();
-                                showEditModal = false;
-                                addToast(data.message || 'Role Updated Successfully');
-                                // Refresh with loader - no page shake
-                                await refreshRoles();
-                            } else {
-                                const data = await response.json();
-                                let errorMsg = 'Failed to update role';
-                                if (data.errors) {
-                                    const firstError = Object.values(data.errors)[0];
-                                    errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
-                                } else if (data.message) {
-                                    errorMsg = data.message;
-                                }
-                                addToast('Error: ' + errorMsg);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            addToast('Error: Failed to update role');
-                        });
-                    "
-                    class="space-y-6">
+                    @submit.prevent="submitEditRole($event.target)" class="space-y-6">
                     @csrf
                     @method('PUT')
                     <div>
@@ -632,36 +684,43 @@
                     <div class="p-6 border-t border-slate-50 bg-slate-50/20 flex justify-end gap-3">
                         <button @click="showPermissionModal = false"
                             class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">Cancel</button>
-                        <button
-                            @click="
-                                const form = document.getElementById('permissionForm');
-                                const formData = new FormData(form);
-                                fetch(form.action, {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.content || '{{ csrf_token() }}'
-                                    }
-                                })
-                                .then(async response => {
-                                    if (response.ok) {
-                                        showPermissionModal = false;
-                                        addToast('Success: Permissions Updated for ' + selectedRole);
-                                        // Refresh with loader - no page shake
-                                        await refreshRoles();
-                                    } else {
-                                        addToast('Error: Failed to update permissions');
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error:', error);
-                                    addToast('Error: Failed to update permissions');
-                                });
-                            "
+                        <button type="button" @click="submitPermissions()"
                             class="px-8 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Save
                             Permissions</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Role Confirmation Modal -->
+    <div x-show="showDeleteModal" x-cloak
+        class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div @click.away="showDeleteModal = false; deleteRoleId = null; deleteRoleName = ''"
+            class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="p-6 text-center">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-rose-50 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-1">Delete Role</h3>
+                <p class="text-sm text-slate-500 mb-2">Are you sure you want to delete this role?</p>
+                <p class="text-sm font-semibold text-slate-700 mb-6" x-text="deleteRoleName || 'This role'"></p>
+                <div class="flex gap-3 justify-center">
+                    <button type="button" @click="showDeleteModal = false; deleteRoleId = null; deleteRoleName = ''"
+                        class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" @click="confirmDelete()"
+                        class="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm rounded-xl transition-colors">
+                        Yes, delete
+                    </button>
                 </div>
             </div>
         </div>

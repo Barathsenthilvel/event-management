@@ -14,7 +14,7 @@ class RoleController extends Controller
     {
         $roles = Role::with('permissions')->latest()->paginate(5);
 
-        // If it's an AJAX request, return JSON
+        // If it's an AJAX request, return JSON (for table-only refresh after create/update)
         if (request()->expectsJson() || request()->ajax()) {
             return response()->json([
                 'roles' => $roles->map(function ($role) {
@@ -32,6 +32,10 @@ class RoleController extends Controller
                     'current_page' => $roles->currentPage(),
                     'last_page' => $roles->lastPage(),
                     'total' => $roles->total(),
+                    'first_item' => $roles->firstItem(),
+                    'last_item' => $roles->lastItem(),
+                    'has_pages' => $roles->hasPages(),
+                    'links_html' => (string) $roles->links('pagination.simple-tailwind'),
                 ]
             ]);
         }
@@ -142,6 +146,10 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $role->delete();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Role deleted successfully.']);
+        }
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role deleted successfully.');

@@ -164,8 +164,12 @@
                 x-transition>VANGUARD</span>
         </div>
 
-        <!-- Navigation -->
+        <!-- Navigation: fixed links + dynamic menus from Menu Management -->
+        @php
+            $admin = Auth::guard('admin')->user();
+        @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
+            {{-- Dashboard --}}
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.dashboard') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
@@ -175,6 +179,8 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
             </a>
 
+            {{-- Users --}}
+            @if($admin && $admin->hasPermission('user.view'))
             <a href="{{ route('admin.admins.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.admins.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.admins.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor"
@@ -184,7 +190,10 @@
                 </svg>
                 <span x-show="sidebarOpen" class="text-sm font-medium">Users</span>
             </a>
+            @endif
 
+            {{-- Roles & Permissions --}}
+            @if($admin && $admin->hasPermission('role.view'))
             <a href="{{ route('admin.roles.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.roles.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.roles.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
@@ -194,6 +203,97 @@
                 </svg>
                 <span x-show="sidebarOpen" class="text-sm font-medium">Roles & Permissions</span>
             </a>
+            @endif
+
+            {{-- Menu Management --}}
+            @if($admin && $admin->hasPermission('menu.view'))
+            <a href="{{ route('admin.menus.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 10h16M4 14h10" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Menu Management</span>
+            </a>
+            @endif
+
+            {{-- Dynamic menus from database (Menu Management) --}}
+            @foreach($sidebarMenus ?? [] as $menu)
+                @php
+                    $url = $menu->route_name && \Illuminate\Support\Facades\Route::has($menu->route_name)
+                        ? route($menu->route_name)
+                        : '#';
+                    $isActive = $menu->route_name && request()->routeIs(preg_replace('/\.(index|show|create|edit)$/', '.*', $menu->route_name));
+                @endphp
+                @if($menu->children->isEmpty())
+                    <a href="{{ $url }}"
+                        class="flex items-center gap-3 p-3 {{ $isActive ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                        @if($menu->icon && (str_starts_with($menu->icon, 'fa') || str_contains($menu->icon, 'icon-')))
+                            <i class="w-5 h-5 flex items-center justify-center {{ $menu->icon }} {{ $isActive ? 'text-indigo-400' : 'group-hover:text-indigo-400' }}"></i>
+                        @else
+                            <svg class="w-5 h-5 {{ $isActive ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        @endif
+                        <span x-show="sidebarOpen" class="text-sm font-medium">{{ $menu->title }}</span>
+                    </a>
+                @else
+                    @php
+                        $childActive = $menu->children->contains(function ($c) {
+                            if (!$c->route_name) return false;
+                            $pattern = \Illuminate\Support\Str::beforeLast($c->route_name, '.') . '.*';
+                            return request()->routeIs($pattern) || request()->routeIs($c->route_name);
+                        });
+                    @endphp
+                    <div x-data="{ open: true }" class="space-y-1">
+                        <div class="flex items-center gap-3 p-3 {{ $isActive ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                            <a href="{{ $url }}" class="flex items-center gap-3 flex-1 min-w-0">
+                                @if($menu->icon && (str_starts_with($menu->icon, 'fa') || str_contains($menu->icon, 'icon-')))
+                                    <i class="w-5 h-5 flex items-center justify-center flex-shrink-0 {{ $menu->icon }} {{ $isActive ? 'text-indigo-400' : 'group-hover:text-indigo-400' }}"></i>
+                                @else
+                                    <svg class="w-5 h-5 flex-shrink-0 {{ $isActive ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                @endif
+                                <span x-show="sidebarOpen" class="text-sm font-medium truncate">{{ $menu->title }}</span>
+                            </a>
+                            <button type="button" x-show="sidebarOpen" @click.prevent="open = !open" class="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+                                :aria-expanded="open">
+                                <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div x-show="open && sidebarOpen"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="ml-10 space-y-1 mt-1 text-xs font-medium text-slate-500 border-l border-slate-700 pl-3">
+                            @foreach($menu->children as $child)
+                                @php
+                                    $childUrl = $child->route_name && \Illuminate\Support\Facades\Route::has($child->route_name)
+                                        ? route($child->route_name)
+                                        : '#';
+                                    $childActive = $child->route_name && (request()->routeIs($child->route_name) || request()->routeIs(\Illuminate\Support\Str::beforeLast($child->route_name, '.') . '.*'));
+                                @endphp
+                                <a href="{{ $childUrl }}"
+                                    class="block py-2 {{ $childActive ? 'text-indigo-400 font-bold' : 'hover:text-white' }} transition-colors">
+                                    {{ $child->title }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </nav>
 
         <!-- User Profile Bottom -->

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MenuController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -41,6 +42,14 @@ Route::prefix('admin')->group(function () {
             ->name('admin.roles.permissions-data');
         Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
             ->name('admin.roles.update-permissions');
+
+        // Menu Management
+        Route::resource('menus', MenuController::class)->only(['index', 'store', 'update', 'destroy'])->names([
+            'index' => 'admin.menus.index',
+            'store' => 'admin.menus.store',
+            'update' => 'admin.menus.update',
+            'destroy' => 'admin.menus.destroy',
+        ]);
     });
 });
 
