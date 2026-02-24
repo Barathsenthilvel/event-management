@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Menu;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\RoleMenuPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -40,7 +42,10 @@ class RoleController extends Controller
             ]);
         }
 
-        return view('admin.roles.index', compact('roles'));
+        $canManageMenuPermissions = auth()->guard('admin')->check()
+            && auth()->guard('admin')->user()->is_super_admin;
+
+        return view('admin.roles.index', compact('roles', 'canManageMenuPermissions'));
     }
 
     public function create()
@@ -157,24 +162,74 @@ class RoleController extends Controller
 
     public function getPermissionsData(Role $role)
     {
+        $admin = auth()->guard('admin')->user();
+        if (! $admin || ! $admin->is_super_admin) {
+            abort(403, 'Only Super Admin can manage menu permissions.');
+        }
+
+        $menus = Menu::orderBy('order')->orderBy('title')->get(['id', 'title']);
+        $menuPermissions = $role->menuPermissions()->get()->keyBy('menu_id');
+
+        $menuPermissionsMap = [];
+        foreach ($menus as $menu) {
+            $p = $menuPermissions->get($menu->id);
+            $menuPermissionsMap[$menu->id] = [
+                'can_view' => $p ? $p->can_view : false,
+                'can_create' => $p ? $p->can_create : false,
+                'can_edit' => $p ? $p->can_edit : false,
+                'can_delete' => $p ? $p->can_delete : false,
+            ];
+        }
+
         return response()->json([
-            'permissions' => $role->permissions->pluck('slug')->toArray(),
+            'menus' => $menus->map(fn ($m) => ['id' => $m->id, 'title' => $m->title]),
+            'menuPermissions' => $menuPermissionsMap,
         ]);
     }
 
     public function updatePermissions(Request $request, Role $role)
     {
+        $admin = auth()->guard('admin')->user();
+        if (! $admin || ! $admin->is_super_admin) {
+            abort(403, 'Only Super Admin can manage menu permissions.');
+        }
+
         $validated = $request->validate([
-            'permissions' => 'nullable|array',
+            'menu_permissions' => 'nullable|array',
+            'menu_permissions.*.menu_id' => 'required|exists:menus,id',
+            'menu_permissions.*.can_view' => 'nullable|boolean',
+            'menu_permissions.*.can_create' => 'nullable|boolean',
+            'menu_permissions.*.can_edit' => 'nullable|boolean',
+            'menu_permissions.*.can_delete' => 'nullable|boolean',
         ]);
 
-        // Get permission IDs by slug
-        $permissionSlugs = $validated['permissions'] ?? [];
-        $permissions = Permission::whereIn('slug', $permissionSlugs)->pluck('id');
+        $role->menuPermissions()->delete();
 
-        $role->permissions()->sync($permissions);
+        foreach ($validated['menu_permissions'] ?? [] as $row) {
+            $view = filter_var($row['can_view'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $create = filter_var($row['can_create'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $edit = filter_var($row['can_edit'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $delete = filter_var($row['can_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            if ($view || $create || $edit || $delete) {
+                RoleMenuPermission::create([
+                    'role_id' => $role->id,
+                    'menu_id' => $row['menu_id'],
+                    'can_view' => $view,
+                    'can_create' => $create,
+                    'can_edit' => $edit,
+                    'can_delete' => $delete,
+                ]);
+            }
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Menu permissions updated successfully for ' . $role->name,
+            ]);
+        }
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Permissions updated successfully for ' . $role->name);
+            ->with('success', 'Menu permissions updated successfully for ' . $role->name);
     }
 }

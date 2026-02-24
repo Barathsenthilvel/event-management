@@ -33,6 +33,11 @@ class Role extends Model
         return $this->belongsToMany(Permission::class, 'permission_role');
     }
 
+    public function menuPermissions()
+    {
+        return $this->hasMany(RoleMenuPermission::class);
+    }
+
     public function hasPermission($permission)
     {
         if (is_string($permission)) {

@@ -5,8 +5,10 @@
 document.addEventListener('alpine:init', () => {
   Alpine.data('rolesPage', () => ({
     destroyUrl: '',
+    canManageMenuPermissions: false,
     init() {
       this.destroyUrl = this.$el.dataset.destroyUrl || '';
+      this.canManageMenuPermissions = this.$el.dataset.canManageMenuPermissions === '1';
     },
     viewType: 'list',
     showAddPanel: false,
@@ -20,6 +22,8 @@ document.addEventListener('alpine:init', () => {
     selectedRoleData: null,
     rolePermissions: [],
     permissions: [],
+    menus: [],
+    menuPermissions: {},
     loading: false,
     loadingPermissions: false,
     searchQuery: '',
@@ -42,6 +46,9 @@ document.addEventListener('alpine:init', () => {
       }
       return roles.map(r => {
         const nameAttr = this.escapeAttr(r.name);
+        var permBtn = this.canManageMenuPermissions
+          ? '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Menu Permissions"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></button>'
+          : '';
         return '<tr class="group transition-all">' +
           '<td class="px-6 py-4 bg-white border-y border-l border-slate-100 first:rounded-l-2xl"><div class="flex items-center gap-3">' +
           '<div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
@@ -50,8 +57,7 @@ document.addEventListener('alpine:init', () => {
           '<td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-400 font-medium">' + (r.created_at || '') + '</td>' +
           '<td class="px-6 py-4 bg-white border-y border-slate-100 text-center"><span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span></td>' +
           '<td class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">' +
-          '<div class="flex items-center justify-end gap-1">' +
-          '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Set Permissions"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></button>' +
+          '<div class="flex items-center justify-end gap-1">' + permBtn +
           '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Edit Role"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
           '<button type="button" data-action="delete" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Delete Role"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>' +
           '</div></td></tr>';
@@ -62,13 +68,15 @@ document.addEventListener('alpine:init', () => {
       return roles.map(r => {
         const desc = (r.description || 'Manages access levels and permissions for this specific user group.').substring(0, 80);
         const nameAttr = this.escapeAttr(r.name);
+        const permBtn = this.canManageMenuPermissions
+          ? '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Menu Permissions</button>'
+          : '';
         return '<div class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">' +
           '<div class="flex justify-between items-start mb-4"><div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
           '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase">Active</span></div>' +
           '<h4 class="font-bold text-slate-800 mb-1">' + this.escapeAttr(r.name) + '</h4>' +
           '<p class="text-xs text-slate-400 mb-4 line-clamp-2">' + this.escapeAttr(desc) + '</p>' +
-          '<div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">' +
-          '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Permissions</button>' +
+          '<div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">' + permBtn +
           '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
           '<button type="button" data-action="delete" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>' +
           '</div></div>';
@@ -178,17 +186,28 @@ document.addEventListener('alpine:init', () => {
       this.selectedRoleId = roleId;
       this.loadingPermissions = true;
       this.showPermissionModal = true;
+      this.menus = [];
+      this.menuPermissions = {};
       try {
         const response = await fetch('/admin/roles/' + roleId + '/permissions-data', {
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         });
         const data = await response.json();
-        this.rolePermissions = data.permissions || [];
+        this.menus = data.menus || [];
+        this.menuPermissions = data.menuPermissions || {};
       } catch (error) {
-        console.error('Error loading permissions:', error);
+        console.error('Error loading menu permissions:', error);
       } finally {
         this.loadingPermissions = false;
       }
+    },
+    getMenuPerm(menuId, key) {
+      const p = this.menuPermissions[menuId];
+      return p ? (p[key] || false) : false;
+    },
+    setMenuPerm(menuId, key, value) {
+      if (!this.menuPermissions[menuId]) this.menuPermissions[menuId] = { can_view: false, can_create: false, can_edit: false, can_delete: false };
+      this.menuPermissions[menuId][key] = value;
     },
     async submitCreateRole(form) {
       const formData = new FormData(form);
@@ -247,32 +266,38 @@ document.addEventListener('alpine:init', () => {
       }
     },
     async submitPermissions() {
-      const form = document.getElementById('permissionForm');
-      if (!form) return;
-      const formData = new FormData(form);
+      if (!this.selectedRoleId) return;
+      const menu_permissions = this.menus.map(m => ({
+        menu_id: m.id,
+        can_view: this.getMenuPerm(m.id, 'can_view'),
+        can_create: this.getMenuPerm(m.id, 'can_create'),
+        can_edit: this.getMenuPerm(m.id, 'can_edit'),
+        can_delete: this.getMenuPerm(m.id, 'can_delete')
+      }));
       const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
       try {
-        const response = await fetch(form.action, {
+        const response = await fetch('/admin/roles/' + this.selectedRoleId + '/permissions', {
           method: 'POST',
-          body: formData,
-          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf }
+          body: JSON.stringify({ menu_permissions, _token: csrf }),
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' }
         });
+        const data = response.ok ? await response.json().catch(() => ({})) : {};
         if (response.ok) {
           this.showPermissionModal = false;
-          this.addToast('Success: Permissions Updated for ' + this.selectedRole);
+          this.addToast(data.message || 'Menu permissions updated for ' + this.selectedRole);
           await this.refreshRoles();
         } else {
-          this.addToast('Error: Failed to update permissions');
+          this.addToast(data.message || 'Error: Failed to update menu permissions');
         }
       } catch (error) {
         console.error(error);
-        this.addToast('Error: Failed to update permissions');
+        this.addToast('Error: Failed to update menu permissions');
       }
     }
   }));
 });
 </script>
-<div x-data="rolesPage()" data-destroy-url="{{ url('/admin/roles') }}" class="h-full flex gap-3 workspace-transition relative p-6" :class="showAddPanel ? '' : ''">
+<div x-data="rolesPage()" data-destroy-url="{{ url('/admin/roles') }}" data-can-manage-menu-permissions="{{ ($canManageMenuPermissions ?? false) ? '1' : '0' }}" class="h-full flex gap-3 workspace-transition relative p-6" :class="showAddPanel ? '' : ''">
 <div class="flex flex-col gap-3 workspace-transition flex-1" :class="showAddPanel ? 'w-2/3' : 'w-full'">
     <!-- Tools Bar -->
     <div class="flex items-center justify-between mb-6 shrink-0">
@@ -354,15 +379,17 @@ document.addEventListener('alpine:init', () => {
                     <td
                         class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">
                         <div class="flex items-center justify-end gap-1">
+                            @if($canManageMenuPermissions ?? false)
                             <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
                                 class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                                title="Set Permissions">
+                                title="Menu Permissions">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                     viewBox="0 0 24 24">
                                     <path
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                             </button>
+                            @endif
                             <button type="button" data-action="edit" data-role-id="{{ $role->id }}"
                                 class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
                                 title="Edit Role">
@@ -421,8 +448,10 @@ document.addEventListener('alpine:init', () => {
                 <p class="text-xs text-slate-400 mb-4 line-clamp-2">{{ $role->description ?? 'Manages access levels and permissions for this specific user group.' }}</p>
 
                 <div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">
+                    @if($canManageMenuPermissions ?? false)
                     <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
-                        class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Permissions</button>
+                        class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Menu Permissions</button>
+                    @endif
                     <button type="button" data-action="edit" data-role-id="{{ $role->id }}" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                     <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                 </div>
@@ -584,7 +613,7 @@ document.addEventListener('alpine:init', () => {
                     <div class="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-xs">
                         Role: <span x-text="selectedRole"></span>
                     </div>
-                    <h3 class="font-bold text-slate-800">Module Permissions Management</h3>
+                    <h3 class="font-bold text-slate-800">Menu Permissions Management</h3>
                 </div>
                 <button @click="showPermissionModal = false" class="p-2 text-slate-300 hover:text-slate-600"><svg
                         class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -595,89 +624,65 @@ document.addEventListener('alpine:init', () => {
             <div class="flex-1 overflow-hidden flex">
                 <div class="w-64 bg-slate-50/50 border-r border-slate-100 p-6 shrink-0 hidden md:block">
                     <div class="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Active
-                            Focus</label>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest">Active Focus</label>
                         <p class="font-bold text-indigo-600 text-sm" x-text="selectedRole"></p>
                     </div>
-                    <p class="mt-6 text-[10px] text-slate-400 leading-relaxed italic">Configure granular access for this
-                        specific role. Changes will affect all users assigned to this role immediately.</p>
+                    <p class="mt-6 text-[10px] text-slate-400 leading-relaxed italic">Configure granular access for this specific role. Only menus you created in Menu Management appear here. Changes affect all users with this role.</p>
                 </div>
 
                 <div class="flex-1 flex flex-col">
                     <div class="flex-1 overflow-y-auto p-6 custom-scroll" x-show="!loadingPermissions">
-                        <form id="permissionForm" method="POST" :action="selectedRoleId ? `/admin/roles/${selectedRoleId}/permissions` : '#'">
-                            @csrf
-                            <table class="w-full">
-                                <thead class="sticky top-0 bg-white z-10">
-                                    <tr
-                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                        <th class="text-left pb-4">Module Name</th>
-                                        <th class="text-center pb-4">Create</th>
-                                        <th class="text-center pb-4">Edit</th>
-                                        <th class="text-center pb-4">Delete</th>
-                                        <th class="text-center pb-4">View</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    @php
-                                        $permissions = \App\Models\Permission::all()->groupBy('module');
-                                    @endphp
-                                    @foreach($permissions as $moduleName => $modulePerms)
+                        <table class="w-full">
+                            <thead class="sticky top-0 bg-white z-10">
+                                <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                    <th class="text-left pb-4">Menu Name</th>
+                                    <th class="text-center pb-4">View</th>
+                                    <th class="text-center pb-4">Create</th>
+                                    <th class="text-center pb-4">Edit</th>
+                                    <th class="text-center pb-4">Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <template x-for="menu in menus" :key="menu.id">
                                     <tr class="hover:bg-slate-50/50 transition-colors">
-                                        <td class="py-4 font-bold text-xs text-slate-700">{{ $moduleName }}</td>
-                                        @php
-                                            $createPerm = $modulePerms->where('slug', 'like', '%.create')->first();
-                                            $editPerm = $modulePerms->where('slug', 'like', '%.edit')->first();
-                                            $deletePerm = $modulePerms->where('slug', 'like', '%.delete')->first();
-                                            $viewPerm = $modulePerms->where('slug', 'like', '%.view')->first();
-                                        @endphp
+                                        <td class="py-4 font-bold text-xs text-slate-700" x-text="menu.title"></td>
                                         <td class="py-4 text-center">
-                                            @if($createPerm)
-                                            <input type="checkbox" name="permissions[]" value="{{ $createPerm->slug }}"
-                                                x-bind:checked="rolePermissions.includes('{{ $createPerm->slug }}')"
+                                            <input type="checkbox"
+                                                :checked="getMenuPerm(menu.id, 'can_view')"
+                                                @change="setMenuPerm(menu.id, 'can_view', $event.target.checked)"
                                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20">
-                                            @else
-                                            <span class="text-slate-300">-</span>
-                                            @endif
                                         </td>
                                         <td class="py-4 text-center">
-                                            @if($editPerm)
-                                            <input type="checkbox" name="permissions[]" value="{{ $editPerm->slug }}"
-                                                x-bind:checked="rolePermissions.includes('{{ $editPerm->slug }}')"
+                                            <input type="checkbox"
+                                                :checked="getMenuPerm(menu.id, 'can_create')"
+                                                @change="setMenuPerm(menu.id, 'can_create', $event.target.checked)"
                                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20">
-                                            @else
-                                            <span class="text-slate-300">-</span>
-                                            @endif
                                         </td>
                                         <td class="py-4 text-center">
-                                            @if($deletePerm)
-                                            <input type="checkbox" name="permissions[]" value="{{ $deletePerm->slug }}"
-                                                x-bind:checked="rolePermissions.includes('{{ $deletePerm->slug }}')"
+                                            <input type="checkbox"
+                                                :checked="getMenuPerm(menu.id, 'can_edit')"
+                                                @change="setMenuPerm(menu.id, 'can_edit', $event.target.checked)"
                                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20">
-                                            @else
-                                            <span class="text-slate-300">-</span>
-                                            @endif
                                         </td>
                                         <td class="py-4 text-center">
-                                            @if($viewPerm)
-                                            <input type="checkbox" name="permissions[]" value="{{ $viewPerm->slug }}"
-                                                x-bind:checked="rolePermissions.includes('{{ $viewPerm->slug }}')"
+                                            <input type="checkbox"
+                                                :checked="getMenuPerm(menu.id, 'can_delete')"
+                                                @change="setMenuPerm(menu.id, 'can_delete', $event.target.checked)"
                                                 class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20">
-                                            @else
-                                            <span class="text-slate-300">-</span>
-                                            @endif
                                         </td>
                                     </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </form>
+                                </template>
+                                <tr x-show="menus.length === 0 && !loadingPermissions">
+                                    <td colspan="5" class="py-8 text-center text-slate-400 text-sm">No menus yet. Create menus in Menu Management and they will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <div x-show="loadingPermissions" class="flex-1 flex items-center justify-center p-12">
                         <div class="text-center">
                             <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                            <p class="text-sm text-slate-500 font-bold">Loading permissions...</p>
+                            <p class="text-sm text-slate-500 font-bold">Loading menu permissions...</p>
                         </div>
                     </div>
 
@@ -685,8 +690,7 @@ document.addEventListener('alpine:init', () => {
                         <button @click="showPermissionModal = false"
                             class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-slate-800">Cancel</button>
                         <button type="button" @click="submitPermissions()"
-                            class="px-8 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Save
-                            Permissions</button>
+                            class="px-8 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">Save Permissions</button>
                     </div>
                 </div>
             </div>

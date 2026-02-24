@@ -35,5 +35,10 @@ class Menu extends Model
     {
         return $this->hasMany(Menu::class, 'parent_id')->orderBy('order');
     }
+
+    public function rolePermissions()
+    {
+        return $this->hasMany(RoleMenuPermission::class);
+    }
 }
 
