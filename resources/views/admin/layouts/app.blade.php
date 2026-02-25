@@ -169,7 +169,7 @@
             $admin = Auth::guard('admin')->user();
         @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
-            {{-- Dashboard --}}
+            {{-- 1. Dashboard (first) --}}
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.dashboard') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
@@ -179,46 +179,7 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
             </a>
 
-            {{-- Users --}}
-            @if($admin && $admin->hasPermission('user.view'))
-            <a href="{{ route('admin.admins.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.admins.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.admins.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Users</span>
-            </a>
-            @endif
-
-            {{-- Roles & Permissions --}}
-            @if($admin && $admin->hasPermission('role.view'))
-            <a href="{{ route('admin.roles.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.roles.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.roles.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Roles & Permissions</span>
-            </a>
-            @endif
-
-            {{-- Menu Management --}}
-            @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
-            <a href="{{ \Illuminate\Support\Facades\Route::has('admin.menus.index') ? route('admin.menus.index') : '#' }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h10" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Menu Management</span>
-            </a>
-            @endif
-
-            {{-- Dynamic menus from database (Menu Management) --}}
+            {{-- 2. Dynamic menus from database (created in Menu Management) --}}
             @foreach($sidebarMenus ?? [] as $menu)
                 @php
                     $url = $menu->route_name && \Illuminate\Support\Facades\Route::has($menu->route_name)
@@ -294,6 +255,82 @@
                     </div>
                 @endif
             @endforeach
+
+            {{-- 3. Users, Roles & Permissions, Menu Management, Settings (last) --}}
+            @if($admin && $admin->hasPermission('user.view'))
+            <a href="{{ route('admin.admins.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.admins.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.admins.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Users</span>
+            </a>
+            @endif
+
+            @if($admin && $admin->hasPermission('role.view'))
+            <a href="{{ route('admin.roles.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.roles.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.roles.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Roles & Permissions</span>
+            </a>
+            @endif
+
+            @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
+            <a href="{{ \Illuminate\Support\Facades\Route::has('admin.menus.index') ? route('admin.menus.index') : '#' }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 10h16M4 14h10" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Menu Management</span>
+            </a>
+            @endif
+
+            @if(\Illuminate\Support\Facades\Route::has('admin.settings.default-settings'))
+            @php
+                $settingsActive = request()->routeIs('admin.settings.*');
+            @endphp
+            <div x-data="{ open: {{ $settingsActive ? 'true' : 'false' }} }" class="space-y-1">
+                <div class="flex items-center gap-3 p-3 {{ $settingsActive ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                    <a href="#" class="flex items-center gap-3 flex-1 min-w-0">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ $settingsActive ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span x-show="sidebarOpen" class="text-sm font-medium truncate">Settings</span>
+                    </a>
+                    <button type="button" x-show="sidebarOpen" @click.prevent="open = !open" class="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+                        :aria-expanded="open">
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+                <div x-show="open && sidebarOpen"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="ml-10 space-y-1 mt-1 text-xs font-medium text-slate-500 border-l border-slate-700 pl-3">
+                    <a href="{{ route('admin.settings.default-settings') }}"
+                        class="block py-2 {{ request()->routeIs('admin.settings.default-settings*') ? 'text-indigo-400 font-bold' : 'hover:text-white' }} transition-colors">
+                        Default Settings
+                    </a>
+                </div>
+            </div>
+            @endif
         </nav>
 
         <!-- User Profile Bottom -->

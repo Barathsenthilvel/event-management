@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\DefaultSettingsController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -50,6 +51,12 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.menus.update',
             'destroy' => 'admin.menus.destroy',
         ]);
+
+        // Settings > Default Settings
+        Route::get('/settings/default-settings', [DefaultSettingsController::class, 'index'])->name('admin.settings.default-settings');
+        Route::post('/settings/default-settings', [DefaultSettingsController::class, 'store'])->name('admin.settings.default-settings.store');
+        Route::post('/settings/default-settings/{defaultSetting}/set-default', [DefaultSettingsController::class, 'setDefault'])->name('admin.settings.default-settings.set-default');
+        Route::delete('/settings/default-settings/{defaultSetting}', [DefaultSettingsController::class, 'destroy'])->name('admin.settings.default-settings.destroy');
     });
 });
 

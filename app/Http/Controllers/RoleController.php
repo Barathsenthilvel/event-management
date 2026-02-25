@@ -14,7 +14,7 @@ class RoleController extends Controller
 
     public function index()
     {
-        $roles = Role::with('permissions')->latest()->paginate(5);
+        $roles = Role::with('permissions')->latest()->paginate(10);
 
         // If it's an AJAX request, return JSON (for table-only refresh after create/update)
         if (request()->expectsJson() || request()->ajax()) {

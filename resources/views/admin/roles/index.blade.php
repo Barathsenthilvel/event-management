@@ -342,8 +342,8 @@ document.addEventListener('alpine:init', () => {
         </div>
         @endif
 
-        <!-- List View (Roles Table) -->
-        <table x-show="viewType === 'list'" class="w-full text-left island-row" @click="handleTableClick($event)">
+        <!-- List View (Roles Table) - default on load so no flash of grid -->
+        <table x-show="viewType === 'list'" x-transition class="w-full text-left island-row" @click="handleTableClick($event)">
             <thead
                 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 bg-white z-10">
                 <tr>
@@ -433,8 +433,11 @@ document.addEventListener('alpine:init', () => {
         @endif
         </div>
 
-        <!-- Grid View (Roles) -->
-        <div x-show="viewType === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" @click="handleTableClick($event)">
+        <!-- Grid View (Roles) - hidden by default so refresh doesn't show grid at bottom / move sidebar -->
+        <div x-show="viewType === 'grid'" x-cloak
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 hidden"
+            :class="viewType === 'grid' ? '!block' : ''"
+            @click="handleTableClick($event)">
             @foreach($roles as $role)
             <div
                 class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">
@@ -618,7 +621,9 @@ document.addEventListener('alpine:init', () => {
                 <button @click="showPermissionModal = false" class="p-2 text-slate-300 hover:text-slate-600"><svg
                         class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M6 18L18 6M6 6l12 12" />
-                    </svg></button>
+                    </svg>
+                  
+                  </button>
             </div>
 
             <div class="flex-1 overflow-hidden flex">
