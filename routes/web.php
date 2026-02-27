@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DefaultSettingsController;
+use App\Http\Controllers\EBookController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -57,6 +58,13 @@ Route::prefix('admin')->group(function () {
         Route::post('/settings/default-settings', [DefaultSettingsController::class, 'store'])->name('admin.settings.default-settings.store');
         Route::post('/settings/default-settings/{defaultSetting}/set-default', [DefaultSettingsController::class, 'setDefault'])->name('admin.settings.default-settings.set-default');
         Route::delete('/settings/default-settings/{defaultSetting}', [DefaultSettingsController::class, 'destroy'])->name('admin.settings.default-settings.destroy');
+
+        // E-Books Management (UI only for now)
+        Route::resource('e-books', EBookController::class)->only(['index', 'create', 'store'])->names([
+            'index' => 'admin.ebooks.index',
+            'create' => 'admin.ebooks.create',
+            'store' => 'admin.ebooks.store',
+        ]);
     });
 });
 
