@@ -104,8 +104,18 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-500 font-medium">
-                                <code class="text-[10px] bg-slate-100 px-2 py-1 rounded" x-text="menu.icon || '-'"></code>
+                            <td class="px-6 py-4 bg-white border-y border-slate-100">
+                                <template x-if="menu.icon">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                                            <i :class="menu.icon" class="text-indigo-500 text-sm"></i>
+                                        </div>
+                                        <code class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500" x-text="menu.icon"></code>
+                                    </div>
+                                </template>
+                                <template x-if="!menu.icon">
+                                    <span class="text-slate-300 text-xs">—</span>
+                                </template>
                             </td>
                             <td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-500 font-medium">
                                 <span x-text="menu.route || '-'"></span>
@@ -158,9 +168,13 @@
                     <div
                         class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">
                         <div class="flex justify-between items-start mb-4">
-                            <div
-                                class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                                <span x-text="(menu.icon && menu.icon.substring(0,2)) || (menu.name ? menu.name[0] : '?')"></span>
+                            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                                <template x-if="menu.icon">
+                                    <i :class="menu.icon" class="text-lg"></i>
+                                </template>
+                                <template x-if="!menu.icon">
+                                    <span x-text="menu.name ? menu.name[0] : '?'"></span>
+                                </template>
                             </div>
                             <span
                                 :class="menu.status ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'"
@@ -236,17 +250,53 @@
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
                     </div>
 
-                    <!-- Icon & Sort Order -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Icon Class</label>
-                            <input type="text" x-model="menuForm.icon" name="icon" placeholder="e.g. fa-home"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                    <!-- Sort Order -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Sort Order</label>
+                        <input type="number" x-model="menuForm.sort" name="order" placeholder="1"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                    </div>
+
+                    <!-- Icon Picker -->
+                    <div x-data="{ iconSearch: '' }">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Icon</label>
+
+                        <!-- Selected icon preview + hidden input -->
+                        <input type="hidden" name="icon" :value="menuForm.icon">
+                        <div class="flex items-center gap-3 mb-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                <template x-if="menuForm.icon">
+                                    <i :class="menuForm.icon" class="text-indigo-600 text-base"></i>
+                                </template>
+                                <template x-if="!menuForm.icon">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                                </template>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-slate-700" x-text="menuForm.icon || 'No icon selected'"></p>
+                                <p class="text-[10px] text-slate-400">Click an icon below to select</p>
+                            </div>
+                            <button type="button" x-show="menuForm.icon" @click="menuForm.icon = ''"
+                                class="text-slate-400 hover:text-rose-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Sort Order</label>
-                            <input type="number" x-model="menuForm.sort" name="order" placeholder="1"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+
+                        <!-- Search -->
+                        <input type="text" x-model="iconSearch" placeholder="Search icons..."
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 mb-2 transition-all">
+
+                        <!-- Icon Grid -->
+                        <div class="grid grid-cols-6 gap-1.5 max-h-52 overflow-y-auto custom-scroll p-1 bg-slate-50 rounded-xl border border-slate-200">
+                            <template x-for="icon in iconList.filter(i => !iconSearch || i.label.toLowerCase().includes(iconSearch.toLowerCase()))" :key="icon.cls">
+                                <button type="button"
+                                    @click="menuForm.icon = icon.cls"
+                                    :title="icon.label"
+                                    :class="menuForm.icon === icon.cls ? 'bg-indigo-600 text-white ring-2 ring-indigo-400' : 'bg-white text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'"
+                                    class="w-full aspect-square rounded-lg flex items-center justify-center transition-all text-sm">
+                                    <i :class="icon.cls"></i>
+                                </button>
+                            </template>
                         </div>
                     </div>
 
@@ -372,6 +422,86 @@
             showCreateMenu: false,
             showDeleteModal: false,
             isEditing: false,
+
+            iconList: [
+                { cls: 'fas fa-home',            label: 'Home' },
+                { cls: 'fas fa-tachometer-alt',  label: 'Dashboard' },
+                { cls: 'fas fa-users',            label: 'Users' },
+                { cls: 'fas fa-user',             label: 'User' },
+                { cls: 'fas fa-user-tie',         label: 'Admin' },
+                { cls: 'fas fa-user-shield',      label: 'User Shield' },
+                { cls: 'fas fa-user-cog',         label: 'User Settings' },
+                { cls: 'fas fa-id-card',          label: 'ID Card' },
+                { cls: 'fas fa-lock',             label: 'Lock' },
+                { cls: 'fas fa-key',              label: 'Key' },
+                { cls: 'fas fa-shield-alt',       label: 'Shield' },
+                { cls: 'fas fa-cog',              label: 'Settings' },
+                { cls: 'fas fa-cogs',             label: 'Cogs' },
+                { cls: 'fas fa-sliders-h',        label: 'Sliders' },
+                { cls: 'fas fa-chart-bar',        label: 'Chart Bar' },
+                { cls: 'fas fa-chart-line',       label: 'Chart Line' },
+                { cls: 'fas fa-chart-pie',        label: 'Chart Pie' },
+                { cls: 'fas fa-table',            label: 'Table' },
+                { cls: 'fas fa-list',             label: 'List' },
+                { cls: 'fas fa-th',               label: 'Grid' },
+                { cls: 'fas fa-layer-group',      label: 'Layers' },
+                { cls: 'fas fa-sitemap',          label: 'Sitemap' },
+                { cls: 'fas fa-project-diagram',  label: 'Diagram' },
+                { cls: 'fas fa-folder',           label: 'Folder' },
+                { cls: 'fas fa-folder-open',      label: 'Folder Open' },
+                { cls: 'fas fa-file',             label: 'File' },
+                { cls: 'fas fa-file-alt',         label: 'File Alt' },
+                { cls: 'fas fa-clipboard',        label: 'Clipboard' },
+                { cls: 'fas fa-tasks',            label: 'Tasks' },
+                { cls: 'fas fa-bell',             label: 'Bell' },
+                { cls: 'fas fa-envelope',         label: 'Envelope' },
+                { cls: 'fas fa-calendar',         label: 'Calendar' },
+                { cls: 'fas fa-calendar-alt',     label: 'Calendar Alt' },
+                { cls: 'fas fa-clock',            label: 'Clock' },
+                { cls: 'fas fa-search',           label: 'Search' },
+                { cls: 'fas fa-filter',           label: 'Filter' },
+                { cls: 'fas fa-tag',              label: 'Tag' },
+                { cls: 'fas fa-tags',             label: 'Tags' },
+                { cls: 'fas fa-star',             label: 'Star' },
+                { cls: 'fas fa-bookmark',         label: 'Bookmark' },
+                { cls: 'fas fa-heart',            label: 'Heart' },
+                { cls: 'fas fa-shopping-cart',    label: 'Cart' },
+                { cls: 'fas fa-credit-card',      label: 'Credit Card' },
+                { cls: 'fas fa-wallet',           label: 'Wallet' },
+                { cls: 'fas fa-money-bill',       label: 'Money' },
+                { cls: 'fas fa-database',         label: 'Database' },
+                { cls: 'fas fa-server',           label: 'Server' },
+                { cls: 'fas fa-globe',            label: 'Globe' },
+                { cls: 'fas fa-link',             label: 'Link' },
+                { cls: 'fas fa-map-marker-alt',   label: 'Location' },
+                { cls: 'fas fa-building',         label: 'Building' },
+                { cls: 'fas fa-university',       label: 'University' },
+                { cls: 'fas fa-briefcase',        label: 'Briefcase' },
+                { cls: 'fas fa-book',             label: 'Book' },
+                { cls: 'fas fa-book-open',        label: 'Book Open' },
+                { cls: 'fas fa-graduation-cap',   label: 'Education' },
+                { cls: 'fas fa-image',            label: 'Image' },
+                { cls: 'fas fa-video',            label: 'Video' },
+                { cls: 'fas fa-music',            label: 'Music' },
+                { cls: 'fas fa-print',            label: 'Print' },
+                { cls: 'fas fa-download',         label: 'Download' },
+                { cls: 'fas fa-upload',           label: 'Upload' },
+                { cls: 'fas fa-cloud',            label: 'Cloud' },
+                { cls: 'fas fa-wifi',             label: 'WiFi' },
+                { cls: 'fas fa-plug',             label: 'Plug' },
+                { cls: 'fas fa-boxes',            label: 'Boxes' },
+                { cls: 'fas fa-box',              label: 'Box' },
+                { cls: 'fas fa-cubes',            label: 'Cubes' },
+                { cls: 'fas fa-medal',            label: 'Medal' },
+                { cls: 'fas fa-trophy',           label: 'Trophy' },
+                { cls: 'fas fa-percent',          label: 'Percent' },
+                { cls: 'fas fa-receipt',          label: 'Receipt' },
+                { cls: 'fas fa-hand-holding-usd', label: 'Payment' },
+                { cls: 'fas fa-id-badge',         label: 'Badge' },
+                { cls: 'fas fa-qrcode',           label: 'QR Code' },
+                { cls: 'fas fa-barcode',          label: 'Barcode' },
+            ],
+
             menuForm: {
                 id: null,
                 name: '',
