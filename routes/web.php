@@ -8,19 +8,16 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\EBookController;
-use App\Http\Controllers\MemberAuthController;
-use App\Http\Controllers\MemberDashboardController;
-use App\Http\Controllers\MemberProfileController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
-    
+
     Route::middleware('auth:admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-        
+
         // Admin Users Management
         Route::resource('admins', AdminController::class)->names([
             'index' => 'admin.admins.index',
@@ -31,7 +28,7 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.admins.update',
             'destroy' => 'admin.admins.destroy',
         ]);
-        
+
         // Roles & Permissions Management
         Route::resource('roles', RoleController::class)->names([
             'index' => 'admin.roles.index',
@@ -42,7 +39,7 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.roles.update',
             'destroy' => 'admin.roles.destroy',
         ]);
-        
+
         Route::get('/roles/{role}/permissions-data', [RoleController::class, 'getPermissionsData'])
             ->name('admin.roles.permissions-data');
         Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
@@ -68,6 +65,12 @@ Route::prefix('admin')->group(function () {
             'create' => 'admin.ebooks.create',
             'store' => 'admin.ebooks.store',
         ]);
+
+        // Membership Subscription Settings
+        Route::get('/membershipmodule', [MembershipController::class, 'index'])->name('admin.memberships.index');
+        Route::post('/memberships', [MembershipController::class, 'store'])->name('admin.memberships.store');
+        Route::put('/memberships/{id}', [MembershipController::class, 'update'])->name('admin.memberships.update');
+        Route::delete('/memberships/{id}', [MembershipController::class, 'destroy'])->name('admin.memberships.destroy');
     });
 });
 

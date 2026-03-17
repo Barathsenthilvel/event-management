@@ -42,7 +42,7 @@ class AdminController extends Controller
 
         if (isset($validated['roles'])) {
             $admin->roles()->attach($validated['roles']);
-        }
+    }
 
         // If it's an AJAX request, return JSON
         if ($request->expectsJson() || $request->ajax()) {
