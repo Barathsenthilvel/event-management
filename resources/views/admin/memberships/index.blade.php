@@ -26,6 +26,12 @@
                 <h1 class="text-lg font-bold text-slate-800">Membership Settings</h1>
                 <p class="text-xs text-slate-500 mt-1">Manage membership subscription types, fees and payment options.</p>
             </div>
+            <div class="shrink-0">
+                <span class="inline-flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-[11px] font-extrabold text-indigo-700">
+                    Total settings:
+                    <span class="rounded-xl bg-white px-2 py-0.5 text-indigo-800 border border-indigo-100" x-text="settings.length"></span>
+                </span>
+            </div>
         </div>
 
         <!-- Main Content Board -->
@@ -36,6 +42,10 @@
                 <div class="flex items-center gap-2">
                     <input type="text" x-model="search" placeholder="Search settings..."
                         class="pl-4 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs w-48 outline-none focus:ring-2 focus:ring-indigo-500/10">
+                    <span class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-extrabold text-slate-600">
+                        Showing
+                        <span class="rounded-lg bg-white px-2 py-0.5 border border-slate-100 text-slate-800" x-text="filtered.length"></span>
+                    </span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="flex bg-slate-50 p-1 rounded-xl">
@@ -250,7 +260,7 @@
                     </div>
                     <!-- Toggle Switch -->
                     <div :class="form.registration_fee_enabled ? 'bg-emerald-500' : 'bg-slate-300'"
-                        class="w-10 h-5 rounded-full relative transition-colors flex-shrink-0">
+                        class="w-10 h-5 rounded-full relative transition-colors shrink-0">
                         <span :class="form.registration_fee_enabled ? 'translate-x-5' : 'translate-x-0.5'"
                             class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-sm"></span>
                     </div>
@@ -297,7 +307,7 @@
 
     <!-- ── DELETE CONFIRM MODAL ── -->
     <div x-show="showDeleteModal" x-cloak
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4"
         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         <div class="bg-white rounded-[32px] p-8 max-w-sm w-full text-center shadow-2xl"
@@ -331,7 +341,7 @@
     </div>
 
     <!-- ── TOAST NOTIFICATIONS ── -->
-    <div class="fixed bottom-10 right-10 z-[300] space-y-3 pointer-events-none">
+    <div class="fixed bottom-10 right-10 z-300 space-y-3 pointer-events-none">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-5"
@@ -360,7 +370,7 @@
 <script>
 function membershipPage() {
     return {
-        viewType: 'list',
+        viewType: 'grid',
         showPanel: false,
         showDeleteModal: false,
         isEditing: false,

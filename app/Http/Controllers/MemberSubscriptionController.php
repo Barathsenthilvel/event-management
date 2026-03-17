@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MembershipSubscriptionSetting;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MemberSubscriptionController extends Controller
@@ -11,49 +12,75 @@ class MemberSubscriptionController extends Controller
     {
         $user = Auth::user();
 
-        $settings = MembershipSubscriptionSetting::query()
+        $plans = MembershipSubscriptionSetting::query()
             ->where('is_active', true)
-            ->get()
-            ->groupBy('subscription_type');
-
-        $rows = collect(['New', 'Renewal'])->map(function (string $type) use ($settings) {
-            $typeSettings = $settings->get($type, collect())->keyBy('payment_type');
-
-            $getAmount = function (string $paymentType) use ($typeSettings): ?float {
-                $s = $typeSettings->get($paymentType);
-                if (!$s) return null;
-                return (float) $s->membership_fee;
-            };
-
-            $membershipMonthly = $getAmount('monthly');
-            $membershipBiMonthly = $getAmount('bi_monthly');
-            $membershipQuarterly = $getAmount('quarterly');
-            $membershipHalfYearly = $getAmount('half_yearly');
-            $membershipYearly = $getAmount('yearly');
-
-            $base = $typeSettings->first();
-            $registrationFee = ($type === 'New' && $base && $base->registration_fee_enabled) ? (float) $base->registration_fee : 0.0;
-            $subscriptionFee = $membershipMonthly;
-
-            $yearlyTotal = $membershipYearly !== null ? $membershipYearly + $registrationFee : null;
-
-            return [
-                'subscription_type' => $type,
-                'subscription_fee' => $subscriptionFee,
-                'registration_fee' => $type === 'New' ? $registrationFee : null,
-                'monthly' => $membershipMonthly,
-                'bi_monthly' => $membershipBiMonthly,
-                'quarterly' => $membershipQuarterly,
-                'half_yearly' => $membershipHalfYearly,
-                'yearly' => $membershipYearly,
-                'total' => $yearlyTotal,
-            ];
-        });
+            ->orderBy('subscription_type')
+            ->orderBy('payment_type')
+            ->get();
 
         return view('member.subscription.index', [
             'user' => $user,
-            'rows' => $rows,
+            'plans' => $plans,
+            'settingsCount' => $plans->count(),
+        ]);
+    }
+
+    public function checkout(Request $request)
+    {
+        $data = $request->validate([
+            'membership_setting_id' => ['required', 'integer', 'exists:membership_subscription_settings,id'],
+        ]);
+
+        $plan = MembershipSubscriptionSetting::query()
+            ->where('id', $data['membership_setting_id'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$plan) {
+            return redirect()->route('member.subscription.index')
+                ->with('error', 'Selected subscription plan is not available.');
+        }
+
+        $registrationFee = 0.0;
+        if ($plan->subscription_type === 'New' && $plan->registration_fee_enabled) {
+            $registrationFee = (float) $plan->registration_fee;
+        }
+
+        $payableAmount = (float) $plan->membership_fee + $registrationFee;
+
+        $request->session()->put('member.selected_membership_setting_id', $plan->id);
+        $request->session()->put('member.selected_membership_payable_amount', $payableAmount);
+
+        return redirect()->route('member.subscription.checkout.show');
+    }
+
+    public function showCheckout(Request $request)
+    {
+        $id = $request->session()->get('member.selected_membership_setting_id');
+        if (!$id) {
+            return redirect()->route('member.subscription.index')
+                ->with('error', 'Please select a subscription plan first.');
+        }
+
+        $plan = MembershipSubscriptionSetting::query()->find($id);
+        if (!$plan) {
+            $request->session()->forget([
+                'member.selected_membership_setting_id',
+                'member.selected_membership_payable_amount',
+            ]);
+            return redirect()->route('member.subscription.index')
+                ->with('error', 'Selected subscription plan is no longer available.');
+        }
+
+        $payableAmount = (float) $request->session()->get(
+            'member.selected_membership_payable_amount',
+            (float) $plan->membership_fee
+        );
+
+        return view('member.subscription.checkout', [
+            'user' => Auth::user(),
+            'plan' => $plan,
+            'payableAmount' => $payableAmount,
         ]);
     }
 }
-

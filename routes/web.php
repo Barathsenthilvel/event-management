@@ -98,6 +98,8 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
         Route::get('/subscription', [MemberSubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription/checkout', [MemberSubscriptionController::class, 'checkout'])->name('subscription.checkout');
+        Route::get('/subscription/checkout', [MemberSubscriptionController::class, 'showCheckout'])->name('subscription.checkout.show');
     });
 });
 
