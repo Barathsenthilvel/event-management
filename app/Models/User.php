@@ -21,6 +21,21 @@ class User extends Authenticatable
         'name',
         'first_name',
         'last_name',
+        'dob',
+        'gender',
+        'qualification',
+        'blood_group',
+        'rnrm_number_with_date',
+        'college_name',
+        'door_no',
+        'locality_area',
+        'state',
+        'pin_code',
+        'council_state',
+        'currently_working',
+        'educational_certificate_path',
+        'aadhar_card_path',
+        'passport_photo_path',
         'email',
         'mobile',
         'profile_completed',
@@ -47,6 +62,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'dob' => 'date',
+            'profile_completed' => 'boolean',
         ];
     }
 }

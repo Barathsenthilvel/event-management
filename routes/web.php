@@ -8,6 +8,11 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\EBookController;
+use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MemberAuthController;
+use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\MemberProfileController;
+use App\Http\Controllers\MemberSubscriptionController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -92,6 +97,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
+        Route::get('/subscription', [MemberSubscriptionController::class, 'index'])->name('subscription.index');
     });
 });
 
