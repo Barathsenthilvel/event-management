@@ -8,6 +8,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\EBookController;
+use App\Http\Controllers\MemberAuthController;
+use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\MemberProfileController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -68,6 +71,27 @@ Route::prefix('admin')->group(function () {
     });
 });
 
+// Member (User Site) Routes
+Route::prefix('member')->name('member.')->group(function () {
+    Route::get('/login', [MemberAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [MemberAuthController::class, 'login'])->name('login.store');
+
+    Route::get('/register', [MemberAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [MemberAuthController::class, 'register'])->name('register.store');
+
+    Route::get('/otp', [MemberAuthController::class, 'showOtpForm'])->name('otp');
+    Route::post('/otp', [MemberAuthController::class, 'verifyOtp'])->name('otp.verify');
+    Route::post('/resend-otp', [MemberAuthController::class, 'resendOtp'])->name('otp.resend');
+
+    Route::post('/logout', [MemberAuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
+    });
+});
+
 Route::get('/', function () {
-    return redirect()->route('admin.login');
+    return view('home');
 });
