@@ -22,6 +22,37 @@
         </div>
     </div>
 
+    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-sm font-bold text-slate-600 mb-2">Membership</h3>
+                @if(!empty($activeSubscription))
+                    <p class="text-lg font-extrabold text-slate-900">
+                        Active • {{ $activeSubscription->subscription_type }} • {{ ucfirst(str_replace('_', ' ', (string) $activeSubscription->payment_type)) }}
+                    </p>
+                    <p class="text-xs font-bold text-slate-500 mt-1">
+                        Valid till: {{ optional($activeSubscription->end_date)->format('M d, Y') }}
+                    </p>
+                @else
+                    <p class="text-lg font-extrabold text-slate-900">No active membership</p>
+                    <p class="text-xs font-bold text-slate-500 mt-1">Subscribe to activate your membership.</p>
+                @endif
+            </div>
+            <div class="shrink-0 flex gap-3">
+                @if(!empty($activeSubscription))
+                    <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}"
+                       class="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-lg transition-all text-center">
+                        Renew
+                    </a>
+                @endif
+                <a href="{{ route('member.subscription.index') }}"
+                   class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-lg transition-all text-center">
+                    View Plans
+                </a>
+            </div>
+        </div>
+    </div>
+
     @if($profileIncomplete)
         <div x-data="{ open: true }">
             <div x-show="open" x-cloak

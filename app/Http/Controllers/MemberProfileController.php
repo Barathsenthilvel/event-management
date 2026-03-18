@@ -9,8 +9,16 @@ class MemberProfileController extends Controller
 {
     public function edit()
     {
+        $user = Auth::user();
+        $activeSubscription = \App\Models\PaymentTransaction::with('subscriptionPlan')
+            ->where('user_id', $user->id)
+            ->where('status', 'successful')
+            ->latest()
+            ->first();
+
         return view('member.profile.edit', [
-            'user' => Auth::user(),
+            'user' => $user,
+            'activeSubscription' => $activeSubscription,
         ]);
     }
 

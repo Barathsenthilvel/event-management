@@ -28,6 +28,15 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            // "Page Expired" (419) due to CSRF/session timeout
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Page expired.'], 419);
+            }
+
+            return redirect('/');
+        });
+
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             // Redirect admin routes to admin login when session expires
             if ($request->is('admin/*')) {

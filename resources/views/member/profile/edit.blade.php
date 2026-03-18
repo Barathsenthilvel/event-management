@@ -16,6 +16,42 @@
         </div>
     </div>
 
+    @if(isset($activeSubscription) && $activeSubscription)
+    <div class="w-full bg-white p-6 md:p-8 rounded-[28px] border border-slate-100 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-sm font-extrabold text-slate-900 tracking-tight">Active Subscription</h2>
+                <p class="text-xs text-slate-500">Your current membership plan details.</p>
+            </div>
+            <a href="{{ route('member.subscription.invoice', $activeSubscription->id) }}" target="_blank" 
+               class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-indigo-600 transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download Invoice
+            </a>
+        </div>
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-[20px] border border-slate-100 bg-slate-50/50">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Plan</p>
+                <p class="mt-1 font-bold text-slate-900">{{ $activeSubscription->subscriptionPlan->subscription_type }}</p>
+            </div>
+            <div class="p-4 rounded-[20px] border border-slate-100 bg-slate-50/50">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Cycle</p>
+                <p class="mt-1 font-bold text-slate-900">{{ ucfirst(str_replace('_', ' ', $activeSubscription->subscriptionPlan->payment_type)) }}</p>
+            </div>
+            <div class="p-4 rounded-[20px] border border-slate-100 bg-slate-50/50">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Amount Paid</p>
+                <p class="mt-1 font-extrabold text-emerald-600">₹ {{ number_format($activeSubscription->amount, 0) }}</p>
+            </div>
+            <div class="p-4 rounded-[20px] border border-slate-100 bg-slate-50/50">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                <p class="mt-1 font-bold text-indigo-600 uppercase">{{ $activeSubscription->status }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="w-full">
         <div class="bg-white p-6 md:p-8 rounded-[28px] border border-slate-100 shadow-sm">
             <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-6">

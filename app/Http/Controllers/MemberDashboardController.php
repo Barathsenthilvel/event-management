@@ -31,6 +31,7 @@ class MemberDashboardController extends Controller
 
         return view('member.dashboard', [
             'profileIncomplete' => $profileIncomplete,
+            'activeSubscription' => $user?->activeSubscription,
         ]);
     }
 }

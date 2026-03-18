@@ -100,6 +100,9 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/subscription', [MemberSubscriptionController::class, 'index'])->name('subscription.index');
         Route::post('/subscription/checkout', [MemberSubscriptionController::class, 'checkout'])->name('subscription.checkout');
         Route::get('/subscription/checkout', [MemberSubscriptionController::class, 'showCheckout'])->name('subscription.checkout.show');
+        Route::post('/subscription/order', [MemberSubscriptionController::class, 'createOrder'])->name('subscription.order');
+        Route::post('/subscription/verify', [MemberSubscriptionController::class, 'verifyPayment'])->name('subscription.verify');
+        Route::get('/subscription/invoice/{id}', [MemberSubscriptionController::class, 'downloadInvoice'])->name('subscription.invoice');
     });
 });
 
