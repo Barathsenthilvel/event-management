@@ -42,6 +42,13 @@ class MembershipController extends Controller
         $validated['discount_based_on_payment'] = $request->boolean('discount_based_on_payment');
         $validated['grace_period']              = $request->input('grace_period', 0);
 
+        if (($validated['subscription_type'] ?? null) !== 'New') {
+            $validated['registration_fee'] = 0;
+            $validated['registration_fee_enabled'] = false;
+        } else {
+            $validated['registration_fee'] = (float) ($validated['registration_fee'] ?? 0);
+        }
+
         MembershipSubscriptionSetting::create($validated);
 
         return redirect()->route('admin.memberships.index')
@@ -57,6 +64,13 @@ class MembershipController extends Controller
         $validated['registration_fee_enabled']  = $request->boolean('registration_fee_enabled');
         $validated['discount_based_on_payment'] = $request->boolean('discount_based_on_payment');
         $validated['grace_period']              = $request->input('grace_period', 0);
+
+        if (($validated['subscription_type'] ?? null) !== 'New') {
+            $validated['registration_fee'] = 0;
+            $validated['registration_fee_enabled'] = false;
+        } else {
+            $validated['registration_fee'] = (float) ($validated['registration_fee'] ?? 0);
+        }
 
         $setting->update($validated);
 

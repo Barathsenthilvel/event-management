@@ -168,6 +168,50 @@
     </div>
 </div>
 
+<!-- Renewal blocked modal -->
+<div id="renewal-blocked-modal" class="fixed inset-0 z-[130] hidden">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-[28px] bg-white border border-slate-100 shadow-2xl overflow-hidden">
+            <div class="p-6 bg-linear-to-br from-slate-900 via-slate-900 to-amber-700 text-white">
+                <div class="flex flex-col items-center text-center">
+                    <div class="h-14 w-14 rounded-2xl bg-white/10 border border-white/15 shadow-lg flex items-center justify-center">
+                        <div class="h-11 w-11 rounded-xl bg-white/95 flex items-center justify-center shadow-sm">
+                            <svg class="h-6 w-6 text-amber-700" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 text-[10px] font-black uppercase tracking-widest text-white/75">Renewal not available</p>
+                    <h3 class="mt-1 text-xl font-extrabold tracking-tight text-white">Please renew after validity completion</h3>
+                    <p class="mt-1 text-xs font-bold text-white/75">Renewal will be enabled once your current validity ends.</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <p class="text-sm font-extrabold text-slate-900">Message</p>
+                    <p class="mt-1 text-xs font-bold text-slate-600" id="renewal-blocked-message">
+                        {{ session('renewal_blocked_message') }}
+                    </p>
+                </div>
+                @if(!empty($activeSubscription) && !empty($activeSubscription->end_date))
+                    <div class="rounded-2xl border border-slate-100 bg-white p-4 flex items-center justify-between">
+                        <p class="text-xs font-bold text-slate-500">Current validity ends on</p>
+                        <p class="text-xs font-extrabold text-slate-900">{{ optional($activeSubscription->end_date)->format('M d, Y') }}</p>
+                    </div>
+                @endif
+                <div class="flex justify-end pt-2">
+                    <button type="button" onclick="closeRenewalBlockedModal()"
+                        class="inline-flex items-center justify-center px-8 py-3 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-extrabold shadow-lg transition-all">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 2-step payment success modal -->
 <div id="payment-success-modal" class="fixed inset-0 z-[120] hidden">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
@@ -231,6 +275,16 @@
 let successModalStep = 1;
 let postSuccessRedirectUrl = "{{ route('member.dashboard') }}";
 
+function openRenewalBlockedModal() {
+    const modal = document.getElementById('renewal-blocked-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeRenewalBlockedModal() {
+    const modal = document.getElementById('renewal-blocked-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
 function formatInr(n) {
     const v = Number(n || 0);
     return '₹ ' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
@@ -287,6 +341,10 @@ function advanceSuccessModal() {
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('success-btn');
     if (btn) btn.addEventListener('click', advanceSuccessModal);
+
+    @if(session('renewal_blocked'))
+    openRenewalBlockedModal();
+    @endif
 });
 
 async function startRazorpayCheckout() {

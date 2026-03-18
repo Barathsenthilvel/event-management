@@ -16,6 +16,7 @@ class MemberSubscriptionController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $activeSubscription = $user?->activeSubscription;
 
         $query = MembershipSubscriptionSetting::query()
             ->where('is_active', true)
@@ -25,6 +26,32 @@ class MemberSubscriptionController extends Controller
 
         $filterType = request()->query('type');
         if (in_array($filterType, ['New', 'Renewal'], true)) {
+            // Renewal should be allowed only when validity is completed (expired).
+            if (
+                $filterType === 'Renewal'
+                && !empty($activeSubscription?->end_date)
+                && Carbon::parse($activeSubscription->end_date)->isFuture()
+            ) {
+                session()->flash('renewal_blocked', true);
+                session()->flash(
+                    'renewal_blocked_message',
+                    'Your membership is still active. You can renew only after your validity is completed.'
+                );
+
+                $filterType = 'New';
+            }
+
+            // If user doesn't have any subscription yet, don't allow Renewal filter.
+            if ($filterType === 'Renewal' && empty($activeSubscription)) {
+                session()->flash('renewal_blocked', true);
+                session()->flash(
+                    'renewal_blocked_message',
+                    'You don’t have an active membership yet. Please purchase a New plan first.'
+                );
+
+                $filterType = 'New';
+            }
+
             $query->where('subscription_type', $filterType);
         }
 
@@ -34,7 +61,7 @@ class MemberSubscriptionController extends Controller
             'user' => $user,
             'plans' => $plans,
             'settingsCount' => $plans->count(),
-            'activeSubscription' => $user?->activeSubscription,
+            'activeSubscription' => $activeSubscription,
             'filterType' => $filterType,
         ]);
     }

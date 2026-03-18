@@ -107,13 +107,27 @@
                                         <p class="mt-2 text-sm text-slate-500 text-center">
                                             Your transaction has been securely processed.
                                         </p>
+                                        <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Plan purchased</p>
+                                            <p class="mt-1 text-sm font-extrabold text-slate-900 text-center" x-text="planSummary"></p>
+                                            <div class="mt-3 grid grid-cols-2 gap-3">
+                                                <div class="rounded-xl border border-slate-100 bg-white p-3 text-center">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Amount paid</p>
+                                                    <p class="mt-1 text-sm font-extrabold text-emerald-700" x-text="amountPaid"></p>
+                                                </div>
+                                                <div class="rounded-xl border border-slate-100 bg-white p-3 text-center">
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Valid till</p>
+                                                    <p class="mt-1 text-sm font-extrabold text-slate-900" x-text="validTill"></p>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl text-center">
                                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Razorpay Payment ID</p>
                                             <p class="mt-1 font-mono text-xs font-bold text-slate-700" x-text="paymentId"></p>
                                         </div>
                                         <div class="mt-6">
-                                            <button @click="modalStep = 2" class="w-full inline-flex justify-center rounded-xl bg-slate-900 px-3 py-3 text-sm font-extrabold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                                Okay
+                                            <button @click="advanceModal()" class="w-full inline-flex justify-center rounded-xl bg-slate-900 px-3 py-3 text-sm font-extrabold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                                OK
                                             </button>
                                         </div>
                                     </div>
@@ -124,15 +138,23 @@
                                         <div class="space-y-3">
                                             <div class="flex justify-between items-center py-2 border-b border-slate-100">
                                                 <span class="text-xs font-bold text-slate-500">Plan Type</span>
-                                                <span class="text-sm font-extrabold text-slate-900">{{ $plan->subscription_type }}</span>
+                                                <span class="text-sm font-extrabold text-slate-900" x-text="plan?.subscription_type || '-'"></span>
                                             </div>
                                             <div class="flex justify-between items-center py-2 border-b border-slate-100">
                                                 <span class="text-xs font-bold text-slate-500">Billing Cycle</span>
-                                                <span class="text-sm font-extrabold text-slate-900">{{ $paymentLabel }}</span>
+                                                <span class="text-sm font-extrabold text-slate-900" x-text="humanCycle(plan?.payment_type)"></span>
                                             </div>
                                             <div class="flex justify-between items-center py-2 border-b border-slate-100">
                                                 <span class="text-xs font-bold text-slate-500">Amount Paid</span>
-                                                <span class="text-sm font-extrabold text-emerald-600">₹ {{ number_format((float)$payableAmount, 0) }}</span>
+                                                <span class="text-sm font-extrabold text-emerald-600" x-text="amountPaid"></span>
+                                            </div>
+                                            <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                                                <span class="text-xs font-bold text-slate-500">Start Date</span>
+                                                <span class="text-sm font-extrabold text-slate-900" x-text="subscription?.start_date || '-'"></span>
+                                            </div>
+                                            <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                                                <span class="text-xs font-bold text-slate-500">End Date</span>
+                                                <span class="text-sm font-extrabold text-slate-900" x-text="subscription?.end_date || '-'"></span>
                                             </div>
                                         </div>
                                         <div class="mt-6 flex flex-col gap-3">
@@ -140,10 +162,10 @@
                                                class="w-full inline-flex justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 shadow-sm hover:bg-slate-50">
                                                 Download Invoice
                                             </a>
-                                            <a href="{{ route('member.dashboard') }}" 
-                                               class="w-full inline-flex justify-center rounded-xl bg-indigo-600 px-3 py-3 text-sm font-extrabold text-white shadow-sm hover:bg-indigo-500">
+                                            <button type="button" @click="advanceModal()"
+                                                class="w-full inline-flex justify-center rounded-xl bg-indigo-600 px-3 py-3 text-sm font-extrabold text-white shadow-sm hover:bg-indigo-500">
                                                 Go to Membership Dashboard
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -165,6 +187,28 @@
             modalStep: 1,
             paymentId: '',
             transactionId: '',
+            plan: null,
+            subscription: null,
+            planSummary: '',
+            amountPaid: '',
+            validTill: '',
+
+            humanCycle(v) {
+                return String(v || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+            },
+
+            formatInr(n) {
+                const v = Number(n || 0);
+                return '₹ ' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            },
+
+            advanceModal() {
+                if (this.modalStep === 1) {
+                    this.modalStep = 2;
+                    return;
+                }
+                window.location.href = "{{ route('member.dashboard') }}";
+            },
             
             async initPayment() {
                 if(this.isProcessing) return;
@@ -179,7 +223,7 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            amount: {{ $payableAmount }}
+                            membership_setting_id: {{ (int) $plan->id }}
                         })
                     });
                     
@@ -190,7 +234,7 @@
                     // 2. Setup Razorpay Options
                     const options = {
                         "key": orderData.key,
-                        "amount": {{ $payableAmount * 100 }},
+                        "amount": Math.round(Number(orderData.amount || 0) * 100),
                         "currency": "INR",
                         "name": "Event Management",
                         "description": "Membership Subscription",
@@ -209,12 +253,21 @@
                                     razorpay_payment_id: response.razorpay_payment_id,
                                     razorpay_order_id: response.razorpay_order_id,
                                     razorpay_signature: response.razorpay_signature,
-                                    amount: {{ $payableAmount }}
                                 })
                             });
                             
                             const verifyData = await verifyResponse.json();
-                            this.transactionId = verifyData.transaction_id;
+                            if (!verifyResponse.ok || !verifyData?.success) {
+                                throw new Error(verifyData?.message || 'Payment verification failed');
+                            }
+
+                            this.transactionId = verifyData.transaction_id || '';
+                            this.plan = verifyData.plan || null;
+                            this.subscription = verifyData.subscription || null;
+                            this.planSummary = `${verifyData?.plan?.subscription_type || ''} • ${this.humanCycle(verifyData?.plan?.payment_type)} Plan`;
+                            const amt = verifyData?.subscription?.amount ?? orderData.amount ?? 0;
+                            this.amountPaid = `${this.formatInr(amt)} ${verifyData?.subscription?.currency || 'INR'}`;
+                            this.validTill = verifyData?.subscription?.end_date || '-';
                             
                             // 4. Show success modal
                             this.isProcessing = false;

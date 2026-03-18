@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaymentTransaction;
 use Illuminate\Support\Facades\Auth;
 
 class MemberDashboardController extends Controller
@@ -32,6 +33,12 @@ class MemberDashboardController extends Controller
         return view('member.dashboard', [
             'profileIncomplete' => $profileIncomplete,
             'activeSubscription' => $user?->activeSubscription,
+            'transactions' => PaymentTransaction::query()
+                ->with('subscriptionPlan')
+                ->where('user_id', $user?->id)
+                ->latest('id')
+                ->limit(10)
+                ->get(),
         ]);
     }
 }
