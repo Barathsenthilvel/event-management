@@ -18,6 +18,11 @@ class MemberSubscriptionController extends Controller
         $user = Auth::user();
         $activeSubscription = $user?->activeSubscription;
 
+        if (!$user->profile_completed || !$user->is_approved) {
+            return redirect()->route('member.dashboard')
+                ->with('error', 'Your profile is awaiting admin approval. Subscription plans will be visible after approval.');
+        }
+
         $query = MembershipSubscriptionSetting::query()
             ->where('is_active', true)
             ->orderBy('subscription_type')

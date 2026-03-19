@@ -80,7 +80,14 @@ class MemberProfileController extends Controller
         $user->profile_completed = $this->isProfileComplete($user);
         $user->save();
 
-        return redirect()->route('member.subscription.index')->with('success', 'Profile updated successfully.');
+        if ($user->profile_completed && !$user->is_approved) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with('approval_pending_modal', true)
+                ->with('success', 'Profile submitted successfully.');
+        }
+
+        return redirect()->route('member.dashboard')->with('success', 'Profile updated successfully.');
     }
 
     private function isProfileComplete($user): bool

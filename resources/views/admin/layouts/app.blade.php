@@ -76,9 +76,18 @@
     showLogout: false,
     showNotifications: false,
     refreshing: false,
+    pendingApprovalsCount: {{ (int) (\App\Models\User::query()->where('profile_completed', true)->where('is_approved', false)->count()) }},
     notifications: [
-        { title: 'Security Alert', desc: 'New login from Chrome/MacOs', time: 'Just now', type: 'alert' },
-        { title: 'New User', desc: 'Sarah registered an account', time: '2 min ago', type: 'info' }
+        @php
+            $pendingApprovalsCountHeader = \App\Models\User::query()
+                ->where('profile_completed', true)
+                ->where('is_approved', false)
+                ->count();
+        @endphp
+        @if($pendingApprovalsCountHeader > 0)
+        { title: 'Member Approvals', desc: '{{ (int) $pendingApprovalsCountHeader }} member(s) waiting for approval', time: 'Now', type: 'alert', url: '{{ route('admin.members.pending-approvals.index') }}' },
+        @endif
+        { title: 'Security Alert', desc: 'New login activity detected', time: 'Just now', type: 'info' }
     ],
     toasts: [],
     addToast(msg) {
@@ -168,6 +177,10 @@
         <!-- Navigation: fixed links + dynamic menus from Menu Management -->
         @php
             $admin = Auth::guard('admin')->user();
+            $pendingApprovalsCount = \App\Models\User::query()
+                ->where('profile_completed', true)
+                ->where('is_approved', false)
+                ->count();
         @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
             {{-- 1. Dashboard (first) --}}
@@ -269,6 +282,22 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Users</span>
             </a>
             @endif
+
+            <a href="{{ route('admin.members.pending-approvals.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zm9 10v-2a4 4 0 00-3-3.87" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Member Approvals</span>
+                @if($pendingApprovalsCount > 0)
+                    <span x-show="sidebarOpen"
+                        class="ml-auto inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-rose-500 text-white text-[10px] font-black">
+                        {{ (int) $pendingApprovalsCount }}
+                    </span>
+                @endif
+            </a>
 
             @if($admin && $admin->hasPermission('role.view'))
             <a href="{{ route('admin.roles.index') }}"
@@ -393,8 +422,11 @@
                     <div class="relative">
                         <button @click="showNotifications = !showNotifications"
                             class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 transition-all text-slate-500 relative">
-                            <span
-                                class="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                            <template x-if="pendingApprovalsCount > 0">
+                                <span class="absolute -top-1 -right-1 min-w-6 h-6 px-2 rounded-xl bg-rose-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                                    <span x-text="pendingApprovalsCount"></span>
+                                </span>
+                            </template>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -413,7 +445,7 @@
                             </div>
                             <div class="space-y-1 max-h-64 overflow-y-auto custom-scroll">
                                 <template x-for="note in notifications">
-                                    <div
+                                    <a :href="note.url || '#'"
                                         class="p-2 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer flex gap-3">
                                         <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                                             :class="note.type === 'alert' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'">
@@ -433,7 +465,7 @@
                                             <p class="text-[10px] text-slate-500" x-text="note.desc"></p>
                                             <p class="text-[9px] text-slate-300 mt-1" x-text="note.time"></p>
                                         </div>
-                                    </div>
+                                    </a>
                                 </template>
                             </div>
                         </div>

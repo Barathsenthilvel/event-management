@@ -13,6 +13,7 @@ use App\Http\Controllers\MemberAuthController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MemberSubscriptionController;
+use App\Http\Controllers\AdminMemberApprovalController;
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -76,6 +77,14 @@ Route::prefix('admin')->group(function () {
         Route::post('/memberships', [MembershipController::class, 'store'])->name('admin.memberships.store');
         Route::put('/memberships/{id}', [MembershipController::class, 'update'])->name('admin.memberships.update');
         Route::delete('/memberships/{id}', [MembershipController::class, 'destroy'])->name('admin.memberships.destroy');
+
+        // Member Approvals
+        Route::get('/members/pending-approvals', [AdminMemberApprovalController::class, 'index'])
+            ->name('admin.members.pending-approvals.index');
+        Route::post('/members/{user}/approve', [AdminMemberApprovalController::class, 'approve'])
+            ->name('admin.members.pending-approvals.approve');
+        Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])
+            ->name('admin.members.pending-approvals.reject');
     });
 });
 

@@ -1,6 +1,59 @@
 @extends('member.layouts.app')
 
 @section('content')
+@if(Auth::user()?->profile_completed && !Auth::user()?->is_approved)
+    <div x-data="{ open: true }">
+        <div x-show="open" x-cloak
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+
+            <div class="bg-white border border-slate-100 rounded-[28px] shadow-2xl w-full max-w-lg overflow-hidden">
+                <div class="p-7 bg-linear-to-br from-slate-900 via-slate-900 to-indigo-700 text-white">
+                    <div class="flex items-center gap-4">
+                        <div class="h-12 w-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-white/75">Approval pending</p>
+                            <h3 class="mt-1 text-xl font-extrabold tracking-tight text-white">Please wait for admin approval</h3>
+                            <p class="mt-1 text-xs font-bold text-white/75">
+                                We received your profile details. Once the admin approves, you can purchase membership plans.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-7 space-y-4">
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                        <p class="text-xs font-extrabold text-slate-900">What happens next?</p>
+                        <ul class="mt-3 space-y-2 text-xs font-bold text-slate-600">
+                            <li>- Admin will verify your documents and profile information.</li>
+                            <li>- After approval, the Membership menu and subscription plans will be enabled.</li>
+                            <li>- If anything is missing, admin may ask you to update your profile.</li>
+                        </ul>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-1">
+                        <a href="{{ route('member.profile.edit') }}"
+                           class="px-6 py-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-extrabold shadow-sm transition-all">
+                            Review Profile
+                        </a>
+                        <button type="button" @click="open=false"
+                            class="px-8 py-3 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-extrabold shadow-lg transition-all">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+@endif
+
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-6">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-900 mb-2">Dashboard</h1>
@@ -145,6 +198,59 @@
                         Update
                     </a>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    @if(Auth::user()?->profile_completed && !Auth::user()?->is_approved)
+        <div x-data="{ open: {{ session('approval_pending_modal') ? 'true' : 'false' }} }">
+            <div x-show="open" x-cloak
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+
+                <div class="bg-white border border-slate-100 rounded-[28px] shadow-2xl w-full max-w-lg overflow-hidden">
+                    <div class="p-7 pb-4 border-b border-slate-100 bg-white">
+                        <div class="flex flex-col items-center text-center gap-3">
+                            <div class="h-14 w-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
+                                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke-width="2.3" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Approval pending</p>
+                                <h3 class="mt-1 text-xl font-extrabold tracking-tight text-slate-900">Please wait for admin approval</h3>
+                                <p class="mt-1 text-xs font-bold text-slate-600">
+                                    We received your profile details. Once the admin approves, you can purchase membership plans.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-7 space-y-4">
+                        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                            <p class="text-xs font-extrabold text-slate-900">What happens next?</p>
+                            <ul class="mt-3 space-y-2 text-xs font-bold text-slate-600">
+                                <li>- Admin will verify your documents and profile information.</li>
+                                <li>- After approval, the Membership menu and subscription plans will be enabled.</li>
+                                <li>- If anything is missing, admin may ask you to update your profile.</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-1">
+                            <a href="{{ route('member.profile.edit') }}"
+                               class="px-6 py-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-extrabold shadow-sm transition-all">
+                                Review Profile
+                            </a>
+                            <button type="button" @click="open=false"
+                                class="px-8 py-3 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-extrabold shadow-lg transition-all">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     @endif

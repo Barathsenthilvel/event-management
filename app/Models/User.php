@@ -41,6 +41,7 @@ class User extends Authenticatable
         'email',
         'mobile',
         'profile_completed',
+        'is_approved',
         'password',
     ];
 
@@ -66,6 +67,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'dob' => 'date',
             'profile_completed' => 'boolean',
+            'is_approved' => 'boolean',
         ];
     }
 
