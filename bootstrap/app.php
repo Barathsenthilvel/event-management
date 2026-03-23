@@ -16,7 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('admin/*')) {
                 return route('admin.login');
             }
-            return route('admin.login'); // Default to admin login
+            if ($request->is('member/*')) {
+                return route('member.login');
+            }
+
+            return route('home');
         });
 
         // Configure AuthenticationException redirect
@@ -24,7 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('admin/*')) {
                 return route('admin.login');
             }
-            return route('admin.login');
+            if ($request->is('member/*')) {
+                return route('member.login');
+            }
+
+            return route('home');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -41,6 +49,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Redirect admin routes to admin login when session expires
             if ($request->is('admin/*')) {
                 return redirect()->guest(route('admin.login'));
+            }
+
+            if ($request->is('member/*')) {
+                return redirect()->guest(route('member.login'));
             }
 
             // Handle JSON requests

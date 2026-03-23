@@ -3,81 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member | Verify OTP</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Verify OTP — GNAT Donation</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #F8FAFC; }
-        .fluid-bg { background: linear-gradient(120deg, #F0F4F8 0%, #E2E8F0 50%, #F8FAFC 100%); position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
-        .light-glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        body { font-family: "DM Sans", system-ui, sans-serif; }
+        .ml-page-bg {
+            background-color: #f8f6fc;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(150, 89, 149, 0.18), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 0%, rgba(253, 220, 106, 0.15), transparent);
+            min-height: 100vh;
+        }
+        .otp-box {
+            width: 3.25rem;
+            height: 3.5rem;
+            text-align: center;
+            font-size: 1.375rem;
+            font-weight: 700;
+            border-radius: 1rem;
+            border: 1px solid rgba(53, 28, 66, 0.12);
+            background: linear-gradient(180deg, #fff 0%, #faf8fc 100%);
+            box-shadow: 0 2px 8px rgba(53, 28, 66, 0.06);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+        }
+        .otp-box:focus {
+            border-color: #965995;
+            box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.18);
+            transform: translateY(-1px);
+            outline: none;
+        }
+        @media (min-width: 480px) {
+            .otp-box { width: 3.75rem; height: 3.75rem; font-size: 1.5rem; }
+        }
+        .ml-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            padding: 0.875rem 1.75rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #351c42 0%, #4d2a5c 100%);
+            color: #fddc6a;
+            box-shadow: 0 8px 24px rgba(53, 28, 66, 0.28);
+            border: none;
+            cursor: pointer;
+        }
+        .ml-btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        .ml-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            padding: 0.875rem 1.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: #fff;
+            color: #351c42;
+            border: 1px solid rgba(53, 28, 66, 0.14);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .ml-card-elevated {
+            box-shadow: 0 4px 6px -1px rgba(53, 28, 66, 0.06), 0 24px 48px -12px rgba(53, 28, 66, 0.14);
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
-    <div class="fluid-bg"></div>
-    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-200/50 rounded-full blur-[120px]"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-200/50 rounded-full blur-[120px]"></div>
+<body class="ml-page-bg text-[#351c42] antialiased">
+    <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-12">
+        <a href="{{ route('home') }}" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-[#965995] hover:text-[#351c42]">
+            ← GNAT Donation home
+        </a>
 
-    <div class="w-full max-w-[720px] light-glass-panel rounded-[48px] overflow-hidden">
-        <div class="p-12 bg-white/40 text-center" x-data="{
-            d1:'', d2:'', d3:'', d4:'',
-            get code(){ return `${this.d1}${this.d2}${this.d3}${this.d4}`; },
-            focusNext(e, nextId){ if((e.target.value || '').length === 1 && nextId){ document.getElementById(nextId)?.focus(); } }
-        }">
-            <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">VERIFY YOUR IDENTITY</h1>
-            <p class="text-slate-500 text-sm mb-10">Please enter the code sent to mobile no "{{ $maskedMobile }}"</p>
+        <div class="overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-8 shadow-2xl shadow-[#351c42]/12 backdrop-blur-md sm:p-10 ml-card-elevated">
+            <div class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#965995]/20 to-[#fddc6a]/30">
+                <svg class="h-7 w-7 text-[#351c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h1 class="text-center text-xl font-bold tracking-tight text-[#351c42] sm:text-2xl">Verify your identity</h1>
+            <p class="mx-auto mt-3 max-w-sm text-center text-sm leading-relaxed text-[#351c42]/65">
+                Enter the code sent to <span class="font-semibold text-[#351c42]">{{ $maskedMobile }}</span>
+            </p>
 
             @if($generatedOtp)
-                <div class="mb-6 text-sm font-bold text-slate-700 bg-white/70 border border-slate-200 rounded-2xl px-5 py-4">
-                    OTP (for now): <span class="text-indigo-700">{{ $generatedOtp }}</span>
+                <div class="mt-5 rounded-2xl border border-[#965995]/20 bg-gradient-to-br from-[#965995]/8 to-transparent px-4 py-3 text-center" aria-live="polite">
+                    <p class="text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">Demo / dev code</p>
+                    <p class="mt-1 font-mono text-xl font-bold tracking-[0.35em] text-[#351c42]">{{ $generatedOtp }}</p>
                 </div>
             @endif
 
             @if(session('success'))
-                <div class="mb-6 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4">
+                <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-800">
                     {{ session('success') }}
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('member.otp.verify') }}" class="space-y-8">
+            <form method="POST" action="{{ route('member.otp.verify') }}" class="mt-8" id="otp-form">
                 @csrf
-
-                <div class="flex items-center justify-center gap-4">
-                    <input id="otp1" maxlength="1" inputmode="numeric" pattern="[0-9]*" x-model="d1" @input="focusNext($event, 'otp2')"
-                        class="w-14 h-14 text-center text-xl font-bold bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5">
-                    <input id="otp2" maxlength="1" inputmode="numeric" pattern="[0-9]*" x-model="d2" @input="focusNext($event, 'otp3')"
-                        class="w-14 h-14 text-center text-xl font-bold bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5">
-                    <input id="otp3" maxlength="1" inputmode="numeric" pattern="[0-9]*" x-model="d3" @input="focusNext($event, 'otp4')"
-                        class="w-14 h-14 text-center text-xl font-bold bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5">
-                    <input id="otp4" maxlength="1" inputmode="numeric" pattern="[0-9]*" x-model="d4"
-                        class="w-14 h-14 text-center text-xl font-bold bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5">
+                <p class="text-center text-sm font-semibold text-[#351c42]">Enter 4-digit code</p>
+                <div class="mt-5 flex justify-center gap-2.5 sm:gap-3.5" role="group" aria-label="One-time code digits">
+                    <input type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*" data-otp-digit="0" class="otp-box text-[#351c42]" aria-label="Digit 1" autocomplete="one-time-code" />
+                    <input type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*" data-otp-digit="1" class="otp-box text-[#351c42]" aria-label="Digit 2" />
+                    <input type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*" data-otp-digit="2" class="otp-box text-[#351c42]" aria-label="Digit 3" />
+                    <input type="text" inputmode="numeric" maxlength="1" pattern="[0-9]*" data-otp-digit="3" class="otp-box text-[#351c42]" aria-label="Digit 4" />
                 </div>
-
-                <input type="hidden" name="code" :value="code">
+                <input type="hidden" name="code" id="otp-code" value="" />
                 @error('code')
-                    <p class="text-xs text-rose-600 font-semibold">{{ $message }}</p>
+                    <p class="mt-3 text-center text-sm text-red-600">{{ $message }}</p>
                 @enderror
 
-                <div class="text-center">
-                    <button form="resendForm" type="submit"
-                        class="text-sm font-bold text-slate-600 hover:text-indigo-600 underline underline-offset-4">
-                        Resend OTP?
-                    </button>
+                <div class="mt-8 text-center">
+                    <button type="submit" form="resend-form" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]">Resend code</button>
                 </div>
 
-                <div class="flex gap-3 justify-center pt-2">
-                    <a href="{{ route('member.login') }}"
-                        class="w-44 py-4 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-bold transition-colors text-center">Cancels</a>
-                    <button type="submit"
-                        class="w-52 py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-slate-200 hover:shadow-indigo-200 transition-all">Verify</button>
+                <div class="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                    <a href="{{ route('member.login') }}" class="ml-btn-secondary w-full justify-center sm:w-auto">Cancel</a>
+                    <button type="submit" class="ml-btn-primary w-full min-w-[10rem] justify-center sm:w-auto">Verify</button>
                 </div>
             </form>
 
-            <form id="resendForm" method="POST" action="{{ route('member.otp.resend') }}" class="hidden">
+            <form id="resend-form" method="POST" action="{{ route('member.otp.resend') }}" class="hidden">
                 @csrf
             </form>
         </div>
-    </div>
+    </main>
+
+    <script>
+        (() => {
+            const otpInputs = Array.from(document.querySelectorAll("[data-otp-digit]"));
+            const hidden = document.getElementById("otp-code");
+            const form = document.getElementById("otp-form");
+
+            function sync() {
+                if (hidden) hidden.value = otpInputs.map((i) => i.value).join("");
+            }
+
+            otpInputs.forEach((input, idx) => {
+                input.addEventListener("input", () => {
+                    input.value = input.value.replace(/\D/g, "").slice(0, 1);
+                    sync();
+                    if (input.value && idx < otpInputs.length - 1) otpInputs[idx + 1].focus();
+                });
+                input.addEventListener("keydown", (ev) => {
+                    if (ev.key === "Backspace" && !input.value && idx > 0) otpInputs[idx - 1].focus();
+                });
+            });
+
+            otpInputs[0]?.addEventListener("paste", (ev) => {
+                const t = (ev.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 4);
+                if (t.length) {
+                    ev.preventDefault();
+                    t.split("").forEach((ch, i) => { if (otpInputs[i]) otpInputs[i].value = ch; });
+                    sync();
+                    otpInputs[Math.min(t.length, 3)]?.focus();
+                }
+            });
+
+            form?.addEventListener("submit", (e) => {
+                sync();
+                if ((hidden?.value || "").length !== 4) {
+                    e.preventDefault();
+                    alert("Please enter the 4-digit code.");
+                }
+            });
+
+            otpInputs[0]?.focus();
+        })();
+    </script>
 </body>
 </html>
-

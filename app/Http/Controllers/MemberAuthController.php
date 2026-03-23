@@ -20,7 +20,7 @@ class MemberAuthController extends Controller
             return redirect()->route('member.dashboard');
         }
 
-        return view('member.auth.register');
+        return view('member.auth.login', ['defaultTab' => 'signup']);
     }
 
     public function showLoginForm()
@@ -29,7 +29,7 @@ class MemberAuthController extends Controller
             return redirect()->route('member.dashboard');
         }
 
-        return view('member.auth.login');
+        return view('member.auth.login', ['defaultTab' => 'signin']);
     }
 
     public function login(Request $request)
@@ -53,6 +53,8 @@ class MemberAuthController extends Controller
             ]);
         }
 
+        $request->session()->put('member_otp_remember', $request->boolean('remember'));
+
         $this->issueOtp($request, (int) $user->id);
 
         return redirect()->route('member.otp');
@@ -68,17 +70,18 @@ class MemberAuthController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'mobile' => ['required', 'string', 'max:30'],
+            'mobile' => ['required', 'string', 'max:30', 'unique:users,mobile'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
+        // Plain password: User model uses the `hashed` cast — do not Hash::make here.
         $user = User::create([
             'name' => trim($data['first_name'] . ' ' . $data['last_name']),
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
             'mobile' => $data['mobile'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
             'profile_completed' => false,
         ]);
 
@@ -94,12 +97,14 @@ class MemberAuthController extends Controller
         }
 
         if (!$request->session()->has(self::OTP_USER_SESSION_KEY)) {
-            return redirect()->route('member.register');
+            return redirect()->route('member.login');
         }
 
         return view('member.auth.otp', [
             'maskedMobile' => $this->maskedMobile($request),
-            'generatedOtp' => (string) $request->session()->get(self::OTP_SESSION_KEY, ''),
+            'generatedOtp' => app()->isProduction()
+                ? ''
+                : (string) $request->session()->get(self::OTP_SESSION_KEY, ''),
         ]);
     }
 
@@ -135,9 +140,11 @@ class MemberAuthController extends Controller
             ]);
         }
 
+        $remember = (bool) $request->session()->pull('member_otp_remember', false);
+
         $request->session()->forget([self::OTP_SESSION_KEY, self::OTP_EXPIRES_SESSION_KEY, self::OTP_USER_SESSION_KEY]);
 
-        Auth::loginUsingId($userId);
+        Auth::loginUsingId($userId, $remember);
         $request->session()->regenerate();
 
         return redirect()->route('member.dashboard');
@@ -151,7 +158,7 @@ class MemberAuthController extends Controller
 
         $userId = (int) $request->session()->get(self::OTP_USER_SESSION_KEY);
         if (!$userId) {
-            return redirect()->route('member.register');
+            return redirect()->route('member.login');
         }
 
         $this->issueOtp($request, $userId);
