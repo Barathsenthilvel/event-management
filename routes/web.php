@@ -14,6 +14,10 @@ use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\AdminMemberApprovalController;
+use App\Http\Controllers\HomeController;
+
+// Public marketing site
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -115,6 +119,3 @@ Route::prefix('member')->name('member.')->group(function () {
     });
 });
 
-Route::get('/', function () {
-    return view('home');
-});
