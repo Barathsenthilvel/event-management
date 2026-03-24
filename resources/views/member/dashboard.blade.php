@@ -127,7 +127,7 @@
                 <div class="w-full max-w-md rounded-2xl border-2 border-[#965995]/30 bg-white p-8 text-center shadow-2xl">
                     <h2 class="text-2xl font-bold text-[#351c42]">Hello, {{ $firstName }}</h2>
                     <p class="mt-4 text-sm leading-relaxed text-[#351c42]/75">Your profile is incomplete. Please complete it to be part of the GNAT member community.</p>
-                    <a href="{{ route('member.profile.edit') }}" class="md-btn-pay mx-auto mt-8 inline-flex min-w-[10rem]">Update profile</a>
+                    <a href="{{ route('member.profile.edit') }}" class="mx-auto mt-8 inline-flex min-w-[10rem] items-center justify-center rounded-full bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-6 py-2.5 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 transition hover:brightness-105">Update profile</a>
                     <button type="button" @click="open = false" class="mt-4 block w-full text-sm font-semibold text-[#351c42]/50 hover:text-[#351c42]">Dismiss</button>
                 </div>
             </div>
