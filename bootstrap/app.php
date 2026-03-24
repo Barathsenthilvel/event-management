@@ -36,13 +36,25 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($e->getStatusCode() !== 419) {
+                return null;
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Page expired.'], 419);
+            }
+
+            return redirect('/')->with('error', 'Your session expired. Please try again.');
+        });
+
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
             // "Page Expired" (419) due to CSRF/session timeout
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Page expired.'], 419);
             }
 
-            return redirect('/');
+            return redirect('/')->with('error', 'Your session expired. Please try again.');
         });
 
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {

@@ -4,7 +4,7 @@ return [
     'title' => 'GNAT Donation — Give Hope, Support Communities',
 
     'logo' => [
-        'src' => 'logo.png',
+        'src' => 'images/logo.png',
         'alt' => 'GNAT Donation',
     ],
 
@@ -35,7 +35,7 @@ return [
         'description_html' => '<strong class="text-white">GNAT Donation</strong> GNAT Association brings people together to create meaningful impact.',
         'registered_count' => 2603,
         'registered_label' => 'Peoples Registered',
-        'avatar_image' => 'testimonials-images/thumb-10.2.webp',
+        'avatar_image' => 'images/testimonials-images/thumb-10.2.webp',
     ],
 
     'volunteer_cards' => [
@@ -82,9 +82,9 @@ return [
     ],
 
     'banners' => [
-        ['href' => '#events', 'src' => 'events/event-1-1.jpg', 'alt' => 'Community education and outreach'],
-        ['href' => '#donate', 'src' => 'events/event-1-2.jpg', 'alt' => 'Programs and fundraising support'],
-        ['href' => '#gallery', 'src' => 'events/event-1-3.jpg', 'alt' => 'Volunteers at community events'],
+        ['href' => '#events', 'src' => 'images/events/event-1-1.jpg', 'alt' => 'Community education and outreach'],
+        ['href' => '#donate', 'src' => 'images/events/event-1-2.jpg', 'alt' => 'Programs and fundraising support'],
+        ['href' => '#gallery', 'src' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteers at community events'],
     ],
 
     'testimonials_intro' => [
@@ -102,18 +102,18 @@ return [
         ['name' => 'Olivia King', 'role' => 'Client', 'text' => 'Highly responsive, thoughtful, and proactive. We loved the final outcome.', 'stars' => 5],
     ],
 
-    'testimonial_profile_image' => 'testimonials-images/thumb-10.2.webp',
+    'testimonial_profile_image' => 'images/testimonials-images/thumb-10.2.webp',
 
     'testimonial_stack_cards' => [
-        ['image' => 'testimonials-images/thumb-10.2.webp', 'quote' => 'GNAT Donation made giving simple and transparent. We saw exactly how our support helped the community. Highly recommended!', 'name' => 'Penelope Miller (Arjon)', 'role' => 'Sr. Volunteer', 'rating' => '5.0', 'play' => true],
-        ['image' => 'events/event-1-1.jpg', 'quote' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'name' => 'David Johnson (Brook)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
-        ['image' => 'events/event-1-3.jpg', 'quote' => 'The team showed real expertise and delivered measurable improvements quickly.', 'name' => 'Sophia Brown (Karis)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
-        ['image' => 'events/event-1-2.jpg', 'quote' => 'From planning to delivery, everything was handled professionally and on time.', 'name' => 'Emma Wilson (Nova)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
+        ['image' => 'images/testimonials-images/thumb-10.2.webp', 'quote' => 'GNAT Donation made giving simple and transparent. We saw exactly how our support helped the community. Highly recommended!', 'name' => 'Penelope Miller (Arjon)', 'role' => 'Sr. Volunteer', 'rating' => '5.0', 'play' => true],
+        ['image' => 'images/events/event-1-1.jpg', 'quote' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'name' => 'David Johnson (Brook)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
+        ['image' => 'images/events/event-1-3.jpg', 'quote' => 'The team showed real expertise and delivered measurable improvements quickly.', 'name' => 'Sophia Brown (Karis)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
+        ['image' => 'images/events/event-1-2.jpg', 'quote' => 'From planning to delivery, everything was handled professionally and on time.', 'name' => 'Emma Wilson (Nova)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
     ],
 
     'about' => [
-        'main_image' => 'events/event-1-2.jpg',
-        'accent_image' => 'events/event-1-1.jpg',
+        'main_image' => 'images/events/event-1-2.jpg',
+        'accent_image' => 'images/events/event-1-1.jpg',
         'eyebrow' => 'ABOUT GNAT DONATION',
         'title_lines' => ['Worldwide, Our', 'Community', 'One Mission'],
         'title_highlight' => 'Adopted',
@@ -125,7 +125,7 @@ return [
             'summary_date' => '03 Sep',
             'summary_title' => "Let's Education For Children Get Good Life",
             'time' => '10:00 AM - 2:00 PM',
-            'image' => 'events/event-1-1.jpg',
+            'image' => 'images/events/event-1-1.jpg',
             'badge_day' => '03',
             'badge_month' => 'SEP',
             'badge_rounded' => 'rounded-full',
@@ -137,7 +137,7 @@ return [
             'summary_date' => '10 Sep',
             'summary_title' => 'Start A Fundraiser For Yourself In World',
             'time' => '10:00 AM - 2:00 PM',
-            'image' => 'events/event-1-2.jpg',
+            'image' => 'images/events/event-1-2.jpg',
             'badge_day' => '10',
             'badge_month' => 'SEP',
             'badge_rounded' => 'rounded-xl',
@@ -149,7 +149,7 @@ return [
             'summary_date' => '24 Sep',
             'summary_title' => 'Volunteer Training: Communication & Impact',
             'time' => '10:00 AM - 2:00 PM',
-            'image' => 'events/event-1-3.jpg',
+            'image' => 'images/events/event-1-3.jpg',
             'badge_day' => '24',
             'badge_month' => 'SEP',
             'badge_rounded' => 'rounded-full',
@@ -169,10 +169,10 @@ return [
         'bar_percent_demo' => 52,
         'amounts' => [10, 25, 50, 100, 250],
         'campaigns' => [
-            ['image' => 'events/event-1-2.jpg', 'alt' => 'Child health program', 'day' => '03', 'month' => 'SEP', 'title' => 'Promoting the rights of every child', 'excerpt' => 'Healthcare, education, and safe spaces for children in our communities.'],
-            ['image' => 'events/event-1-1.jpg', 'alt' => 'Community children', 'day' => '09', 'month' => 'OCT', 'title' => 'There are many ways you can help today', 'excerpt' => 'Join workshops, fundraisers, and outreach programs that change lives.'],
-            ['image' => 'events/event-1-3.jpg', 'alt' => 'Volunteer event', 'day' => '21', 'month' => 'NOV', 'title' => 'Clean water & nutrition programs', 'excerpt' => 'Your gift funds sustainable access to essentials for families in need.'],
-            ['image' => 'events/event-1-2.jpg', 'alt' => 'Youth support', 'day' => '15', 'month' => 'DEC', 'title' => 'Youth mentorship & skills training', 'excerpt' => 'Building brighter futures through coaching, courses, and community.'],
+            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Child health program', 'day' => '03', 'month' => 'SEP', 'title' => 'Promoting the rights of every child', 'excerpt' => 'Healthcare, education, and safe spaces for children in our communities.'],
+            ['image' => 'images/events/event-1-1.jpg', 'alt' => 'Community children', 'day' => '09', 'month' => 'OCT', 'title' => 'There are many ways you can help today', 'excerpt' => 'Join workshops, fundraisers, and outreach programs that change lives.'],
+            ['image' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteer event', 'day' => '21', 'month' => 'NOV', 'title' => 'Clean water & nutrition programs', 'excerpt' => 'Your gift funds sustainable access to essentials for families in need.'],
+            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Youth support', 'day' => '15', 'month' => 'DEC', 'title' => 'Youth mentorship & skills training', 'excerpt' => 'Building brighter futures through coaching, courses, and community.'],
         ],
     ],
 
@@ -187,10 +187,10 @@ return [
 
     'blog' => [
         'posts' => [
-            ['image' => 'events/event-1-2.jpg', 'tag' => 'Forest', 'day' => '09', 'month' => 'Jan', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
-            ['image' => 'events/event-1-3.jpg', 'tag' => 'Recycle', 'day' => '24', 'month' => 'Feb', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
-            ['image' => 'events/event-1-1.jpg', 'tag' => 'Forest', 'day' => '15', 'month' => 'Mar', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
-            ['image' => 'events/event-1-2.jpg', 'tag' => 'Forest', 'day' => '29', 'month' => 'Apr', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
+            ['image' => 'images/events/event-1-2.jpg', 'tag' => 'Forest', 'day' => '09', 'month' => 'Jan', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
+            ['image' => 'images/events/event-1-3.jpg', 'tag' => 'Recycle', 'day' => '24', 'month' => 'Feb', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
+            ['image' => 'images/events/event-1-1.jpg', 'tag' => 'Forest', 'day' => '15', 'month' => 'Mar', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
+            ['image' => 'images/events/event-1-2.jpg', 'tag' => 'Forest', 'day' => '29', 'month' => 'Apr', 'year' => '2026', 'title' => 'Waste Management', 'excerpt' => 'Energy consulting involves providing of advice and guidance on energy', 'comments' => 367],
         ],
     ],
 
@@ -202,13 +202,13 @@ return [
             ['key' => 'community', 'label' => 'Community'],
         ],
         'items' => [
-            ['cat' => 'programs', 'layout' => 'hero', 'image' => 'events/event-1-1.jpg', 'alt' => 'School and education support program', 'eyebrow' => 'Programs', 'title' => 'Learning & school support', 'text' => 'Books, meals, and safe classrooms for children in Chennai.'],
-            ['cat' => 'events', 'layout' => 'wide', 'image' => 'events/event-1-2.jpg', 'alt' => 'Fundraising and outreach event', 'eyebrow' => 'Events', 'title' => 'Annual drive'],
-            ['cat' => 'community', 'layout' => 'cell', 'image' => 'events/event-1-3.jpg', 'alt' => 'Community volunteers together', 'eyebrow' => 'Community', 'title' => 'Volunteer day'],
-            ['cat' => 'programs', 'layout' => 'cell', 'image' => 'events/event-1-2.jpg', 'alt' => 'Health and wellness outreach', 'eyebrow' => 'Programs', 'title' => 'Health camp'],
-            ['cat' => 'events', 'layout' => 'banner', 'image' => 'events/event-1-1.jpg', 'alt' => 'Celebration at community event', 'eyebrow' => 'Events', 'title' => 'Together we go further', 'text' => 'Thank-you gatherings and impact stories from Chennai neighborhoods.'],
-            ['cat' => 'community', 'layout' => 'cell', 'image' => 'events/event-1-3.jpg', 'alt' => 'Children at community program', 'eyebrow' => 'Community', 'title' => 'Youth circle'],
-            ['cat' => 'programs', 'layout' => 'cell', 'image' => 'events/event-1-1.jpg', 'alt' => 'Donation supplies distribution', 'eyebrow' => 'Programs', 'title' => 'Relief kits'],
+            ['cat' => 'programs', 'layout' => 'hero', 'image' => 'images/events/event-1-1.jpg', 'alt' => 'School and education support program', 'eyebrow' => 'Programs', 'title' => 'Learning & school support', 'text' => 'Books, meals, and safe classrooms for children in Chennai.'],
+            ['cat' => 'events', 'layout' => 'wide', 'image' => 'images/events/event-1-2.jpg', 'alt' => 'Fundraising and outreach event', 'eyebrow' => 'Events', 'title' => 'Annual drive'],
+            ['cat' => 'community', 'layout' => 'cell', 'image' => 'images/events/event-1-3.jpg', 'alt' => 'Community volunteers together', 'eyebrow' => 'Community', 'title' => 'Volunteer day'],
+            ['cat' => 'programs', 'layout' => 'cell', 'image' => 'images/events/event-1-2.jpg', 'alt' => 'Health and wellness outreach', 'eyebrow' => 'Programs', 'title' => 'Health camp'],
+            ['cat' => 'events', 'layout' => 'banner', 'image' => 'images/events/event-1-1.jpg', 'alt' => 'Celebration at community event', 'eyebrow' => 'Events', 'title' => 'Together we go further', 'text' => 'Thank-you gatherings and impact stories from Chennai neighborhoods.'],
+            ['cat' => 'community', 'layout' => 'cell', 'image' => 'images/events/event-1-3.jpg', 'alt' => 'Children at community program', 'eyebrow' => 'Community', 'title' => 'Youth circle'],
+            ['cat' => 'programs', 'layout' => 'cell', 'image' => 'images/events/event-1-1.jpg', 'alt' => 'Donation supplies distribution', 'eyebrow' => 'Programs', 'title' => 'Relief kits'],
         ],
     ],
 
