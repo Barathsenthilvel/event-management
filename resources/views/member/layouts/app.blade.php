@@ -1,3 +1,7 @@
+{{--
+    Legacy “Vanguard” demo shell — not used for logged-in member pages.
+    Member area uses member.layouts.gnat; admin area uses admin.layouts.app.
+--}}
 <!DOCTYPE html>
 <html lang="en">
 <head>

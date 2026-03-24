@@ -1,7 +1,9 @@
-@extends('member.layouts.app')
+@extends('member.layouts.gnat')
+
+@section('title', 'Membership plans — GNAT Donation')
 
 @section('content')
-<div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-6">
+<div class="space-y-6">
     <div class="rounded-[28px] border border-white bg-linear-to-br from-white via-white to-indigo-50/40 shadow-sm p-6 md:p-7">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -64,8 +66,51 @@
                     </div>
                 @endif
 
-                <form id="subscription-form" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <form id="subscription-form" class="space-y-6"
+                    x-data="{
+                        viewType: 'grid',
+                        selectedPlan: {{ old('membership_setting_id') !== null && old('membership_setting_id') !== '' ? (int) old('membership_setting_id') : 'null' }},
+                        pick(id) {
+                            this.selectedPlan = id;
+                            const el = document.getElementById('mp-' + id);
+                            if (el) el.checked = true;
+                        }
+                    }"
+                    @change="if ($event.target?.name === 'membership_setting_id') selectedPlan = parseInt($event.target.value, 10)">
+                    {{-- Single radio group: grid + table both control these inputs --}}
+                    <div class="sr-only" aria-hidden="true">
+                        @foreach($plans as $p)
+                            <input type="radio" name="membership_setting_id" id="mp-{{ $p->id }}" value="{{ $p->id }}"
+                                {{ (string) old('membership_setting_id') === (string) $p->id ? 'checked' : '' }} />
+                        @endforeach
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-end gap-3">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-auto max-sm:w-full">View</span>
+                        <div class="flex bg-slate-50 p-1 rounded-xl border border-slate-200/80 shadow-inner" role="group" aria-label="Plan view mode">
+                            <button type="button" @click="viewType = 'grid'"
+                                :class="viewType === 'grid' ? 'bg-white shadow text-[#351c42] ring-1 ring-slate-200/80' : 'text-slate-400 hover:text-slate-600'"
+                                class="p-2.5 rounded-lg transition-all"
+                                title="Grid view (2 cards per row)"
+                                aria-label="Grid view">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                            </button>
+                            <button type="button" @click="viewType = 'list'"
+                                :class="viewType === 'list' ? 'bg-white shadow text-[#351c42] ring-1 ring-slate-200/80' : 'text-slate-400 hover:text-slate-600'"
+                                class="p-2.5 rounded-lg transition-all"
+                                title="Table list view"
+                                aria-label="Table list view">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Grid: max 2 cards per row, cleaner cards --}}
+                    <div x-show="viewType === 'grid'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         @forelse($plans as $plan)
                             @php
                                 $isNew = ($plan->subscription_type === 'New');
@@ -81,78 +126,121 @@
                                 $payable = (float) $plan->membership_fee + $registrationFee;
                             @endphp
 
-                            <label class="group block rounded-[28px] border border-slate-100 bg-white shadow-sm hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
-                                   data-payable="{{ $payable }}">
-                                <input
-                                    type="radio"
-                                    name="membership_setting_id"
-                                    value="{{ $plan->id }}"
-                                    class="sr-only peer"
-                                    {{ old('membership_setting_id') == $plan->id ? 'checked' : '' }}
-                                />
-
-                                <div class="p-6 bg-linear-to-br from-indigo-600 to-slate-900 text-white">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-white/80">
-                                                {{ $plan->subscription_type }} • {{ $paymentLabel }}
-                                            </p>
-                                            <h3 class="mt-1 text-lg font-extrabold tracking-tight">
-                                                {{ $isNew ? 'New Members' : 'Renewal' }} Plan
-                                            </h3>
-                                        </div>
-                                        <span class="inline-flex items-center rounded-2xl bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest border border-white/15">
-                                            Select
-                                        </span>
+                            <label for="mp-{{ $plan->id }}"
+                                class="relative flex flex-col rounded-2xl border bg-white shadow-sm transition-all cursor-pointer overflow-hidden"
+                                :class="selectedPlan === {{ (int) $plan->id }} ? 'ring-2 ring-indigo-500 ring-offset-2 border-indigo-300 shadow-md' : 'border-slate-200/90 hover:border-indigo-200 hover:shadow-md'"
+                                data-payable="{{ $payable }}">
+                                <div class="flex items-center justify-between gap-3 px-5 py-4 bg-linear-to-r from-[#351c42] to-[#5c3570] text-white">
+                                    <div class="min-w-0">
+                                        <span class="inline-flex rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#fddc6a]">{{ $plan->subscription_type }}</span>
+                                        <p class="mt-2 text-lg font-extrabold tracking-tight truncate">{{ $paymentLabel }}</p>
+                                        <p class="text-[11px] font-semibold text-white/75">{{ $isNew ? 'New member' : 'Renewal' }}</p>
                                     </div>
+                                    <span class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl border font-black text-xs transition-colors"
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-[#fddc6a] text-[#351c42] border-transparent' : 'border-white/20 bg-white/10 text-[#fddc6a]'">
+                                        ✓
+                                    </span>
                                 </div>
-
-                                <div class="p-6 space-y-4">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership fee</p>
-                                            <p class="mt-1 text-sm font-extrabold text-slate-900">
-                                                ₹ {{ number_format((float)$plan->membership_fee, 0) }}
-                                                <span class="text-[10px] font-bold text-slate-500">({{ $paymentLabel }})</span>
-                                            </p>
+                                <div class="flex flex-1 flex-col gap-4 p-5">
+                                    <dl class="grid grid-cols-2 gap-3 text-sm">
+                                        <div class="rounded-xl bg-slate-50 px-3 py-2.5 border border-slate-100">
+                                            <dt class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Membership</dt>
+                                            <dd class="mt-0.5 font-extrabold text-slate-900">₹ {{ number_format((float) $plan->membership_fee, 0) }}</dd>
                                         </div>
-                                        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Registration fee</p>
-                                            <p class="mt-1 text-sm font-extrabold text-slate-900">
+                                        <div class="rounded-xl bg-slate-50 px-3 py-2.5 border border-slate-100">
+                                            <dt class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Registration</dt>
+                                            <dd class="mt-0.5 font-extrabold text-slate-900">
                                                 @if($isNew)
-                                                    ₹ {{ number_format((float)$plan->registration_fee, 0) }}
-                                                    <span class="text-[10px] font-bold {{ $plan->registration_fee_enabled ? 'text-emerald-600' : 'text-slate-400' }}">
-                                                        {{ $plan->registration_fee_enabled ? 'ENABLED' : 'DISABLED' }}
-                                                    </span>
+                                                    ₹ {{ number_format((float) $plan->registration_fee, 0) }}
+                                                    @if($plan->registration_fee_enabled)
+                                                        <span class="block text-[10px] font-bold text-emerald-600">On</span>
+                                                    @endif
                                                 @else
-                                                    <span class="text-slate-400 font-bold">N/A</span>
+                                                    <span class="text-slate-400">—</span>
                                                 @endif
-                                            </p>
+                                            </dd>
                                         </div>
+                                    </dl>
+                                    <div class="mt-auto flex items-end justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+                                        <span class="text-xs font-bold text-slate-600">Total payable</span>
+                                        <span class="text-xl font-black text-indigo-900 tabular-nums">₹ {{ number_format($payable, 0) }}</span>
                                     </div>
-
-                                    <div class="rounded-2xl border border-slate-100 bg-white p-4 flex items-start justify-between gap-3">
-                                        <div>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payable amount</p>
-                                            <p class="mt-1 text-[10px] font-bold text-slate-500">{{ $isNew && $plan->registration_fee_enabled ? 'Membership fee + Registration fee' : 'Membership fee' }}</p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-extrabold text-slate-900">₹ {{ number_format($payable, 0) }}</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="rounded-2xl border border-slate-100 bg-indigo-50/40 p-4 hidden peer-checked:block">
-                                        <p class="text-xs font-extrabold text-indigo-700">Selected</p>
-                                        <p class="text-[10px] font-bold text-indigo-700/80 mt-1">Click “Pay Now” to continue to checkout.</p>
-                                    </div>
+                                    <p class="text-center text-xs font-extrabold transition-opacity"
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'text-indigo-600 opacity-100' : 'text-slate-400 opacity-0 h-0 overflow-hidden py-0'">
+                                        Selected — use Pay Now below
+                                    </p>
                                 </div>
                             </label>
                         @empty
-                            <div class="md:col-span-2 lg:col-span-3 rounded-[28px] border border-slate-100 bg-slate-50 p-10 text-center">
+                            <div class="md:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-12 text-center">
                                 <h3 class="text-lg font-extrabold text-slate-900">No active plans found</h3>
-                                <p class="mt-1 text-sm text-slate-500">Ask admin to add and activate subscription settings.</p>
+                                <p class="mt-1 text-sm text-slate-500">Ask admin to add plans under Membership module.</p>
                             </div>
                         @endforelse
+                    </div>
+
+                    {{-- List: table view --}}
+                    <div x-show="viewType === 'list'" x-cloak class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <table class="min-w-[720px] w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-50/90 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    <th class="w-12 px-4 py-3.5"></th>
+                                    <th class="px-4 py-3.5">Type</th>
+                                    <th class="px-4 py-3.5">Cycle</th>
+                                    <th class="px-4 py-3.5 text-right">Membership</th>
+                                    <th class="px-4 py-3.5 text-right">Registration</th>
+                                    <th class="px-4 py-3.5 text-center">Grace</th>
+                                    <th class="px-4 py-3.5 text-right">Payable</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($plans as $plan)
+                                    @php
+                                        $isNew = ($plan->subscription_type === 'New');
+                                        $paymentLabel = match($plan->payment_type) {
+                                            'monthly' => 'Monthly',
+                                            'bi_monthly' => 'Bi - Monthly',
+                                            'quarterly' => 'Quarterly',
+                                            'half_yearly' => 'Half Yearly',
+                                            'yearly' => 'Yearly',
+                                            default => ucfirst((string) $plan->payment_type),
+                                        };
+                                        $registrationFee = ($isNew && $plan->registration_fee_enabled) ? (float) $plan->registration_fee : 0.0;
+                                        $payable = (float) $plan->membership_fee + $registrationFee;
+                                    @endphp
+                                    <tr class="subscription-plan-row cursor-pointer transition-colors hover:bg-indigo-50/30"
+                                        data-payable="{{ $payable }}"
+                                        @click="pick({{ (int) $plan->id }})"
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-indigo-50' : ''">
+                                        <td class="px-4 py-3 align-middle text-center">
+                                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors"
+                                                :class="selectedPlan === {{ (int) $plan->id }} ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'">
+                                                <svg class="h-3 w-3 text-white" :class="selectedPlan === {{ (int) $plan->id }} ? 'opacity-100' : 'opacity-0'" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 font-extrabold text-slate-900">{{ $plan->subscription_type }}</td>
+                                        <td class="px-4 py-3 text-slate-700">{{ $paymentLabel }}</td>
+                                        <td class="px-4 py-3 text-right font-bold tabular-nums">₹ {{ number_format((float) $plan->membership_fee, 0) }}</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-slate-700">
+                                            @if($isNew)
+                                                ₹ {{ number_format((float) $plan->registration_fee, 0) }}
+                                                @if(!$plan->registration_fee_enabled)
+                                                    <span class="block text-[10px] font-bold text-slate-400">(off)</span>
+                                                @endif
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 text-center text-slate-600">{{ (int) ($plan->grace_period ?? 0) }}d</td>
+                                        <td class="px-4 py-3 text-right font-black text-indigo-900 tabular-nums">₹ {{ number_format($payable, 0) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-12 text-center text-slate-500">No active plans. Admin can add them in Membership module.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="flex justify-center">
@@ -348,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function startRazorpayCheckout() {
-    const selected = document.querySelector('label.group input[name="membership_setting_id"]:checked');
+    const selected = document.querySelector('input[name="membership_setting_id"]:checked');
     if (!selected) {
         alert('Please select a subscription plan first.');
         return;

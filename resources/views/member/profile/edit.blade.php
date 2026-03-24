@@ -120,163 +120,142 @@
                 <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8">
                     @csrf
 
-                    <div class="grid gap-8 lg:grid-cols-3">
-                        <div class="space-y-5">
+                    <div class="space-y-8">
+                        <section class="space-y-5">
                             <h3 class="flex items-center gap-2 border-b border-[#351c42]/10 pb-3 text-xs font-bold uppercase tracking-widest text-[#965995]">
                                 <span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Personal
                             </h3>
-                            <div>
-                                <label class="ml-label">First name <span class="text-red-500">*</span></label>
-                                <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" />
+                            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                <div>
+                                    <label class="ml-label">First name <span class="text-red-500">*</span></label>
+                                    <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Last name <span class="text-red-500">*</span></label>
+                                    <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Email ID</label>
+                                    <input value="{{ $user->email }}" disabled class="ml-inp bg-slate-100 text-slate-500" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Mobile <span class="text-red-500">*</span></label>
+                                    <input name="mobile" value="{{ old('mobile', $user->mobile) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">DOB <span class="text-red-500">*</span></label>
+                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Gender <span class="text-red-500">*</span></label>
+                                    @php($gender = old('gender', $user->gender))
+                                    <select name="gender" required class="ml-inp">
+                                        <option value="">Select</option>
+                                        <option value="Male" @selected($gender === 'Male')>Male</option>
+                                        <option value="Female" @selected($gender === 'Female')>Female</option>
+                                        <option value="Other" @selected($gender === 'Other')>Other</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label class="ml-label">Last name <span class="text-red-500">*</span></label>
-                                <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" />
-                            </div>
-                            <div>
-                                <label class="ml-label">Email ID</label>
-                                <input value="{{ $user->email }}" disabled class="ml-inp bg-slate-100 text-slate-500" />
-                            </div>
-                            <div>
-                                <label class="ml-label">Mobile <span class="text-red-500">*</span></label>
-                                <input name="mobile" value="{{ old('mobile', $user->mobile) }}" required class="ml-inp" />
-                            </div>
-                            <div>
-                                <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" />
-                            </div>
-                            <div>
-                                <label class="ml-label">Gender <span class="text-red-500">*</span></label>
-                                @php($gender = old('gender', $user->gender))
-                                <select name="gender" required class="ml-inp">
-                                    <option value="">Select</option>
-                                    <option value="Male" @selected($gender === 'Male')>Male</option>
-                                    <option value="Female" @selected($gender === 'Female')>Female</option>
-                                    <option value="Other" @selected($gender === 'Other')>Other</option>
-                                </select>
-                            </div>
-                        </div>
+                        </section>
 
-                        <div class="space-y-5">
+                        <section class="space-y-5">
                             <h3 class="flex items-center gap-2 border-b border-[#351c42]/10 pb-3 text-xs font-bold uppercase tracking-widest text-[#965995]">
                                 <span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Professional &amp; address
                             </h3>
-                            <div>
-                                <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
-                                @php($qualification = old('qualification', $user->qualification))
-                                <select name="qualification" required class="ml-inp">
-                                    <option value="">Select</option>
-                                    <option value="Diploma" @selected($qualification === 'Diploma')>Diploma</option>
-                                    <option value="B.Sc" @selected($qualification === 'B.Sc')>B.Sc</option>
-                                    <option value="B.Tech" @selected($qualification === 'B.Tech')>B.Tech</option>
-                                    <option value="M.Sc" @selected($qualification === 'M.Sc')>M.Sc</option>
-                                    <option value="M.Tech" @selected($qualification === 'M.Tech')>M.Tech</option>
-                                    <option value="PhD" @selected($qualification === 'PhD')>PhD</option>
-                                    <option value="Other" @selected($qualification === 'Other')>Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="ml-label">Blood group <span class="text-red-500">*</span></label>
-                                @php($blood = old('blood_group', $user->blood_group))
-                                <select name="blood_group" required class="ml-inp">
-                                    <option value="">Select</option>
-                                    @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
-                                        <option value="{{ $bg }}" @selected($blood === $bg)>{{ $bg }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="ml-label">RNRM number with date <span class="text-red-500">*</span></label>
-                                <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" required class="ml-inp" />
-                            </div>
-                            <div>
-                                <label class="ml-label">College name <span class="text-red-500">*</span></label>
-                                <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" />
-                            </div>
-                            <div>
-                                <label class="ml-label">Door no <span class="text-red-500">*</span></label>
-                                <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" />
-                            </div>
-                            <div class="md:col-span-2">
-                                <div class="ml-card-soft">
-                                    <p class="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#965995]">Address details</p>
-                                    <div class="grid gap-4 sm:grid-cols-2">
-                                        <div>
-                                            <label class="ml-label">Locality / area <span class="text-red-500">*</span></label>
-                                            <input name="locality_area" value="{{ old('locality_area', $user->locality_area) }}" required class="ml-inp" data-validate="required|min:3" data-label="Locality / area" />
-                                            <p class="ml-help" data-error-for="locality_area"></p>
-                                        </div>
-                                        <div>
-                                            <label class="ml-label">State <span class="text-red-500">*</span></label>
-                                            <input name="state" value="{{ old('state', $user->state) }}" required class="ml-inp" data-validate="required|min:2" data-label="State" />
-                                            <p class="ml-help" data-error-for="state"></p>
-                                        </div>
-                                        <div>
-                                            <label class="ml-label">Pin code <span class="text-red-500">*</span></label>
-                                            <input name="pin_code" value="{{ old('pin_code', $user->pin_code) }}" required maxlength="6" inputmode="numeric" pattern="[0-9]*" class="ml-inp" data-validate="required|digits:6" data-label="Pin code" />
-                                            <p class="ml-help" data-error-for="pin_code"></p>
-                                        </div>
-                                        <div>
-                                            <label class="ml-label">Council state <span class="text-red-500">*</span></label>
-                                            <input name="council_state" value="{{ old('council_state', $user->council_state) }}" required class="ml-inp" data-validate="required|min:2" data-label="Council state" />
-                                            <p class="ml-help" data-error-for="council_state"></p>
-                                        </div>
-                                    </div>
+                            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                <div>
+                                    <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
+                                    @php($qualification = old('qualification', $user->qualification))
+                                    <select name="qualification" required class="ml-inp">
+                                        <option value="">Select</option>
+                                        <option value="Diploma" @selected($qualification === 'Diploma')>Diploma</option>
+                                        <option value="B.Sc" @selected($qualification === 'B.Sc')>B.Sc</option>
+                                        <option value="B.Tech" @selected($qualification === 'B.Tech')>B.Tech</option>
+                                        <option value="M.Sc" @selected($qualification === 'M.Sc')>M.Sc</option>
+                                        <option value="M.Tech" @selected($qualification === 'M.Tech')>M.Tech</option>
+                                        <option value="PhD" @selected($qualification === 'PhD')>PhD</option>
+                                        <option value="Other" @selected($qualification === 'Other')>Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="ml-label">Blood group <span class="text-red-500">*</span></label>
+                                    @php($blood = old('blood_group', $user->blood_group))
+                                    <select name="blood_group" required class="ml-inp">
+                                        <option value="">Select</option>
+                                        @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
+                                            <option value="{{ $bg }}" @selected($blood === $bg)>{{ $bg }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="ml-label">RNRM number with date <span class="text-red-500">*</span></label>
+                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">College name <span class="text-red-500">*</span></label>
+                                    <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Door no <span class="text-red-500">*</span></label>
+                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Locality / area <span class="text-red-500">*</span></label>
+                                    <input name="locality_area" value="{{ old('locality_area', $user->locality_area) }}" required class="ml-inp" data-validate="required|min:3" data-label="Locality / area" />
+                                    <p class="ml-help" data-error-for="locality_area"></p>
+                                </div>
+                                <div>
+                                    <label class="ml-label">State <span class="text-red-500">*</span></label>
+                                    <input name="state" value="{{ old('state', $user->state) }}" required class="ml-inp" data-validate="required|min:2" data-label="State" />
+                                    <p class="ml-help" data-error-for="state"></p>
+                                </div>
+                                <div>
+                                    <label class="ml-label">Pin code <span class="text-red-500">*</span></label>
+                                    <input name="pin_code" value="{{ old('pin_code', $user->pin_code) }}" required maxlength="6" inputmode="numeric" pattern="[0-9]*" class="ml-inp" data-validate="required|digits:6" data-label="Pin code" />
+                                    <p class="ml-help" data-error-for="pin_code"></p>
+                                </div>
+                                <div>
+                                    <label class="ml-label">Council state <span class="text-red-500">*</span></label>
+                                    <input name="council_state" value="{{ old('council_state', $user->council_state) }}" required class="ml-inp" data-validate="required|min:2" data-label="Council state" />
+                                    <p class="ml-help" data-error-for="council_state"></p>
+                                </div>
+                                <div class="md:col-span-2 xl:col-span-3">
+                                    <label class="ml-label">Currently working</label>
+                                    <textarea name="currently_working" rows="3" class="ml-inp" placeholder="Role, hospital/clinic, and experience (optional)">{{ old('currently_working', $user->currently_working) }}</textarea>
                                 </div>
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="ml-label">Currently working</label>
-                                <textarea name="currently_working" rows="3" class="ml-inp" placeholder="Role, hospital/clinic, and experience (optional)">{{ old('currently_working', $user->currently_working) }}</textarea>
-                            </div>
-                        </div>
+                        </section>
 
-                        <div class="space-y-5">
+                        <section class="space-y-5">
                             <h3 class="flex items-center gap-2 border-b border-[#351c42]/10 pb-3 text-xs font-bold uppercase tracking-widest text-[#965995]">
                                 <span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Documents
                             </h3>
-                            <div class="ml-upload-zone p-4">
-                                <label class="ml-label">Educational certificate <span class="text-red-500">*</span></label>
-                                @if($user->educational_certificate_path)
-                                    <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->educational_certificate_path) }}">View current</a>
-                                @endif
-                                <input type="file" name="educational_certificate" class="w-full text-sm" />
-                            </div>
-                            <div class="ml-upload-zone p-4">
-                                <label class="ml-label">Aadhar card <span class="text-red-500">*</span></label>
-                                @if($user->aadhar_card_path)
-                                    <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->aadhar_card_path) }}">View current</a>
-                                @endif
-                                <input type="file" name="aadhar_card" class="w-full text-sm" />
-                            </div>
-                            <div class="ml-upload-zone p-4">
-                                <label class="ml-label">Passport size photo <span class="text-red-500">*</span></label>
-                                @if($user->passport_photo_path)
-                                    <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->passport_photo_path) }}">View current</a>
-                                @endif
-                                <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" />
-                            </div>
-
-                            <div class="ml-card-soft">
-                                <p class="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#965995]">Password update</p>
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="ml-label">Current password</label>
-                                        <input type="password" name="current_password" class="ml-inp" autocomplete="current-password" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label">New password</label>
-                                        <input type="password" name="new_password" class="ml-inp" autocomplete="new-password" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label">Confirm new password</label>
-                                        <input type="password" name="new_password_confirmation" class="ml-inp" autocomplete="new-password" />
-                                    </div>
-                                    <p class="text-[11px] font-semibold text-[#351c42]/65">
-                                        Leave password fields empty if you do not want to change password.
-                                    </p>
+                            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                <div class="ml-upload-zone p-4">
+                                    <label class="ml-label">Educational certificate <span class="text-red-500">*</span></label>
+                                    @if($user->educational_certificate_path)
+                                        <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->educational_certificate_path) }}">View current</a>
+                                    @endif
+                                    <input type="file" name="educational_certificate" class="w-full text-sm" />
+                                </div>
+                                <div class="ml-upload-zone p-4">
+                                    <label class="ml-label">Aadhar card <span class="text-red-500">*</span></label>
+                                    @if($user->aadhar_card_path)
+                                        <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->aadhar_card_path) }}">View current</a>
+                                    @endif
+                                    <input type="file" name="aadhar_card" class="w-full text-sm" />
+                                </div>
+                                <div class="ml-upload-zone p-4">
+                                    <label class="ml-label">Passport size photo <span class="text-red-500">*</span></label>
+                                    @if($user->passport_photo_path)
+                                        <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->passport_photo_path) }}">View current</a>
+                                    @endif
+                                    <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" />
                                 </div>
                             </div>
-                        </div>
+
+                        </section>
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t border-[#351c42]/10 pt-6 sm:flex-row sm:justify-end sm:gap-4">

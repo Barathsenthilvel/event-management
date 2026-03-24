@@ -224,17 +224,6 @@
                 <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
             </header>
 
-            <section class="rounded-2xl border-2 border-blue-200/80 bg-white p-8 text-center shadow-lg shadow-blue-500/5 sm:p-10">
-                <h2 class="text-2xl font-bold text-[#351c42] sm:text-3xl">Hello, {{ $firstName }}</h2>
-                <p class="mt-4 text-lg font-semibold text-[#351c42] sm:text-xl">Your membership fee <span class="text-blue-600">700 INR</span> / year</p>
-                <p class="mx-auto mt-2 max-w-md text-sm text-[#351c42]/65">(Typical new member bundle: subscription + registration — pay via plans below.)</p>
-                @if($canSeeMembership)
-                    <a href="{{ route('member.subscription.index') }}" class="md-btn-pay mx-auto mt-8 inline-flex px-10">Pay now</a>
-                @else
-                    <a href="{{ route('member.profile.edit') }}" class="md-btn-pay mx-auto mt-8 inline-flex px-10">Complete profile first</a>
-                @endif
-            </section>
-
             <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">

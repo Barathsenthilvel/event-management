@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminMemberApprovalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AdminSubscriptionController;
+use App\Http\Controllers\MemberPasswordController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -136,6 +137,8 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
+        Route::get('/password', [MemberPasswordController::class, 'edit'])->name('password.edit');
+        Route::post('/password', [MemberPasswordController::class, 'update'])->name('password.update');
         Route::get('/subscription', [MemberSubscriptionController::class, 'index'])->name('subscription.index');
         Route::post('/subscription/checkout', [MemberSubscriptionController::class, 'checkout'])->name('subscription.checkout');
         Route::get('/subscription/checkout', [MemberSubscriptionController::class, 'showCheckout'])->name('subscription.checkout.show');
@@ -144,4 +147,3 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/subscription/invoice/{id}', [MemberSubscriptionController::class, 'downloadInvoice'])->name('subscription.invoice');
     });
 });
-

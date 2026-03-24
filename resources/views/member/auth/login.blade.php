@@ -126,7 +126,7 @@
                 </span>
             </button>
             <a href="{{ route('home') }}" class="flex min-w-0 max-w-[min(48vw,200px)] shrink-0 items-center sm:max-w-[220px]" aria-label="GNAT Donation home">
-                <img src="{{ asset('/images/logo.png') }}" alt="GNAT Donation" class="h-8 w-auto max-h-11 max-w-full object-contain object-left sm:h-11" width="200" height="48" />
+                <img src="{{ asset('clogo.png') }}" alt="GNAT Donation" class="h-8 w-auto max-h-11 max-w-full object-contain object-left sm:h-11" width="200" height="48" />
             </a>
             <nav class="hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-10" aria-label="Primary">
                 <a href="{{ route('home') }}#home" class="ml-nav-link">Home</a>

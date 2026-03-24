@@ -48,10 +48,15 @@
             color: #351c42;
             box-shadow: inset 0 0 0 1px rgba(53, 28, 66, 0.08);
         }
+        [x-cloak] { display: none !important; }
     </style>
     @stack('styles')
 </head>
 <body class="md-page-bg text-[#351c42] antialiased">
+    @php
+        $gnatMember = Auth::user();
+        $gnatCanSubscribe = $gnatMember && $gnatMember->profile_completed && $gnatMember->is_approved;
+    @endphp
     <header class="sticky top-0 z-40 md-glass-header">
         <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
             <a href="{{ route('home') }}" class="flex min-w-0 max-w-[200px] shrink-0 sm:max-w-[220px]" aria-label="Home">
@@ -85,6 +90,13 @@
                         </svg>
                         Profile
                     </a>
+                    <a href="{{ route('member.password.edit') }}"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm-7 8v-2a4 4 0 014-4h6a4 4 0 014 4v2"/>
+                        </svg>
+                        Change password
+                    </a>
                     <form method="POST" action="{{ route('member.logout') }}">
                         @csrf
                         <button type="submit"
@@ -105,8 +117,11 @@
             <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">Menu</p>
             <nav class="flex flex-col gap-1" aria-label="Member">
                 <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Dashboard</a>
+                @if($gnatCanSubscribe)
+                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Membership</a>
+                @endif
                 <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Profile</a>
-                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Account settings</a>
+                <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Change password</a>
             </nav>
             <form method="POST" action="{{ route('member.logout') }}" class="mt-8 border-t border-[#351c42]/10 pt-4">
                 @csrf

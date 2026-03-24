@@ -1,7 +1,9 @@
-@extends('member.layouts.app')
+@extends('member.layouts.gnat')
+
+@section('title', 'Checkout — GNAT Donation')
 
 @section('content')
-<div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-6">
+<div class="space-y-6">
     <div class="rounded-[28px] border border-white bg-linear-to-br from-white via-white to-indigo-50/40 shadow-sm p-6 md:p-7">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
