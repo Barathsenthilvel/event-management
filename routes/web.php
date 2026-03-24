@@ -15,6 +15,7 @@ use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\AdminMemberApprovalController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\EventController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -69,12 +70,17 @@ Route::prefix('admin')->group(function () {
         Route::post('/settings/default-settings/{defaultSetting}/set-default', [DefaultSettingsController::class, 'setDefault'])->name('admin.settings.default-settings.set-default');
         Route::delete('/settings/default-settings/{defaultSetting}', [DefaultSettingsController::class, 'destroy'])->name('admin.settings.default-settings.destroy');
 
-        // E-Books Management (UI only for now)
-        Route::resource('e-books', EBookController::class)->only(['index', 'create', 'store'])->names([
+        // E-Books Management
+        Route::resource('e-books', EBookController::class)->except(['show'])->names([
             'index' => 'admin.ebooks.index',
             'create' => 'admin.ebooks.create',
             'store' => 'admin.ebooks.store',
+            'edit' => 'admin.ebooks.edit',
+            'update' => 'admin.ebooks.update',
+            'destroy' => 'admin.ebooks.destroy',
         ]);
+        Route::post('/e-books/{e_book}/toggle-promote', [EBookController::class, 'togglePromote'])->name('admin.ebooks.toggle-promote');
+        Route::post('/e-books/{e_book}/toggle-status', [EBookController::class, 'toggleStatus'])->name('admin.ebooks.toggle-status');
 
         // Membership Subscription Settings
         Route::get('/membershipmodule', [MembershipController::class, 'index'])->name('admin.memberships.index');
@@ -89,6 +95,21 @@ Route::prefix('admin')->group(function () {
             ->name('admin.members.pending-approvals.approve');
         Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])
             ->name('admin.members.pending-approvals.reject');
+
+        // Events Management
+        Route::get('/events', [EventController::class, 'index'])->name('admin.events.index');
+        Route::get('/events/create', [EventController::class, 'create'])->name('admin.events.create');
+        Route::post('/events', [EventController::class, 'store'])->name('admin.events.store');
+        Route::get('/events/{event}', [EventController::class, 'show'])->name('admin.events.show');
+        Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('admin.events.edit');
+        Route::put('/events/{event}', [EventController::class, 'update'])->name('admin.events.update');
+        Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('admin.events.destroy');
+        Route::post('/events/{event}/cancel', [EventController::class, 'cancel'])->name('admin.events.cancel');
+        Route::post('/events/{event}/toggle-promote', [EventController::class, 'togglePromote'])->name('admin.events.toggle-promote');
+        Route::post('/events/{event}/toggle-display', [EventController::class, 'toggleDisplay'])->name('admin.events.toggle-display');
+        Route::post('/events/{event}/send-reminder', [EventController::class, 'sendReminder'])->name('admin.events.send-reminder');
+        Route::get('/events/{event}/invite', [EventController::class, 'inviteForm'])->name('admin.events.invite');
+        Route::post('/events/{event}/invite', [EventController::class, 'inviteStore'])->name('admin.events.invite.store');
     });
 });
 

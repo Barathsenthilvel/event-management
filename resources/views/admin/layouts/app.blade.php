@@ -283,6 +283,16 @@
             </a>
             @endif
 
+            <a href="{{ route('admin.events.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.events.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.events.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Events</span>
+            </a>
+
             <a href="{{ route('admin.members.pending-approvals.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"

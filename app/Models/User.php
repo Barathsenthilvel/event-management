@@ -87,4 +87,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(PaymentTransaction::class);
     }
+
+    public function eventInvites(): HasMany
+    {
+        return $this->hasMany(EventInvite::class);
+    }
 }

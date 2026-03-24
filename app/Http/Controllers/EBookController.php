@@ -2,97 +2,149 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EBook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EBookController extends Controller
 {
-    /**
-     * Show the E-Books listing page.
-     * For now this uses sample data so the UI works
-     * even before the database/model are wired.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $ebooks = collect([
-            [
-                'hospital' => 'Hospital A',
-                'title' => 'Title 1',
-                'code' => 'CODE-001',
-                'promote_front' => true,
-                'created_on' => '01 Jan 2026',
-                'created_by' => 'User name',
-                'updated_on' => '02 Jan 2026',
-                'updated_by' => 'User name',
-                'status' => 'active',
-            ],
-            [
-                'hospital' => 'Hospital B',
-                'title' => 'Title 2',
-                'code' => 'CODE-002',
-                'promote_front' => true,
-                'created_on' => '05 Jan 2026',
-                'created_by' => 'User name',
-                'updated_on' => '06 Jan 2026',
-                'updated_by' => 'User name',
-                'status' => 'active',
-            ],
-            [
-                'hospital' => 'Hospital C',
-                'title' => 'Title 3',
-                'code' => 'CODE-003',
-                'promote_front' => true,
-                'created_on' => '10 Jan 2026',
-                'created_by' => 'User name',
-                'updated_on' => '11 Jan 2026',
-                'updated_by' => 'User name',
-                'status' => 'active',
-            ],
-            [
-                'hospital' => 'Hospital D',
-                'title' => 'Title 4',
-                'code' => 'CODE-004',
-                'promote_front' => true,
-                'created_on' => '15 Jan 2026',
-                'created_by' => 'User name',
-                'updated_on' => '16 Jan 2026',
-                'updated_by' => 'User name',
-                'status' => 'inactive',
-            ],
-        ]);
+        $q = trim((string) $request->query('q', ''));
 
-        return view('admin.ebooks.index', compact('ebooks'));
+        $ebooks = EBook::query()
+            ->with('creator:id,name')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%' . $q . '%')
+                        ->orWhere('code', 'like', '%' . $q . '%')
+                        ->orWhere('hospital', 'like', '%' . $q . '%');
+                });
+            })
+            ->latest('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('admin.ebooks.index', compact('ebooks', 'q'));
     }
 
-    /**
-     * Show the create E-Book form.
-     */
     public function create()
     {
         return view('admin.ebooks.create');
     }
 
-    /**
-     * Temporary store handler – validates and redirects back.
-     * You can replace this later with real persistence logic.
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'short_description' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'pricing_type' => 'required|in:free,paid',
-            'price' => 'nullable|numeric|min:0',
-            'cover_image' => 'nullable|image',
-            'banner_image' => 'nullable|image',
-            'material' => 'nullable|file',
-        ]);
+        $validated = $this->validatePayload($request);
 
-        // TODO: Implement real save logic (model + upload handling)
+        EBook::create($this->buildPayload($request, $validated, true));
 
         return redirect()
             ->route('admin.ebooks.index')
-            ->with('success', 'E-Book form submitted (demo only).');
+            ->with('success', 'E-Book created successfully.');
+    }
+
+    public function edit(EBook $e_book)
+    {
+        return view('admin.ebooks.edit', ['ebook' => $e_book]);
+    }
+
+    public function update(Request $request, EBook $e_book)
+    {
+        $validated = $this->validatePayload($request, $e_book->id);
+        $e_book->update($this->buildPayload($request, $validated, false, $e_book));
+
+        return redirect()
+            ->route('admin.ebooks.index')
+            ->with('success', 'E-Book updated successfully.');
+    }
+
+    public function destroy(EBook $e_book)
+    {
+        $e_book->delete();
+
+        return redirect()
+            ->route('admin.ebooks.index')
+            ->with('success', 'E-Book deleted successfully.');
+    }
+
+    public function togglePromote(EBook $e_book)
+    {
+        $e_book->update(['promote_front' => !$e_book->promote_front]);
+
+        return redirect()
+            ->route('admin.ebooks.index')
+            ->with('success', 'Promote front updated.');
+    }
+
+    public function toggleStatus(EBook $e_book)
+    {
+        $e_book->update(['is_active' => !$e_book->is_active]);
+
+        return redirect()
+            ->route('admin.ebooks.index')
+            ->with('success', 'Display status updated.');
+    }
+
+    private function validatePayload(Request $request, ?int $id = null): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:255',
+            'hospital' => 'nullable|string|max:255',
+            'short_description' => 'nullable|string|max:500',
+            'description' => 'nullable|string',
+            'pricing_type' => 'required|in:free,paid',
+            'price' => 'nullable|numeric|min:0|required_if:pricing_type,paid',
+            'cover_image' => 'nullable|image|max:5120',
+            'banner_image' => 'nullable|image|max:5120',
+            'material' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'is_active' => 'nullable|boolean',
+        ]);
+    }
+
+    private function buildPayload(Request $request, array $validated, bool $creating, ?EBook $ebook = null): array
+    {
+        $payload = [
+            'title' => $validated['title'],
+            'hospital' => $validated['hospital'] ?? null,
+            'short_description' => $validated['short_description'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'pricing_type' => $validated['pricing_type'],
+            'price' => $validated['pricing_type'] === 'paid' ? (float) $validated['price'] : 0,
+            'is_active' => $request->boolean('is_active', true),
+        ];
+
+        if ($creating) {
+            $payload['created_by_admin_id'] = Auth::guard('admin')->id();
+            $payload['code'] = $this->generateCode();
+            $payload['promote_front'] = false;
+        }
+
+        if ($request->hasFile('cover_image')) {
+            $payload['cover_image_path'] = $request->file('cover_image')->store('ebooks/covers', 'public');
+        } elseif ($ebook) {
+            $payload['cover_image_path'] = $ebook->cover_image_path;
+        }
+
+        if ($request->hasFile('banner_image')) {
+            $payload['banner_image_path'] = $request->file('banner_image')->store('ebooks/banners', 'public');
+        } elseif ($ebook) {
+            $payload['banner_image_path'] = $ebook->banner_image_path;
+        }
+
+        if ($request->hasFile('material')) {
+            $payload['material_path'] = $request->file('material')->store('ebooks/materials', 'public');
+        } elseif ($ebook) {
+            $payload['material_path'] = $ebook->material_path;
+        }
+
+        return $payload;
+    }
+
+    private function generateCode(): string
+    {
+        $nextId = ((int) EBook::max('id')) + 1;
+        return 'EBK-' . str_pad((string) $nextId, 5, '0', STR_PAD_LEFT);
     }
 }
 
