@@ -255,6 +255,27 @@
                                 @endif
                                 <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" />
                             </div>
+
+                            <div class="ml-card-soft">
+                                <p class="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#965995]">Password update</p>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="ml-label">Current password</label>
+                                        <input type="password" name="current_password" class="ml-inp" autocomplete="current-password" />
+                                    </div>
+                                    <div>
+                                        <label class="ml-label">New password</label>
+                                        <input type="password" name="new_password" class="ml-inp" autocomplete="new-password" />
+                                    </div>
+                                    <div>
+                                        <label class="ml-label">Confirm new password</label>
+                                        <input type="password" name="new_password_confirmation" class="ml-inp" autocomplete="new-password" />
+                                    </div>
+                                    <p class="text-[11px] font-semibold text-[#351c42]/65">
+                                        Leave password fields empty if you do not want to change password.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

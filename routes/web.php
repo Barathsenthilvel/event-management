@@ -16,6 +16,7 @@ use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\AdminMemberApprovalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AdminSubscriptionController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -95,6 +96,10 @@ Route::prefix('admin')->group(function () {
             ->name('admin.members.pending-approvals.approve');
         Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])
             ->name('admin.members.pending-approvals.reject');
+
+        // Subscription List (view only)
+        Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])
+            ->name('admin.subscriptions.index');
 
         // Events Management
         Route::get('/events', [EventController::class, 'index'])->name('admin.events.index');

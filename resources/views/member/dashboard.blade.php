@@ -153,10 +153,36 @@
                 <a href="{{ route('home') }}#gallery" class="md-nav-link">Gallery</a>
                 <a href="{{ route('home') }}#contact" class="md-nav-link">Contact us</a>
             </nav>
-            <div class="ml-auto flex items-center gap-2">
-                <a href="{{ route('member.dashboard') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11" aria-label="Account">
+            <div class="ml-auto relative" x-data="{ openProfile: false }">
+                <button type="button"
+                    @click="openProfile = !openProfile"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11"
+                    aria-label="Account menu">
                     <svg class="h-5 w-5 text-[#351c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                </a>
+                </button>
+                <div x-show="openProfile" x-cloak @click.away="openProfile = false"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    class="absolute right-0 mt-2 w-52 rounded-2xl border border-[#351c42]/10 bg-white shadow-xl p-2 z-50">
+                    <a href="{{ route('member.profile.edit') }}"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Profile
+                    </a>
+                    <form method="POST" action="{{ route('member.logout') }}">
+                        @csrf
+                        <button type="submit"
+                            class="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </header>

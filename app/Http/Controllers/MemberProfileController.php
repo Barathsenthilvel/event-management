@@ -45,6 +45,8 @@ class MemberProfileController extends Controller
             'educational_certificate' => [empty($user?->educational_certificate_path) ? 'required' : 'nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
             'aadhar_card' => [empty($user?->aadhar_card_path) ? 'required' : 'nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
             'passport_photo' => [empty($user?->passport_photo_path) ? 'required' : 'nullable', 'image', 'max:5120', 'mimes:jpg,jpeg,png,webp'],
+            'current_password' => ['nullable', 'required_with:new_password', 'current_password'],
+            'new_password' => ['nullable', 'string', 'min:6', 'confirmed'],
         ]);
 
         $user->first_name = $data['first_name'];
@@ -75,6 +77,11 @@ class MemberProfileController extends Controller
         }
         if ($request->hasFile('passport_photo')) {
             $user->passport_photo_path = $request->file('passport_photo')->store($dir, 'public');
+        }
+
+        if (!empty($data['new_password'])) {
+            // User model casts password as "hashed", so plain value is stored securely.
+            $user->password = $data['new_password'];
         }
 
         $user->profile_completed = $this->isProfileComplete($user);
