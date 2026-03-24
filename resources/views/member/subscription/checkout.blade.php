@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="rounded-[28px] border border-white bg-linear-to-br from-white via-white to-indigo-50/40 shadow-sm p-6 md:p-7">
+    <div class="rounded-[28px] border border-white bg-gradient-to-br from-white via-white to-indigo-50/40 shadow-sm p-6 md:p-7">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Checkout</h1>
@@ -32,7 +32,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7">
             <div class="rounded-[28px] border border-slate-100 bg-white shadow-sm overflow-hidden">
-                <div class="p-6 bg-linear-to-br from-indigo-600 to-slate-900 text-white">
+                <div class="p-6 bg-gradient-to-br from-indigo-600 to-slate-900 text-white">
                     <p class="text-[10px] font-black uppercase tracking-widest text-white/80">
                         {{ $plan->subscription_type }} • {{ $paymentLabel }}
                     </p>

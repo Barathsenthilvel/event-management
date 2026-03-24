@@ -20,10 +20,10 @@
         body { font-family: "DM Sans", system-ui, sans-serif; }
         [x-cloak] { display: none !important; }
         .md-page-bg {
-            background-color: #f6f7fb;
+            background-color: #f8f6fa;
             background-image:
-                radial-gradient(ellipse 70% 45% at 50% -15%, rgba(37, 99, 235, 0.08), transparent),
-                radial-gradient(ellipse 50% 35% at 100% 20%, rgba(150, 89, 149, 0.1), transparent);
+                radial-gradient(ellipse 70% 45% at 50% -15%, rgba(53, 28, 66, 0.09), transparent),
+                radial-gradient(ellipse 50% 35% at 100% 20%, rgba(150, 89, 149, 0.12), transparent);
             min-height: 100vh;
         }
         .md-glass-header {
@@ -59,15 +59,15 @@
         }
         .md-plan-card {
             border-radius: 1.25rem;
-            border: 1px solid rgba(37, 99, 235, 0.18);
-            background: linear-gradient(180deg, #fff 0%, #fafbff 100%);
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.06);
+            border: 1px solid rgba(53, 28, 66, 0.12);
+            background: linear-gradient(180deg, #fff 0%, rgba(150, 89, 149, 0.04) 100%);
+            box-shadow: 0 4px 20px rgba(53, 28, 66, 0.06);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
         .md-plan-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.1);
-            border-color: rgba(37, 99, 235, 0.35);
+            box-shadow: 0 12px 32px rgba(53, 28, 66, 0.1);
+            border-color: rgba(150, 89, 149, 0.35);
         }
         .md-history-card {
             border-radius: 1.25rem;
@@ -83,13 +83,13 @@
             padding: 0.65rem 1.35rem;
             font-size: 0.8125rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: #fff;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+            background: linear-gradient(135deg, #351c42 0%, #4d2a5c 100%);
+            color: #fddc6a;
+            box-shadow: 0 6px 18px rgba(53, 28, 66, 0.35);
             transition: filter 0.2s, transform 0.15s;
             text-decoration: none;
         }
-        .md-btn-pay:hover { filter: brightness(1.05); transform: translateY(-1px); }
+        .md-btn-pay:hover { filter: brightness(1.06); transform: translateY(-1px); }
         .md-modal-overlay {
             position: fixed;
             inset: 0;
@@ -166,7 +166,7 @@
                     x-transition:enter-end="opacity-100 scale-100"
                     class="absolute right-0 mt-2 w-52 rounded-2xl border border-[#351c42]/10 bg-white shadow-xl p-2 z-50">
                     <a href="{{ route('member.profile.edit') }}"
-                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#351c42]/75 hover:bg-[#351c42]/5 hover:text-[#351c42]">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
@@ -175,7 +175,7 @@
                     <form method="POST" action="{{ route('member.logout') }}">
                         @csrf
                         <button type="submit"
-                            class="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50">
+                            class="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
@@ -196,18 +196,18 @@
             <nav class="flex flex-col gap-1" aria-label="Member">
                 <a href="{{ url()->current() }}#top" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Dashboard</a>
                 @if($canSeeMembership && $hasActiveSubscription)
-                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Membership</a>
-                    <a href="{{ route('home') }}#events" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Events</a>
-                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Meetings</a>
-                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Find e-books</a>
-                    <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Search jobs</a>
-                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Polling</a>
-                    <a href="{{ route('home') }}#donate" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Donations</a>
+                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
+                    <a href="{{ route('home') }}#events" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Events</a>
+                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Meetings</a>
+                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Find e-books</a>
+                    <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
+                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Polling</a>
+                    <a href="{{ route('home') }}#donate" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Donations</a>
                 @else
-                    <span class="md-sidebar-link cursor-default opacity-50" title="Available after profile completion and approval"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Membership &amp; more</span>
+                    <span class="md-sidebar-link cursor-default opacity-50" title="Available after profile completion and approval"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership &amp; more</span>
                 @endif
-                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Profile</a>
-                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> Account settings</a>
+                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
+                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Account settings</a>
             </nav>
             <form method="POST" action="{{ route('member.logout') }}" class="mt-8 border-t border-[#351c42]/10 pt-4">
                 @csrf
@@ -253,7 +253,7 @@
                                 @if($sub)
                                     <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Active</span>
                                 @else
-                                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">No active plan</span>
+                                    <span class="rounded-full bg-[#965995]/15 px-2.5 py-1 text-xs font-bold text-[#351c42]/80">No active plan</span>
                                 @endif
                             </p>
                         </div>
@@ -281,14 +281,14 @@
                         <p class="mt-1 text-sm text-[#351c42]/60">Choose a plan from the admin-configured list. Payment is handled on the next step.</p>
                     </div>
                     @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-blue-600 hover:text-blue-800">View all plans →</a>
+                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">View all plans →</a>
                     @endif
                 </div>
 
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-blue-600">New members</h3>
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
                 <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
-                        <p class="text-xs font-bold uppercase tracking-wide text-blue-600">New member · Full year</p>
+                        <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
                         <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
                         <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
                         <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
@@ -303,7 +303,7 @@
                     </article>
                 </div>
 
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-blue-600">Renewal options</h3>
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
                 <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
                 <div class="flex flex-wrap gap-3">
                     @if($canSeeMembership)
@@ -315,7 +315,7 @@
             <section aria-labelledby="history-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h2 id="history-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription history</h2>
-                    <input type="search" id="md-history-search" placeholder="Search…" class="rounded-full border border-[#351c42]/15 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" aria-label="Search history" />
+                    <input type="search" id="md-history-search" placeholder="Search…" class="rounded-full border border-[#351c42]/15 bg-white px-4 py-2 text-sm text-[#351c42] outline-none placeholder:text-[#351c42]/40 focus:border-[#965995]/40 focus:ring-2 focus:ring-[#965995]/25" aria-label="Search history" />
                 </div>
                 <p class="mb-4 text-xs text-[#351c42]/50">Recent transactions · Download invoice when payment is successful.</p>
 
@@ -328,16 +328,16 @@
                         <article class="md-history-card overflow-hidden p-5 sm:p-6" data-history-row="{{ strtolower($planLabel . ' ' . $t->type . ' ' . $status . ' ' . $t->amount) }}">
                             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div class="flex flex-wrap gap-3">
-                                    <span class="rounded-lg bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-900">{{ $t->type }}</span>
+                                    <span class="rounded-lg bg-[#351c42]/10 px-2.5 py-1 text-xs font-bold text-[#351c42]">{{ $t->type }}</span>
                                     @if($planLabel)
-                                        <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[#351c42]">{{ $t->subscriptionPlan?->subscription_type ?? 'Plan' }}</span>
+                                        <span class="rounded-lg bg-[#965995]/15 px-2.5 py-1 text-xs font-semibold text-[#351c42]">{{ $t->subscriptionPlan?->subscription_type ?? 'Plan' }}</span>
                                     @endif
                                 </div>
                                 <div class="relative" data-history-menu-wrap>
                                     <button type="button" class="rounded-lg p-2 text-[#351c42]/60 hover:bg-[#351c42]/5" aria-label="Actions" data-history-menu-btn>⋮</button>
                                     <div class="absolute right-0 top-full z-10 mt-1 hidden min-w-[11rem] rounded-xl border border-[#351c42]/10 bg-white py-1 shadow-xl" data-history-menu>
                                         @if($status === 'successful')
-                                            <a href="{{ route('member.subscription.invoice', $t->id) }}" target="_blank" class="block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50">Download receipt</a>
+                                            <a href="{{ route('member.subscription.invoice', $t->id) }}" target="_blank" class="block w-full px-4 py-2.5 text-left text-sm font-medium text-[#351c42] hover:bg-[#351c42]/5">Download receipt</a>
                                         @else
                                             <span class="block px-4 py-2.5 text-sm text-[#351c42]/45">Receipt when paid</span>
                                         @endif

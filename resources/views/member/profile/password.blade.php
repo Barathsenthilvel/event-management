@@ -55,7 +55,7 @@
                     Back to profile
                 </a>
                 <button type="submit"
-                    class="inline-flex w-full items-center justify-center rounded-full bg-linear-to-br from-[#351c42] to-[#4d2a5c] px-6 py-3 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 sm:w-auto">
+                    class="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-br from-[#351c42] to-[#4d2a5c] px-6 py-3 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 sm:w-auto">
                     Update password
                 </button>
             </div>

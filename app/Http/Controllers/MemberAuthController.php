@@ -17,7 +17,7 @@ class MemberAuthController extends Controller
     public function showRegisterForm()
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         return view('member.auth.login', ['defaultTab' => 'signup']);
@@ -26,7 +26,7 @@ class MemberAuthController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         return view('member.auth.login', ['defaultTab' => 'signin']);
@@ -35,7 +35,7 @@ class MemberAuthController extends Controller
     public function login(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         $request->validate([
@@ -63,7 +63,7 @@ class MemberAuthController extends Controller
     public function register(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         $data = $request->validate([
@@ -93,7 +93,7 @@ class MemberAuthController extends Controller
     public function showOtpForm(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         if (!$request->session()->has(self::OTP_USER_SESSION_KEY)) {
@@ -111,7 +111,7 @@ class MemberAuthController extends Controller
     public function verifyOtp(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         $data = $request->validate([
@@ -147,13 +147,30 @@ class MemberAuthController extends Controller
         Auth::loginUsingId($userId, $remember);
         $request->session()->regenerate();
 
-        return redirect()->route('member.dashboard');
+        $user = User::find($userId);
+        if (!$user) {
+            return redirect()->route('member.dashboard');
+        }
+
+        return redirect()->to($this->memberHomeAfterAuth($user));
+    }
+
+    /**
+     * New / renewing members who are approved and have no active plan land on subscription first.
+     */
+    private function memberHomeAfterAuth(User $user): string
+    {
+        if ($user->profile_completed && $user->is_approved && !$user->activeSubscription()->exists()) {
+            return route('member.subscription.index');
+        }
+
+        return route('member.dashboard');
     }
 
     public function resendOtp(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('member.dashboard');
+            return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
         $userId = (int) $request->session()->get(self::OTP_USER_SESSION_KEY);

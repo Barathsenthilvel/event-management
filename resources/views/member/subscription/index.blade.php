@@ -4,14 +4,14 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="rounded-[28px] border border-white bg-linear-to-br from-white via-white to-indigo-50/40 shadow-sm p-6 md:p-7">
+    <div class="rounded-[28px] border border-[#351c42]/10 bg-gradient-to-br from-white via-white to-[#965995]/8 shadow-sm p-6 md:p-7">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Hello, {{ $user->first_name ?? 'Member' }}</h1>
-                <p class="mt-1 text-sm text-slate-500">Choose a subscription plan from the admin-added list and continue.</p>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-[#351c42] tracking-tight">Hello, {{ $user->first_name ?? 'Member' }}</h1>
+                <p class="mt-1 text-sm text-[#351c42]/60">Choose a subscription plan from the admin-added list and continue.</p>
             </div>
             <a href="{{ route('member.dashboard') }}"
-                class="px-6 py-3 rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-extrabold shadow-lg transition-all text-center">
+                class="px-6 py-3 rounded-2xl bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] text-xs font-extrabold shadow-lg transition-all text-center">
                 Back to Dashboard
             </a>
         </div>
@@ -48,14 +48,14 @@
                         <p class="text-xs text-slate-500">
                             Fees are shown in INR. Registration fee applies only for new subscription (if enabled).
                             @if(in_array(($filterType ?? null), ['New','Renewal'], true))
-                                <span class="font-extrabold text-indigo-700">Showing: {{ $filterType }}</span>
+                                <span class="font-extrabold text-[#965995]">Showing: {{ $filterType }}</span>
                             @endif
                         </p>
                     </div>
                     <div class="shrink-0">
-                        <span class="inline-flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-[11px] font-extrabold text-indigo-700">
+                        <span class="inline-flex items-center gap-2 rounded-2xl border border-[#965995]/25 bg-[#965995]/10 px-4 py-2 text-[11px] font-extrabold text-[#351c42]">
                             Active plans:
-                            <span class="rounded-xl bg-white px-2 py-0.5 text-indigo-800 border border-indigo-100">{{ (int) ($settingsCount ?? 0) }}</span>
+                            <span class="rounded-xl bg-white px-2 py-0.5 text-[#965995] border border-[#965995]/20">{{ (int) ($settingsCount ?? 0) }}</span>
                         </span>
                     </div>
                 </div>
@@ -109,8 +109,8 @@
                         </div>
                     </div>
 
-                    {{-- Grid: max 2 cards per row, cleaner cards --}}
-                    <div x-show="viewType === 'grid'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Grid: admin-style cards (light blue accents); 1 / 2 / 3 cols like reference --}}
+                    <div x-show="viewType === 'grid'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                         @forelse($plans as $plan)
                             @php
                                 $isNew = ($plan->subscription_type === 'New');
@@ -122,57 +122,75 @@
                                     'yearly' => 'Yearly',
                                     default => ucfirst((string) $plan->payment_type),
                                 };
+                                $cycleBadge = strtoupper(str_replace('_', '-', (string) $plan->payment_type));
                                 $registrationFee = ($isNew && $plan->registration_fee_enabled) ? (float) $plan->registration_fee : 0.0;
                                 $payable = (float) $plan->membership_fee + $registrationFee;
+                                $graceDays = (int) ($plan->grace_period ?? 0);
                             @endphp
 
                             <label for="mp-{{ $plan->id }}"
-                                class="relative flex flex-col rounded-2xl border bg-white shadow-sm transition-all cursor-pointer overflow-hidden"
-                                :class="selectedPlan === {{ (int) $plan->id }} ? 'ring-2 ring-indigo-500 ring-offset-2 border-indigo-300 shadow-md' : 'border-slate-200/90 hover:border-indigo-200 hover:shadow-md'"
+                                class="relative flex flex-col rounded-[20px] border border-[#351c42]/12 bg-white p-5 shadow-sm transition-all cursor-pointer"
+                                :class="selectedPlan === {{ (int) $plan->id }} ? 'ring-2 ring-[#965995] ring-offset-2 border-[#965995]/50 shadow-md' : 'hover:border-[#965995]/35 hover:shadow-md'"
                                 data-payable="{{ $payable }}">
-                                <div class="flex items-center justify-between gap-3 px-5 py-4 bg-linear-to-r from-[#351c42] to-[#5c3570] text-white">
-                                    <div class="min-w-0">
-                                        <span class="inline-flex rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#fddc6a]">{{ $plan->subscription_type }}</span>
-                                        <p class="mt-2 text-lg font-extrabold tracking-tight truncate">{{ $paymentLabel }}</p>
-                                        <p class="text-[11px] font-semibold text-white/75">{{ $isNew ? 'New member' : 'Renewal' }}</p>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#965995]/15 text-lg font-black text-[#351c42]">
+                                        {{ $isNew ? 'N' : 'R' }}
                                     </div>
-                                    <span class="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl border font-black text-xs transition-colors"
-                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-[#fddc6a] text-[#351c42] border-transparent' : 'border-white/20 bg-white/10 text-[#fddc6a]'">
-                                        ✓
+                                    <span class="shrink-0 rounded-full bg-[#965995]/15 px-3 py-1.5 text-[10px] font-black tracking-wide text-[#351c42]">
+                                        {{ $cycleBadge }}
                                     </span>
                                 </div>
-                                <div class="flex flex-1 flex-col gap-4 p-5">
-                                    <dl class="grid grid-cols-2 gap-3 text-sm">
-                                        <div class="rounded-xl bg-slate-50 px-3 py-2.5 border border-slate-100">
-                                            <dt class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Membership</dt>
-                                            <dd class="mt-0.5 font-extrabold text-slate-900">₹ {{ number_format((float) $plan->membership_fee, 0) }}</dd>
-                                        </div>
-                                        <div class="rounded-xl bg-slate-50 px-3 py-2.5 border border-slate-100">
-                                            <dt class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Registration</dt>
-                                            <dd class="mt-0.5 font-extrabold text-slate-900">
-                                                @if($isNew)
-                                                    ₹ {{ number_format((float) $plan->registration_fee, 0) }}
-                                                    @if($plan->registration_fee_enabled)
-                                                        <span class="block text-[10px] font-bold text-emerald-600">On</span>
-                                                    @endif
-                                                @else
-                                                    <span class="text-slate-400">—</span>
-                                                @endif
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                    <div class="mt-auto flex items-end justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
-                                        <span class="text-xs font-bold text-slate-600">Total payable</span>
-                                        <span class="text-xl font-black text-indigo-900 tabular-nums">₹ {{ number_format($payable, 0) }}</span>
+                                <h3 class="mt-4 text-xl font-black tracking-tight text-slate-900">
+                                    {{ $isNew ? 'New Membership' : 'Renewal Membership' }}
+                                </h3>
+
+                                <div class="mt-4 grid grid-cols-2 gap-3">
+                                    <div class="rounded-xl border border-slate-200/70 bg-slate-100/70 px-3 py-3">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Membership fee</p>
+                                        <p class="mt-1 text-base font-black tabular-nums text-slate-900">₹ {{ number_format((float) $plan->membership_fee, 2) }}</p>
                                     </div>
-                                    <p class="text-center text-xs font-extrabold transition-opacity"
-                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'text-indigo-600 opacity-100' : 'text-slate-400 opacity-0 h-0 overflow-hidden py-0'">
-                                        Selected — use Pay Now below
-                                    </p>
+                                    <div class="rounded-xl border border-slate-200/70 bg-slate-100/70 px-3 py-3">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Reg. fee</p>
+                                        @if($isNew)
+                                            <p class="mt-1 text-base font-black tabular-nums text-slate-900">₹ {{ number_format((float) $plan->registration_fee, 2) }}</p>
+                                            @if($plan->registration_fee_enabled)
+                                                <span class="mt-0.5 inline-block text-[10px] font-black uppercase text-emerald-600">On</span>
+                                            @else
+                                                <span class="mt-0.5 inline-block text-[10px] font-black uppercase text-slate-400">Off</span>
+                                            @endif
+                                        @else
+                                            <p class="mt-1 text-base font-bold text-slate-400">—</p>
+                                        @endif
+                                    </div>
                                 </div>
+
+                                <div class="mt-3 rounded-xl border border-slate-200/70 bg-slate-100/70 px-3 py-3">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Grace period</p>
+                                    <p class="mt-1 text-base font-black text-slate-900">{{ $graceDays }} {{ $graceDays === 1 ? 'day' : 'days' }}</p>
+                                </div>
+
+                                <div class="mt-3 rounded-xl border border-[#965995]/25 bg-[#965995]/8 px-3 py-2.5 flex items-center justify-between gap-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-[#351c42]/70">Total payable</span>
+                                    <span class="text-sm font-black tabular-nums text-[#351c42]">₹ {{ number_format($payable, 2) }}</span>
+                                </div>
+
+                                <div class="mt-4 flex gap-2">
+                                    <span class="flex flex-1 items-center justify-center rounded-xl bg-[#965995]/15 py-3 text-sm font-black text-[#351c42] transition-colors"
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-[#351c42] text-[#fddc6a]' : ''"
+                                        x-text="selectedPlan === {{ (int) $plan->id }} ? 'Selected' : 'Select plan'">
+                                    </span>
+                                    <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-[#965995]/30 bg-[#965995]/10 text-[#351c42]"
+                                        title="Selected for payment"
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'border-[#351c42] bg-[#351c42] text-[#fddc6a]' : ''">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <p class="mt-2 text-center text-[10px] font-bold text-slate-400">Then tap <span class="font-extrabold text-[#965995]">Pay Now</span> below</p>
                             </label>
                         @empty
-                            <div class="md:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-12 text-center">
+                            <div class="sm:col-span-2 xl:col-span-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-12 text-center">
                                 <h3 class="text-lg font-extrabold text-slate-900">No active plans found</h3>
                                 <p class="mt-1 text-sm text-slate-500">Ask admin to add plans under Membership module.</p>
                             </div>
@@ -208,13 +226,13 @@
                                         $registrationFee = ($isNew && $plan->registration_fee_enabled) ? (float) $plan->registration_fee : 0.0;
                                         $payable = (float) $plan->membership_fee + $registrationFee;
                                     @endphp
-                                    <tr class="subscription-plan-row cursor-pointer transition-colors hover:bg-indigo-50/30"
+                                    <tr class="subscription-plan-row cursor-pointer transition-colors hover:bg-[#965995]/10"
                                         data-payable="{{ $payable }}"
                                         @click="pick({{ (int) $plan->id }})"
-                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-indigo-50' : ''">
+                                        :class="selectedPlan === {{ (int) $plan->id }} ? 'bg-[#965995]/15' : ''">
                                         <td class="px-4 py-3 align-middle text-center">
                                             <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors"
-                                                :class="selectedPlan === {{ (int) $plan->id }} ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'">
+                                                :class="selectedPlan === {{ (int) $plan->id }} ? 'border-[#351c42] bg-[#351c42]' : 'border-slate-300 bg-white'">
                                                 <svg class="h-3 w-3 text-white" :class="selectedPlan === {{ (int) $plan->id }} ? 'opacity-100' : 'opacity-0'" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                             </span>
                                         </td>
@@ -232,7 +250,7 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-center text-slate-600">{{ (int) ($plan->grace_period ?? 0) }}d</td>
-                                        <td class="px-4 py-3 text-right font-black text-indigo-900 tabular-nums">₹ {{ number_format($payable, 0) }}</td>
+                                        <td class="px-4 py-3 text-right font-black text-[#351c42] tabular-nums">₹ {{ number_format($payable, 0) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -245,7 +263,7 @@
 
                     <div class="flex justify-center">
                         <button type="button" onclick="startRazorpayCheckout()"
-                            class="inline-flex items-center justify-center px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-extrabold shadow-lg shadow-indigo-200 transition-all">
+                            class="inline-flex items-center justify-center px-10 py-4 bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] rounded-2xl font-extrabold shadow-lg shadow-[#351c42]/25 transition-all">
                             Pay Now
                         </button>
                     </div>
@@ -261,7 +279,7 @@
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
         <div class="w-full max-w-md rounded-[28px] bg-white border border-slate-100 shadow-2xl overflow-hidden">
-            <div class="p-6 bg-linear-to-br from-slate-900 via-slate-900 to-amber-700 text-white">
+            <div class="p-6 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-700 text-white">
                 <div class="flex flex-col items-center text-center">
                     <div class="h-14 w-14 rounded-2xl bg-white/10 border border-white/15 shadow-lg flex items-center justify-center">
                         <div class="h-11 w-11 rounded-xl bg-white/95 flex items-center justify-center shadow-sm">
@@ -291,7 +309,7 @@
                 @endif
                 <div class="flex justify-end pt-2">
                     <button type="button" onclick="closeRenewalBlockedModal()"
-                        class="inline-flex items-center justify-center px-8 py-3 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-extrabold shadow-lg transition-all">
+                        class="inline-flex items-center justify-center px-8 py-3 bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] rounded-2xl font-extrabold shadow-lg transition-all">
                         OK
                     </button>
                 </div>
@@ -300,59 +318,76 @@
     </div>
 </div>
 
-<!-- 2-step payment success modal -->
+<!-- Payment success: theme modal + download invoice -->
 <div id="payment-success-modal" class="fixed inset-0 z-[120] hidden">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-    <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="w-full max-w-lg rounded-[28px] bg-white border border-slate-100 shadow-2xl overflow-hidden">
-            <div class="p-6 bg-linear-to-br from-emerald-600 to-slate-900 text-white">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/80">Payment Successful</p>
-                <h3 class="mt-1 text-lg font-extrabold tracking-tight" id="success-title">Thank you!</h3>
-                <p class="mt-2 text-xs font-bold text-white/80" id="success-subtitle"></p>
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeSuccessModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4 pointer-events-none">
+        <div class="w-full max-w-lg rounded-[28px] bg-white border border-[#351c42]/10 shadow-2xl overflow-hidden pointer-events-auto" onclick="event.stopPropagation()">
+            <div class="p-6 bg-gradient-to-br from-[#351c42] via-[#4d2a5c] to-[#965995] text-white">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[#fddc6a]/90">Payment successful</p>
+                <h3 class="mt-1 text-xl font-extrabold tracking-tight text-white" id="success-title">Thank you!</h3>
+                <p class="mt-2 text-xs font-bold text-white/85" id="success-subtitle"></p>
             </div>
 
-            <div class="p-6 space-y-4">
-                <div id="success-step-1">
-                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Plan purchased</p>
-                        <p class="mt-1 text-sm font-extrabold text-slate-900" id="plan-summary"></p>
-                        <p class="mt-1 text-xs font-bold text-slate-600" id="payment-id"></p>
+            <div class="p-6 space-y-4 max-h-[min(70vh,520px)] overflow-y-auto">
+                <div class="rounded-2xl border border-[#351c42]/10 bg-slate-50 p-4 space-y-2">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#965995]">Plan</p>
+                    <p class="text-sm font-extrabold text-[#351c42]" id="plan-summary"></p>
+                    <p class="text-xs font-mono font-bold text-slate-600 break-all" id="razorpay-order-line"></p>
+                    <p class="text-xs font-mono font-bold text-slate-600 break-all" id="payment-id"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-2xl border border-[#351c42]/10 bg-white p-4">
+                        <p class="text-[10px] font-black uppercase text-slate-500">Amount paid</p>
+                        <p class="mt-1 text-sm font-extrabold text-[#351c42]" id="amount-paid"></p>
                     </div>
-                    <div class="rounded-2xl border border-slate-100 bg-white p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Amount paid</p>
-                            <p class="mt-1 text-sm font-extrabold text-slate-900" id="amount-paid"></p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Valid till</p>
-                            <p class="mt-1 text-sm font-extrabold text-slate-900" id="valid-till"></p>
-                        </div>
+                    <div class="rounded-2xl border border-[#351c42]/10 bg-white p-4">
+                        <p class="text-[10px] font-black uppercase text-slate-500">Valid till</p>
+                        <p class="mt-1 text-sm font-extrabold text-[#351c42]" id="valid-till"></p>
                     </div>
                 </div>
-
-                <div id="success-step-2" class="hidden">
-                    <div class="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-700">Plan details</p>
-                        <ul class="mt-3 space-y-2 text-xs font-bold text-indigo-900/80">
-                            <li><span class="font-black text-indigo-900">Subscription Type:</span> <span id="detail-subscription-type"></span></li>
-                            <li><span class="font-black text-indigo-900">Cycle:</span> <span id="detail-payment-type"></span></li>
-                            <li><span class="font-black text-indigo-900">Membership Fee:</span> <span id="detail-membership-fee"></span></li>
-                            <li><span class="font-black text-indigo-900">Registration Fee:</span> <span id="detail-registration-fee"></span></li>
-                            <li><span class="font-black text-indigo-900">Grace Period (days):</span> <span id="detail-grace-period"></span></li>
-                        </ul>
-                    </div>
-                    <div class="rounded-2xl border border-slate-100 bg-white p-4">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Next</p>
-                        <p class="mt-1 text-xs font-bold text-slate-600">Click below to continue to your membership dashboard.</p>
-                    </div>
+                <div class="rounded-2xl border border-[#965995]/25 bg-[#965995]/8 p-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[#351c42]">Plan details</p>
+                    <ul class="mt-3 space-y-2 text-xs font-bold text-[#351c42]/90">
+                        <li class="flex justify-between gap-2"><span class="text-slate-500">Type</span><span id="detail-subscription-type"></span></li>
+                        <li class="flex justify-between gap-2"><span class="text-slate-500">Cycle</span><span id="detail-payment-type"></span></li>
+                        <li class="flex justify-between gap-2"><span class="text-slate-500">Membership fee</span><span id="detail-membership-fee"></span></li>
+                        <li class="flex justify-between gap-2"><span class="text-slate-500">Registration fee</span><span id="detail-registration-fee"></span></li>
+                        <li class="flex justify-between gap-2"><span class="text-slate-500">Grace (days)</span><span id="detail-grace-period"></span></li>
+                    </ul>
                 </div>
-
-                <div class="flex gap-3 justify-end pt-2">
+                <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                    <a id="success-invoice-link" href="#" target="_blank" rel="noopener"
+                        class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#351c42] bg-white px-6 py-3.5 text-sm font-extrabold text-[#351c42] hover:bg-[#351c42]/5 transition-all">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Download invoice
+                    </a>
                     <button id="success-btn" type="button"
-                        class="inline-flex items-center justify-center px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-extrabold shadow-lg transition-all">
-                        OK
+                        class="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#351c42] px-6 py-3.5 text-sm font-extrabold text-[#fddc6a] shadow-lg hover:bg-[#4d2a5c] transition-all">
+                        Go to dashboard
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment failed / cancelled -->
+<div id="payment-failure-modal" class="fixed inset-0 z-[120] hidden">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeFailureModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4 pointer-events-none">
+        <div class="w-full max-w-md rounded-[28px] bg-white border border-rose-100 shadow-2xl overflow-hidden pointer-events-auto" onclick="event.stopPropagation()">
+            <div class="p-6 bg-gradient-to-br from-rose-600 to-[#351c42] text-white">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/80" id="failure-badge">Payment issue</p>
+                <h3 class="mt-1 text-lg font-extrabold" id="failure-title">Something went wrong</h3>
+                <p class="mt-2 text-sm font-bold text-white/90" id="failure-message"></p>
+            </div>
+            <div class="p-6">
+                <p class="text-xs font-semibold text-slate-600 whitespace-pre-wrap" id="failure-detail"></p>
+                <button type="button" onclick="closeFailureModal()"
+                    class="mt-6 w-full rounded-2xl bg-[#351c42] py-3.5 text-sm font-extrabold text-[#fddc6a] hover:bg-[#4d2a5c] transition-all">
+                    OK
+                </button>
             </div>
         </div>
     </div>
@@ -360,8 +395,11 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-let successModalStep = 1;
-let postSuccessRedirectUrl = "{{ route('member.dashboard') }}";
+const postSuccessRedirectUrl = "{{ route('member.dashboard') }}";
+
+function invoiceUrl(transactionId) {
+    return @json(url('/member/subscription/invoice')) + '/' + encodeURIComponent(String(transactionId));
+}
 
 function openRenewalBlockedModal() {
     const modal = document.getElementById('renewal-blocked-modal');
@@ -373,9 +411,31 @@ function closeRenewalBlockedModal() {
     if (modal) modal.classList.add('hidden');
 }
 
+function closeSuccessModal() {
+    const modal = document.getElementById('payment-success-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function openFailureModal(title, message, detail, badge) {
+    const modal = document.getElementById('payment-failure-modal');
+    if (!modal) return;
+    document.getElementById('failure-title').textContent = title || 'Something went wrong';
+    document.getElementById('failure-message').textContent = message || '';
+    const det = document.getElementById('failure-detail');
+    det.textContent = detail || '';
+    det.classList.toggle('hidden', !detail);
+    document.getElementById('failure-badge').textContent = badge || 'Payment issue';
+    modal.classList.remove('hidden');
+}
+
+function closeFailureModal() {
+    const modal = document.getElementById('payment-failure-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
 function formatInr(n) {
     const v = Number(n || 0);
-    return '₹ ' + v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    return '₹ ' + v.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 }
 
 function humanCycle(s) {
@@ -386,18 +446,18 @@ function openSuccessModal(payload) {
     const modal = document.getElementById('payment-success-modal');
     if (!modal) return;
 
-    // Step 1 data
-    document.getElementById('success-subtitle').textContent = payload?.message || '';
+    document.getElementById('success-subtitle').textContent = payload?.message || 'Your membership payment was received.';
     document.getElementById('plan-summary').textContent =
-        `${payload?.plan?.subscription_type || ''} • ${humanCycle(payload?.plan?.payment_type)} Plan`;
+        `${payload?.plan?.subscription_type || ''} • ${humanCycle(payload?.plan?.payment_type)}`;
+    document.getElementById('razorpay-order-line').textContent =
+        `Order ID: ${payload?.razorpay_order_id || '—'}`;
     document.getElementById('payment-id').textContent =
-        `Razorpay Payment ID: ${payload?.razorpay_payment_id || '-'}`;
+        `Payment ID: ${payload?.razorpay_payment_id || '—'}`;
     document.getElementById('amount-paid').textContent =
         `${formatInr(payload?.subscription?.amount)} ${payload?.subscription?.currency || 'INR'}`;
-    document.getElementById('valid-till').textContent = payload?.subscription?.end_date || '-';
+    document.getElementById('valid-till').textContent = payload?.subscription?.end_date || '—';
 
-    // Step 2 data
-    document.getElementById('detail-subscription-type').textContent = payload?.plan?.subscription_type || '-';
+    document.getElementById('detail-subscription-type').textContent = payload?.plan?.subscription_type || '—';
     document.getElementById('detail-payment-type').textContent = humanCycle(payload?.plan?.payment_type);
     document.getElementById('detail-membership-fee').textContent = formatInr(payload?.plan?.membership_fee);
     const regFee = (payload?.plan?.subscription_type === 'New' && payload?.plan?.registration_fee_enabled)
@@ -406,29 +466,27 @@ function openSuccessModal(payload) {
     document.getElementById('detail-registration-fee').textContent = formatInr(regFee);
     document.getElementById('detail-grace-period').textContent = String(payload?.plan?.grace_period ?? 0);
 
-    // Reset steps
-    successModalStep = 1;
-    document.getElementById('success-step-1').classList.remove('hidden');
-    document.getElementById('success-step-2').classList.add('hidden');
-    document.getElementById('success-btn').textContent = 'OK';
+    const tid = payload?.transaction_id;
+    const inv = document.getElementById('success-invoice-link');
+    if (inv && tid) {
+        inv.href = invoiceUrl(tid);
+        inv.classList.remove('pointer-events-none', 'opacity-50');
+    } else if (inv) {
+        inv.href = '#';
+        inv.classList.add('pointer-events-none', 'opacity-50');
+    }
 
     modal.classList.remove('hidden');
 }
 
-function advanceSuccessModal() {
-    if (successModalStep === 1) {
-        successModalStep = 2;
-        document.getElementById('success-step-1').classList.add('hidden');
-        document.getElementById('success-step-2').classList.remove('hidden');
-        document.getElementById('success-btn').textContent = 'Go to Dashboard';
-        return;
-    }
-    window.location.href = postSuccessRedirectUrl;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('success-btn');
-    if (btn) btn.addEventListener('click', advanceSuccessModal);
+    if (btn) {
+        btn.addEventListener('click', () => {
+            closeSuccessModal();
+            window.location.href = postSuccessRedirectUrl;
+        });
+    }
 
     @if(session('renewal_blocked'))
     openRenewalBlockedModal();
@@ -438,11 +496,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function startRazorpayCheckout() {
     const selected = document.querySelector('input[name="membership_setting_id"]:checked');
     if (!selected) {
-        alert('Please select a subscription plan first.');
+        openFailureModal('No plan selected', 'Please choose a subscription plan before paying.', '', 'Action needed');
         return;
     }
 
     const membershipSettingId = selected.value;
+    let razorpayOutcome = 'idle';
 
     try {
         const res = await fetch("{{ route('member.subscription.order') }}", {
@@ -450,24 +509,27 @@ async function startRazorpayCheckout() {
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content'),
+                'Accept': 'application/json',
             },
             body: JSON.stringify({ membership_setting_id: membershipSettingId })
         });
 
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            throw new Error('Failed to create Razorpay order.');
+            const msg = data?.message || 'Could not start payment. Please try again.';
+            openFailureModal('Payment could not start', msg, '', 'Error');
+            return;
         }
-
-        const data = await res.json();
 
         const options = {
             key: data.key,
-            amount: data.amount * 100,
+            amount: Math.round(Number(data.amount || 0) * 100),
             currency: 'INR',
             name: 'GNAT Membership',
-            description: 'Membership Subscription',
+            description: 'Membership subscription',
             order_id: data.order_id,
             handler: async function (response) {
+                razorpayOutcome = 'processing';
                 try {
                     const verifyRes = await fetch("{{ route('member.subscription.verify') }}", {
                         method: 'POST',
@@ -483,34 +545,67 @@ async function startRazorpayCheckout() {
                         })
                     });
 
-                    const payload = await verifyRes.json();
+                    const payload = await verifyRes.json().catch(() => ({}));
                     if (!verifyRes.ok || !payload?.success) {
-                        throw new Error(payload?.message || 'Payment verification failed.');
+                        razorpayOutcome = 'failed';
+                        openFailureModal(
+                            'Verification failed',
+                            payload?.message || 'We could not confirm this payment. If money was debited, contact support with your payment ID.',
+                            `Order: ${response.razorpay_order_id || '—'}\nPayment: ${response.razorpay_payment_id || '—'}`,
+                            'Failed'
+                        );
+                        return;
                     }
 
-                    // include payment id for UI
+                    razorpayOutcome = 'success';
                     payload.razorpay_payment_id = response.razorpay_payment_id;
+                    payload.razorpay_order_id = response.razorpay_order_id;
                     openSuccessModal(payload);
                 } catch (err) {
                     console.error(err);
-                    alert('Payment done, but verification failed. Please contact support.');
+                    razorpayOutcome = 'failed';
+                    openFailureModal(
+                        'Something went wrong',
+                        'Payment may have gone through but we could not verify it. Please contact support.',
+                        String(err?.message || err),
+                        'Error'
+                    );
                 }
             },
             prefill: {
-                name: "{{ $user->name }}",
-                email: "{{ $user->email }}",
-                contact: "{{ $user->mobile }}"
+                name: @json($user->name ?? ''),
+                email: @json($user->email ?? ''),
+                contact: @json($user->mobile ?? '')
             },
             theme: {
-                color: '#4f46e5'
+                color: '#351c42'
+            },
+            modal: {
+                ondismiss: function () {
+                    if (razorpayOutcome === 'success' || razorpayOutcome === 'processing' || razorpayOutcome === 'failed') return;
+                    openFailureModal(
+                        'Payment not completed',
+                        'The Razorpay window was closed before the payment finished.',
+                        'You can tap Pay again when you are ready.',
+                        'Cancelled'
+                    );
+                }
             }
         };
 
         const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+            razorpayOutcome = 'failed';
+            const err = resp?.error || {};
+            const desc = err.description || err.reason || 'The payment was declined or failed.';
+            const code = err.code ? `Code: ${err.code}` : '';
+            const step = err.step ? `Step: ${err.step}` : '';
+            openFailureModal('Payment failed', desc, [code, step].filter(Boolean).join('\n'), 'Failed');
+        });
         rzp.open();
     } catch (e) {
         console.error(e);
-        alert('Unable to start payment. Please try again.');
+        openFailureModal('Unable to open payment', 'Please check your connection and try again.', String(e?.message || e), 'Error');
     }
 }
 </script>
