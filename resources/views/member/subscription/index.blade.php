@@ -406,6 +406,11 @@ function openRenewalBlockedModal() {
     if (modal) modal.classList.remove('hidden');
 }
 
+function setRenewalBlockedMessage(message) {
+    const el = document.getElementById('renewal-blocked-message');
+    if (el && message) el.textContent = String(message);
+}
+
 function closeRenewalBlockedModal() {
     const modal = document.getElementById('renewal-blocked-modal');
     if (modal) modal.classList.add('hidden');
@@ -516,6 +521,11 @@ async function startRazorpayCheckout() {
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
+            if (data?.renewal_blocked) {
+                setRenewalBlockedMessage(data?.message || 'Renewal is not available right now.');
+                openRenewalBlockedModal();
+                return;
+            }
             const msg = data?.message || 'Could not start payment. Please try again.';
             openFailureModal('Payment could not start', msg, '', 'Error');
             return;

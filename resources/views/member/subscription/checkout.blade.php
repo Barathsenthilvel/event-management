@@ -84,7 +84,7 @@
 
                 <div class="mt-6" x-data="checkoutPage()">
                     <button @click="initPayment()" x-bind:disabled="isProcessing"
-                        class="inline-flex w-full items-center justify-center px-10 py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-extrabold shadow-lg transition-all disabled:opacity-50">
+                        class="inline-flex w-full items-center justify-center px-10 py-4 bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] rounded-2xl font-extrabold shadow-lg transition-all disabled:opacity-100 disabled:cursor-not-allowed disabled:bg-[#351c42] disabled:text-[#fddc6a]">
                         <span x-text="isProcessing ? 'Processing...' : 'Proceed to Pay'"></span>
                     </button>
 

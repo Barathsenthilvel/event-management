@@ -18,6 +18,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\MemberPasswordController;
+use App\Http\Controllers\DonationController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -116,6 +117,20 @@ Route::prefix('admin')->group(function () {
         Route::post('/events/{event}/send-reminder', [EventController::class, 'sendReminder'])->name('admin.events.send-reminder');
         Route::get('/events/{event}/invite', [EventController::class, 'inviteForm'])->name('admin.events.invite');
         Route::post('/events/{event}/invite', [EventController::class, 'inviteStore'])->name('admin.events.invite.store');
+
+        // Donations Management
+        Route::resource('donations', DonationController::class)->except(['show'])->names([
+            'index' => 'admin.donations.index',
+            'create' => 'admin.donations.create',
+            'store' => 'admin.donations.store',
+            'edit' => 'admin.donations.edit',
+            'update' => 'admin.donations.update',
+            'destroy' => 'admin.donations.destroy',
+        ]);
+        Route::post('/donations/{donation}/toggle-promote', [DonationController::class, 'togglePromote'])
+            ->name('admin.donations.toggle-promote');
+        Route::post('/donations/{donation}/toggle-status', [DonationController::class, 'toggleStatus'])
+            ->name('admin.donations.toggle-status');
     });
 });
 

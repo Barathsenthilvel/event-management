@@ -29,35 +29,23 @@ class MemberSubscriptionController extends Controller
             ->orderBy('payment_type')
         ;
 
-        $filterType = request()->query('type');
-        if (in_array($filterType, ['New', 'Renewal'], true)) {
-            // Renewal should be allowed only when validity is completed (expired).
-            if (
-                $filterType === 'Renewal'
-                && !empty($activeSubscription?->end_date)
-                && Carbon::parse($activeSubscription->end_date)->isFuture()
-            ) {
-                session()->flash('renewal_blocked', true);
-                session()->flash(
-                    'renewal_blocked_message',
-                    'Your membership is still active. You can renew only after your validity is completed.'
-                );
+        // UI/UX rule:
+        // - If member already has a subscription record (activeSubscription exists), show ONLY Renewal plans.
+        // - If member has no subscription record, show ONLY New plans.
+        $filterType = !empty($activeSubscription) ? 'Renewal' : 'New';
+        $query->where('subscription_type', $filterType);
 
-                $filterType = 'New';
-            }
-
-            // If user doesn't have any subscription yet, don't allow Renewal filter.
-            if ($filterType === 'Renewal' && empty($activeSubscription)) {
-                session()->flash('renewal_blocked', true);
-                session()->flash(
-                    'renewal_blocked_message',
-                    'You don’t have an active membership yet. Please purchase a New plan first.'
-                );
-
-                $filterType = 'New';
-            }
-
-            $query->where('subscription_type', $filterType);
+        // If validity is NOT expired, show renewal blocked popup message.
+        if (
+            $filterType === 'Renewal'
+            && !empty($activeSubscription?->end_date)
+            && Carbon::parse($activeSubscription->end_date)->isFuture()
+        ) {
+            session()->flash('renewal_blocked', true);
+            session()->flash(
+                'renewal_blocked_message',
+                'Your membership is still active. Please wait until it expires, then renew.'
+            );
         }
 
         $plans = $query->get();
@@ -85,6 +73,19 @@ class MemberSubscriptionController extends Controller
         if (!$plan) {
             return redirect()->route('member.subscription.index')
                 ->with('error', 'Selected subscription plan is not available.');
+        }
+
+        $user = Auth::user();
+        $activeSubscription = $user?->activeSubscription;
+        if (
+            $plan->subscription_type === 'Renewal'
+            && !empty($activeSubscription?->end_date)
+            && Carbon::parse($activeSubscription->end_date)->isFuture()
+        ) {
+            return redirect()
+                ->route('member.subscription.index', ['type' => 'New'])
+                ->with('renewal_blocked', true)
+                ->with('renewal_blocked_message', 'Your current membership is still active. Please wait until it expires, then you can purchase a Renewal plan.');
         }
 
         $registrationFee = 0.0;
@@ -148,6 +149,20 @@ class MemberSubscriptionController extends Controller
 
         if (!$plan) {
             return response()->json(['message' => 'Selected subscription plan is not available.'], 422);
+        }
+
+        $user = Auth::user();
+        $activeSubscription = $user?->activeSubscription;
+        if (
+            $plan->subscription_type === 'Renewal'
+            && !empty($activeSubscription?->end_date)
+            && Carbon::parse($activeSubscription->end_date)->isFuture()
+        ) {
+            return response()->json([
+                'message' => 'Renewal not available while your membership is active. Please wait until your plan expires, then renew.',
+                'renewal_blocked' => true,
+                'valid_till' => optional($activeSubscription->end_date)->toDateString(),
+            ], 422);
         }
 
         $registrationFee = 0.0;
