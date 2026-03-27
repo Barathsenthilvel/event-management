@@ -19,6 +19,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\MemberPasswordController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\AdminJobController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -136,6 +138,41 @@ Route::prefix('admin')->group(function () {
             ->name('admin.donations.toggle-promote');
         Route::post('/donations/{donation}/toggle-status', [DonationController::class, 'toggleStatus'])
             ->name('admin.donations.toggle-status');
+
+        // Meetings Management
+        Route::resource('meetings', MeetingController::class)->except(['show'])->names([
+            'index' => 'admin.meetings.index',
+            'create' => 'admin.meetings.create',
+            'store' => 'admin.meetings.store',
+            'edit' => 'admin.meetings.edit',
+            'update' => 'admin.meetings.update',
+            'destroy' => 'admin.meetings.destroy',
+        ]);
+        Route::post('/meetings/{meeting}/cancel', [MeetingController::class, 'cancel'])->name('admin.meetings.cancel');
+        Route::post('/meetings/{meeting}/send-reminder', [MeetingController::class, 'sendReminder'])->name('admin.meetings.send-reminder');
+        Route::post('/meetings/{meeting}/toggle-display', [MeetingController::class, 'toggleDisplay'])->name('admin.meetings.toggle-display');
+        Route::get('/meetings/{meeting}/invite', [MeetingController::class, 'inviteForm'])->name('admin.meetings.invite');
+        Route::post('/meetings/{meeting}/invite', [MeetingController::class, 'inviteStore'])->name('admin.meetings.invite.store');
+        Route::delete('/meetings/{meeting}/invite/{invite}', [MeetingController::class, 'removeInvite'])->name('admin.meetings.invite.remove');
+
+        // Jobs Management
+        Route::resource('jobs', AdminJobController::class)->except(['show'])->parameters([
+            'jobs' => 'job',
+        ])->names([
+            'index' => 'admin.jobs.index',
+            'create' => 'admin.jobs.create',
+            'store' => 'admin.jobs.store',
+            'edit' => 'admin.jobs.edit',
+            'update' => 'admin.jobs.update',
+            'destroy' => 'admin.jobs.destroy',
+        ]);
+        Route::post('/jobs/{job}/toggle-promote', [AdminJobController::class, 'togglePromote'])->name('admin.jobs.toggle-promote');
+        Route::post('/jobs/{job}/toggle-status', [AdminJobController::class, 'toggleStatus'])->name('admin.jobs.toggle-status');
+        Route::post('/jobs/{job}/toggle-listing', [AdminJobController::class, 'toggleListing'])->name('admin.jobs.toggle-listing');
+        Route::get('/jobs/{job}/alert', [AdminJobController::class, 'alertForm'])->name('admin.jobs.alert');
+        Route::post('/jobs/{job}/alert', [AdminJobController::class, 'alertStore'])->name('admin.jobs.alert.store');
+        Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
+        Route::post('/jobs/{job}/applications/{application}/status', [AdminJobController::class, 'updateApplicationStatus'])->name('admin.jobs.applications.status');
     });
 });
 

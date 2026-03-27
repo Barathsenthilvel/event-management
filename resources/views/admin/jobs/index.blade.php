@@ -1,0 +1,118 @@
+@extends('admin.layouts.app')
+
+@section('content')
+<div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-900">Manage Jobs</h1>
+                <p class="text-xs font-bold text-slate-500 mt-1">Home / Jobs</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.jobs.create') }}" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4">
+        <div class="flex items-center justify-end mb-3">
+            <form method="GET" class="flex items-center gap-2">
+                <input type="text" name="q" value="{{ $q }}" placeholder="Search"
+                    class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold w-56 outline-none focus:ring-2 focus:ring-indigo-200">
+            </form>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs">
+                <thead class="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-rose-50">
+                    <tr>
+                        <th class="px-4 py-3">Hospital</th>
+                        <th class="px-4 py-3">Job Info</th>
+                        <th class="px-4 py-3">Applied</th>
+                        <th class="px-4 py-3">Promote Front</th>
+                        <th class="px-4 py-3">Created On / By</th>
+                        <th class="px-4 py-3">Last Updated</th>
+                        <th class="px-4 py-3">Listing Status</th>
+                        <th class="px-4 py-3">Display Status</th>
+                        <th class="px-4 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($jobs as $job)
+                        <tr>
+                            <td class="px-4 py-3">{{ $job->hospital ?: '-' }}</td>
+                            <td class="px-4 py-3">
+                                <p class="font-extrabold text-slate-800">{{ $job->title }}</p>
+                                <p class="text-[11px] text-slate-500">{{ $job->code }}</p>
+                            </td>
+                            <td class="px-4 py-3">{{ $job->applications_count }}</td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.jobs.toggle-promote', $job->id) }}">
+                                    @csrf
+                                    <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $job->promote_front ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                        {{ $job->promote_front ? 'ON' : 'OFF' }}
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p>{{ $job->created_at->format('d M Y') }}</p>
+                                <p class="text-[10px] text-slate-500">{{ $job->creator->name ?? 'Admin' }}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p>{{ $job->updated_at->format('d M Y') }}</p>
+                                <p class="text-[10px] text-slate-500">{{ $job->creator->name ?? 'Admin' }}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.jobs.toggle-listing', $job->id) }}">
+                                    @csrf
+                                    <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $job->listing_status === 'listed' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700' }}">
+                                        {{ ucfirst($job->listing_status) }}
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.jobs.toggle-status', $job->id) }}">
+                                    @csrf
+                                    <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $job->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                        {{ $job->is_active ? 'Active' : 'Inactive' }}
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="inline-flex items-center gap-2">
+                                    <a href="{{ route('admin.jobs.applications', $job->id) }}" title="More Details"
+                                       class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    </a>
+                                    <a href="{{ route('admin.jobs.edit', $job->id) }}" title="Modify Job"
+                                       class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
+                                    </a>
+                                    <a href="{{ route('admin.jobs.alert', $job->id) }}" title="Invite / Alert Members"
+                                       class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
+                                    </a>
+                                    <form method="POST" action="{{ route('admin.jobs.destroy', $job->id) }}" onsubmit="return confirm('Delete this job?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button title="Delete Job" class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="9" class="px-4 py-8 text-center text-slate-500 font-bold">No jobs found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            {{ $jobs->links() }}
+        </div>
+    </div>
+</div>
+@endsection
+
