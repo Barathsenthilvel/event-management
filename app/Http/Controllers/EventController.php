@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventPhoto;
 use App\Models\EventInvite;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -114,6 +116,51 @@ class EventController extends Controller
         return redirect()->route('admin.events.index')->with('success', 'Reminder marked as sent.');
     }
 
+    public function updateInviteStatus(Request $request, Event $event, EventInvite $invite)
+    {
+        if ($invite->event_id !== $event->id) {
+            abort(404);
+        }
+
+        if ($event->status === 'cancelled') {
+            return back()->with('error', 'Participation status cannot be changed for a cancelled event.');
+        }
+
+        $validated = $request->validate([
+            'participation_status' => 'required|in:interested,participated,not_participated',
+        ]);
+
+        $invite->update([
+            'participation_status' => $validated['participation_status'],
+        ]);
+
+        return back()->with('success', 'Participation status updated.');
+    }
+
+    public function downloadInviteCertificate(Event $event, EventInvite $invite)
+    {
+        if ($invite->event_id !== $event->id) {
+            abort(404);
+        }
+
+        if ($invite->participation_status !== 'participated') {
+            return back()->with('error', 'Certificate download is available only for participated members.');
+        }
+
+        if (empty($event->template_pdf_path) || !Storage::disk('public')->exists($event->template_pdf_path)) {
+            return back()->with('error', 'Certificate template PDF is not available for this event.');
+        }
+
+        $memberName = preg_replace('/[^A-Za-z0-9\-]+/', '-', (string) ($invite->user->name ?? 'member'));
+        $eventTitle = preg_replace('/[^A-Za-z0-9\-]+/', '-', (string) $event->title);
+        $fileName = trim("{$eventTitle}-{$memberName}-certificate.pdf", '-');
+
+        return response()->download(
+            Storage::disk('public')->path($event->template_pdf_path),
+            $fileName
+        );
+    }
+
     public function inviteForm(Event $event, Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -185,6 +232,45 @@ class EventController extends Controller
         $event->update(['interested_count' => EventInvite::where('event_id', $event->id)->count()]);
 
         return redirect()->route('admin.events.index')->with('success', 'Members invited successfully.');
+    }
+
+    public function album(Event $event)
+    {
+        $event->load(['photos' => fn ($q) => $q->latest('id')]);
+        return view('admin.events.album', compact('event'));
+    }
+
+    public function albumStore(Request $request, Event $event)
+    {
+        if ($event->status !== 'completed') {
+            return back()->with('error', 'You can add album photos only after event completion.');
+        }
+
+        $validated = $request->validate([
+            'photos' => 'required|array|min:1|max:20',
+            'photos.*' => 'image|max:5120',
+        ]);
+
+        foreach ($validated['photos'] as $photo) {
+            $path = $photo->store('events/albums', 'public');
+            $event->photos()->create(['photo_path' => $path]);
+        }
+
+        return back()->with('success', 'Event album updated successfully.');
+    }
+
+    public function albumDestroy(Event $event, EventPhoto $photo)
+    {
+        if ($photo->event_id !== $event->id) {
+            abort(404);
+        }
+
+        if (!empty($photo->photo_path) && Storage::disk('public')->exists($photo->photo_path)) {
+            Storage::disk('public')->delete($photo->photo_path);
+        }
+        $photo->delete();
+
+        return back()->with('success', 'Photo removed from album.');
     }
 
     private function rules(?int $eventId = null): array

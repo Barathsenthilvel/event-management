@@ -115,6 +115,11 @@ Route::prefix('admin')->group(function () {
         Route::post('/events/{event}/toggle-promote', [EventController::class, 'togglePromote'])->name('admin.events.toggle-promote');
         Route::post('/events/{event}/toggle-display', [EventController::class, 'toggleDisplay'])->name('admin.events.toggle-display');
         Route::post('/events/{event}/send-reminder', [EventController::class, 'sendReminder'])->name('admin.events.send-reminder');
+        Route::post('/events/{event}/invites/{invite}/status', [EventController::class, 'updateInviteStatus'])->name('admin.events.invites.status');
+        Route::get('/events/{event}/invites/{invite}/certificate', [EventController::class, 'downloadInviteCertificate'])->name('admin.events.invites.certificate');
+        Route::get('/events/{event}/album', [EventController::class, 'album'])->name('admin.events.album');
+        Route::post('/events/{event}/album', [EventController::class, 'albumStore'])->name('admin.events.album.store');
+        Route::delete('/events/{event}/album/{photo}', [EventController::class, 'albumDestroy'])->name('admin.events.album.destroy');
         Route::get('/events/{event}/invite', [EventController::class, 'inviteForm'])->name('admin.events.invite');
         Route::post('/events/{event}/invite', [EventController::class, 'inviteStore'])->name('admin.events.invite.store');
 

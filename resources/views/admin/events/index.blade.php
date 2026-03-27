@@ -120,6 +120,15 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" />
                                             </svg>
                                         </a>
+                                        @if($event->status === 'completed')
+                                            <a href="{{ route('admin.events.album', $event->id) }}"
+                                                title="Add Event Album"
+                                                class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </a>
+                                        @endif
                                         <form method="POST" action="{{ route('admin.events.send-reminder', $event->id) }}">
                                             @csrf
                                             <button title="Send Reminder" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
