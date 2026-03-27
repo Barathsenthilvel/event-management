@@ -21,6 +21,8 @@ use App\Http\Controllers\MemberPasswordController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AdminJobController;
+use App\Http\Controllers\NominationController;
+use App\Http\Controllers\PollingController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -173,6 +175,36 @@ Route::prefix('admin')->group(function () {
         Route::post('/jobs/{job}/alert', [AdminJobController::class, 'alertStore'])->name('admin.jobs.alert.store');
         Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
         Route::post('/jobs/{job}/applications/{application}/status', [AdminJobController::class, 'updateApplicationStatus'])->name('admin.jobs.applications.status');
+
+        // Nominations Management
+        Route::resource('nominations', NominationController::class)->except(['show'])->names([
+            'index' => 'admin.nominations.index',
+            'create' => 'admin.nominations.create',
+            'store' => 'admin.nominations.store',
+            'edit' => 'admin.nominations.edit',
+            'update' => 'admin.nominations.update',
+            'destroy' => 'admin.nominations.destroy',
+        ]);
+        Route::post('/nominations/{nomination}/cancel', [NominationController::class, 'cancel'])->name('admin.nominations.cancel');
+        Route::post('/nominations/{nomination}/toggle-status', [NominationController::class, 'toggleStatus'])->name('admin.nominations.toggle-status');
+        Route::get('/nominations/{nomination}/alert', [NominationController::class, 'alertForm'])->name('admin.nominations.alert');
+        Route::post('/nominations/{nomination}/alert', [NominationController::class, 'alertStore'])->name('admin.nominations.alert.store');
+        Route::get('/nominations/{nomination}/submissions', [NominationController::class, 'submissions'])->name('admin.nominations.submissions');
+        Route::get('/nominations/{nomination}/report', [NominationController::class, 'downloadReport'])->name('admin.nominations.report');
+
+        // Pollings Management
+        Route::resource('pollings', PollingController::class)->except(['show'])->names([
+            'index' => 'admin.pollings.index',
+            'create' => 'admin.pollings.create',
+            'store' => 'admin.pollings.store',
+            'edit' => 'admin.pollings.edit',
+            'update' => 'admin.pollings.update',
+            'destroy' => 'admin.pollings.destroy',
+        ]);
+        Route::post('/pollings/{polling}/toggle-promote', [PollingController::class, 'togglePromote'])->name('admin.pollings.toggle-promote');
+        Route::post('/pollings/{polling}/toggle-status', [PollingController::class, 'toggleStatus'])->name('admin.pollings.toggle-status');
+        Route::get('/pollings/{polling}/stats', [PollingController::class, 'stats'])->name('admin.pollings.stats');
+        Route::get('/pollings/{polling}/report', [PollingController::class, 'downloadReport'])->name('admin.pollings.report');
     });
 });
 
