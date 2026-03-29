@@ -24,6 +24,9 @@
     @include('home.partials.footer')
     @include('home.partials.floating')
 
+    @include('home.partials.event-interest-modal')
+    @include('home.partials.donate-modal')
+    @include('home.partials.donate-payment-modals')
     @include('home.partials.scripts')
 </body>
 </html>

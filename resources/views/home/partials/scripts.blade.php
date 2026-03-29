@@ -576,19 +576,350 @@
     })();
 </script>
 
+@php
+    $__donationPrefill = auth()->check()
+        ? array_filter([
+            'name' => auth()->user()->name ?? '',
+            'email' => auth()->user()->email ?? '',
+            'contact' => auth()->user()->mobile ?? '',
+        ])
+        : [];
+@endphp
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     (() => {
         const viewport = document.querySelector("[data-donate-viewport]");
         const track = document.querySelector("[data-donate-track]");
         const prevBtn = document.querySelector("[data-donate-prev]");
         const nextBtn = document.querySelector("[data-donate-next]");
-        const input = document.querySelector("[data-donate-input]");
-        const bar = document.querySelector("[data-donate-bar]");
-        const amtBtns = document.querySelectorAll("[data-donate-amt]");
-        const customBtn = document.querySelector("[data-donate-custom]");
-        const submitBtn = document.querySelector("[data-donate-submit]");
 
         const GOAL = {{ (int) $donate['goal'] }};
+        const DEFAULT_AMT = {{ (int) $donate['default_amount'] }};
+        const DONATION_MAX_INR = 5_000_000;
+
+        const DONATION_ORDER_URL = @json(route('donations.payment.order'));
+        const DONATION_VERIFY_URL = @json(route('donations.payment.verify'));
+        const donationPrefill = @json($__donationPrefill);
+
+        function donateCsrfToken() {
+            const m = document.querySelector('meta[name="csrf-token"]');
+            return m ? m.getAttribute("content") : "";
+        }
+
+        function formatDonateInr(n) {
+            const v = Number(n || 0);
+            return "₹" + v.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        }
+
+        const donateSuccessModal = document.getElementById("donate-payment-success-modal");
+        const donateErrorModal = document.getElementById("donate-payment-error-modal");
+
+        function openDonatePaymentSuccess(payload) {
+            if (!donateSuccessModal) return;
+            const msgEl = document.getElementById("donate-payment-success-message");
+            const amtEl = document.getElementById("donate-payment-success-amount");
+            const payEl = document.getElementById("donate-payment-success-payment-id");
+            if (msgEl) msgEl.textContent = payload?.message || "Thank you for supporting GNAT Donation!";
+            if (amtEl) amtEl.textContent = formatDonateInr(payload?.amount);
+            if (payEl) {
+                const pid = payload?.razorpay_payment_id;
+                if (pid) {
+                    payEl.textContent = "Payment ID: " + pid;
+                    payEl.classList.remove("hidden");
+                } else {
+                    payEl.textContent = "";
+                    payEl.classList.add("hidden");
+                }
+            }
+            donateSuccessModal.classList.remove("hidden");
+            donateSuccessModal.setAttribute("aria-hidden", "false");
+            syncDonateBodyScrollLock();
+        }
+
+        function closeDonatePaymentSuccess() {
+            if (!donateSuccessModal) return;
+            donateSuccessModal.classList.add("hidden");
+            donateSuccessModal.setAttribute("aria-hidden", "true");
+            syncDonateBodyScrollLock();
+        }
+
+        function openDonatePaymentError(title, message, detail) {
+            if (!donateErrorModal) return;
+            const t = document.getElementById("donate-payment-error-title");
+            const m = document.getElementById("donate-payment-error-message");
+            const d = document.getElementById("donate-payment-error-detail");
+            if (t) t.textContent = title || "Something went wrong";
+            if (m) m.textContent = message || "";
+            if (d) {
+                d.textContent = detail || "";
+                d.classList.toggle("hidden", !detail);
+            }
+            donateErrorModal.classList.remove("hidden");
+            donateErrorModal.setAttribute("aria-hidden", "false");
+            syncDonateBodyScrollLock();
+        }
+
+        function closeDonatePaymentError() {
+            if (!donateErrorModal) return;
+            donateErrorModal.classList.add("hidden");
+            donateErrorModal.setAttribute("aria-hidden", "true");
+            syncDonateBodyScrollLock();
+        }
+
+        donateSuccessModal?.querySelectorAll("[data-close-donate-payment-success]").forEach((el) => {
+            el.addEventListener("click", () => closeDonatePaymentSuccess());
+        });
+        donateErrorModal?.querySelectorAll("[data-close-donate-payment-error]").forEach((el) => {
+            el.addEventListener("click", () => closeDonatePaymentError());
+        });
+
+        const donateModal = document.getElementById("donate-modal");
+
+        function syncDonateBodyScrollLock() {
+            const anyOpen =
+                (donateModal && !donateModal.classList.contains("hidden")) ||
+                (donateSuccessModal && !donateSuccessModal.classList.contains("hidden")) ||
+                (donateErrorModal && !donateErrorModal.classList.contains("hidden"));
+            document.body.style.overflow = anyOpen ? "hidden" : "";
+        }
+
+        function closeDonateModal() {
+            if (!donateModal) return;
+            donateModal.classList.add("hidden");
+            donateModal.setAttribute("aria-hidden", "true");
+            syncDonateBodyScrollLock();
+        }
+
+        function openDonateModal() {
+            if (!donateModal) return;
+            const homeRoot = document.getElementById("home-donate-amounts");
+            const modalRoot = document.getElementById("modal-donate-amounts");
+            const homeInput = homeRoot?.querySelector("[data-donate-input]");
+            const modalInput = modalRoot?.querySelector("[data-donate-input]");
+            if (homeInput && modalInput) {
+                modalInput.value = homeInput.value;
+                modalInput.dispatchEvent(new Event("input", { bubbles: true }));
+            } else if (modalInput) {
+                modalInput.value = String(DEFAULT_AMT);
+                modalInput.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+            donateModal.classList.remove("hidden");
+            donateModal.setAttribute("aria-hidden", "false");
+            syncDonateBodyScrollLock();
+            modalInput?.focus({ preventScroll: true });
+        }
+
+        async function startDonationCheckout(amountInr) {
+            if (typeof window.Razorpay === "undefined") {
+                openDonatePaymentError(
+                    "Payment unavailable",
+                    "The payment form could not load. Refresh the page and try again, or contact us.",
+                    ""
+                );
+                return;
+            }
+
+            let razorpayOutcome = "idle";
+
+            try {
+                const res = await fetch(DONATION_ORDER_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": donateCsrfToken(),
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify({ amount: amountInr }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    openDonatePaymentError(
+                        "Payment could not start",
+                        data?.message || "Please try again in a moment.",
+                        ""
+                    );
+                    return;
+                }
+
+                const options = {
+                    key: data.key,
+                    amount: Math.round(Number(data.amount || 0) * 100),
+                    currency: "INR",
+                    name: "GNAT Donation",
+                    description: "Charitable donation",
+                    order_id: data.order_id,
+                    handler: async function (response) {
+                        razorpayOutcome = "processing";
+                        try {
+                            const verifyRes = await fetch(DONATION_VERIFY_URL, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRF-TOKEN": donateCsrfToken(),
+                                    Accept: "application/json",
+                                },
+                                body: JSON.stringify({
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                }),
+                            });
+                            const payload = await verifyRes.json().catch(() => ({}));
+                            if (!verifyRes.ok || !payload?.success) {
+                                razorpayOutcome = "failed";
+                                openDonatePaymentError(
+                                    "Verification failed",
+                                    payload?.message ||
+                                        "We could not confirm this payment. If money was debited, contact us with your payment ID.",
+                                    ["Order: " + (response.razorpay_order_id || "—"), "Payment: " + (response.razorpay_payment_id || "—")]
+                                        .join("\n")
+                                );
+                                return;
+                            }
+                            razorpayOutcome = "success";
+                            closeDonateModal();
+                            openDonatePaymentSuccess(payload);
+                        } catch (err) {
+                            console.error(err);
+                            razorpayOutcome = "failed";
+                            openDonatePaymentError(
+                                "Something went wrong",
+                                "Payment may have completed but we could not verify it. Please contact support.",
+                                String(err?.message || err)
+                            );
+                        }
+                    },
+                    prefill: donationPrefill,
+                    theme: { color: "#351c42" },
+                    modal: {
+                        ondismiss: function () {
+                            if (razorpayOutcome === "success" || razorpayOutcome === "processing" || razorpayOutcome === "failed") {
+                                return;
+                            }
+                            openDonatePaymentError(
+                                "Payment not completed",
+                                "The payment window was closed before finishing.",
+                                "You can tap Donate again when you are ready."
+                            );
+                        },
+                    },
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.on("payment.failed", function (resp) {
+                    razorpayOutcome = "failed";
+                    const err = resp?.error || {};
+                    const desc = err.description || err.reason || "The payment was declined or failed.";
+                    const code = err.code ? "Code: " + err.code : "";
+                    const step = err.step ? "Step: " + err.step : "";
+                    openDonatePaymentError("Payment failed", desc, [code, step].filter(Boolean).join("\n"));
+                });
+                rzp.open();
+            } catch (e) {
+                console.error(e);
+                openDonatePaymentError(
+                    "Unable to open payment",
+                    "Please check your connection and try again.",
+                    String(e?.message || e)
+                );
+            }
+        }
+
+        function wireDonateAmounts(root) {
+            if (!root) return;
+            const input = root.querySelector("[data-donate-input]");
+            const bar = root.querySelector("[data-donate-bar]");
+            const amtBtns = root.querySelectorAll("[data-donate-amt]");
+            const customBtn = root.querySelector("[data-donate-custom]");
+            const submitBtn = root.querySelector("[data-donate-submit]");
+            if (!input || !bar) return;
+
+            function syncBarFromInput() {
+                const v = Math.min(GOAL, Math.max(0, Number(input.value) || 0));
+                const pct = Math.min(100, Math.round((v / GOAL) * 100));
+                bar.style.width = `${Math.max(8, pct)}%`;
+            }
+
+            function setActiveAmt(amt) {
+                amtBtns.forEach((b) => {
+                    const n = b.getAttribute("data-donate-amt");
+                    b.classList.toggle("is-selected", amt !== "" && n === String(amt));
+                });
+            }
+
+            amtBtns.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const v = btn.getAttribute("data-donate-amt");
+                    if (v) {
+                        input.value = v;
+                        syncBarFromInput();
+                        setActiveAmt(v);
+                    }
+                });
+            });
+
+            customBtn?.addEventListener("click", () => {
+                input.focus();
+                input.select();
+            });
+
+            input.addEventListener("input", () => {
+                syncBarFromInput();
+                setActiveAmt("");
+            });
+
+            submitBtn?.addEventListener("click", async () => {
+                const n = Number(input.value) || 0;
+                if (n < 1) {
+                    openDonatePaymentError("Invalid amount", "Please enter at least ₹1.", "");
+                    return;
+                }
+                if (n > DONATION_MAX_INR) {
+                    openDonatePaymentError(
+                        "Amount too large",
+                        "For very large donations, please contact us directly.",
+                        ""
+                    );
+                    return;
+                }
+                submitBtn.disabled = true;
+                try {
+                    await startDonationCheckout(n);
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            setActiveAmt(String(input.value || DEFAULT_AMT));
+            syncBarFromInput();
+        }
+
+        wireDonateAmounts(document.getElementById("home-donate-amounts"));
+        wireDonateAmounts(document.getElementById("modal-donate-amounts"));
+
+        document.querySelectorAll("[data-open-donate-modal]").forEach((el) => {
+            el.addEventListener("click", (e) => {
+                e.preventDefault();
+                document.querySelector("[data-drawer-close]")?.click();
+                openDonateModal();
+            });
+        });
+        donateModal?.querySelectorAll("[data-close-donate-modal]").forEach((el) => {
+            el.addEventListener("click", () => closeDonateModal());
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Escape") return;
+            if (donateSuccessModal && !donateSuccessModal.classList.contains("hidden")) {
+                closeDonatePaymentSuccess();
+                return;
+            }
+            if (donateErrorModal && !donateErrorModal.classList.contains("hidden")) {
+                closeDonatePaymentError();
+                return;
+            }
+            if (donateModal && !donateModal.classList.contains("hidden")) closeDonateModal();
+        });
 
         if (viewport && track) {
             const originals = Array.from(track.querySelectorAll(".donation-slide"));
@@ -669,53 +1000,6 @@
                 render();
             }
         }
-
-        function syncBarFromInput() {
-            if (!input || !bar) return;
-            const v = Math.min(GOAL, Math.max(0, Number(input.value) || 0));
-            const pct = Math.min(100, Math.round((v / GOAL) * 100));
-            bar.style.width = `${Math.max(8, pct)}%`;
-        }
-
-        function setActiveAmt(amt) {
-            amtBtns.forEach((b) => {
-                const n = b.getAttribute("data-donate-amt");
-                b.classList.toggle("is-selected", amt !== "" && n === String(amt));
-            });
-        }
-
-        amtBtns.forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const v = btn.getAttribute("data-donate-amt");
-                if (input && v) {
-                    input.value = v;
-                    syncBarFromInput();
-                    setActiveAmt(v);
-                }
-            });
-        });
-
-        customBtn?.addEventListener("click", () => {
-            input?.focus();
-            input?.select();
-        });
-
-        input?.addEventListener("input", () => {
-            syncBarFromInput();
-            setActiveAmt("");
-        });
-
-        submitBtn?.addEventListener("click", () => {
-            const n = Number(input?.value) || 0;
-            if (n < 1) {
-                alert("Please enter a valid amount.");
-                return;
-            }
-            alert(`Thank you for supporting GNAT Donation! $${n} — connect this button to your payment flow.`);
-        });
-
-        setActiveAmt(String({{ (int) $donate['default_amount'] }}));
-        syncBarFromInput();
     })();
 </script>
 
@@ -910,7 +1194,10 @@
 
 <script>
     (() => {
-        const items = Array.from(document.querySelectorAll("[data-events-accordion-item]"));
+        const homeRoot = document.getElementById("home-events-accordion");
+        if (!homeRoot) return;
+
+        const items = Array.from(homeRoot.querySelectorAll("[data-events-accordion-item]"));
         if (items.length === 0) return;
 
         let openItem = null;
@@ -949,24 +1236,9 @@
             trigger.addEventListener("click", (e) => {
                 e.preventDefault();
                 if (openItem === item) {
-                    closeItem(item);
-                    openItem = null;
                     return;
                 }
                 openOnly(item);
-            });
-            item.querySelectorAll("[data-events-panel-icon]").forEach((icon) => {
-                icon.style.cursor = "pointer";
-                icon.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (openItem === item) {
-                        closeItem(item);
-                        openItem = null;
-                        return;
-                    }
-                    openOnly(item);
-                });
             });
         });
 

@@ -9,6 +9,10 @@ class Menu extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'order' => 0,
+    ];
+
     protected $fillable = [
         'title',
         'route_name',

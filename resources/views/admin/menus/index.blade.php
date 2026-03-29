@@ -29,37 +29,37 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-bold">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <!-- Main Content Board -->
     <div class="bg-white flex-1 rounded-[24px] shadow-sm flex flex-col p-6 overflow-hidden relative">
-        <!-- Tools Bar -->
-        <div class="flex items-center justify-between mb-6 shrink-0">
-            <div class="flex items-center gap-2">
-                <input type="text" placeholder="Search menus..."
-                    class="pl-4 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs w-48 outline-none focus:ring-2 focus:ring-indigo-500/10">
-                <button class="p-2 text-slate-400 bg-slate-50 rounded-xl hover:text-indigo-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
+        @if ($errors->any())
+            <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 shrink-0" role="alert">
+                <ul class="list-disc list-inside space-y-0.5">
+                    @foreach ($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        <!-- Tools Bar: search left, actions right -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 shrink-0">
+            <div class="relative w-full sm:max-w-xs md:max-w-md min-w-0">
+                <input type="search" x-model="searchQuery" placeholder="Search menus…" autocomplete="off"
+                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/10">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 justify-end shrink-0">
                 <div class="flex bg-slate-50 p-1 rounded-xl">
-                    <button @click="viewType = 'list'"
+                    <button type="button" @click="viewType = 'list'"
                         :class="viewType === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
                         class="p-2 rounded-lg transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <button @click="viewType = 'grid'"
+                    <button type="button" @click="viewType = 'grid'"
                         :class="viewType === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
                         class="p-2 rounded-lg transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@
                         </svg>
                     </button>
                 </div>
-                <button @click="openModal('create')"
+                <button type="button" @click="openModal('create')"
                     class="bg-[#0f172a] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all shadow-lg">+ Create Menu</button>
             </div>
         </div>
@@ -90,7 +90,7 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs">
-                    <template x-for="menu in menus" :key="menu.id">
+                    <template x-for="menu in filteredMenus" :key="menu.id">
                         <tr class="group transition-all">
                             <td
                                 class="px-6 py-4 bg-white border-y border-l border-slate-100 first:rounded-l-2xl">
@@ -164,7 +164,7 @@
 
             <!-- Grid View -->
             <div x-show="viewType === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="menu in menus" :key="'grid-' + menu.id">
+                <template x-for="menu in filteredMenus" :key="'grid-' + menu.id">
                     <div
                         class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">
                         <div class="flex justify-between items-start mb-4">
@@ -241,25 +241,26 @@
             class="flex-1 overflow-y-auto custom-scroll p-8">
                 @csrf
                 <input type="hidden" name="_method" :value="isEditing ? 'PUT' : 'POST'">
+                <input type="hidden" name="is_root_menu" :value="menuForm.is_parent ? 1 : 0">
 
                 <div class="space-y-5">
                     <!-- Menu Name -->
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Menu Name</label>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Menu Name @include('admin.partials.required-mark')</label>
                         <input type="text" x-model="menuForm.name" name="title" placeholder="e.g. Dashboard" required
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
                     </div>
 
                     <!-- Sort Order -->
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Sort Order</label>
-                        <input type="number" x-model="menuForm.sort" name="order" placeholder="1"
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Sort Order @include('admin.partials.required-mark')</label>
+                        <input type="number" x-model="menuForm.sort" name="order" placeholder="0" min="0" step="1" required
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
                     </div>
 
                     <!-- Icon Picker -->
                     <div x-data="{ iconSearch: '' }">
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Icon</label>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Icon @include('admin.partials.required-mark')</label>
 
                         <!-- Selected icon preview + hidden input -->
                         <input type="hidden" name="icon" :value="menuForm.icon">
@@ -302,8 +303,8 @@
 
                     <!-- Route -->
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Route Name</label>
-                        <input type="text" x-model="menuForm.route" name="route_name" placeholder="e.g. admin.menus.index"
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Route Name @include('admin.partials.required-mark')</label>
+                        <input type="text" x-model="menuForm.route" name="route_name" placeholder="e.g. admin.menus.index" required
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
                     </div>
 
@@ -326,8 +327,8 @@
                         </div>
 
                         <div x-show="!menuForm.is_parent">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Parent Menu</label>
-                            <select x-model="menuForm.parent_id" name="parent_id"
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Parent Menu @include('admin.partials.required-mark')</label>
+                            <select x-model="menuForm.parent_id" name="parent_id" :required="!menuForm.is_parent"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer">
                                 <option value="">Select Parent Menu</option>
                                 <template x-for="parent in parents" :key="parent.id">
@@ -422,6 +423,18 @@
             showCreateMenu: false,
             showDeleteModal: false,
             isEditing: false,
+            searchQuery: '',
+
+            get filteredMenus() {
+                const q = (this.searchQuery || '').toLowerCase().trim();
+                if (!q) return this.menus;
+                return this.menus.filter((m) => {
+                    const name = (m.name || '').toLowerCase();
+                    const route = (m.route || '').toLowerCase();
+                    const parent = (m.parent || '').toLowerCase();
+                    return name.includes(q) || route.includes(q) || parent.includes(q);
+                });
+            },
 
             iconList: [
                 { cls: 'fas fa-home',            label: 'Home' },
@@ -507,7 +520,7 @@
                 name: '',
                 icon: '',
                 route: '',
-                sort: '',
+                sort: '0',
                 parent_id: '',
                 is_parent: true,
                 description: '',
@@ -525,7 +538,7 @@
                         name: menu.name,
                         icon: menu.icon || '',
                         route: menu.route || '',
-                        sort: menu.sort ?? '',
+                        sort: menu.sort !== null && menu.sort !== undefined ? String(menu.sort) : '0',
                         parent_id: menu.parent_id || '',
                         is_parent: !menu.parent_id,
                         description: menu.description || '',
@@ -538,7 +551,7 @@
                         name: '',
                         icon: '',
                         route: '',
-                        sort: '',
+                        sort: '0',
                         parent_id: '',
                         is_parent: true,
                         description: '',
@@ -556,7 +569,7 @@
                     name: '',
                     icon: '',
                     route: '',
-                    sort: '',
+                    sort: '0',
                     parent_id: '',
                     is_parent: true,
                     description: '',

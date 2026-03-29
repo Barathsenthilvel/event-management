@@ -9,12 +9,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-bold">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="bg-white flex-1 rounded-[24px] shadow-sm flex flex-col p-6 overflow-hidden">
         <!-- Add form -->
         <div class="mb-8 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
@@ -147,10 +141,14 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">
-                                <form action="{{ route('admin.settings.default-settings.destroy', $s) }}" method="POST" class="inline" onsubmit="return confirm('Remove this setting?');">
+                                <form id="admin-delete-default-setting-{{ $s->id }}" action="{{ route('admin.settings.default-settings.destroy', $s) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Delete">
+                                    <button type="button" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Delete"
+                                        data-delete-form="admin-delete-default-setting-{{ $s->id }}"
+                                        data-delete-title="Remove this setting?"
+                                        data-delete-message="This default country, currency, or timezone option will be deleted."
+                                        onclick="adminOpenDeleteModalFromEl(this)">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>

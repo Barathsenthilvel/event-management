@@ -8,36 +8,41 @@
                 <h1 class="text-xl font-extrabold text-slate-900">Member Subscriptions</h1>
                 <p class="text-xs font-bold text-slate-500 mt-1">View member subscriptions with transaction details.</p>
             </div>
-            <div class="flex items-center gap-3 flex-wrap justify-end">
-                <!-- View Toggle -->
-                <div class="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
-                    <button type="button" @click="viewType = 'list'"
-                        :class="viewType === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
-                        class="p-2 rounded-lg transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" />
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between w-full lg:flex-1 lg:min-w-0">
+                <form method="GET" class="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:max-w-2xl min-w-0">
+                    <div class="relative flex-1 min-w-0">
+                        <input type="search" name="q" value="{{ $q }}" placeholder="Search member / transaction / order"
+                            class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                    </button>
-                    <button type="button" @click="viewType = 'grid'"
-                        :class="viewType === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
-                        class="p-2 rounded-lg transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                </div>
-
-                <form method="GET" class="flex items-center gap-2 flex-wrap">
-                <input type="text" name="q" value="{{ $q }}" placeholder="Search member / transaction / order"
-                    class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold w-64 outline-none focus:ring-2 focus:ring-indigo-200">
-                <select name="status" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
-                    <option value="">All Status</option>
-                    <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="successful" {{ $status === 'successful' ? 'selected' : '' }}>Successful</option>
-                    <option value="failed" {{ $status === 'failed' ? 'selected' : '' }}>Failed</option>
-                </select>
-                <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+                    </div>
+                    <select name="status" class="w-full sm:w-auto shrink-0 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
+                        <option value="">All Status</option>
+                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="successful" {{ $status === 'successful' ? 'selected' : '' }}>Successful</option>
+                        <option value="failed" {{ $status === 'failed' ? 'selected' : '' }}>Failed</option>
+                    </select>
+                    <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
                 </form>
+                <div class="flex items-center gap-2 justify-end shrink-0">
+                    <div class="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                        <button type="button" @click="viewType = 'list'"
+                            :class="viewType === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
+                            class="p-2 rounded-lg transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button type="button" @click="viewType = 'grid'"
+                            :class="viewType === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'"
+                            class="p-2 rounded-lg transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

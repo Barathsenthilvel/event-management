@@ -379,12 +379,6 @@ function membershipPage() {
         toasts: [],
         settings: @json($settingsData),
 
-        init() {
-            @if(session('success'))
-            this.showToast(@json(session('success')));
-            @endif
-        },
-
         showToast(msg) {
             const id = Date.now();
             this.toasts.push({ id, msg });

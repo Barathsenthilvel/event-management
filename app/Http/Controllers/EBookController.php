@@ -17,8 +17,7 @@ class EBookController extends Controller
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%')
-                        ->orWhere('hospital', 'like', '%' . $q . '%');
+                        ->orWhere('code', 'like', '%' . $q . '%');
                 });
             })
             ->latest('id')
@@ -90,7 +89,6 @@ class EBookController extends Controller
     {
         return $request->validate([
             'title' => 'required|string|max:255',
-            'hospital' => 'nullable|string|max:255',
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'pricing_type' => 'required|in:free,paid',
@@ -106,7 +104,6 @@ class EBookController extends Controller
     {
         $payload = [
             'title' => $validated['title'],
-            'hospital' => $validated['hospital'] ?? null,
             'short_description' => $validated['short_description'] ?? null,
             'description' => $validated['description'] ?? null,
             'pricing_type' => $validated['pricing_type'],

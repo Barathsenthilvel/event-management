@@ -13,7 +13,7 @@
         
         <div class="bg-white rounded-2xl border border-slate-100 p-6 space-y-6">
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Role Name</label>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Role Name @include('admin.partials.required-mark')</label>
                 <input type="text" name="name" required
                     class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-indigo-500/5"
                     placeholder="e.g. Content Auditor" value="{{ old('name', $role->name) }}">

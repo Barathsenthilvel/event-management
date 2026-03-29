@@ -3,22 +3,30 @@
 @section('content')
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
     <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900">Manage Nominations</h1>
                 <p class="text-xs font-bold text-slate-500 mt-1">Create and run nomination polls.</p>
             </div>
-            <a href="{{ route('admin.nominations.create') }}" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full md:w-auto md:flex-1 md:max-w-3xl">
+                <form method="GET" class="flex items-center gap-2 w-full sm:max-w-md min-w-0">
+                    <div class="relative flex-1 min-w-0">
+                        <input type="search" name="q" value="{{ $q }}" placeholder="Search"
+                            class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+                </form>
+                <div class="flex shrink-0 justify-end">
+                    <a href="{{ route('admin.nominations.create') }}" class="inline-flex px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4">
-        <div class="flex items-center justify-end mb-3">
-            <form method="GET">
-                <input type="text" name="q" value="{{ $q }}" placeholder="Search"
-                    class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold w-56 outline-none focus:ring-2 focus:ring-indigo-200">
-            </form>
-        </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-left text-xs">
                 <thead class="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-rose-50">
@@ -84,10 +92,15 @@
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
                                     </form>
-                                    <form method="POST" action="{{ route('admin.nominations.destroy', $nomination->id) }}" onsubmit="return confirm('Delete this nomination?')">
+                                    <form id="admin-delete-nomination-{{ $nomination->id }}" method="POST" action="{{ route('admin.nominations.destroy', $nomination->id) }}" class="inline-flex">
                                         @csrf
                                         @method('DELETE')
-                                        <button title="Delete Nomination" class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
+                                        <button type="button" title="Delete Nomination"
+                                            data-delete-form="admin-delete-nomination-{{ $nomination->id }}"
+                                            data-delete-title="Delete this nomination?"
+                                            data-delete-message="This will remove the nomination and related submissions from the system."
+                                            onclick="adminOpenDeleteModalFromEl(this)"
+                                            class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
                                         </button>
                                     </form>

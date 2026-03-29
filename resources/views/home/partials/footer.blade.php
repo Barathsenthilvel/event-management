@@ -67,7 +67,7 @@
             </h3>
             <ul class="space-y-2.5 text-sm font-medium">
                 <li><a href="{{ url('/') }}#about2" class="text-white/80 hover:text-[#fddc6a] transition-colors">About Us</a></li>
-                <li><a href="{{ url('/') }}#donate" class="text-white/80 hover:text-[#fddc6a] transition-colors">Give Donation</a></li>
+                <li><button type="button" data-open-donate-modal class="text-white/80 hover:text-[#fddc6a] transition-colors text-left bg-transparent border-0 p-0 cursor-pointer font-medium">Give Donation</button></li>
                 <li><a href="{{ url('/') }}#service" class="text-white/80 hover:text-[#fddc6a] transition-colors">Education Support</a></li>
                 <li><a href="{{ url('/') }}#events" class="text-white/80 hover:text-[#fddc6a] transition-colors">Our Campaign</a></li>
                 <li><a href="{{ url('/') }}#gallery" class="text-white/80 hover:text-[#fddc6a] transition-colors">Gallery</a></li>

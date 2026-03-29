@@ -34,27 +34,40 @@
             </nav>
 
             <div class="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
-                <a
-                    href="{{ route('member.login') }}"
-                    class="member-login-btn"
-                    aria-label="Member Login"
-                    title="Member Login"
-                >
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path fill="currentColor" d="M12 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"/>
-                        <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
-                        <circle cx="17.75" cy="16.75" r="3.15" stroke="currentColor" stroke-width="1.25" fill="none"/>
-                        <path stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M17.75 15.15v3.2M16.15 16.75h3.2"/>
-                    </svg>
-                </a>
-                <a href="{{ url('/') }}#donate" class="click-btn click-btn--nav btn-style506 max-[380px]:scale-90 max-[380px]:origin-right">
+                @guest
+                    <a
+                        href="{{ route('member.login') }}"
+                        class="member-login-btn"
+                        aria-label="Member Login"
+                        title="Member Login"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path fill="currentColor" d="M12 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"/>
+                            <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
+                            <circle cx="17.75" cy="16.75" r="3.15" stroke="currentColor" stroke-width="1.25" fill="none"/>
+                            <path stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M17.75 15.15v3.2M16.15 16.75h3.2"/>
+                        </svg>
+                    </a>
+                @else
+                    <a
+                        href="{{ route('member.dashboard') }}"
+                        class="member-login-btn member-area-btn"
+                        aria-label="Member area"
+                        title="Member area"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                    </a>
+                @endguest
+                <button type="button" data-open-donate-modal class="click-btn click-btn--nav btn-style506 max-[380px]:scale-90 max-[380px]:origin-right">
                     <span class="click-btn__icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" fill="none" aria-hidden="true">
                             <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
                     <span class="click-btn__label">Donate Now</span>
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -165,26 +178,37 @@
             @foreach ($nav as $link)
                 <a href="{{ url('/') }}{{ $link['href'] }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">{{ $link['label'] }}</a>
             @endforeach
-            <a href="{{ url('/') }}#donate" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Donate</a>
-            <a href="{{ route('member.login') }}" class="mt-4 inline-flex items-center gap-3 text-white font-bold hover:text-[#fddc6a] transition-colors">
-                <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-[#fddc6a] border border-white/20">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path fill="currentColor" d="M12 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"/>
-                        <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
-                        <circle cx="17.75" cy="16.75" r="3.15" stroke="currentColor" stroke-width="1.25" fill="none"/>
-                        <path stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M17.75 15.15v3.2M16.15 16.75h3.2"/>
-                    </svg>
-                </span>
-                Member Login
-            </a>
-            <a href="{{ url('/') }}#donate" class="mt-3 click-btn click-btn--nav btn-style506 !w-full max-w-full">
+            <a href="{{ route('donations.index') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Donate</a>
+            @guest
+                <a href="{{ route('member.login') }}" class="mt-4 inline-flex items-center gap-3 text-white font-bold hover:text-[#fddc6a] transition-colors">
+                    <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-[#fddc6a] border border-white/20">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path fill="currentColor" d="M12 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"/>
+                            <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
+                            <circle cx="17.75" cy="16.75" r="3.15" stroke="currentColor" stroke-width="1.25" fill="none"/>
+                            <path stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M17.75 15.15v3.2M16.15 16.75h3.2"/>
+                        </svg>
+                    </span>
+                    Member Login
+                </a>
+            @else
+                <a href="{{ route('member.dashboard') }}" class="mt-4 inline-flex items-center gap-3 text-white font-bold hover:text-[#fddc6a] transition-colors">
+                    <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#fddc6a]/20 text-[#fddc6a] border border-[#fddc6a]/35">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                    </span>
+                    Member area
+                </a>
+            @endguest
+            <button type="button" data-open-donate-modal class="mt-3 click-btn click-btn--nav btn-style506 !w-full max-w-full">
                 <span class="click-btn__icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" aria-hidden="true">
                         <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </span>
                 <span class="click-btn__label">Donate Now</span>
-            </a>
+            </button>
         </nav>
     </div>
 </aside>

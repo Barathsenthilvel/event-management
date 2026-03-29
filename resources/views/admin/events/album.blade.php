@@ -42,10 +42,14 @@
                         <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
                             <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="Event photo" class="w-full h-40 object-cover">
                             <div class="p-2.5">
-                                <form method="POST" action="{{ route('admin.events.album.destroy', [$event->id, $photo->id]) }}" onsubmit="return confirm('Delete this photo?')">
+                                <form id="admin-delete-event-photo-{{ $photo->id }}" method="POST" action="{{ route('admin.events.album.destroy', [$event->id, $photo->id]) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="w-full rounded-lg bg-rose-600 text-white text-xs font-extrabold py-2 hover:bg-rose-700">Delete</button>
+                                    <button type="button" class="w-full rounded-lg bg-rose-600 text-white text-xs font-extrabold py-2 hover:bg-rose-700"
+                                        data-delete-form="admin-delete-event-photo-{{ $photo->id }}"
+                                        data-delete-title="Remove this photo?"
+                                        data-delete-message="This image will be deleted from the event album permanently."
+                                        onclick="adminOpenDeleteModalFromEl(this)">Delete</button>
                                 </form>
                             </div>
                         </div>

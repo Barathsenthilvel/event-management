@@ -8,31 +8,31 @@
         <p class="text-xs text-slate-500 mt-1">Create and manage donation listings.</p>
     </div>
 
-    <!-- Search + Add -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 px-6 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.donations.create') }}"
-               class="bg-[#0f172a] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all shadow-md">
-                + Add
-            </a>
-        </div>
-        <form method="GET" class="flex items-center gap-2">
-            <div class="relative">
+    <!-- Search (left) + Add (right) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <form method="GET" class="flex items-center gap-2 w-full sm:max-w-md min-w-0">
+            <div class="relative flex-1 min-w-0">
                 <input
                     name="q"
-                    type="text"
+                    type="search"
                     placeholder="Search"
                     value="{{ $q ?? '' }}"
-                    class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 w-60"
+                    class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
                 >
-                <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor"
-                     viewBox="0 0 24 24">
+                <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </div>
-            <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+            <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
         </form>
+        <div class="flex shrink-0 justify-end">
+            <a href="{{ route('admin.donations.create') }}"
+               class="inline-flex bg-[#0f172a] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all shadow-md">
+                + Add
+            </a>
+        </div>
     </div>
 
     <!-- Table -->
@@ -116,13 +116,15 @@
                                     </svg>
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('admin.donations.destroy', $donation->id) }}" class="inline-flex"
-                                  onsubmit="return confirm('Delete this donation?')">
+                            <form id="admin-delete-donation-{{ $donation->id }}" method="POST" action="{{ route('admin.donations.destroy', $donation->id) }}" class="inline-flex">
                                 @csrf
                                 @method('DELETE')
-                                <button title="Delete"
-                                        class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center"
-                                        type="submit">
+                                <button type="button" title="Delete"
+                                        data-delete-form="admin-delete-donation-{{ $donation->id }}"
+                                        data-delete-title="Delete this donation?"
+                                        data-delete-message="This will permanently remove the donation listing and its images from storage."
+                                        onclick="adminOpenDeleteModalFromEl(this)"
+                                        class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
                                     </svg>

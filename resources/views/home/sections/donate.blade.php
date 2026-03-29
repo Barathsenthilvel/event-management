@@ -1,23 +1,28 @@
 <section id="donate" class="relative z-30">
     <div class="bg-[#f6f6f4] py-10 lg:py-14 border-b border-[#351c42]/10">
         <div class="mx-auto max-w-7xl px-4">
-            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 lg:mb-8">
-                <div>
+            <div class="flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-6 mb-6 lg:mb-8">
+                <div class="min-w-0 max-w-xl">
                     <p class="text-sm font-semibold tracking-wide text-[#351c42]/65 uppercase">{{ $donate['intro_kicker'] }}</p>
                     <h3 class="mt-1 text-2xl md:text-3xl font-extrabold text-[#351c42]">{{ $donate['intro_title'] }}</h3>
-                    <p class="mt-2 text-sm text-[#351c42]/60 max-w-lg">{{ $donate['intro_text'] }}</p>
+                    <p class="mt-2 text-sm text-[#351c42]/60">{{ $donate['intro_text'] }}</p>
                 </div>
-                <div class="flex gap-2 shrink-0">
-                    <button type="button" data-donate-prev class="carousel-nav-btn" aria-label="Previous campaigns">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M15 18l-6-6 6-6"/>
-                        </svg>
-                    </button>
-                    <button type="button" data-donate-next class="carousel-nav-btn" aria-label="Next campaigns">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 18l6-6-6-6"/>
-                        </svg>
-                    </button>
+                <div class="flex shrink-0 flex-col gap-3 min-[520px]:items-end">
+                    <a href="{{ route('donations.index') }}" class="self-start text-sm font-semibold text-[#965995] underline-offset-4 hover:text-[#351c42] hover:underline transition-colors min-[520px]:self-end min-[520px]:pt-8 sm:pt-10">
+                        View more
+                    </a>
+                    <div class="flex gap-2">
+                        <button type="button" data-donate-prev class="carousel-nav-btn" aria-label="Previous campaigns">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
+                        </button>
+                        <button type="button" data-donate-next class="carousel-nav-btn" aria-label="Next campaigns">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -25,12 +30,8 @@
                 <div class="flex gap-4 will-change-transform transition-transform duration-500 ease-out" data-donate-track>
                     @foreach ($donate['campaigns'] as $c)
                         <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
-                            <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full">
+                            <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
                                 <img src="{{ asset($c['image']) }}" alt="{{ $c['alt'] }}" class="absolute inset-0 h-full w-full object-cover" width="400" height="300" />
-                                <div class="absolute left-4 top-4 flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-center shadow-md ring-2 ring-white/80">
-                                    <span class="text-lg font-extrabold leading-none text-[#351c42]">{{ $c['day'] }}</span>
-                                    <span class="text-[10px] font-bold tracking-wider text-[#351c42]/80">{{ $c['month'] }}</span>
-                                </div>
                             </div>
                             <div class="flex flex-1 flex-col justify-center p-5 sm:p-6 bg-[linear-gradient(180deg,#faf8f5_0%,#f3f0ea_100%)]">
                                 <div class="flex flex-wrap gap-2">
@@ -39,14 +40,14 @@
                                 </div>
                                 <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $c['title'] }}</h4>
                                 <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $c['excerpt'] }}</p>
-                                <a href="{{ url('/') }}#donate" class="click-btn click-btn--sm btn-style506 mt-4 self-start">
+                                <button type="button" data-open-donate-modal class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                     <span class="click-btn__icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
                                             <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </span>
-                                    <span class="click-btn__label">Read More</span>
-                                </a>
+                                    <span class="click-btn__label">Donate Now</span>
+                                </button>
                             </div>
                         </article>
                     @endforeach
@@ -72,7 +73,7 @@
                         Every contribution makes a difference.
                     </p>
                 </div>
-                <div class="lg:flex-1 lg:pl-10 flex flex-col justify-center gap-5 min-w-0">
+                <div id="home-donate-amounts" class="lg:flex-1 lg:pl-10 flex flex-col justify-center gap-5 min-w-0">
                     <div class="flex flex-col gap-3">
                         <span class="text-sm font-semibold text-white/90">Choose amount:</span>
                         <div class="flex flex-wrap items-center gap-2">
@@ -81,7 +82,7 @@
                                     type="button"
                                     data-donate-amt="{{ $amt }}"
                                     class="donate-amt-btn rounded-full bg-white/10 hover:bg-white/20 px-4 py-2 text-sm font-semibold border border-white/15 transition-colors {{ (int) $amt === (int) $donate['default_amount'] ? 'is-selected' : '' }}"
-                                >${{ $amt }}</button>
+                                >₹{{ $amt }}</button>
                             @endforeach
                             <button type="button" data-donate-custom class="rounded-full border-2 border-[#fddc6a] text-[#fddc6a] px-4 py-2 text-sm font-semibold inline-flex items-center gap-2 hover:bg-[#fddc6a]/10 transition-colors">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M9 10h6M16 14h-5"/></svg>
@@ -97,7 +98,7 @@
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 sm:items-stretch">
                         <label class="relative flex-1 flex items-center rounded-2xl bg-white pl-12 pr-4 py-3.5 shadow-inner">
-                            <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42] font-bold text-sm">$</span>
+                            <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42] font-bold text-base leading-none" aria-hidden="true">₹</span>
                             <input type="number" min="1" step="1" value="{{ $donate['default_amount'] }}" data-donate-input class="w-full min-w-0 border-0 bg-transparent text-[#351c42] text-lg font-bold outline-none focus:ring-0" />
                         </label>
                         <button type="button" data-donate-submit class="click-btn btn-style506 shrink-0">

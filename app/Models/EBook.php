@@ -16,7 +16,6 @@ class EBook extends Model
         'created_by_admin_id',
         'title',
         'code',
-        'hospital',
         'short_description',
         'description',
         'pricing_type',

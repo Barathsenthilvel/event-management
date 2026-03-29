@@ -21,7 +21,7 @@ return [
     'nav' => [
         ['label' => 'Home', 'href' => '#home'],
         ['label' => 'About Us', 'href' => '#about2'],
-        ['label' => 'Events', 'href' => '#events'],
+        ['label' => 'Events', 'href' => '/events'],
         ['label' => 'Blog', 'href' => '#blog'],
         ['label' => 'Gallery', 'href' => '#gallery'],
         ['label' => 'Jobs', 'href' => '#jobs'],
@@ -132,6 +132,9 @@ return [
             'description' => 'Dicta Sunt Explicabo. Nemo Enim Ipsam Voluptatem Quia Voluptas Sit Aspernaturaut Odit Aut Fugit, Sed Quia Consequuntur.',
             'organizer' => 'Ashton Porter',
             'venue' => '350 5th Avenue, New York, NY 10118',
+            'seat_mode' => 'limited',
+            'seat_filled' => 12,
+            'seat_limit' => 50,
         ],
         [
             'summary_date' => '10 Sep',
@@ -144,6 +147,7 @@ return [
             'description' => 'Practical steps to start your fundraiser, keep momentum, and communicate impact clearly to your community.',
             'organizer' => 'Ashton Porter',
             'venue' => 'Virtual Session (Online)',
+            'seat_mode' => 'unlimited',
         ],
         [
             'summary_date' => '24 Sep',
@@ -157,6 +161,9 @@ return [
             'description' => 'Learn communication techniques and how to turn volunteer actions into measurable impact.',
             'organizer' => 'Ashton Porter',
             'venue' => '350 5th Avenue, New York, NY 10118',
+            'seat_mode' => 'limited',
+            'seat_filled' => 8,
+            'seat_limit' => 30,
         ],
     ],
 
@@ -169,10 +176,10 @@ return [
         'bar_percent_demo' => 52,
         'amounts' => [10, 25, 50, 100, 250],
         'campaigns' => [
-            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Child health program', 'day' => '03', 'month' => 'SEP', 'title' => 'Promoting the rights of every child', 'excerpt' => 'Healthcare, education, and safe spaces for children in our communities.'],
-            ['image' => 'images/events/event-1-1.jpg', 'alt' => 'Community children', 'day' => '09', 'month' => 'OCT', 'title' => 'There are many ways you can help today', 'excerpt' => 'Join workshops, fundraisers, and outreach programs that change lives.'],
-            ['image' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteer event', 'day' => '21', 'month' => 'NOV', 'title' => 'Clean water & nutrition programs', 'excerpt' => 'Your gift funds sustainable access to essentials for families in need.'],
-            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Youth support', 'day' => '15', 'month' => 'DEC', 'title' => 'Youth mentorship & skills training', 'excerpt' => 'Building brighter futures through coaching, courses, and community.'],
+            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Child health program', 'title' => 'Promoting the rights of every child', 'excerpt' => 'Healthcare, education, and safe spaces for children in our communities.'],
+            ['image' => 'images/events/event-1-1.jpg', 'alt' => 'Community children', 'title' => 'There are many ways you can help today', 'excerpt' => 'Join workshops, fundraisers, and outreach programs that change lives.'],
+            ['image' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteer event', 'title' => 'Clean water & nutrition programs', 'excerpt' => 'Your gift funds sustainable access to essentials for families in need.'],
+            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Youth support', 'title' => 'Youth mentorship & skills training', 'excerpt' => 'Building brighter futures through coaching, courses, and community.'],
         ],
     ],
 

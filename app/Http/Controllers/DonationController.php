@@ -91,12 +91,17 @@ class DonationController extends Controller
 
     private function rules(?int $id = null): array
     {
+        $creating = $id === null;
+        $coverRules = $creating
+            ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120']
+            : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'];
+
         return [
             'purpose' => ['required', 'string', 'max:255'],
-            'short_description' => ['nullable', 'string', 'max:500'],
-            'description' => ['nullable', 'string'],
-            'cover_image' => ['nullable', 'image', 'max:5120'],
-            'banner_image' => ['nullable', 'image', 'max:5120'],
+            'short_description' => ['required', 'string', 'max:500'],
+            'description' => ['required', 'string', 'max:65535'],
+            'cover_image' => $coverRules,
+            'banner_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
             'promote_front' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];

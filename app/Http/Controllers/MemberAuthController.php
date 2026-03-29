@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class MemberAuthController extends Controller
@@ -14,19 +15,29 @@ class MemberAuthController extends Controller
     private const OTP_EXPIRES_SESSION_KEY = 'member_otp_expires_at';
     private const OTP_USER_SESSION_KEY = 'member_otp_user_id';
 
-    public function showRegisterForm()
+    public function showRegisterForm(Request $request)
     {
         if (Auth::check()) {
             return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
         }
 
+        if ($request->filled('return') && $this->isSafeMemberRedirectUrl($request->string('return')->toString())) {
+            $request->session()->put('member_return_url', $request->string('return')->toString());
+        }
+
         return view('member.auth.login', ['defaultTab' => 'signup']);
     }
 
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
         if (Auth::check()) {
             return redirect()->to($this->memberHomeAfterAuth(Auth::user()));
+        }
+
+        if ($request->filled('return') && $this->isSafeMemberRedirectUrl($request->string('return')->toString())) {
+            $request->session()->put('member_return_url', $request->string('return')->toString());
+        } else {
+            $request->session()->forget('member_return_url');
         }
 
         return view('member.auth.login', ['defaultTab' => 'signin']);
@@ -152,7 +163,28 @@ class MemberAuthController extends Controller
             return redirect()->route('member.dashboard');
         }
 
+        $return = $request->session()->pull('member_return_url');
+        if (is_string($return) && $this->isSafeMemberRedirectUrl($return)) {
+            return redirect()->to($return);
+        }
+
         return redirect()->to($this->memberHomeAfterAuth($user));
+    }
+
+    /**
+     * Only allow redirects back to this application (open redirect protection).
+     */
+    private function isSafeMemberRedirectUrl(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+        $base = rtrim((string) config('app.url'), '/');
+        if (!Str::startsWith($url, $base)) {
+            return false;
+        }
+        return filter_var($url, FILTER_VALIDATE_URL) !== false;
     }
 
     /**

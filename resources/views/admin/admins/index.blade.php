@@ -148,18 +148,6 @@
 
     <!-- Content Area (Scrollable) -->
     <div class="flex-1 overflow-y-auto custom-scroll pr-2 pb-4">
-        @if(session('success'))
-        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-            <p class="text-sm text-emerald-600 font-bold">{{ session('success') }}</p>
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p class="text-sm text-red-600 font-bold">{{ session('error') }}</p>
-        </div>
-        @endif
-
         <!-- List View (Table – one row per user) -->
         <table x-show="viewType === 'list'" class="w-full text-left island-row">
             <thead
@@ -208,11 +196,14 @@
                                 </svg>
                             </button>
                             @if(!$admin->is_super_admin)
-                            <form action="{{ route('admin.admins.destroy', $admin) }}" method="POST" class="inline"
-                                onsubmit="return confirm('Are you sure you want to delete this admin?');">
+                            <form id="admin-delete-admin-{{ $admin->id }}-table" action="{{ route('admin.admins.destroy', $admin) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit"
+                                <button type="button"
+                                    data-delete-form="admin-delete-admin-{{ $admin->id }}-table"
+                                    data-delete-title="Delete this admin user?"
+                                    data-delete-message="They will lose access to the admin panel immediately."
+                                    onclick="adminOpenDeleteModalFromEl(this)"
                                     class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
                                     title="Delete Admin">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
@@ -275,11 +266,14 @@
                     <button @click="openEditPanel({{ $admin->id }})"
                         class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Edit</button>
                     @if(!$admin->is_super_admin)
-                    <form action="{{ route('admin.admins.destroy', $admin) }}" method="POST" class="inline"
-                        onsubmit="return confirm('Are you sure?');">
+                    <form id="admin-delete-admin-{{ $admin->id }}-card" action="{{ route('admin.admins.destroy', $admin) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600"><svg
+                        <button type="button" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-rose-600"
+                            data-delete-form="admin-delete-admin-{{ $admin->id }}-card"
+                            data-delete-title="Delete this admin user?"
+                            data-delete-message="They will lose access to the admin panel immediately."
+                            onclick="adminOpenDeleteModalFromEl(this)"><svg
                                 class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24">
                                 <path

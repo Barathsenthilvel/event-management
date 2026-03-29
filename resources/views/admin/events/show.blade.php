@@ -24,7 +24,7 @@
                 <p class="text-sm text-slate-700">{{ $event->description ?: 'No description provided.' }}</p>
                 <p class="text-xs font-bold text-slate-500">Venue: <span class="text-slate-700">{{ $event->venue ?: 'N/A' }}</span></p>
                 <p class="text-xs font-bold text-slate-500">Seats: <span class="text-slate-700">{{ ucfirst($event->seat_mode) }} @if($event->seat_mode === 'limited') ({{ $event->seat_limit }}) @endif</span></p>
-                <p class="text-xs font-bold text-slate-500">Interested: <span class="text-slate-700">{{ $event->interested_count }}</span></p>
+                <p class="text-xs font-bold text-slate-500">Interested (public): <span class="text-slate-700">{{ $event->interests->count() }}</span></p>
             </div>
 
             <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3">
@@ -42,6 +42,47 @@
                     <p class="text-sm text-slate-500">No dates added.</p>
                 @endforelse
             </div>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+            <h2 class="text-sm font-extrabold text-slate-900 mb-1">Interested (public)</h2>
+            <p class="text-xs font-bold text-slate-500 mb-3">People who registered interest from the events page ({{ $event->interests->count() }}).</p>
+            @if($event->interests->count() === 0)
+                <p class="text-sm text-slate-500">No interest registrations yet.</p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-xs">
+                        <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">Email</th>
+                                <th class="px-4 py-3">Phone</th>
+                                <th class="px-4 py-3">Member ID</th>
+                                <th class="px-4 py-3">Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($event->interests as $row)
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        @if($row->user_id)
+                                            <span class="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-700">Member</span>
+                                        @else
+                                            <span class="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase text-amber-800">Guest</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 font-bold text-slate-800">{{ $row->name }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->email }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->phone }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->user_id ? '#' . $row->user_id : '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->created_at?->format('d M Y h:i A') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
