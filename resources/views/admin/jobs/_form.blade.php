@@ -10,25 +10,25 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Search Hospital *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Search Hospital @include('admin.partials.required-mark')</label>
                 <input type="text" name="hospital" value="{{ old('hospital', $job->hospital ?? '') }}" placeholder="Enter Hospital / Account No"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 @error('hospital')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Job Title *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Job Title @include('admin.partials.required-mark')</label>
                 <input type="text" name="title" value="{{ old('title', $job->title ?? '') }}" placeholder="Enter Job Title"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 @error('title')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Job Code *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Job Code @include('admin.partials.required-mark')</label>
                 <input type="text" name="code" value="{{ old('code', $job->code ?? '') }}" placeholder="Enter Job Code"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 @error('code')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Vacancy Type *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Vacancy Type @include('admin.partials.required-mark')</label>
                 <div class="flex items-center gap-4 text-sm">
                     <label><input type="checkbox" name="vacancy_permanent" value="1" {{ old('vacancy_permanent', $job->vacancy_permanent ?? false) ? 'checked' : '' }}> Permanent</label>
                     <label><input type="checkbox" name="vacancy_temporary" value="1" {{ old('vacancy_temporary', $job->vacancy_temporary ?? false) ? 'checked' : '' }}> Temporary</label>
@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Preference *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Preference @include('admin.partials.required-mark')</label>
                 <div class="flex items-center gap-4 text-sm">
                     <label><input type="checkbox" name="preference_wfh" value="1" {{ old('preference_wfh', $job->preference_wfh ?? false) ? 'checked' : '' }}> WFH</label>
                     <label><input type="checkbox" name="preference_onsite" value="1" {{ old('preference_onsite', $job->preference_onsite ?? false) ? 'checked' : '' }}> Onsite</label>
@@ -44,7 +44,7 @@
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">No. of Openings *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">No. of Openings @include('admin.partials.required-mark')</label>
                 <input type="number" min="0" name="no_of_openings" value="{{ old('no_of_openings', $job->no_of_openings ?? 0) }}"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 @error('no_of_openings')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror

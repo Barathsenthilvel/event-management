@@ -31,7 +31,7 @@
                 Thanks for visiting—explore our programs, see upcoming events, and join us in turning kindness into lasting community impact.
             </p>
             <div class="mt-4 flex flex-wrap items-center gap-2">
-                <a href="{{ url('/') }}#donate" class="inline-flex items-center gap-1.5 rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a] transition hover:bg-[#2a1533]">
+                <a href="{{ route('donations.index') }}" class="inline-flex items-center gap-1.5 rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a] transition hover:bg-[#2a1533]">
                     Give today
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>

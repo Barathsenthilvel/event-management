@@ -4,17 +4,17 @@
 @endphp
 
 <form action="{{ $action }}" method="POST" enctype="multipart/form-data"
-      class="bg-white rounded-[24px] border border-slate-100 shadow-sm flex-1 p-6">
+      class="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6">
     @csrf
     @if($isEdit)
         @method('PUT')
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 h-full">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
         <!-- Left: text fields -->
-        <div class="space-y-5">
+        <div class="space-y-5 min-w-0">
             <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-2">Purpose *</label>
+                <label class="block text-[11px] font-bold text-slate-700 mb-2">Purpose @include('admin.partials.required-mark')</label>
                 <input type="text" name="purpose" value="{{ old('purpose', $donation->purpose ?? '') }}"
                        required
                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
@@ -22,59 +22,17 @@
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-2">Short Description</label>
-                <textarea name="short_description" rows="3"
+                <label class="block text-[11px] font-bold text-slate-700 mb-2">Short Description @include('admin.partials.required-mark')</label>
+                <textarea name="short_description" rows="3" required
                           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">{{ old('short_description', $donation->short_description ?? '') }}</textarea>
                 @error('short_description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-2">Description</label>
-                <textarea name="description" rows="5"
+                <label class="block text-[11px] font-bold text-slate-700 mb-2">Description @include('admin.partials.required-mark')</label>
+                <textarea name="description" rows="5" required
                           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">{{ old('description', $donation->description ?? '') }}</textarea>
                 @error('description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-            </div>
-
-            <div>
-                @php
-                    $promoteChecked = (bool) old('promote_front', $donation->promote_front ?? false);
-                @endphp
-                <label class="flex items-center justify-between gap-4 text-sm text-slate-700 cursor-pointer select-none">
-                    <span class="font-bold text-slate-700">Promote Front</span>
-                    <span class="relative inline-flex items-center">
-                        <input type="hidden" name="promote_front" value="0">
-                        <input
-                            type="checkbox"
-                            name="promote_front"
-                            value="1"
-                            {{ $promoteChecked ? 'checked' : '' }}
-                            class="peer sr-only"
-                        >
-                        <span class="w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 transition-colors shadow-inner"></span>
-                        <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
-                    </span>
-                </label>
-            </div>
-
-            <div>
-                @php
-                    $activeChecked = (bool) old('is_active', $donation->is_active ?? true);
-                @endphp
-                <label class="flex items-center justify-between gap-4 text-sm text-slate-700 cursor-pointer select-none">
-                    <span class="font-bold text-slate-700">Display Active</span>
-                    <span class="relative inline-flex items-center">
-                        <input type="hidden" name="is_active" value="0">
-                        <input
-                            type="checkbox"
-                            name="is_active"
-                            value="1"
-                            {{ $activeChecked ? 'checked' : '' }}
-                            class="peer sr-only"
-                        >
-                        <span class="w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 transition-colors shadow-inner"></span>
-                        <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
-                    </span>
-                </label>
             </div>
 
             <div class="flex gap-3 pt-4">
@@ -89,8 +47,8 @@
             </div>
         </div>
 
-        <!-- Right: image uploads -->
-        <div class="flex flex-col gap-6">
+        <!-- Right: image uploads + toggles -->
+        <div class="flex flex-col gap-6 min-w-0">
             <div class="border border-slate-200 rounded-2xl px-6 py-5">
                 <p class="text-sm font-semibold text-slate-800 mb-4">Images</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -146,8 +104,8 @@
                                     <path d="M10 11l2 2 3-3" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </div>
-                            <span class="text-xs font-medium text-slate-700">Cover Image</span>
-                            <input id="donation_cover_image_input" type="file" name="cover_image" class="hidden" accept="image/*">
+                            <span class="text-xs font-medium text-slate-700">Cover Image @if(!$isEdit)@include('admin.partials.required-mark')@endif</span>
+                            <input id="donation_cover_image_input" type="file" name="cover_image" class="hidden" accept="image/*" @if(!$isEdit) required @endif>
                         </label>
                         @error('cover_image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
@@ -200,6 +158,51 @@
                         </label>
                         @error('banner_image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
+                </div>
+            </div>
+
+            <div class="border border-slate-200 rounded-2xl px-6 py-5 space-y-5">
+                <p class="text-sm font-semibold text-slate-800">Visibility</p>
+                <div>
+                    @php
+                        $promoteChecked = (bool) old('promote_front', $donation->promote_front ?? false);
+                    @endphp
+                    <label class="flex items-center justify-between gap-4 text-sm text-slate-700 cursor-pointer select-none">
+                        <span class="font-bold text-slate-700">Promote Front</span>
+                        <span class="relative inline-flex items-center shrink-0">
+                            <input type="hidden" name="promote_front" value="0">
+                            <input
+                                type="checkbox"
+                                name="promote_front"
+                                value="1"
+                                {{ $promoteChecked ? 'checked' : '' }}
+                                class="peer sr-only"
+                            >
+                            <span class="w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 transition-colors shadow-inner"></span>
+                            <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
+                </div>
+
+                <div>
+                    @php
+                        $activeChecked = (bool) old('is_active', $donation->is_active ?? true);
+                    @endphp
+                    <label class="flex items-center justify-between gap-4 text-sm text-slate-700 cursor-pointer select-none">
+                        <span class="font-bold text-slate-700">Display Active</span>
+                        <span class="relative inline-flex items-center shrink-0">
+                            <input type="hidden" name="is_active" value="0">
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                value="1"
+                                {{ $activeChecked ? 'checked' : '' }}
+                                class="peer sr-only"
+                            >
+                            <span class="w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 transition-colors shadow-inner"></span>
+                            <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>

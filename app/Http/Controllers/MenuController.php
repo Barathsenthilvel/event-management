@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MenuController extends Controller
 {
@@ -17,17 +18,7 @@ class MenuController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'route_name' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:menus,id',
-            'order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $data['is_active'] = $request->has('is_active');
+        $data = $this->validatedMenuPayload($request);
 
         Menu::create($data);
 
@@ -37,17 +28,13 @@ class MenuController extends Controller
 
     public function update(Request $request, Menu $menu)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'route_name' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:menus,id',
-            'order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $this->validatedMenuPayload($request);
 
-        $data['is_active'] = $request->has('is_active');
+        if ($data['parent_id'] !== null && (int) $data['parent_id'] === (int) $menu->id) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['parent_id' => 'A menu cannot be its own parent.']);
+        }
 
         $menu->update($data);
 
@@ -61,6 +48,41 @@ class MenuController extends Controller
 
         return redirect()->route('admin.menus.index')
             ->with('success', 'Menu deleted successfully.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedMenuPayload(Request $request): array
+    {
+        $orderRaw = $request->input('order');
+        if ($orderRaw === null || $orderRaw === '') {
+            $request->merge(['order' => 0]);
+        }
+
+        $isRoot = in_array($request->input('is_root_menu'), [1, '1', true, 'true'], true);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'route_name' => ['required', 'string', 'max:255'],
+            'icon' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'is_root_menu' => ['required', Rule::in([0, 1, '0', '1'])],
+            'parent_id' => [
+                Rule::requiredIf(! $isRoot),
+                'nullable',
+                'exists:menus,id',
+            ],
+            'order' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $data['parent_id'] = $isRoot ? null : (isset($data['parent_id']) ? (int) $data['parent_id'] : null);
+        $data['order'] = (int) $data['order'];
+        $data['is_active'] = $request->boolean('is_active');
+
+        unset($data['is_root_menu']);
+
+        return $data;
     }
 }
 

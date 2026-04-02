@@ -143,7 +143,7 @@
                         <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
                     </svg>
                 </a>
-                <a href="{{ route('home') }}#donate" class="hidden rounded-full bg-gradient-to-r from-[#fddc6a] to-[#f5d56a] px-5 py-2.5 text-xs font-bold text-[#311742] shadow-lg shadow-amber-200/50 ring-1 ring-amber-200/60 transition hover:brightness-105 min-[400px]:inline-flex sm:text-sm">Donate</a>
+                <a href="{{ route('donations.index') }}" class="hidden rounded-full bg-gradient-to-r from-[#fddc6a] to-[#f5d56a] px-5 py-2.5 text-xs font-bold text-[#311742] shadow-lg shadow-amber-200/50 ring-1 ring-amber-200/60 transition hover:brightness-105 min-[400px]:inline-flex sm:text-sm">Donate</a>
             </div>
         </div>
         <div id="ml-mobile-nav" class="ml-mobile-panel border-t border-[#351c42]/10 bg-white/95 backdrop-blur-md lg:hidden" hidden>
@@ -153,7 +153,7 @@
                 <a href="{{ route('home') }}#events" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Events</a>
                 <a href="{{ route('home') }}#gallery" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Gallery</a>
                 <a href="{{ route('home') }}#contact" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Contact us</a>
-                <a href="{{ route('home') }}#donate" class="mt-4 rounded-full bg-[#351c42] py-3.5 text-center text-sm font-bold text-[#fddc6a] shadow-lg">Donate</a>
+                <a href="{{ route('donations.index') }}" class="mt-4 rounded-full bg-[#351c42] py-3.5 text-center text-sm font-bold text-[#fddc6a] shadow-lg">Donate</a>
             </nav>
         </div>
     </header>

@@ -57,7 +57,12 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
-        $event->load(['dates', 'creator:id,name', 'invites.user:id,name,email,mobile']);
+        $event->load([
+            'dates',
+            'creator:id,name',
+            'invites.user:id,name,email,mobile',
+            'interests',
+        ]);
         return view('admin.events.show', compact('event'));
     }
 

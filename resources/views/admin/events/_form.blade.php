@@ -16,7 +16,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-            <label class="block text-xs font-bold text-slate-700 mb-2">Event Title *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Event Title @include('admin.partials.required-mark')</label>
             <input type="text" name="title" value="{{ old('title', $event->title ?? '') }}"
                 class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-indigo-200 outline-none" required>
             @error('title')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
@@ -39,7 +39,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
-            <label class="block text-xs font-bold text-slate-700 mb-2">Seat Mode *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Seat Mode @include('admin.partials.required-mark')</label>
             @php $seatMode = old('seat_mode', $event->seat_mode ?? 'unlimited'); @endphp
             <select name="seat_mode" id="seat_mode"
                 class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-indigo-200 outline-none">
@@ -57,7 +57,7 @@
         </div>
 
         <div>
-            <label class="block text-xs font-bold text-slate-700 mb-2">Event Status *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Event Status @include('admin.partials.required-mark')</label>
             @php $status = old('status', $event->status ?? 'upcoming'); @endphp
             <select name="status"
                 class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-indigo-200 outline-none">
@@ -85,7 +85,7 @@
 
     <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
         <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-slate-800">Event Dates *</h3>
+            <h3 class="text-sm font-bold text-slate-800">Event Dates @include('admin.partials.required-mark')</h3>
             <button type="button" id="add-date-row" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold">+ Add Date</button>
         </div>
         <div id="event-dates-wrapper" class="space-y-3">
@@ -106,16 +106,48 @@
         <div>
             <label class="block text-xs font-bold text-slate-700 mb-2">Cover Image</label>
             <input type="file" name="cover_image" accept="image/*" class="w-full text-sm">
+            @if($isEdit && !empty($event->cover_image_path))
+                <div class="mt-2 rounded-xl border border-slate-200 bg-white p-2">
+                    <p class="text-[11px] font-bold text-slate-500 mb-2">Current cover image</p>
+                    <a href="{{ asset('storage/' . $event->cover_image_path) }}" target="_blank" rel="noopener">
+                        <img src="{{ asset('storage/' . $event->cover_image_path) }}" alt="Current cover image"
+                             class="h-28 w-full rounded-lg object-cover border border-slate-100">
+                    </a>
+                </div>
+            @endif
             @error('cover_image')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
             <label class="block text-xs font-bold text-slate-700 mb-2">Banner Image</label>
             <input type="file" name="banner_image" accept="image/*" class="w-full text-sm">
+            @if($isEdit && !empty($event->banner_image_path))
+                <div class="mt-2 rounded-xl border border-slate-200 bg-white p-2">
+                    <p class="text-[11px] font-bold text-slate-500 mb-2">Current banner image</p>
+                    <a href="{{ asset('storage/' . $event->banner_image_path) }}" target="_blank" rel="noopener">
+                        <img src="{{ asset('storage/' . $event->banner_image_path) }}" alt="Current banner image"
+                             class="h-28 w-full rounded-lg object-cover border border-slate-100">
+                    </a>
+                </div>
+            @endif
             @error('banner_image')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
             <label class="block text-xs font-bold text-slate-700 mb-2">Template PDF</label>
             <input type="file" name="template_pdf" accept="application/pdf" class="w-full text-sm">
+            @if($isEdit && !empty($event->template_pdf_path))
+                <div class="mt-2 rounded-xl border border-slate-200 bg-white p-3">
+                    <p class="text-[11px] font-bold text-slate-500">Current template PDF</p>
+                    <a href="{{ asset('storage/' . $event->template_pdf_path) }}"
+                       target="_blank"
+                       rel="noopener"
+                       class="mt-1 inline-flex items-center gap-2 text-xs font-extrabold text-indigo-700 hover:text-indigo-900">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        {{ basename($event->template_pdf_path) }}
+                    </a>
+                </div>
+            @endif
             @error('template_pdf')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>

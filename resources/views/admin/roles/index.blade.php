@@ -27,11 +27,11 @@ document.addEventListener('alpine:init', () => {
     loading: false,
     loadingPermissions: false,
     searchQuery: '',
-    addToast(msg) {
+    addToast(msg, type = 'success') {
       const id = Date.now();
       this.toasts = this.toasts || [];
-      this.toasts.push({ id, msg });
-      setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 3000);
+      this.toasts.push({ id, msg, type: type === 'error' ? 'error' : 'success' });
+      setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 4500);
     },
     toasts: [],
     escapeAttr(s) {
@@ -157,11 +157,11 @@ document.addEventListener('alpine:init', () => {
         this.showDeleteModal = false;
         this.deleteRoleId = null;
         this.deleteRoleName = '';
-        this.addToast(data.message || 'Role deleted successfully.');
+        this.addToast(data.message || 'Role deleted successfully.', 'success');
         await this.refreshRoles();
       } catch (err) {
         console.error(err);
-        this.addToast('Error: Failed to delete role.');
+        this.addToast('Error: Failed to delete role.', 'error');
       }
     },
     async openEditModal(roleId) {
@@ -223,7 +223,7 @@ document.addEventListener('alpine:init', () => {
           const data = await response.json();
           this.showAddPanel = false;
           form.reset();
-          this.addToast(data.message || 'New Role Created Successfully');
+          this.addToast(data.message || 'New Role Created Successfully', 'success');
           await this.refreshRoles(true);
         } else if (contentType && contentType.includes('application/json')) {
           const data = await response.json();
@@ -232,13 +232,13 @@ document.addEventListener('alpine:init', () => {
             const firstError = Object.values(data.errors)[0];
             errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
           } else if (data.message) errorMsg = data.message;
-          this.addToast('Error: ' + errorMsg);
+          this.addToast('Error: ' + errorMsg, 'error');
         } else {
-          this.addToast('Error: Failed to create role');
+          this.addToast('Error: Failed to create role', 'error');
         }
       } catch (error) {
         console.error(error);
-        this.addToast('Error: Failed to create role');
+        this.addToast('Error: Failed to create role', 'error');
       }
     },
     async submitEditRole(form) {
@@ -253,16 +253,16 @@ document.addEventListener('alpine:init', () => {
         if (response.ok) {
           const data = await response.json();
           this.showEditModal = false;
-          this.addToast(data.message || 'Role Updated Successfully');
+          this.addToast(data.message || 'Role Updated Successfully', 'success');
           await this.refreshRoles();
         } else {
           const data = await response.json();
           let errorMsg = (data.errors && Object.values(data.errors)[0]) ? Object.values(data.errors)[0][0] : (data.message || 'Failed to update role');
-          this.addToast('Error: ' + errorMsg);
+          this.addToast('Error: ' + errorMsg, 'error');
         }
       } catch (error) {
         console.error(error);
-        this.addToast('Error: Failed to update role');
+        this.addToast('Error: Failed to update role', 'error');
       }
     },
     async submitPermissions() {
@@ -284,14 +284,14 @@ document.addEventListener('alpine:init', () => {
         const data = response.ok ? await response.json().catch(() => ({})) : {};
         if (response.ok) {
           this.showPermissionModal = false;
-          this.addToast(data.message || 'Menu permissions updated for ' + this.selectedRole);
+          this.addToast(data.message || 'Menu permissions updated for ' + this.selectedRole, 'success');
           await this.refreshRoles();
         } else {
-          this.addToast(data.message || 'Error: Failed to update menu permissions');
+          this.addToast(data.message || 'Failed to update menu permissions', 'error');
         }
       } catch (error) {
         console.error(error);
-        this.addToast('Error: Failed to update menu permissions');
+        this.addToast('Error: Failed to update menu permissions', 'error');
       }
     }
   }));
@@ -335,12 +335,6 @@ document.addEventListener('alpine:init', () => {
 
     <!-- Content Area (Scrollable) -->
     <div id="roles-list-content" class="flex-1 overflow-y-auto custom-scroll pr-2 pb-4">
-
-        @if(session('success'))
-        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-            <p class="text-sm text-emerald-600 font-bold">{{ session('success') }}</p>
-        </div>
-        @endif
 
         <!-- List View (Roles Table) - default on load so no flash of grid -->
         <table x-show="viewType === 'list'" x-transition class="w-full text-left island-row" @click="handleTableClick($event)">
@@ -736,19 +730,23 @@ document.addEventListener('alpine:init', () => {
     </div>
 
     <!-- Toast Notifications -->
-    <div class="fixed bottom-10 right-10 z-[300] space-y-3 pointer-events-none">
+    <div class="fixed bottom-10 right-10 z-[300] flex flex-col gap-3 pointer-events-none max-w-md">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-5" x-transition:enter-end="opacity-100 translate-y-0"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="flex items-center gap-4 bg-[#0f172a] text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/10 pointer-events-auto">
-                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shrink-0"><svg
-                        class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="4"
-                        viewBox="0 0 24 24">
+                class="flex items-center gap-4 bg-[#111827] text-white pl-4 pr-6 py-4 rounded-full shadow-2xl border border-white/10 pointer-events-auto">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    :class="toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'">
+                    <svg x-show="toast.type === 'error'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <svg x-show="toast.type !== 'error'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg></div>
-                <p class="text-xs font-bold" x-text="toast.msg"></p>
+                    </svg>
+                </div>
+                <p class="text-sm font-bold leading-snug" x-text="toast.msg"></p>
             </div>
         </template>
     </div>

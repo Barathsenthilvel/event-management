@@ -52,6 +52,24 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
             </a>
 
+            <a href="{{ route('donations.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('donations.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('donations.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8c-1.657 0-3 .843-3 2.5 0 1.757 2.25 3.25 3 5.5.75-2.25 3-3.743 3-5.5C15 8.843 13.657 8 12 8z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Donations</span>
+            </a>
+
+            <a href="{{ route('member.ebooks.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('member.ebooks.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('member.ebooks.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 5a2 2 0 012-2h8.5a1.5 1.5 0 011.06.44l2.5 2.5A1.5 1.5 0 0119.5 7H6a2 2 0 01-2-2zm0 4h16M4 13h16M4 17h10" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Find E-Books</span>
+            </a>
+
             {{-- Menus visible only after profile completed + admin approved --}}
             @if($canSeeMembership && $hasActiveSubscription)
                 <a href="{{ route('member.subscription.index') }}"
@@ -85,15 +103,6 @@
                     class="flex items-center gap-3 p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
                     <svg class="w-5 h-5 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4 5a2 2 0 012-2h8.5a1.5 1.5 0 011.06.44l2.5 2.5A1.5 1.5 0 0119.5 7H6a2 2 0 01-2-2zm0 4h16M4 13h16M4 17h10" />
-                    </svg>
-                    <span x-show="sidebarOpen" class="text-sm font-medium">Find E-Books</span>
-                </a>
-
-                <a href="#"
-                    class="flex items-center gap-3 p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                    <svg class="w-5 h-5 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M10 9a3 3 0 116 0 3 3 0 01-6 0zM4 20l4-4 2 2 6-6 4 4" />
                     </svg>
                     <span x-show="sidebarOpen" class="text-sm font-medium">Search Jobs</span>
@@ -108,14 +117,6 @@
                     <span x-show="sidebarOpen" class="text-sm font-medium">Polling</span>
                 </a>
 
-                <a href="#"
-                    class="flex items-center gap-3 p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                    <svg class="w-5 h-5 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8c-1.657 0-3 .843-3 2.5 0 1.757 2.25 3.25 3 5.5.75-2.25 3-3.743 3-5.5C15 8.843 13.657 8 12 8z" />
-                    </svg>
-                    <span x-show="sidebarOpen" class="text-sm font-medium">Donations</span>
-                </a>
             @endif
 
             {{-- Always available profile / password --}}

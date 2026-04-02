@@ -93,10 +93,14 @@
                                 <p class="text-sm font-bold text-slate-800">{{ $invite->user->name ?? 'Member' }}</p>
                                 <p class="text-[11px] text-slate-500">{{ $invite->user->email ?? '-' }}</p>
                             </div>
-                            <form method="POST" action="{{ route('admin.meetings.invite.remove', [$meeting->id, $invite->id]) }}" onsubmit="return confirm('Remove this member from meeting invite list?')">
+                            <form id="admin-delete-meeting-invite-{{ $invite->id }}" method="POST" action="{{ route('admin.meetings.invite.remove', [$meeting->id, $invite->id]) }}" class="inline-flex">
                                 @csrf
                                 @method('DELETE')
-                                <button class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center" title="Remove Member">
+                                <button type="button" class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center" title="Remove Member"
+                                    data-delete-form="admin-delete-meeting-invite-{{ $invite->id }}"
+                                    data-delete-title="Remove this invite?"
+                                    data-delete-message="This member will be removed from the meeting invite list."
+                                    onclick="adminOpenDeleteModalFromEl(this)">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>

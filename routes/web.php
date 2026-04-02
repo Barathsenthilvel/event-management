@@ -16,9 +16,12 @@ use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\AdminMemberApprovalController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventInterestController;
 use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\MemberPasswordController;
+use App\Http\Controllers\MemberEBookController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\DonationPaymentController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\NominationController;
@@ -26,6 +29,13 @@ use App\Http\Controllers\PollingController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/events', [HomeController::class, 'events'])->name('events.index');
+Route::get('/donations', [HomeController::class, 'donations'])->name('donations.index');
+Route::post('/donations/payment/order', [DonationPaymentController::class, 'createOrder'])->name('donations.payment.order');
+Route::post('/donations/payment/verify', [DonationPaymentController::class, 'verify'])->name('donations.payment.verify');
+Route::redirect('/events-demo', '/events', 301);
+
+Route::post('/events/{event}/interest', [EventInterestController::class, 'store'])->name('events.interest');
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -210,6 +220,10 @@ Route::prefix('admin')->group(function () {
 
 // Member (User Site) Routes
 Route::prefix('member')->name('member.')->group(function () {
+    Route::get('/donations', function (\Illuminate\Http\Request $request) {
+        return redirect()->route('donations.index', $request->query());
+    });
+
     Route::get('/login', [MemberAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [MemberAuthController::class, 'login'])->name('login.store');
 
@@ -235,5 +249,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('/subscription/order', [MemberSubscriptionController::class, 'createOrder'])->name('subscription.order');
         Route::post('/subscription/verify', [MemberSubscriptionController::class, 'verifyPayment'])->name('subscription.verify');
         Route::get('/subscription/invoice/{id}', [MemberSubscriptionController::class, 'downloadInvoice'])->name('subscription.invoice');
+
+        Route::get('/e-books', [MemberEBookController::class, 'index'])->name('ebooks.index');
     });
 });

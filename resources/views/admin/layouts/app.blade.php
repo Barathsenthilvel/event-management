@@ -90,10 +90,10 @@
         { title: 'Security Alert', desc: 'New login activity detected', time: 'Just now', type: 'info' }
     ],
     toasts: [],
-    addToast(msg) {
-        const id = Date.now();
-        this.toasts.push({ id, msg });
-        setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 3000);
+    addToast(msg, type = 'success') {
+        const id = Date.now() + Math.random();
+        this.toasts.push({ id, msg, type: type === 'error' ? 'error' : 'success' });
+        setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 4500);
     },
     showLoader() {
         this.refreshing = true;
@@ -155,6 +155,26 @@
         } finally {
             this.hideLoader();
         }
+    },
+    deleteModalOpen: false,
+    deleteModalTitle: 'Delete this item?',
+    deleteModalMessage: '',
+    pendingDeleteFormId: null,
+    openDeleteModal(formId, message, title) {
+        this.pendingDeleteFormId = formId;
+        this.deleteModalMessage = message || 'This action cannot be undone.';
+        this.deleteModalTitle = title || 'Delete this item?';
+        this.deleteModalOpen = true;
+    },
+    closeDeleteModal() {
+        this.deleteModalOpen = false;
+        this.pendingDeleteFormId = null;
+    },
+    confirmPendingDelete() {
+        if (!this.pendingDeleteFormId) return;
+        const form = document.getElementById(this.pendingDeleteFormId);
+        if (form) form.submit();
+        this.closeDeleteModal();
     }
 }">
 
@@ -388,7 +408,7 @@
     </aside>
 
     <main class="flex-1 flex gap-3 workspace-transition relative overflow-hidden">
-        <div class="flex flex-col gap-3 workspace-transition w-full">
+        <div class="flex flex-col gap-3 workspace-transition w-full min-h-0 flex-1">
             <!-- Header -->
             <header
                 class="bg-white h-16 rounded-[24px] flex items-center justify-between px-6 shadow-sm border border-white shrink-0 z-10 relative">
@@ -492,7 +512,7 @@
             </header>
 
             <!-- Main Content -->
-            <div class="bg-white flex-1 rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+            <div class="bg-white flex-1 min-h-0 rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
                 <!-- Global Loader Overlay -->
                 <div x-show="refreshing" x-cloak
                     class="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex items-center justify-center rounded-[24px]"
@@ -530,20 +550,24 @@
         };
     </script>
 
-    <!-- Toast Notifications -->
-    <div class="fixed bottom-10 right-10 z-[300] space-y-3 pointer-events-none">
+    <!-- Toast Notifications (success + error) -->
+    <div class="fixed bottom-10 right-10 z-[300] flex flex-col gap-3 pointer-events-none max-w-md">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-5" x-transition:enter-end="opacity-100 translate-y-0"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="flex items-center gap-4 bg-[#0f172a] text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/10 pointer-events-auto">
-                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shrink-0"><svg
-                        class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="4"
-                        viewBox="0 0 24 24">
+                class="flex items-center gap-4 bg-[#111827] text-white pl-4 pr-6 py-4 rounded-full shadow-2xl border border-white/10 pointer-events-auto">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    :class="toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'">
+                    <svg x-show="toast.type === 'error'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <svg x-show="toast.type !== 'error'" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg></div>
-                <p class="text-xs font-bold" x-text="toast.msg"></p>
+                    </svg>
+                </div>
+                <p class="text-sm font-bold leading-snug" x-text="toast.msg"></p>
             </div>
         </template>
     </div>
@@ -583,13 +607,87 @@
         </div>
     </div>
 
-    @if(session('success'))
+    <!-- Global delete confirmation modal -->
+    <div x-show="deleteModalOpen" x-cloak
+        class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @keydown.escape.window="closeDeleteModal()">
+        <div class="bg-white rounded-[28px] p-8 max-w-md w-full shadow-2xl border border-slate-100"
+            @click.away="closeDeleteModal()"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-3"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-5 shadow-inner shadow-rose-100/80 ring-1 ring-rose-100">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 tracking-tight" x-text="deleteModalTitle"></h3>
+                <p class="mt-3 text-sm text-slate-500 leading-relaxed" x-text="deleteModalMessage"></p>
+                <p class="mt-2 text-xs font-semibold text-rose-600/90">This cannot be undone.</p>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button type="button" @click="closeDeleteModal()"
+                    class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" @click="confirmPendingDelete()"
+                    class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200/60 transition-all hover:shadow-xl">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('toast', { msg: '{{ session('success') }}' });
-        });
+        window.adminOpenDeleteModal = function (formId, message, title) {
+            if (!window.Alpine || typeof Alpine.$data !== 'function') return;
+            var root = Alpine.$data(document.querySelector('body'));
+            if (root && typeof root.openDeleteModal === 'function') {
+                root.openDeleteModal(formId, message, title);
+            }
+        };
+        window.adminOpenDeleteModalFromEl = function (el) {
+            if (!el) return;
+            var formId = el.getAttribute('data-delete-form');
+            var message = el.getAttribute('data-delete-message') || '';
+            var title = el.getAttribute('data-delete-title') || '';
+            adminOpenDeleteModal(formId, message, title || undefined);
+        };
     </script>
-    @endif
+
+    <script>
+        (function () {
+            function flushAdminToasts() {
+                if (window.__adminFlashConsumed) return true;
+                if (!window.Alpine || typeof Alpine.$data !== 'function') return false;
+                var root = Alpine.$data(document.querySelector('body'));
+                if (!root || typeof root.addToast !== 'function') return false;
+                window.__adminFlashConsumed = true;
+                @if(session('success'))
+                root.addToast(@json(session('success')), 'success');
+                @elseif(session('error'))
+                root.addToast(@json(session('error')), 'error');
+                @elseif($errors->any())
+                root.addToast(@json($errors->first()), 'error');
+                @endif
+                return true;
+            }
+            document.addEventListener('alpine:initialized', flushAdminToasts);
+            document.addEventListener('DOMContentLoaded', function () {
+                var n = 0;
+                var t = setInterval(function () {
+                    if (flushAdminToasts() || ++n > 100) clearInterval(t);
+                }, 25);
+            });
+        })();
+    </script>
 
 </body>
 </html>

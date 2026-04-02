@@ -45,6 +45,11 @@ class Event extends Model
         return $this->hasMany(EventInvite::class);
     }
 
+    public function interests(): HasMany
+    {
+        return $this->hasMany(EventInterest::class)->orderByDesc('created_at');
+    }
+
     public function photos(): HasMany
     {
         return $this->hasMany(EventPhoto::class);

@@ -25,14 +25,14 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Title *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Title @include('admin.partials.required-mark')</label>
                 <input type="text" name="title" value="{{ old('title', $meeting->title ?? '') }}" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
                 @error('title')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Link *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Link @include('admin.partials.required-mark')</label>
                 <input type="text" name="meeting_link" value="{{ old('meeting_link', $meeting->meeting_link ?? '') }}" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
                 @error('meeting_link')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
@@ -46,7 +46,7 @@
             </div>
 
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Mode *</label>
+                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Mode @include('admin.partials.required-mark')</label>
                 @php $mode = old('meeting_mode', $meeting->meeting_mode ?? 'direct'); @endphp
                 <select name="meeting_mode"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
@@ -62,7 +62,7 @@
 
         <div class="space-y-5">
             <div class="rounded-xl border border-slate-200 p-4">
-                <p class="text-xs font-black text-slate-700 mb-3">Meeting Date & Time *</p>
+                <p class="text-xs font-black text-slate-700 mb-3">Meeting Date & Time @include('admin.partials.required-mark')</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <input type="date" name="schedule_date" value="{{ $schedule['meeting_date'] }}"
@@ -100,7 +100,7 @@
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-black text-slate-600 mb-2">Status *</label>
+                    <label class="block text-xs font-black text-slate-600 mb-2">Status @include('admin.partials.required-mark')</label>
                     @php $status = old('status', $meeting->status ?? 'upcoming'); @endphp
                     <select name="status" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
                         <option value="upcoming" {{ $status === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
