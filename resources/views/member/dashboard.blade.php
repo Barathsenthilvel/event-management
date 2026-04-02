@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Member dashboard — GNAT Donation</title>
+    <title>Dashboard — GNAT Donation</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -31,12 +31,18 @@
             backdrop-filter: blur(14px);
             border-bottom: 1px solid rgba(53, 28, 66, 0.07);
         }
+        .site-header-main {
+            background: linear-gradient(180deg, #f5f3f9 0%, #eae7f3 100%);
+            border-bottom: 1px solid rgba(53, 28, 66, 0.09);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+        }
         .md-nav-link {
             font-size: 0.6875rem;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: #5c5a6b;
+            transition: color 0.2s ease;
         }
         .md-nav-link:hover { color: #351c42; }
         body.md-drawer-open { overflow: hidden; }
@@ -102,6 +108,19 @@
             backdrop-filter: blur(8px);
         }
         .md-modal-overlay.is-open { display: flex; }
+        .md-btn-interest {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #351c42;
+            color: #fddc6a;
+            transition: transform 0.15s ease, filter 0.2s ease;
+        }
+        .md-btn-interest:hover { filter: brightness(1.06); transform: translateY(-1px); }
     </style>
 </head>
 <body class="md-page-bg text-[#351c42] antialiased" id="top">
@@ -122,19 +141,19 @@
     @endif
 
     @if($profileIncomplete)
-        <div x-data="{ open: true }" x-cloak>
-            <div x-show="open" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+        <div x-data x-cloak>
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
                 <div class="w-full max-w-md rounded-2xl border-2 border-[#965995]/30 bg-white p-8 text-center shadow-2xl">
                     <h2 class="text-2xl font-bold text-[#351c42]">Hello, {{ $firstName }}</h2>
                     <p class="mt-4 text-sm leading-relaxed text-[#351c42]/75">Your profile is incomplete. Please complete it to be part of the GNAT member community.</p>
                     <a href="{{ route('member.profile.edit') }}" class="mx-auto mt-8 inline-flex min-w-[10rem] items-center justify-center rounded-full bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-6 py-2.5 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 transition hover:brightness-105">Update profile</a>
-                    <button type="button" @click="open = false" class="mt-4 block w-full text-sm font-semibold text-[#351c42]/50 hover:text-[#351c42]">Dismiss</button>
                 </div>
             </div>
         </div>
     @endif
 
     <header class="sticky top-0 z-40 md-glass-header">
+        <div class="site-header-main">
         <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
             <button type="button" class="rounded-xl p-2.5 hover:bg-[#351c42]/5 lg:hidden -ml-2" data-md-sidebar-toggle aria-expanded="false" aria-controls="md-sidebar" aria-label="Open menu">
                 <span class="flex w-[22px] flex-col gap-1.5" aria-hidden="true">
@@ -154,6 +173,7 @@
                 <a href="{{ route('home') }}#contact" class="md-nav-link">Contact us</a>
             </nav>
             <div class="ml-auto relative" x-data="{ openProfile: false }">
+                <a href="{{ route('home') }}#donate" class="mr-2 hidden rounded-full bg-[#fddc6a] px-4 py-2 text-xs font-bold text-[#311742] shadow ring-1 ring-amber-200/70 transition hover:brightness-105 sm:inline-flex">Donate Now</a>
                 <button type="button"
                     @click="openProfile = !openProfile"
                     class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11"
@@ -184,6 +204,7 @@
                     </form>
                 </div>
             </div>
+        </div>
         </div>
     </header>
 
@@ -223,6 +244,21 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
                 <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
             </header>
+
+            <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Profile status</p>
+                    <p class="mt-2 text-lg font-bold text-[#351c42]">{{ $member?->profile_completed ? 'Completed' : 'Incomplete' }}</p>
+                </article>
+                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Approval status</p>
+                    <p class="mt-2 text-lg font-bold {{ $member?->is_approved ? 'text-emerald-700' : 'text-amber-700' }}">{{ $member?->is_approved ? 'Approved' : 'Pending approval' }}</p>
+                </article>
+                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm sm:col-span-2 lg:col-span-1">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Member name</p>
+                    <p class="mt-2 text-lg font-bold text-[#351c42]">{{ $member?->name ?? '-' }}</p>
+                </article>
+            </section>
 
             <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -312,6 +348,63 @@
                 </div>
             </section>
 
+            <section aria-labelledby="member-events-heading" class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
+                <div class="mb-6 flex items-center justify-between gap-4">
+                    <h2 id="member-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Events</h2>
+                    <a href="{{ route('home') }}#events" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">View all on home</a>
+                </div>
+
+                @if(session('event_interest_error'))
+                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                        {{ session('event_interest_error') }}
+                    </div>
+                @endif
+
+                <div class="space-y-4">
+                    @forelse($events as $event)
+                        @php
+                            $alreadyInterested = in_array($event->id, $interestedEventIds ?? [], true);
+                            $seatsFull = $event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit;
+                            $eventDate = optional($event->dates->first())->event_date;
+                        @endphp
+                        <article class="rounded-2xl border border-[#351c42]/10 bg-white p-4 sm:p-5">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
+                                    <h3 class="mt-1 text-lg font-bold text-[#351c42]">{{ $event->title }}</h3>
+                                    <p class="mt-1 text-sm text-[#351c42]/70">{{ $event->venue ?: 'Venue will be shared soon' }}</p>
+                                    <p class="mt-2 text-xs font-semibold text-[#351c42]/60">
+                                        {{ $eventDate ? \Illuminate\Support\Carbon::parse($eventDate)->format('d M Y') : 'Date TBD' }}
+                                        @if($event->seat_mode === 'limited' && $event->seat_limit)
+                                            · Seats {{ $event->interested_count }}/{{ $event->seat_limit }}
+                                        @else
+                                            · Unlimited seats
+                                        @endif
+                                    </p>
+                                    <p class="mt-1 text-xs text-[#351c42]/55">Interested profiles: {{ $event->interested_count }}</p>
+                                </div>
+                                <div class="shrink-0">
+                                    @if($alreadyInterested)
+                                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">Interest submitted</span>
+                                    @elseif($seatsFull)
+                                        <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700">Seat limit reached</span>
+                                    @else
+                                        <form method="POST" action="{{ route('member.events.interest', $event) }}">
+                                            @csrf
+                                            <button type="submit" class="md-btn-interest">Interested</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </article>
+                    @empty
+                        <div class="rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-6 text-sm text-[#351c42]/70">
+                            No active events available right now.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
             <section aria-labelledby="history-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h2 id="history-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription history</h2>
@@ -383,6 +476,10 @@
 
     <script>
         (() => {
+            @if(session('event_interest_success'))
+                alert("{{ session('event_interest_success') }}");
+            @endif
+
             const sidebar = document.getElementById("md-sidebar");
             const toggle = document.querySelector("[data-md-sidebar-toggle]");
             const backdrop = document.getElementById("md-sidebar-backdrop");

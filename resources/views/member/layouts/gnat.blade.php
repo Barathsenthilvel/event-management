@@ -22,12 +22,18 @@
             backdrop-filter: blur(14px);
             border-bottom: 1px solid rgba(53, 28, 66, 0.07);
         }
+        .site-header-main {
+            background: linear-gradient(180deg, #f5f3f9 0%, #eae7f3 100%);
+            border-bottom: 1px solid rgba(53, 28, 66, 0.09);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+        }
         .md-nav-link {
             font-size: 0.6875rem;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: #5c5a6b;
+            transition: color 0.2s ease;
         }
         .md-nav-link:hover { color: #351c42; }
         .md-sidebar-link {
@@ -58,6 +64,7 @@
         $gnatCanSubscribe = $gnatMember && $gnatMember->profile_completed && $gnatMember->is_approved;
     @endphp
     <header class="sticky top-0 z-40 md-glass-header">
+        <div class="site-header-main">
         <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
             <a href="{{ route('home') }}" class="flex min-w-0 max-w-[200px] shrink-0 sm:max-w-[220px]" aria-label="Home">
                 <img src="{{ asset('logo.png') }}" alt="GNAT Donation" class="h-8 w-auto max-h-11 object-contain sm:h-11" width="200" height="48" />
@@ -70,6 +77,7 @@
                 <a href="{{ route('home') }}#contact" class="md-nav-link">Contact us</a>
             </nav>
             <div class="ml-auto relative" x-data="{ open: false }">
+                <a href="{{ route('home') }}#donate" class="mr-2 hidden rounded-full bg-[#fddc6a] px-4 py-2 text-xs font-bold text-[#311742] shadow ring-1 ring-amber-200/70 transition hover:brightness-105 sm:inline-flex">Donate Now</a>
                 <button type="button"
                     @click="open = !open"
                     class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11"
@@ -109,6 +117,7 @@
                     </form>
                 </div>
             </div>
+        </div>
         </div>
     </header>
 

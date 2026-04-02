@@ -1,6 +1,6 @@
 <section class="relative bg-[#f6f3e9] overflow-hidden py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4">
-        <div class="flex flex-col lg:flex-row gap-10 items-start">
+        <div class="flex flex-col lg:flex-row gap-10 items-start lg:items-center">
             <div class="w-full lg:w-[30%] lg:max-w-md lg:shrink-0">
                 <div class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-[#965995]">
                     <span class="h-2.5 w-2.5 rounded-full bg-[#965995]"></span>

@@ -25,12 +25,17 @@ class MemberProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+        if ($user->is_approved) {
+            return redirect()
+                ->route('member.profile.edit')
+                ->withErrors(['profile' => 'Approved profiles cannot be updated. Please contact admin.']);
+        }
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'mobile' => ['required', 'string', 'max:30'],
-            'dob' => ['required', 'date'],
+            'mobile' => ['required', 'digits:10'],
+            'dob' => ['required', 'date', 'before_or_equal:today'],
             'gender' => ['required', 'string', 'max:30'],
             'qualification' => ['required', 'string', 'max:120'],
             'blood_group' => ['required', 'string', 'max:30'],

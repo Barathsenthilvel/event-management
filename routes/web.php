@@ -224,6 +224,7 @@ Route::prefix('member')->name('member.')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
         Route::get('/password', [MemberPasswordController::class, 'edit'])->name('password.edit');

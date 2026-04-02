@@ -10,5 +10,10 @@
             <a href="mailto:{{ $contact['email'] }}" class="font-semibold text-[#351c42] underline underline-offset-2 hover:text-[#965995]">{{ $contact['email'] }}</a>
             and tell us how you’d like to contribute.
         </p>
+        <div class="mt-8">
+            <a href="{{ route('member.login') }}#signup" class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-6 py-3 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 transition hover:brightness-105">
+                Join Now
+            </a>
+        </div>
     </div>
 </section>

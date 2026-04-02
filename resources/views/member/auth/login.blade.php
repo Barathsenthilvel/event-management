@@ -52,41 +52,42 @@
                     <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" data-auth-panel="signup" hidden>
                         <h2 class="text-center text-lg font-bold tracking-tight text-[#351c42] sm:text-xl">New member registration</h2>
                         <p class="mx-auto mt-2 max-w-sm text-center text-sm text-[#351c42]/55">We’ll verify your mobile number in the next step.</p>
-                        <form class="mt-8 space-y-6" method="POST" action="{{ route('member.register.store') }}">
+                        <form class="mt-8 space-y-6" method="POST" action="{{ route('member.register.store') }}" id="member-signup-form" novalidate>
                             @csrf
+                            <input type="hidden" name="country_code" value="+91" />
                             <div class="grid gap-6 sm:grid-cols-2 sm:gap-x-8">
-                                <div class="space-y-5">
-                                    <div>
-                                        <label class="ml-label" for="su-first">First name <span class="text-red-500">*</span></label>
-                                        <input id="su-first" name="first_name" type="text" autocomplete="given-name" required class="ml-inp" placeholder="Given name" value="{{ old('first_name') }}" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label" for="su-last">Last name <span class="text-red-500">*</span></label>
-                                        <input id="su-last" name="last_name" type="text" autocomplete="family-name" required class="ml-inp" placeholder="Family name" value="{{ old('last_name') }}" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label" for="su-mobile">Mobile <span class="text-red-500">*</span></label>
-                                        <input id="su-mobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" required class="ml-inp" placeholder="+91 98765 43210" value="{{ old('mobile') }}" />
+                                <div>
+                                    <label class="ml-label" for="su-first">First name <span class="text-red-500">*</span></label>
+                                    <input id="su-first" name="first_name" type="text" autocomplete="given-name" required class="ml-inp" placeholder="Given name" value="{{ old('first_name') }}" />
+                                </div>
+                                <div>
+                                    <label class="ml-label" for="su-email">Email <span class="text-red-500">*</span></label>
+                                    <input id="su-email" name="email" type="email" autocomplete="email" required class="ml-inp" placeholder="name@email.com" value="{{ old('email') }}" />
+                                </div>
+                                <div>
+                                    <label class="ml-label" for="su-last">Last name <span class="text-red-500">*</span></label>
+                                    <input id="su-last" name="last_name" type="text" autocomplete="family-name" required class="ml-inp" placeholder="Family name" value="{{ old('last_name') }}" />
+                                </div>
+                                <div>
+                                    <label class="ml-label" for="su-pass">Password <span class="text-red-500">*</span></label>
+                                    <input id="su-pass" name="password" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Min. 6 characters" />
+                                </div>
+                                <div>
+                                    <label class="ml-label" for="su-mobile">Mobile <span class="text-red-500">*</span></label>
+                                    <div class="grid grid-cols-[88px_1fr] gap-2">
+                                        <input type="text" value="+91" class="ml-inp text-center font-semibold" readonly aria-label="Country code" tabindex="-1" />
+                                        <input id="su-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" required class="ml-inp" placeholder="10-digit mobile number" pattern="[0-9]{10}" minlength="10" maxlength="10" title="Please enter exactly 10 digits" value="{{ old('mobile') }}" />
                                     </div>
                                 </div>
-                                <div class="space-y-5">
-                                    <div>
-                                        <label class="ml-label" for="su-email">Email <span class="text-red-500">*</span></label>
-                                        <input id="su-email" name="email" type="email" autocomplete="email" required class="ml-inp" placeholder="name@email.com" value="{{ old('email') }}" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label" for="su-pass">Password <span class="text-red-500">*</span></label>
-                                        <input id="su-pass" name="password" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Min. 6 characters" />
-                                    </div>
-                                    <div>
-                                        <label class="ml-label" for="su-pass2">Confirm password <span class="text-red-500">*</span></label>
-                                        <input id="su-pass2" name="password_confirmation" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Repeat password" />
-                                    </div>
-                                    <div class="flex justify-end pt-1">
-                                        <button type="button" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]" data-back-to-login>Back to sign in</button>
-                                    </div>
+                                <div>
+                                    <label class="ml-label" for="su-pass2">Confirm password <span class="text-red-500">*</span></label>
+                                    <input id="su-pass2" name="password_confirmation" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Repeat password" />
+                                </div>
+                                <div class="sm:col-span-2 flex justify-end pt-1">
+                                    <button type="button" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]" data-back-to-login>Back to sign in</button>
                                 </div>
                             </div>
+                            <p id="su-password-error" class="hidden rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert"></p>
                             <div class="flex flex-col-reverse gap-3 border-t border-[#351c42]/8 pt-8 sm:flex-row sm:justify-end sm:gap-4">
                                 <button type="button" class="ml-btn-secondary w-full sm:w-auto" data-signup-cancel>Cancel</button>
                                 <button type="submit" class="ml-btn-primary w-full sm:w-auto">Create account</button>
@@ -155,6 +156,43 @@
             document.querySelector("[data-signup-cancel]")?.addEventListener("click", () => {
                 setTab("signin");
                 if (history.replaceState) history.replaceState(null, "", "#signin");
+            });
+
+            const signupMobileInput = document.getElementById("su-mobile");
+            if (signupMobileInput) {
+                signupMobileInput.addEventListener("input", () => {
+                    signupMobileInput.value = signupMobileInput.value.replace(/\D/g, "").slice(0, 10);
+                });
+            }
+
+            const signupForm = document.getElementById("member-signup-form");
+            const passwordInput = document.getElementById("su-pass");
+            const confirmPasswordInput = document.getElementById("su-pass2");
+            const passwordError = document.getElementById("su-password-error");
+
+            function setPasswordMismatchError() {
+                if (!passwordInput || !confirmPasswordInput || !passwordError) return;
+                const hasMismatch = Boolean(confirmPasswordInput.value) && passwordInput.value !== confirmPasswordInput.value;
+                if (hasMismatch) {
+                    confirmPasswordInput.setCustomValidity("Passwords do not match");
+                    passwordError.textContent = "Password and confirm password do not match.";
+                    passwordError.classList.remove("hidden");
+                } else {
+                    confirmPasswordInput.setCustomValidity("");
+                    passwordError.textContent = "";
+                    passwordError.classList.add("hidden");
+                }
+            }
+
+            passwordInput?.addEventListener("input", setPasswordMismatchError);
+            confirmPasswordInput?.addEventListener("input", setPasswordMismatchError);
+
+            signupForm?.addEventListener("submit", (event) => {
+                setPasswordMismatchError();
+                if (!signupForm.checkValidity()) {
+                    event.preventDefault();
+                    signupForm.reportValidity();
+                }
             });
 
             @if($errors->any() && (old('first_name') || old('password_confirmation')))

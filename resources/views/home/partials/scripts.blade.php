@@ -450,7 +450,7 @@
             const cardW = computeCardWidth();
             const gapPx = getGapPx();
             const step = stepOverride ?? (cardW + gapPx);
-            const centerSlot = centerSlotOverride ?? 0;
+            const centerSlot = centerSlotOverride ?? 1;
             const translateX = -(pos - centerSlot) * step;
             track.style.transform = `translateX(${translateX}px)`;
             applyCardStyles();
@@ -461,7 +461,7 @@
             track.innerHTML = "";
             const extended = buildExtendedSlides();
             const n = testimonials.length;
-            const centerSlot = 0;
+            const centerSlot = 1;
             pos = clonesBefore + activeIndex;
             extended.forEach((realIndex) => {
                 const t = testimonials[realIndex];
