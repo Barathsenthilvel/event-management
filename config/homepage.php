@@ -22,7 +22,7 @@ return [
         ['label' => 'Home', 'href' => '#home'],
         ['label' => 'Association Activity', 'href' => '#association-activity'],
         ['label' => 'About Us', 'href' => '#about2'],
-        ['label' => 'Events', 'href' => '/events'],
+        ['label' => 'Events', 'href' => '#events'],
         ['label' => 'Blog', 'href' => '#blog'],
         ['label' => 'Gallery', 'href' => '#gallery'],
         ['label' => 'Jobs', 'href' => '#jobs'],

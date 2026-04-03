@@ -74,10 +74,13 @@
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-mobile">Mobile <span class="text-red-500">*</span></label>
-                                    <div class="grid grid-cols-[88px_1fr] gap-2">
-                                        <input type="text" value="+91" class="ml-inp text-center font-semibold" readonly aria-label="Country code" tabindex="-1" />
-                                        <input id="su-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" required class="ml-inp" placeholder="10-digit mobile number" pattern="[0-9]{10}" minlength="10" maxlength="10" title="Please enter exactly 10 digits" value="{{ old('mobile') }}" />
+                                    <div class="ml-inp-phone-wrap">
+                                        <span class="ml-inp-phone-prefix" aria-hidden="true">+91</span>
+                                        <input id="su-mobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" required
+                                            class="ml-inp-phone-field" placeholder="10-digit mobile number" pattern="[0-9]{10}" minlength="10" maxlength="10"
+                                            title="Please enter exactly 10 digits" value="{{ old('mobile') }}" aria-describedby="su-mobile-hint" />
                                     </div>
+                                    <p id="su-mobile-hint" class="sr-only">Enter 10 digits; country code +91 is already included.</p>
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-pass2">Confirm password <span class="text-red-500">*</span></label>

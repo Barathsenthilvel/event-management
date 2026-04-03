@@ -78,6 +78,50 @@
             background: #fff;
             box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
         }
+        /* Single combined field: +91 prefix + 10-digit input (one border, full width for digits) */
+        .ml-inp-phone-wrap {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            border-radius: 1rem;
+            border: 1px solid rgba(53, 28, 66, 0.1);
+            background: rgba(255, 255, 255, 0.85);
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .ml-inp-phone-wrap:hover {
+            border-color: rgba(150, 89, 149, 0.25);
+            background: #fff;
+        }
+        .ml-inp-phone-wrap:focus-within {
+            border-color: rgba(150, 89, 149, 0.55);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
+        }
+        .ml-inp-phone-prefix {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding: 0.8125rem 0.5rem 0.8125rem 1rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: rgba(53, 28, 66, 0.55);
+            border-right: 1px solid rgba(53, 28, 66, 0.1);
+            background: rgba(53, 28, 66, 0.035);
+            user-select: none;
+            pointer-events: none;
+        }
+        .ml-inp-phone-field {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            padding: 0.8125rem 1.125rem 0.8125rem 0.75rem;
+            font-size: 0.9375rem;
+            color: #351c42;
+            outline: none;
+        }
+        .ml-inp-phone-field::placeholder { color: rgba(53, 28, 66, 0.32); }
         .ml-card-elevated {
             box-shadow: 0 4px 6px -1px rgba(53, 28, 66, 0.06), 0 24px 48px -12px rgba(53, 28, 66, 0.14);
         }

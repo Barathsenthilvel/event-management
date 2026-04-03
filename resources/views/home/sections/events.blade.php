@@ -1,4 +1,4 @@
-<section id="events" class="relative bg-white overflow-hidden py-16 lg:py-24">
+<section id="events" class="relative scroll-mt-32 bg-white overflow-hidden py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-6">
             <div class="min-w-0 max-w-xl">

@@ -367,7 +367,7 @@
         if (!viewport || !track || !prevBtn || !nextBtn || !dotsWrap) return;
 
         let activeIndex = 0;
-        let visibleCardFraction = 1.5;
+        let visibleCardFraction = 1;
         const CLONE_SLIDES = 3;
         let clonesBefore = 0;
         let clonesAfter = 0;
@@ -378,7 +378,7 @@
         const AUTOPLAY_MS = 4000;
 
         function getVisibleCardFraction() {
-            return window.innerWidth >= 768 ? 1.5 : 1;
+            return 1;
         }
 
         function getGapPx() {

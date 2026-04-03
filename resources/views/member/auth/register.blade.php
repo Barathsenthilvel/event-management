@@ -39,20 +39,13 @@
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Row 1: First name, Last name --}}
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">First Name <span class="text-rose-500">*</span></label>
                         <input name="first_name" value="{{ old('first_name') }}" required
                             class="w-full bg-white/80 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
                             placeholder="Enter">
                         @error('first_name')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Email <span class="text-rose-500">*</span></label>
-                        <input type="email" name="email" value="{{ old('email') }}" required
-                            class="w-full bg-white/80 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                            placeholder="Enter">
-                        @error('email')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
                     </div>
 
                     <div>
@@ -63,6 +56,27 @@
                         @error('last_name')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
                     </div>
 
+                    {{-- Row 2: Email, Mobile no. --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Email <span class="text-rose-500">*</span></label>
+                        <input type="email" name="email" value="{{ old('email') }}" required
+                            class="w-full bg-white/80 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                            placeholder="Enter">
+                        @error('email')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Mobile No <span class="text-rose-500">*</span></label>
+                        <div class="flex w-full overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm transition-all focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5">
+                            <span class="flex shrink-0 select-none items-center border-r border-slate-200 bg-slate-50/90 px-3 py-4 text-sm font-bold text-slate-600" aria-hidden="true">+91</span>
+                            <input name="mobile" type="tel" inputmode="numeric" value="{{ old('mobile') }}" required
+                                class="min-w-0 flex-1 border-0 bg-transparent px-4 py-4 text-slate-900 placeholder-slate-400 outline-none"
+                                placeholder="10-digit mobile number" pattern="[0-9]{10}" minlength="10" maxlength="10" title="Enter exactly 10 digits">
+                        </div>
+                        @error('mobile')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
+                    </div>
+
+                    {{-- Row 3: Password, Confirm password --}}
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">Password <span class="text-rose-500">*</span></label>
                         <input type="password" name="password" required
@@ -72,18 +86,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Mobile No <span class="text-rose-500">*</span></label>
-                        <div class="flex gap-2">
-                            <div class="w-20 bg-white/80 border border-slate-200 rounded-2xl px-4 py-4 text-slate-700 font-bold text-sm flex items-center justify-center">+91</div>
-                            <input name="mobile" value="{{ old('mobile', '+91') }}" required
-                                class="flex-1 bg-white/80 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                                placeholder="Enter">
-                        </div>
-                        @error('mobile')<p class="mt-2 text-xs text-rose-600 font-semibold">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">Confirm <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2">Confirm Password <span class="text-rose-500">*</span></label>
                         <input type="password" name="password_confirmation" required
                             class="w-full bg-white/80 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/5 transition-all"
                             placeholder="Enter">

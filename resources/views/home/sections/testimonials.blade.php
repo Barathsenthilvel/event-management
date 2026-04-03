@@ -1,4 +1,4 @@
-<section class="relative bg-[#f6f3e9] overflow-hidden py-16 lg:py-24">
+<section id="testimonials" class="relative scroll-mt-32 bg-[#f6f3e9] overflow-hidden py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-col lg:flex-row gap-10 items-start lg:items-center">
             <div class="w-full lg:w-[30%] lg:max-w-md lg:shrink-0">
@@ -86,8 +86,8 @@
                 </div>
 
                 <div class="relative">
-                    <div id="carousel-viewport" class="overflow-hidden rounded-2xl bg-transparent" aria-label="GNAT Donation testimonials">
-                        <div id="carousel-track" class="flex items-stretch gap-6 transition-transform duration-500 ease-in-out will-change-transform"></div>
+                    <div id="carousel-viewport" class="overflow-hidden rounded-2xl bg-transparent px-0 sm:px-1" aria-label="GNAT Donation testimonials">
+                        <div id="carousel-track" class="flex items-stretch gap-5 sm:gap-6 transition-transform duration-500 ease-in-out will-change-transform"></div>
                     </div>
                     <div class="mt-4 flex justify-center gap-2" id="dots"></div>
                 </div>
