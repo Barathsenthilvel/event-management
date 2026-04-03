@@ -8,7 +8,7 @@
             <div class="flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-6">
                 <div class="min-w-0 max-w-xl">
                     <p class="text-xs font-bold tracking-[0.28em] uppercase text-[#965995]">Impact in pictures</p>
-                    <h2 class="mt-3 text-4xl font-extrabold leading-[1.08] text-[#351c42] sm:text-5xl">
+                    <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
                         Our <span class="relative inline-block">gallery
                             <span class="absolute -bottom-1 left-0 right-0 h-2.5 rounded-full bg-[#fddc6a]/90 -z-10" aria-hidden="true"></span>
                         </span>

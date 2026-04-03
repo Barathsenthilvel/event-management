@@ -39,6 +39,7 @@
                             <th class="px-6 py-4">Member</th>
                             <th class="px-6 py-4">Contact</th>
                             <th class="px-6 py-4">Profile</th>
+                            <th class="px-6 py-4 text-center w-14">View</th>
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -64,6 +65,17 @@
                                     <span class="inline-flex items-center rounded-xl border border-amber-100 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-800">
                                         Completed • Pending
                                     </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <a href="{{ route('admin.members.pending-approvals.show', $m) }}"
+                                       class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-[#965995]/40 hover:bg-[#965995]/10 hover:text-[#351c42]"
+                                       title="View full profile"
+                                       aria-label="View full profile for {{ $m->name }}">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </a>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">

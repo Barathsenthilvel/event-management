@@ -33,7 +33,7 @@
                     {{ $about['eyebrow'] }}
                 </div>
 
-                <h2 class="mt-4 text-4xl md:text-5xl font-extrabold leading-tight text-white">
+                <h2 class="mt-4 text-3xl md:text-4xl font-extrabold leading-tight text-white">
                     {{ $about['title_lines'][0] }}<br />
                     {{ $about['title_lines'][1] }} <span class="relative inline-block">{{ $about['title_highlight'] }}
                         <span class="absolute left-0 right-0 -bottom-2 h-2 bg-[#fddc6a] rounded-full"></span>

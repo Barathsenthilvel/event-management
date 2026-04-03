@@ -1,5 +1,5 @@
 {{--
-    Legacy “Vanguard” demo shell — not used for logged-in member pages.
+    Legacy demo shell — not used for logged-in member pages.
     Member area uses member.layouts.gnat; admin area uses admin.layouts.app.
 --}}
 <!DOCTYPE html>
@@ -32,7 +32,7 @@
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
             </div>
-            <span x-show="sidebarOpen" class="font-bold text-lg tracking-tight text-white transition-opacity duration-300" x-transition>VANGUARD</span>
+            <span x-show="sidebarOpen" class="font-bold text-lg tracking-tight text-white transition-opacity duration-300" x-transition>GNAT</span>
         </div>
 
         @php

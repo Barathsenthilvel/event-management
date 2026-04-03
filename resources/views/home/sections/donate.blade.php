@@ -4,7 +4,7 @@
             <div class="flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-6 mb-6 lg:mb-8">
                 <div class="min-w-0 max-w-xl">
                     <p class="text-sm font-semibold tracking-wide text-[#351c42]/65 uppercase">{{ $donate['intro_kicker'] }}</p>
-                    <h3 class="mt-1 text-2xl md:text-3xl font-extrabold text-[#351c42]">{{ $donate['intro_title'] }}</h3>
+                    <h2 class="mt-1 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">{{ $donate['intro_title'] }}</h2>
                     <p class="mt-2 text-sm text-[#351c42]/60">{{ $donate['intro_text'] }}</p>
                 </div>
                 <div class="flex shrink-0 flex-col gap-3 min-[520px]:items-end">

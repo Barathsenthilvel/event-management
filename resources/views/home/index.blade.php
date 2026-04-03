@@ -11,15 +11,15 @@
     @include('home.partials.header')
 
     @include('home.sections.hero')
+    @include('home.sections.service')
     @include('home.sections.banner-carousel')
-    @include('home.sections.testimonials')
     @include('home.sections.about')
+    @include('home.sections.jobs')
+    @include('home.sections.testimonials')
     @include('home.sections.events')
     @include('home.sections.donate')
-    @include('home.sections.service')
     @include('home.sections.blog')
     @include('home.sections.gallery')
-    @include('home.sections.jobs')
 
     @include('home.partials.footer')
     @include('home.partials.floating')

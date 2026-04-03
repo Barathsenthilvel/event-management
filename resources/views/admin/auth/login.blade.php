@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vanguard | Auth</title>
+    <title>GNAT Admin Login</title>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,27 +32,27 @@
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
-    <div class="fluid-bg"></div>
+    <div class="fluid-bg" style="background: radial-gradient(circle at top left, #fddc6a33, transparent 55%), radial-gradient(circle at bottom right, #351c4233, transparent 55%), #f8fafc;"></div>
 
-    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-200/50 rounded-full blur-[120px]"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-200/50 rounded-full blur-[120px]"></div>
+    <div class="absolute top-1/4 left-1/4 w-[480px] h-[480px] bg-[#fddc6a]/40 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-[480px] h-[480px] bg-[#351c42]/35 rounded-full blur-[120px]"></div>
 
     <div class="w-full max-w-[1000px] flex flex-col md:flex-row light-glass-panel rounded-[48px] overflow-hidden" x-data="{ loginType: 'email', showOtpModal: false }">
 
         <div class="w-full md:w-1/2 p-12 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100">
             <div>
                 <div class="flex items-center gap-3 mb-12">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <div class="w-10 h-10 bg-[#351c42] rounded-2xl flex items-center justify-center">
+                        <img src="{{ asset('images/logo.png') }}" alt="GNAT" class="h-7 w-auto object-contain">
                     </div>
-                    <span class="text-slate-900 font-bold text-xl tracking-tighter">VANGUARD<span class="text-slate-500 font-light italic">.OS</span></span>
+                    <span class="text-[#351c42] font-bold text-xl tracking-tighter">GNAT<span class="text-[#965995] font-medium"> Admin</span></span>
                 </div>
 
-                <h1 class="text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]">
-                    Manage with <br> <span class="text-indigo-600">Precision.</span>
+                <h1 class="text-4xl md:text-5xl font-bold text-[#351c42] tracking-tight leading-[1.1]">
+                    Manage your <br> <span class="text-[#fbbf24]">GNAT platform.</span>
                 </h1>
                 <p class="mt-6 text-slate-600 text-lg leading-relaxed max-w-xs">
-                    Access the most advanced administrative suite designed for speed and clarity in a streamlined interface.
+                    Secure console for GNAT Association to manage members, events, donations, and more.
                 </p>
             </div>
 
@@ -62,8 +62,8 @@
                         <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-slate-900 text-sm font-semibold">New in Version 4.0</p>
-                        <p class="text-slate-500 text-xs">Role-based dynamic access control</p>
+                        <p class="text-slate-900 text-sm font-semibold">GNAT Admin Access</p>
+                        <p class="text-slate-500 text-xs">Only authorised administrators can sign in here.</p>
                     </div>
                 </div>
             </div>

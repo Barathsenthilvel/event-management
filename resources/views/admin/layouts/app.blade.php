@@ -313,6 +313,16 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Events</span>
             </a>
 
+            <a href="{{ route('admin.members.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.members.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Members</span>
+            </a>
+
             <a href="{{ route('admin.members.pending-approvals.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
@@ -327,6 +337,16 @@
                         {{ (int) $pendingApprovalsCount }}
                     </span>
                 @endif
+            </a>
+
+            <a href="{{ route('admin.designations.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.designations.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.designations.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Designations</span>
             </a>
 
             @if($admin && $admin->hasPermission('role.view'))

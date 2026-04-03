@@ -15,8 +15,8 @@ class AdminSeeder extends Seeder
     {
         Admin::create([
             'name' => 'Super Admin',
-            'email' => 'admin@vanguard.com',
-            'phone' => '+1234567890',
+            'email' => 'admin@gnatdonation.org',
+            'phone' => '+911234567890',
             'password' => Hash::make('password'),
             'is_super_admin' => true,
         ]);

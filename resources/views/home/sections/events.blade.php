@@ -6,7 +6,7 @@
                     <span class="h-2.5 w-2.5 rounded-full bg-[#965995]"></span>
                     EVENTS
                 </div>
-                <h2 class="mt-3 text-3xl font-extrabold leading-tight text-[#351c42] sm:text-4xl">
+                <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
                     Upcoming Events<br />
                     <span class="text-[#965995]">Don’t Miss Out</span>
                 </h2>

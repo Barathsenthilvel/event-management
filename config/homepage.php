@@ -20,6 +20,7 @@ return [
 
     'nav' => [
         ['label' => 'Home', 'href' => '#home'],
+        ['label' => 'Association Activity', 'href' => '#association-activity'],
         ['label' => 'About Us', 'href' => '#about2'],
         ['label' => 'Events', 'href' => '/events'],
         ['label' => 'Blog', 'href' => '#blog'],
@@ -187,8 +188,8 @@ return [
         ['num' => '01', 'label' => 'Quick Fundraising'],
         ['num' => '02', 'label' => 'School & Education Support'],
         ['num' => '03', 'label' => 'Medical Treatment'],
-        ['num' => '04', 'label' => 'Program Outreach'],
-        ['num' => '05', 'label' => 'Children Treatment'],
+        ['num' => '04', 'label' => 'Careers & opportunities', 'href' => '#jobs'],
+        ['num' => '05', 'label' => 'Job openings & applications', 'href' => '#jobs'],
         ['num' => '06', 'label' => 'Fundraising Goals'],
     ],
 

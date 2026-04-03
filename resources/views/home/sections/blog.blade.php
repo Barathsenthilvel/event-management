@@ -13,8 +13,8 @@
                     Our Blog
                 </div>
 
-                <h2 class="mt-3 text-5xl md:text-6xl font-extrabold leading-[0.95] text-[#351c42]">
-                    Insights & Updates<br />
+                <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
+                    Insights &amp; Updates
                 </h2>
 
                 <p class="mt-6 text-[#351c42]/65 text-base leading-7 max-w-sm">

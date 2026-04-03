@@ -4,7 +4,7 @@
             <span class="h-2.5 w-2.5 rounded-full bg-[#965995]"></span>
             {{ $jobs['eyebrow'] }}
         </div>
-        <h2 class="mt-4 text-3xl md:text-4xl font-extrabold text-[#351c42]">{{ $jobs['title'] }}</h2>
+        <h2 class="mt-4 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">{{ $jobs['title'] }}</h2>
         <p class="mt-4 text-[#351c42]/70 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             {{ $jobs['text'] }}
             <a href="mailto:{{ $contact['email'] }}" class="font-semibold text-[#351c42] underline underline-offset-2 hover:text-[#965995]">{{ $contact['email'] }}</a>

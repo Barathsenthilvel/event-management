@@ -7,6 +7,17 @@ use Illuminate\Http\Request;
 
 class AdminMemberApprovalController extends Controller
 {
+    public function show(User $user)
+    {
+        if (!$user->profile_completed || $user->is_approved) {
+            abort(404);
+        }
+
+        return view('admin.members.pending-approval-show', [
+            'member' => $user->load('designation'),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));

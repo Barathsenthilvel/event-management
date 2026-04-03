@@ -22,10 +22,13 @@ use App\Http\Controllers\MemberPasswordController;
 use App\Http\Controllers\MemberEBookController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonationPaymentController;
+use App\Http\Controllers\AdminDonationPaymentController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\NominationController;
 use App\Http\Controllers\PollingController;
+use App\Http\Controllers\AdminMemberController;
+use App\Http\Controllers\AdminDesignationController;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -108,10 +111,24 @@ Route::prefix('admin')->group(function () {
         // Member Approvals
         Route::get('/members/pending-approvals', [AdminMemberApprovalController::class, 'index'])
             ->name('admin.members.pending-approvals.index');
+        Route::get('/members/pending-approvals/{user}', [AdminMemberApprovalController::class, 'show'])
+            ->name('admin.members.pending-approvals.show');
         Route::post('/members/{user}/approve', [AdminMemberApprovalController::class, 'approve'])
             ->name('admin.members.pending-approvals.approve');
         Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])
             ->name('admin.members.pending-approvals.reject');
+
+        // Members list (all / active / inactive)
+        Route::get('/members', [AdminMemberController::class, 'index'])->name('admin.members.index');
+        Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation'])
+            ->name('admin.members.designation.update');
+
+        // Member designations (admin-defined titles for members)
+        Route::get('/designations', [AdminDesignationController::class, 'index'])->name('admin.designations.index');
+        Route::post('/designations', [AdminDesignationController::class, 'store'])->name('admin.designations.store');
+        Route::get('/designations/{designation}/edit', [AdminDesignationController::class, 'edit'])->name('admin.designations.edit');
+        Route::put('/designations/{designation}', [AdminDesignationController::class, 'update'])->name('admin.designations.update');
+        Route::delete('/designations/{designation}', [AdminDesignationController::class, 'destroy'])->name('admin.designations.destroy');
 
         // Subscription List (view only)
         Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])
@@ -150,6 +167,8 @@ Route::prefix('admin')->group(function () {
             ->name('admin.donations.toggle-promote');
         Route::post('/donations/{donation}/toggle-status', [DonationController::class, 'toggleStatus'])
             ->name('admin.donations.toggle-status');
+        Route::get('/donations/payments', [AdminDonationPaymentController::class, 'index'])
+            ->name('admin.donations.payments.index');
 
         // Meetings Management
         Route::resource('meetings', MeetingController::class)->except(['show'])->names([
