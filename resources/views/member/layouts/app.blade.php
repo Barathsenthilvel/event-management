@@ -52,15 +52,6 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
             </a>
 
-            <a href="{{ route('donations.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('donations.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('donations.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8c-1.657 0-3 .843-3 2.5 0 1.757 2.25 3.25 3 5.5.75-2.25 3-3.743 3-5.5C15 8.843 13.657 8 12 8z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Donations</span>
-            </a>
-
             <a href="{{ route('member.ebooks.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('member.ebooks.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('member.ebooks.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,7 +72,7 @@
                     <span x-show="sidebarOpen" class="text-sm font-medium">Membership</span>
                 </a>
 
-                <a href="#"
+                <a href="{{ route('member.events.index') }}"
                     class="flex items-center gap-3 p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
                     <svg class="w-5 h-5 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

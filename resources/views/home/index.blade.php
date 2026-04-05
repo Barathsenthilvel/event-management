@@ -10,6 +10,17 @@
 <body>
     @include('home.partials.header')
 
+    @if(session('event_interest_success'))
+        <div class="mx-auto max-w-7xl px-4 pt-4">
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900" role="status">{{ session('event_interest_success') }}</div>
+        </div>
+    @endif
+    @if(session('event_interest_error'))
+        <div class="mx-auto max-w-7xl px-4 pt-4">
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{{ session('event_interest_error') }}</div>
+        </div>
+    @endif
+
     @include('home.sections.hero')
     @include('home.sections.service')
     @include('home.sections.banner-carousel')

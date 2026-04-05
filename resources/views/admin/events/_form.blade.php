@@ -132,7 +132,8 @@
             @error('banner_image')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-xs font-bold text-slate-700 mb-2">Template PDF</label>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Certificate template (PDF)</label>
+            <p class="text-[11px] text-slate-500 mb-2 leading-relaxed">Upload the certificate file members will download after the event is <strong class="text-slate-700">Completed</strong> and you mark them as <strong class="text-slate-700">Attended</strong> on the event detail page.</p>
             <input type="file" name="template_pdf" accept="application/pdf" class="w-full text-sm">
             @if($isEdit && !empty($event->template_pdf_path))
                 <div class="mt-2 rounded-xl border border-slate-200 bg-white p-3">

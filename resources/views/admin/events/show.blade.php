@@ -85,8 +85,21 @@
             @endif
         </div>
 
-        <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-            <h2 class="text-sm font-extrabold text-slate-900 mb-3">Invited Members</h2>
+        @php
+            $canMarkAttendance = in_array($event->status, ['live', 'completed'], true);
+        @endphp
+
+        <div id="event-member-attendance" class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm scroll-mt-6">
+            <h2 class="text-sm font-extrabold text-slate-900 mb-1">Invited &amp; interested members</h2>
+            <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                When the event is <strong class="text-slate-800">Live</strong> or <strong class="text-slate-800">Completed</strong>, set <strong>Attended</strong> or <strong>Did not attend</strong> for each member.
+                Members can <strong>download the certificate</strong> only after the event is <strong>Completed</strong>, they are marked <strong>Participated — certificate eligible</strong>, and you upload the <strong>template PDF</strong> on <a href="{{ route('admin.events.edit', $event) }}" class="font-bold text-indigo-600 hover:underline">Edit event</a>.
+            </p>
+            @if(!$canMarkAttendance && $event->status !== 'cancelled')
+                <p class="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
+                    Attendance fields unlock when you set this event to <strong>Live</strong> (or after it is <strong>Completed</strong>).
+                </p>
+            @endif
             @if($event->invites->count() === 0)
                 <p class="text-sm text-slate-500">No invites sent yet.</p>
             @else
@@ -96,7 +109,7 @@
                             <tr>
                                 <th class="px-4 py-3">Member</th>
                                 <th class="px-4 py-3">Contact</th>
-                                <th class="px-4 py-3">Participation Status</th>
+                                <th class="px-4 py-3">Attendance</th>
                                 <th class="px-4 py-3">Invited At</th>
                                 <th class="px-4 py-3 text-right">Certificate</th>
                             </tr>
@@ -117,14 +130,14 @@
                                             @csrf
                                             <select name="participation_status"
                                                 class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                                                @disabled($event->status === 'cancelled')>
+                                                @disabled(!$canMarkAttendance)>
                                                 <option value="interested" {{ $invite->participation_status === 'interested' ? 'selected' : '' }}>Interested (registered)</option>
-                                                <option value="participated" {{ $invite->participation_status === 'participated' ? 'selected' : '' }}>Participated — certificate eligible</option>
-                                                <option value="not_participated" {{ $invite->participation_status === 'not_participated' ? 'selected' : '' }}>Did not participate</option>
+                                                <option value="participated" {{ $invite->participation_status === 'participated' ? 'selected' : '' }}>Attended (certificate eligible)</option>
+                                                <option value="not_participated" {{ $invite->participation_status === 'not_participated' ? 'selected' : '' }}>Did not attend</option>
                                             </select>
                                             <button type="submit"
                                                 class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold disabled:opacity-50"
-                                                @disabled($event->status === 'cancelled')>
+                                                @disabled(!$canMarkAttendance)>
                                                 Save
                                             </button>
                                         </form>

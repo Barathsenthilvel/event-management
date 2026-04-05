@@ -131,6 +131,13 @@ class EventController extends Controller
             return back()->with('error', 'Participation status cannot be changed for a cancelled event.');
         }
 
+        if (! in_array($event->status, ['live', 'completed'], true)) {
+            return back()->with(
+                'error',
+                'Attendance (attended / did not attend) can be updated only when the event is Live or Completed.'
+            );
+        }
+
         $validated = $request->validate([
             'participation_status' => 'required|in:interested,participated,not_participated',
         ]);

@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @include('home.partials.styles')
     <style>
         body { font-family: "DM Sans", system-ui, sans-serif; }
         .md-page-bg {
@@ -65,63 +66,7 @@
         $gnatHasActiveSubscription = $gnatMember && $gnatMember->activeSubscription()->exists();
         $gnatPortalUnlocked = $gnatCanSeeMembership && $gnatHasActiveSubscription;
     @endphp
-    <header class="sticky top-0 z-40 md-glass-header">
-        <div class="site-header-main">
-        <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
-            <a href="{{ route('home') }}" class="flex min-w-0 max-w-[200px] shrink-0 sm:max-w-[220px]" aria-label="Home">
-                <img src="{{ asset('logo.png') }}" alt="GNAT Association" class="h-8 w-auto max-h-11 object-contain sm:h-11" width="200" height="48" />
-            </a>
-            <nav class="hidden flex-1 justify-center gap-6 lg:flex xl:gap-9" aria-label="Primary">
-                <a href="{{ route('home') }}#home" class="md-nav-link">Home</a>
-                <a href="{{ route('home') }}#about2" class="md-nav-link">About us</a>
-                <a href="{{ route('home') }}#events" class="md-nav-link">Events</a>
-                <a href="{{ route('home') }}#gallery" class="md-nav-link">Gallery</a>
-                <a href="{{ route('home') }}#contact" class="md-nav-link">Contact us</a>
-            </nav>
-            <div class="ml-auto relative" x-data="{ open: false }">
-                <a href="{{ route('home') }}#donate" class="mr-2 hidden rounded-full bg-[#fddc6a] px-4 py-2 text-xs font-bold text-[#311742] shadow ring-1 ring-amber-200/70 transition hover:brightness-105 sm:inline-flex">Donate Now</a>
-                <button type="button"
-                    @click="open = !open"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11"
-                    aria-label="Account menu">
-                    <svg class="h-5 w-5 text-[#351c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                </button>
-                <div x-show="open" x-cloak @click.away="open = false"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    class="absolute right-0 mt-2 w-52 rounded-2xl border border-[#351c42]/10 bg-white shadow-xl p-2 z-50">
-                    <a href="{{ route('member.profile.edit') }}"
-                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                        Profile
-                    </a>
-                    <a href="{{ route('member.password.edit') }}"
-                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm-7 8v-2a4 4 0 014-4h6a4 4 0 014 4v2"/>
-                        </svg>
-                        Change password
-                    </a>
-                    <form method="POST" action="{{ route('member.logout') }}">
-                        @csrf
-                        <button type="submit"
-                            class="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        </div>
-    </header>
+    @include('member.partials.public-site-header')
 
     <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 lg:flex-row lg:gap-8 lg:py-10">
         <aside class="lg:w-60 lg:rounded-2xl lg:border lg:border-[#351c42]/10 lg:bg-white/80 lg:p-4 lg:shadow-lg lg:shadow-[#351c42]/5">
@@ -129,13 +74,13 @@
             <nav class="flex flex-col gap-1" aria-label="Member">
                 @if($gnatPortalUnlocked)
                     <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Dashboard</a>
-                    <a href="{{ route('donations.index') }}" class="md-sidebar-link {{ request()->routeIs('donations.index') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('donations.index') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Donations</a>
+                    <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Events</a>
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Membership</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Change password</a>
                 @elseif($gnatCanSeeMembership)
-                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Pay for a plan to unlock the full menu. Use the profile icon (top right) for account settings.</p>
+                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Pay for a plan to unlock the full menu. Use the sidebar below for profile and account settings.</p>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Membership plans</a>
                     <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Plans overview</a>
                 @else
@@ -144,18 +89,20 @@
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Change password</a>
                 @endif
             </nav>
-            <form method="POST" action="{{ route('member.logout') }}" class="mt-8 border-t border-[#351c42]/10 pt-4">
-                @csrf
-                <button type="submit" class="md-sidebar-link w-full text-left text-red-600 hover:bg-red-50 hover:text-red-700">
-                    <span class="h-1.5 w-1.5 rounded-full bg-red-400"></span> Log out
-                </button>
-            </form>
+            @include('member.partials.sidebar-logout')
         </aside>
 
         <main class="min-w-0 flex-1">
             @yield('content')
         </main>
     </div>
+
+    @php
+        $donate = config('homepage.donate', ['goal' => 500, 'default_amount' => 100]);
+    @endphp
+    @include('home.partials.donate-modal')
+    @include('home.partials.donate-payment-modals')
+    @include('home.partials.scripts')
 
     @stack('scripts')
 </body>

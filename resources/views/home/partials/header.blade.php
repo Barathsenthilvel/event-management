@@ -178,6 +178,16 @@
             @foreach ($nav as $link)
                 <a href="{{ url('/') }}{{ $link['href'] }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">{{ $link['label'] }}</a>
             @endforeach
+            @auth
+                <div class="mt-4 border-t border-white/10 pt-4">
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#fddc6a]/90">Member portal</p>
+                    <a href="{{ route('member.dashboard') }}" class="mt-3 block py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Dashboard</a>
+                    <a href="{{ route('member.events.index') }}" class="block py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Events</a>
+                    <a href="{{ route('member.ebooks.index') }}" class="block py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">E-Books</a>
+                    <a href="{{ route('member.subscription.index') }}" class="block py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Membership</a>
+                    <a href="{{ route('member.profile.edit') }}" class="block py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Profile</a>
+                </div>
+            @endauth
             <a href="{{ route('donations.index') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Donate</a>
             @guest
                 <a href="{{ route('member.login') }}" class="mt-4 inline-flex items-center gap-3 text-white font-bold hover:text-[#fddc6a] transition-colors">

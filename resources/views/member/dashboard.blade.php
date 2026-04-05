@@ -17,6 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @include('home.partials.styles')
     <style>
         html { scroll-behavior: smooth; }
         body { font-family: "DM Sans", system-ui, sans-serif; }
@@ -173,68 +174,11 @@
         </div>
     @endif
 
-    <header class="sticky top-0 z-40 md-glass-header">
-        <div class="site-header-main">
-        <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
-            <button type="button" class="rounded-xl p-2.5 hover:bg-[#351c42]/5 lg:hidden -ml-2" data-md-sidebar-toggle aria-expanded="false" aria-controls="md-sidebar" aria-label="Open menu">
-                <span class="flex w-[22px] flex-col gap-1.5" aria-hidden="true">
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                </span>
-            </button>
-            <a href="{{ route('home') }}" class="flex min-w-0 max-w-[200px] shrink-0 sm:max-w-[220px]" aria-label="Home">
-                <img src="{{ asset('logo.png') }}" alt="GNAT Association" class="h-8 w-auto max-h-11 object-contain sm:h-11" width="200" height="48" />
-            </a>
-            <nav class="hidden flex-1 justify-center gap-6 lg:flex xl:gap-9" aria-label="Primary">
-                <a href="{{ route('home') }}#home" class="md-nav-link">Home</a>
-                <a href="{{ route('home') }}#about2" class="md-nav-link">About us</a>
-                <a href="{{ route('home') }}#events" class="md-nav-link">Events</a>
-                <a href="{{ route('home') }}#gallery" class="md-nav-link">Gallery</a>
-                <a href="{{ route('home') }}#contact" class="md-nav-link">Contact us</a>
-            </nav>
-            <div class="ml-auto relative" x-data="{ openProfile: false }">
-                <a href="{{ route('home') }}#donate" class="mr-2 hidden rounded-full bg-[#fddc6a] px-4 py-2 text-xs font-bold text-[#311742] shadow ring-1 ring-amber-200/70 transition hover:brightness-105 sm:inline-flex">Donate Now</a>
-                <button type="button"
-                    @click="openProfile = !openProfile"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-[#351c42]/10 sm:h-11 sm:w-11"
-                    aria-label="Account menu">
-                    <svg class="h-5 w-5 text-[#351c42]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                </button>
-                <div x-show="openProfile" x-cloak @click.away="openProfile = false"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    class="absolute right-0 mt-2 w-52 rounded-2xl border border-[#351c42]/10 bg-white shadow-xl p-2 z-50">
-                    <a href="{{ route('member.profile.edit') }}"
-                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#351c42]/75 hover:bg-[#351c42]/5 hover:text-[#351c42]">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                        Profile
-                    </a>
-                    <a href="{{ route('member.password.edit') }}"
-                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#351c42]/75 hover:bg-[#351c42]/5 hover:text-[#351c42]">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm-7 8v-2a4 4 0 014-4h6a4 4 0 014 4v2"/>
-                        </svg>
-                        Change password
-                    </a>
-                    <form method="POST" action="{{ route('member.logout') }}">
-                        @csrf
-                        <button type="submit"
-                            class="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        </div>
-    </header>
+    @include('member.partials.public-site-header')
+    <div class="sticky top-0 z-30 flex items-center justify-between border-b border-[#351c42]/10 bg-[#faf9fc] px-4 py-2 lg:hidden">
+        <span class="text-[10px] font-bold uppercase tracking-wide text-[#351c42]/45">Member</span>
+        <button type="button" data-md-sidebar-toggle aria-expanded="false" aria-controls="md-sidebar" class="text-xs font-bold text-[#965995] hover:text-[#351c42]">Menu</button>
+    </div>
 
     <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 lg:flex-row lg:gap-8 lg:py-10">
         <aside
@@ -244,30 +188,24 @@
             <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">{{ $showFullMemberMenu ? 'Menu' : ($canSeeMembership ? 'Membership' : 'Account') }}</p>
             <nav class="flex flex-col gap-1" aria-label="Member">
                 @if($showFullMemberMenu)
-                    <a href="{{ url()->current() }}#top" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Dashboard</a>
-                    <a href="{{ route('donations.index') }}" class="md-sidebar-link {{ request()->routeIs('donations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('donations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Donations</a>
+                    <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Dashboard</a>
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
-                    <a href="{{ route('home') }}#events" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Events</a>
+                    <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
                     <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Meetings</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
                     <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Polling</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @elseif($canSeeMembership)
-                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Choose and pay for a plan below. The full member menu appears after your subscription is active. Use the profile icon (top right) for account settings.</p>
+                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Choose and pay for a plan below. The full member menu appears after your subscription is active. Use the member sidebar for profile and account settings.</p>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Membership plans</a>
                 @else
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @endif
             </nav>
-            <form method="POST" action="{{ route('member.logout') }}" class="mt-8 border-t border-[#351c42]/10 pt-4">
-                @csrf
-                <button type="submit" class="md-sidebar-link w-full text-left text-red-600 hover:bg-red-50 hover:text-red-700">
-                    <span class="h-1.5 w-1.5 rounded-full bg-red-400"></span> Log out
-                </button>
-            </form>
+            @include('member.partials.sidebar-logout')
         </aside>
         <div id="md-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" aria-hidden="true"></div>
 
@@ -282,7 +220,7 @@
                 @if($canSeeMembership && !$showFullMemberMenu)
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
                     <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Choose your subscription plan</h1>
-                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#351c42]/70">Your account is approved. Select a plan below and complete payment. After your membership is active, the full menu (dashboard, donations, e-books, events, and more) will unlock.</p>
+                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#351c42]/70">Your account is approved. Select a plan below and complete payment. After your membership is active, the full menu (dashboard, e-books, events, and more) will unlock.</p>
                 @else
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
                     <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
@@ -290,69 +228,116 @@
             </header>
 
             @if(!$canSeeMembership || $showFullMemberMenu)
-            <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Profile status</p>
-                    <p class="mt-2 text-lg font-bold text-[#351c42]">{{ $member?->profile_completed ? 'Completed' : 'Incomplete' }}</p>
+            <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Account summary">
+                {{-- Profile --}}
+                <article class="relative overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-md transition hover:border-[#965995]/35 hover:shadow-lg">
+                    <div class="h-1 bg-gradient-to-r from-[#965995] to-[#351c42]"></div>
+                    <div class="p-5 pt-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#351c42]/45">Profile</p>
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#965995]/12 text-[#965995]" aria-hidden="true">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                            </span>
+                        </div>
+                        <p class="mt-3 text-2xl font-extrabold tracking-tight text-[#351c42]">{{ $member?->profile_completed ? 'Completed' : 'Incomplete' }}</p>
+                        <p class="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f6f3e9] px-2.5 py-1 text-[11px] font-semibold text-[#351c42]/75">
+                            @if($member?->profile_completed)
+                                <svg class="h-3.5 w-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                Details on file
+                            @else
+                                <svg class="h-3.5 w-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                Finish your profile
+                            @endif
+                        </p>
+                    </div>
                 </article>
-                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Approval status</p>
-                    <p class="mt-2 text-lg font-bold {{ $member?->is_approved ? 'text-emerald-700' : 'text-amber-700' }}">{{ $member?->is_approved ? 'Approved' : 'Pending approval' }}</p>
+                {{-- Approval --}}
+                <article class="relative overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-md transition hover:border-emerald-300/60 hover:shadow-lg">
+                    <div class="h-1 {{ $member?->is_approved ? 'bg-gradient-to-r from-emerald-400 to-teal-600' : 'bg-gradient-to-r from-amber-300 to-amber-600' }}"></div>
+                    <div class="p-5 pt-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#351c42]/45">Approval</p>
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $member?->is_approved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800' }}" aria-hidden="true">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </span>
+                        </div>
+                        <p class="mt-3 text-2xl font-extrabold tracking-tight {{ $member?->is_approved ? 'text-emerald-800' : 'text-amber-800' }}">{{ $member?->is_approved ? 'Approved' : 'Pending' }}</p>
+                        <p class="mt-2 text-[11px] leading-snug text-[#351c42]/55">{{ $member?->is_approved ? 'Your account is cleared by the office.' : 'We will notify you when review is complete.' }}</p>
+                    </div>
                 </article>
-                <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm sm:col-span-2 lg:col-span-1">
-                    <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Member name</p>
-                    <p class="mt-2 text-lg font-bold text-[#351c42]">{{ $member?->name ?? '-' }}</p>
+                {{-- Name --}}
+                <article class="relative overflow-hidden rounded-2xl border border-[#351c42]/10 bg-gradient-to-br from-white to-[#faf8fc] shadow-md transition hover:border-[#351c42]/20 hover:shadow-lg">
+                    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#965995]/10 blur-2xl"></div>
+                    <div class="relative p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#351c42]/45">Member name</p>
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#351c42] text-[#fddc6a]" aria-hidden="true">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </span>
+                        </div>
+                        <p class="mt-3 break-words text-xl font-extrabold leading-tight text-[#351c42] sm:text-2xl" title="{{ $member?->name ?? '-' }}">{{ $member?->name ?? '—' }}</p>
+                        <p class="mt-2 text-[11px] text-[#351c42]/50">As registered with GNAT</p>
+                    </div>
+                </article>
+                {{-- Donations --}}
+                <article class="relative overflow-hidden rounded-2xl border border-[#fddc6a]/40 bg-[#f7f6f0] shadow-md transition hover:shadow-lg sm:col-span-2 lg:col-span-1">
+                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_100%_0%,rgba(150,89,149,0.08),transparent)]"></div>
+                    <div class="relative p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#351c42]/50">Donations</p>
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#351c42] text-[#fddc6a]" aria-hidden="true">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                        </div>
+                        <p class="mt-2 font-mono text-3xl font-extrabold tabular-nums tracking-tight text-[#351c42]">₹{{ number_format((float) ($memberDonationsTotal ?? 0), 0) }}</p>
+                        <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">Your total successful gifts to GNAT</p>
+                    </div>
                 </article>
             </section>
             @endif
 
             @if($showFullMemberMenu)
                 <section aria-labelledby="digital-id-heading" class="scroll-mt-28">
-                    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                    <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
-                            <h2 id="digital-id-heading" class="text-xl font-extrabold text-[#351c42] sm:text-2xl">Digital member ID</h2>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
+                            <h2 id="digital-id-heading" class="text-lg font-extrabold tracking-tight text-[#351c42] sm:text-xl">Digital member ID</h2>
                         </div>
-                        <p class="text-sm text-[#351c42]/55">Show this screen when attending GNAT programs.</p>
+                        <p class="text-[11px] text-[#351c42]/50">Show at GNAT programs</p>
                     </div>
-                    <div class="md-id-card p-6 sm:p-8 text-white">
-                        <div class="relative z-[1] flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between">
-                            <div class="flex gap-5">
-                                <div class="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl border-2 border-[#fddc6a]/50 bg-white/10 shadow-lg sm:h-32 sm:w-32">
-                                    @if($member->passport_photo_path)
-                                        <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="128" height="128" />
-                                    @else
-                                        <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/80">
-                                            <svg class="h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="min-w-0 flex flex-col justify-center">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#fddc6a]/90">GNAT Association</p>
-                                    <p class="mt-1 truncate text-xl font-extrabold tracking-tight sm:text-2xl">{{ $member->name }}</p>
-                                    @if($member->designation?->name)
-                                        <p class="mt-1 text-sm font-semibold text-white/75">{{ $member->designation->name }}</p>
-                                    @endif
-                                    <p class="mt-3 font-mono text-sm font-bold tracking-wider text-[#fddc6a]">ID · GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
-                                </div>
+                    <div class="md-id-card rounded-xl p-4 text-white shadow-md sm:p-4">
+                        <div class="relative z-[1] flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                            <div class="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl border-2 border-[#fddc6a]/45 bg-white/10">
+                                @if($member->passport_photo_path)
+                                    <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="72" height="72" />
+                                @else
+                                    <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/75">
+                                        <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </div>
+                                @endif
                             </div>
-                            <div class="flex flex-1 flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm lg:max-w-xs">
-                                <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-widest text-white/50">Status</p>
-                                    <p class="mt-1 inline-flex rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-bold text-emerald-100 ring-1 ring-emerald-300/40">
-                                        {{ $sub ? 'Active member' : 'Member (no active plan)' }}
-                                    </p>
-                                </div>
-                                <div class="grid gap-3 text-sm">
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-widest text-white/45">Valid through</p>
-                                        <p class="mt-0.5 font-semibold text-white">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</p>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[9px] font-bold uppercase tracking-[0.28em] text-[#fddc6a]/85">GNAT Association</p>
+                                <p class="mt-0.5 truncate text-base font-extrabold leading-snug sm:text-lg">{{ $member->name }}</p>
+                                @if($member->designation?->name)
+                                    <p class="mt-0.5 truncate text-xs text-white/70">{{ $member->designation->name }}</p>
+                                @endif
+                                <p class="mt-1.5 font-mono text-xs font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
+                            </div>
+                            <div class="flex shrink-0 flex-col gap-2 border-t border-white/10 pt-3 sm:border-t-0 sm:border-l sm:pl-4 sm:pt-0">
+                                <span class="inline-flex w-fit rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-100 ring-1 ring-emerald-300/35">
+                                    {{ $sub ? 'Active' : 'No plan' }}
+                                </span>
+                                <dl class="grid gap-1 text-[11px] leading-tight text-white/90 sm:text-xs">
+                                    <div class="flex justify-between gap-4 sm:flex-col sm:gap-0">
+                                        <dt class="text-white/45">Valid</dt>
+                                        <dd class="font-semibold tabular-nums">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</dd>
                                     </div>
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-widest text-white/45">Member since</p>
-                                        <p class="mt-0.5 font-semibold text-white">{{ $member->created_at?->format('M Y') ?? '—' }}</p>
+                                    <div class="flex justify-between gap-4 sm:flex-col sm:gap-0">
+                                        <dt class="text-white/45">Since</dt>
+                                        <dd class="font-semibold">{{ $member->created_at?->format('M Y') ?? '—' }}</dd>
                                     </div>
-                                </div>
+                                </dl>
                             </div>
                         </div>
                     </div>
@@ -407,7 +392,12 @@
                     <div class="flex shrink-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                         @if($showFullMemberMenu && $latestReceiptTransaction)
                             <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener"
-                                class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/20 bg-white px-5 py-2.5 text-center text-sm font-bold text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#faf8fc]">
+                                class="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#351c42]/20 bg-white px-5 py-2.5 text-center text-sm font-bold text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#faf8fc]">
+                                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
                                 Download latest receipt
                             </a>
                         @endif
@@ -457,121 +447,18 @@
                 </div>
             </section>
 
-            @if($showFullMemberMenu && isset($myEventInvites) && $myEventInvites->isNotEmpty())
-                <section aria-labelledby="member-my-events-heading" class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
-                    <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h2 id="member-my-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Events you’re tracking</h2>
-                            <p class="mt-1 text-sm text-[#351c42]/60">Events where you tapped <span class="font-semibold text-[#351c42]">Interested</span>, plus status from the office.</p>
-                        </div>
-                        <a href="{{ route('home') }}#events" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">Browse all events</a>
-                    </div>
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        @foreach($myEventInvites as $inv)
-                            @php $ev = $inv->event; @endphp
-                            @continue(!$ev)
-                            @php
-                                $evDate = optional($ev->dates->first())->event_date;
-                                $ps = $inv->participation_status;
-                            @endphp
-                            <article class="flex flex-col overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-sm">
-                                <div class="flex items-start justify-between gap-3 border-b border-[#351c42]/08 bg-[#faf9fc] px-4 py-3">
-                                    <div class="min-w-0">
-                                        <h3 class="font-bold text-[#351c42]">{{ $ev->title }}</h3>
-                                        <p class="mt-0.5 text-xs text-[#351c42]/55">{{ $evDate ? \Illuminate\Support\Carbon::parse($evDate)->format('d M Y') : 'Date TBD' }}</p>
-                                    </div>
-                                    <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700" title="You expressed interest">
-                                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10.5a4.5 4.5 0 016.7-3.9 5.5 5.5 0 0110.6 0A4.5 4.5 0 0122 10.5c0 3.8-3.4 6.5-8.5 11.5a1 1 0 01-1.5 0C6.4 17 3 14.3 3 10.5z"/></svg>
-                                    </span>
-                                </div>
-                                <div class="flex flex-1 flex-col gap-3 p-4">
-                                    @if($ps === 'participated')
-                                        <span class="inline-flex w-fit rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Participated — certified</span>
-                                        <p class="text-xs text-[#351c42]/60">Your participation is confirmed. Download your certificate when the event template is ready.</p>
-                                        <a href="{{ route('member.events.certificate', $ev) }}" class="inline-flex w-fit items-center rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a] transition hover:brightness-105">Download certificate</a>
-                                    @elseif($ps === 'not_participated')
-                                        <span class="inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">Recorded: did not attend</span>
-                                    @else
-                                        <span class="inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">Interest registered</span>
-                                        <p class="text-xs text-[#351c42]/60">We’ll update this when your attendance is confirmed.</p>
-                                    @endif
-                                </div>
-                            </article>
-                        @endforeach
-                    </div>
-                </section>
-            @endif
-
             @if($showFullMemberMenu)
-            <section aria-labelledby="member-events-heading" class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
-                <div class="mb-6 flex items-center justify-between gap-4">
-                    <h2 id="member-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">All events</h2>
-                    <a href="{{ route('home') }}#events" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">View all on home</a>
-                </div>
-
-                @if(session('event_interest_error'))
-                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                        {{ session('event_interest_error') }}
+            <section class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Events</p>
+                        <h2 class="mt-1 text-lg font-bold text-[#351c42]">Interested in GNAT events?</h2>
+                        <p class="mt-1 text-sm text-[#351c42]/60">Register interest, see attendance, and download certificates on the member events page.</p>
                     </div>
-                @endif
-
-                <div class="space-y-4">
-                    @forelse($events as $event)
-                        @php
-                            $alreadyInterested = in_array($event->id, $interestedEventIds ?? [], true);
-                            $myInvite = $inviteByEventId->get($event->id);
-                            $seatsFull = $event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit;
-                            $eventDate = optional($event->dates->first())->event_date;
-                        @endphp
-                        <article class="rounded-2xl border border-[#351c42]/10 bg-white p-4 sm:p-5">
-                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div class="min-w-0">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
-                                    <h3 class="mt-1 text-lg font-bold text-[#351c42]">{{ $event->title }}</h3>
-                                    <p class="mt-1 text-sm text-[#351c42]/70">{{ $event->venue ?: 'Venue will be shared soon' }}</p>
-                                    <p class="mt-2 text-xs font-semibold text-[#351c42]/60">
-                                        {{ $eventDate ? \Illuminate\Support\Carbon::parse($eventDate)->format('d M Y') : 'Date TBD' }}
-                                        @if($event->seat_mode === 'limited' && $event->seat_limit)
-                                            · Seats {{ $event->interested_count }}/{{ $event->seat_limit }}
-                                        @else
-                                            · Unlimited seats
-                                        @endif
-                                    </p>
-                                    <p class="mt-1 text-xs text-[#351c42]/55">Interested profiles: {{ $event->interested_count }}</p>
-                                </div>
-                                <div class="shrink-0 flex flex-col items-end gap-2">
-                                    @if($alreadyInterested && $myInvite)
-                                        @if($myInvite->participation_status === 'participated')
-                                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">Participated</span>
-                                            <a href="{{ route('member.events.certificate', $event) }}" class="text-xs font-bold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">Certificate</a>
-                                        @elseif($myInvite->participation_status === 'not_participated')
-                                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">Did not attend</span>
-                                        @else
-                                            <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">Interest registered</span>
-                                        @endif
-                                    @elseif($alreadyInterested)
-                                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">Interest submitted</span>
-                                    @elseif($seatsFull)
-                                        <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700">Seat limit reached</span>
-                                    @else
-                                        <form method="POST" action="{{ route('member.events.interest', $event) }}">
-                                            @csrf
-                                            <button type="submit" class="md-btn-interest">Interested</button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </article>
-                    @empty
-                        <div class="rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-6 text-sm text-[#351c42]/70">
-                            No active events available right now.
-                        </div>
-                    @endforelse
+                    <a href="{{ route('member.events.index') }}" class="md-btn-pay shrink-0 text-center">Open events page</a>
                 </div>
             </section>
-            @endif
 
-            @if($showFullMemberMenu)
             <section aria-labelledby="history-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h2 id="history-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription history</h2>
@@ -642,12 +529,15 @@
         </main>
     </div>
 
+    @php
+        $donate = config('homepage.donate', ['goal' => 500, 'default_amount' => 100]);
+    @endphp
+    @include('home.partials.donate-modal')
+    @include('home.partials.donate-payment-modals')
+    @include('home.partials.scripts')
+
     <script>
         (() => {
-            @if(session('event_interest_success'))
-                alert("{{ session('event_interest_success') }}");
-            @endif
-
             const sidebar = document.getElementById("md-sidebar");
             const toggle = document.querySelector("[data-md-sidebar-toggle]");
             const backdrop = document.getElementById("md-sidebar-backdrop");

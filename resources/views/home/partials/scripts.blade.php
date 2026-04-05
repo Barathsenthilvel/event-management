@@ -410,8 +410,8 @@
 
 <script>
     (() => {
-        const testimonials = @json($testimonials);
-        const profileImg = @json(asset($testimonial_profile_image));
+        const testimonials = @json($testimonials ?? config('homepage.testimonials', []));
+        const profileImg = @json(asset($testimonial_profile_image ?? config('homepage.testimonial_profile_image', 'images/testimonials-images/thumb-10.2.webp')));
 
         const viewport = document.getElementById("carousel-viewport");
         const track = document.getElementById("carousel-track");

@@ -135,15 +135,21 @@
                                 <span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/20 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/80 cursor-default">
                                     Interest registered
                                 </span>
+                            @elseif(Auth::check())
+                                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="w-full">
+                                    @csrf
+                                    <button
+                                        type="submit"
+                                        class="inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors"
+                                    >
+                                        Interested
+                                    </button>
+                                </form>
                             @else
                                 <button
                                     type="button"
                                     class="interest-open-btn inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors"
                                     data-interest-url="{{ route('events.interest', $event) }}"
-                                    data-is-logged-in="{{ Auth::check() ? '1' : '0' }}"
-                                    data-prefill-name="{{ e(Auth::check() ? (Auth::user()->name ?? '') : '') }}"
-                                    data-prefill-email="{{ e(Auth::check() ? (Auth::user()->email ?? '') : '') }}"
-                                    data-prefill-phone="{{ e(Auth::check() ? (Auth::user()->mobile ?? '') : '') }}"
                                 >
                                     Interested
                                 </button>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Models\EventInvite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,10 +30,19 @@ class HomeController extends Controller
 
         $interestedEventIds = [];
         if (Auth::check() && $homeEvents->isNotEmpty()) {
-            $interestedEventIds = EventInterest::query()
+            $ids = $homeEvents->pluck('id');
+            $interestedEventIds = EventInvite::query()
                 ->where('user_id', Auth::id())
-                ->whereIn('event_id', $homeEvents->pluck('id'))
+                ->whereIn('event_id', $ids)
                 ->pluck('event_id')
+                ->merge(
+                    EventInterest::query()
+                        ->where('user_id', Auth::id())
+                        ->whereIn('event_id', $ids)
+                        ->pluck('event_id')
+                )
+                ->unique()
+                ->values()
                 ->all();
         }
 
@@ -74,10 +84,19 @@ class HomeController extends Controller
 
         $interestedEventIds = [];
         if (Auth::check() && $events->count() > 0) {
-            $interestedEventIds = EventInterest::query()
+            $ids = $events->pluck('id');
+            $interestedEventIds = EventInvite::query()
                 ->where('user_id', Auth::id())
-                ->whereIn('event_id', $events->pluck('id'))
+                ->whereIn('event_id', $ids)
                 ->pluck('event_id')
+                ->merge(
+                    EventInterest::query()
+                        ->where('user_id', Auth::id())
+                        ->whereIn('event_id', $ids)
+                        ->pluck('event_id')
+                )
+                ->unique()
+                ->values()
                 ->all();
         }
 

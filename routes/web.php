@@ -264,8 +264,9 @@ Route::prefix('member')->name('member.')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
+        Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');
         Route::middleware('member.subscribed')->group(function () {
-            Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');
             Route::get('/events/{event}/certificate', [MemberDashboardController::class, 'downloadEventCertificate'])->name('events.certificate');
         });
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
@@ -280,7 +281,19 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/subscription/invoice/{id}', [MemberSubscriptionController::class, 'downloadInvoice'])->name('subscription.invoice');
 
         Route::middleware('member.subscribed')->group(function () {
-            Route::get('/e-books', [MemberEBookController::class, 'index'])->name('ebooks.index');
+            Route::get('/e-books', [MemberEBookController::class, 'index'])->name('Profile status
+
+Completed
+
+Approval status
+
+Approved
+
+Member name
+
+Barath s
+
+Donations (your total).index');
         });
     });
 });

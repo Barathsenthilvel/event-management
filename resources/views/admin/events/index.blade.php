@@ -107,12 +107,22 @@
                                 <td class="px-5 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2 flex-wrap">
                                         <a href="{{ route('admin.events.show', $event->id) }}"
-                                            title="More Details"
+                                            title="Event details (info, public interest list)"
                                             class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </a>
+                                        @if(in_array($event->status, ['live', 'completed'], true))
+                                            <a href="{{ route('admin.events.show', $event->id) }}#event-member-attendance"
+                                                title="Member attendance — set Attended / Did not attend (Live or Completed)"
+                                                class="h-8 min-w-8 px-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 inline-flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wide">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="hidden sm:inline">Attendance</span>
+                                            </a>
+                                        @endif
                                         <a href="{{ route('admin.events.edit', $event->id) }}"
                                             title="Modify Event"
                                             class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">

@@ -130,39 +130,20 @@
             btn.addEventListener("click", () => {
                 const url = btn.getAttribute("data-interest-url");
                 if (url) form.setAttribute("action", url);
-                const loggedIn = btn.getAttribute("data-is-logged-in") === "1";
-
-                if (loggedIn) {
-                    setTitles("Member — confirm your interest", "Signed in as a member. Review your details and submit.");
-                    if (formIntro) {
-                        formIntro.textContent = "";
-                        formIntro.classList.add("hidden");
-                    }
-                    if (nameEl) nameEl.value = btn.getAttribute("data-prefill-name") || "";
-                    if (emailEl) {
-                        emailEl.value = btn.getAttribute("data-prefill-email") || "";
-                        emailEl.readOnly = true;
-                        emailEl.classList.add("bg-[#f6f3e9]", "cursor-not-allowed");
-                    }
-                    if (emailHint) emailHint.classList.remove("hidden");
-                    if (phoneEl) phoneEl.value = btn.getAttribute("data-prefill-phone") || "";
-                    showSteps("form");
-                } else {
-                    setTitles("Register your interest", "First, tell us whether you’re a member or an interested visitor.");
-                    if (formIntro) {
-                        formIntro.textContent = "";
-                        formIntro.classList.add("hidden");
-                    }
-                    if (nameEl) nameEl.value = "";
-                    if (emailEl) {
-                        emailEl.value = "";
-                        emailEl.readOnly = false;
-                        emailEl.classList.remove("bg-[#f6f3e9]", "cursor-not-allowed");
-                    }
-                    if (emailHint) emailHint.classList.add("hidden");
-                    if (phoneEl) phoneEl.value = "";
-                    showSteps("choose");
+                setTitles("Register your interest", "First, tell us whether you’re a member or an interested visitor.");
+                if (formIntro) {
+                    formIntro.textContent = "";
+                    formIntro.classList.add("hidden");
                 }
+                if (nameEl) nameEl.value = "";
+                if (emailEl) {
+                    emailEl.value = "";
+                    emailEl.readOnly = false;
+                    emailEl.classList.remove("bg-[#f6f3e9]", "cursor-not-allowed");
+                }
+                if (emailHint) emailHint.classList.add("hidden");
+                if (phoneEl) phoneEl.value = "";
+                showSteps("choose");
                 openModal();
             });
         });
