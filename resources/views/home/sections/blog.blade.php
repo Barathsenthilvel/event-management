@@ -2,15 +2,9 @@
     <div class="mx-auto max-w-7xl px-4">
         <div class="grid gap-10 lg:grid-cols-[300px_1fr] items-start">
             <div class="lg:sticky lg:top-8">
-                <div class="inline-flex items-center gap-2 text-[#351c42] text-sm font-medium">
-                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#351c42]/10">
-                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 13C12 8.5 8 5 3 5C3 10 7 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 13C12 8.5 16 5 21 5C21 10 17 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                    Our Blog
+                <div class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-[#965995]">
+                    <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-[#965995]" aria-hidden="true"></span>
+                    Our blog
                 </div>
 
                 <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">

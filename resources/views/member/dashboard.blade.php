@@ -2,6 +2,8 @@
     $member = Auth::user();
     $hasActiveSubscription = $member?->activeSubscription()->exists();
     $canSeeMembership = $member && $member->profile_completed && $member->is_approved;
+    /** Full sidebar + events / e-books / history / digital ID */
+    $showFullMemberMenu = $canSeeMembership && $hasActiveSubscription;
     $sub = $activeSubscription ?? null;
     $firstName = $member?->first_name ?? 'Member';
 @endphp
@@ -11,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dashboard — GNAT Donation</title>
+    <title>Dashboard — GNAT Association</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -121,6 +123,27 @@
             transition: transform 0.15s ease, filter 0.2s ease;
         }
         .md-btn-interest:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        .md-id-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.35rem;
+            border: 1px solid rgba(253, 220, 106, 0.35);
+            background:
+                radial-gradient(ellipse 120% 80% at 100% 0%, rgba(150, 89, 149, 0.45), transparent 55%),
+                radial-gradient(ellipse 90% 60% at 0% 100%, rgba(253, 220, 106, 0.12), transparent 50%),
+                linear-gradient(155deg, #24122e 0%, #351c42 42%, #3d2149 100%);
+            box-shadow: 0 20px 50px rgba(53, 28, 66, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .md-id-card::after {
+            content: "";
+            position: absolute;
+            inset: -40% -20% auto auto;
+            width: 60%;
+            height: 80%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.04));
+            transform: rotate(12deg);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="md-page-bg text-[#351c42] antialiased" id="top">
@@ -161,7 +184,7 @@
                 </span>
             </button>
             <a href="{{ route('home') }}" class="flex min-w-0 max-w-[200px] shrink-0 sm:max-w-[220px]" aria-label="Home">
-                <img src="{{ asset('logo.png') }}" alt="GNAT Donation" class="h-8 w-auto max-h-11 object-contain sm:h-11" width="200" height="48" />
+                <img src="{{ asset('logo.png') }}" alt="GNAT Association" class="h-8 w-auto max-h-11 object-contain sm:h-11" width="200" height="48" />
             </a>
             <nav class="hidden flex-1 justify-center gap-6 lg:flex xl:gap-9" aria-label="Primary">
                 <a href="{{ route('home') }}#home" class="md-nav-link">Home</a>
@@ -190,6 +213,13 @@
                         </svg>
                         Profile
                     </a>
+                    <a href="{{ route('member.password.edit') }}"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#351c42]/75 hover:bg-[#351c42]/5 hover:text-[#351c42]">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm-7 8v-2a4 4 0 014-4h6a4 4 0 014 4v2"/>
+                        </svg>
+                        Change password
+                    </a>
                     <form method="POST" action="{{ route('member.logout') }}">
                         @csrf
                         <button type="submit"
@@ -211,22 +241,26 @@
             id="md-sidebar"
             class="fixed inset-y-0 left-0 z-50 w-[min(100%,280px)] -translate-x-full border-r border-[#351c42]/10 bg-white/95 p-5 shadow-2xl transition-transform duration-300 lg:static lg:z-0 lg:w-60 lg:translate-x-0 lg:rounded-2xl lg:border lg:bg-white/80 lg:p-4 lg:shadow-lg lg:shadow-[#351c42]/5"
         >
-            <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">Menu</p>
+            <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">{{ $showFullMemberMenu ? 'Menu' : ($canSeeMembership ? 'Membership' : 'Account') }}</p>
             <nav class="flex flex-col gap-1" aria-label="Member">
-                <a href="{{ url()->current() }}#top" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Dashboard</a>
-                <a href="{{ route('donations.index') }}" class="md-sidebar-link {{ request()->routeIs('donations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('donations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Donations</a>
-                <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
-                @if($canSeeMembership && $hasActiveSubscription)
+                @if($showFullMemberMenu)
+                    <a href="{{ url()->current() }}#top" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Dashboard</a>
+                    <a href="{{ route('donations.index') }}" class="md-sidebar-link {{ request()->routeIs('donations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('donations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Donations</a>
+                    <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
                     <a href="{{ route('home') }}#events" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Events</a>
                     <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Meetings</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
                     <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Polling</a>
+                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
+                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
+                @elseif($canSeeMembership)
+                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Choose and pay for a plan below. The full member menu appears after your subscription is active. Use the profile icon (top right) for account settings.</p>
+                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Membership plans</a>
                 @else
-                    <span class="md-sidebar-link cursor-default opacity-50" title="Available after profile completion and approval"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership &amp; more</span>
+                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Profile</a>
+                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @endif
-                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
-                <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Account settings</a>
             </nav>
             <form method="POST" action="{{ route('member.logout') }}" class="mt-8 border-t border-[#351c42]/10 pt-4">
                 @csrf
@@ -238,11 +272,24 @@
         <div id="md-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" aria-hidden="true"></div>
 
         <main class="min-w-0 flex-1 space-y-10 lg:space-y-12" id="member-dashboard-main">
+            @if(session('member_gate_error'))
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
+                    {{ session('member_gate_error') }}
+                </div>
+            @endif
+
             <header id="member-dashboard-top" class="scroll-mt-28">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
-                <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
+                @if($canSeeMembership && !$showFullMemberMenu)
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
+                    <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Choose your subscription plan</h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#351c42]/70">Your account is approved. Select a plan below and complete payment. After your membership is active, the full menu (dashboard, donations, e-books, events, and more) will unlock.</p>
+                @else
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
+                    <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
+                @endif
             </header>
 
+            @if(!$canSeeMembership || $showFullMemberMenu)
             <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <article class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-sm">
                     <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Profile status</p>
@@ -257,7 +304,62 @@
                     <p class="mt-2 text-lg font-bold text-[#351c42]">{{ $member?->name ?? '-' }}</p>
                 </article>
             </section>
+            @endif
 
+            @if($showFullMemberMenu)
+                <section aria-labelledby="digital-id-heading" class="scroll-mt-28">
+                    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
+                            <h2 id="digital-id-heading" class="text-xl font-extrabold text-[#351c42] sm:text-2xl">Digital member ID</h2>
+                        </div>
+                        <p class="text-sm text-[#351c42]/55">Show this screen when attending GNAT programs.</p>
+                    </div>
+                    <div class="md-id-card p-6 sm:p-8 text-white">
+                        <div class="relative z-[1] flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between">
+                            <div class="flex gap-5">
+                                <div class="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl border-2 border-[#fddc6a]/50 bg-white/10 shadow-lg sm:h-32 sm:w-32">
+                                    @if($member->passport_photo_path)
+                                        <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="128" height="128" />
+                                    @else
+                                        <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/80">
+                                            <svg class="h-14 w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="min-w-0 flex flex-col justify-center">
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.35em] text-[#fddc6a]/90">GNAT Association</p>
+                                    <p class="mt-1 truncate text-xl font-extrabold tracking-tight sm:text-2xl">{{ $member->name }}</p>
+                                    @if($member->designation?->name)
+                                        <p class="mt-1 text-sm font-semibold text-white/75">{{ $member->designation->name }}</p>
+                                    @endif
+                                    <p class="mt-3 font-mono text-sm font-bold tracking-wider text-[#fddc6a]">ID · GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-1 flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm lg:max-w-xs">
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-white/50">Status</p>
+                                    <p class="mt-1 inline-flex rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-bold text-emerald-100 ring-1 ring-emerald-300/40">
+                                        {{ $sub ? 'Active member' : 'Member (no active plan)' }}
+                                    </p>
+                                </div>
+                                <div class="grid gap-3 text-sm">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-widest text-white/45">Valid through</p>
+                                        <p class="mt-0.5 font-semibold text-white">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-widest text-white/45">Member since</p>
+                                        <p class="mt-0.5 font-semibold text-white">{{ $member->created_at?->format('M Y') ?? '—' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            @endif
+
+            @if($showFullMemberMenu)
             <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -302,11 +404,20 @@
                             </p>
                         </div>
                     </div>
-                    @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index', array_filter(['type' => 'Renewal'])) }}" class="md-btn-pay shrink-0 text-center">Pay &amp; renew</a>
-                    @endif
+                    <div class="flex shrink-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                        @if($showFullMemberMenu && $latestReceiptTransaction)
+                            <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener"
+                                class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/20 bg-white px-5 py-2.5 text-center text-sm font-bold text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#faf8fc]">
+                                Download latest receipt
+                            </a>
+                        @endif
+                        @if($showFullMemberMenu && $canSeeMembership)
+                            <a href="{{ route('member.subscription.index', array_filter(['type' => 'Renewal'])) }}" class="md-btn-pay text-center">Pay &amp; renew</a>
+                        @endif
+                    </div>
                 </div>
             </section>
+            @endif
 
             <section aria-labelledby="plans-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -346,9 +457,55 @@
                 </div>
             </section>
 
+            @if($showFullMemberMenu && isset($myEventInvites) && $myEventInvites->isNotEmpty())
+                <section aria-labelledby="member-my-events-heading" class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
+                    <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 id="member-my-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Events you’re tracking</h2>
+                            <p class="mt-1 text-sm text-[#351c42]/60">Events where you tapped <span class="font-semibold text-[#351c42]">Interested</span>, plus status from the office.</p>
+                        </div>
+                        <a href="{{ route('home') }}#events" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">Browse all events</a>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        @foreach($myEventInvites as $inv)
+                            @php $ev = $inv->event; @endphp
+                            @continue(!$ev)
+                            @php
+                                $evDate = optional($ev->dates->first())->event_date;
+                                $ps = $inv->participation_status;
+                            @endphp
+                            <article class="flex flex-col overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-sm">
+                                <div class="flex items-start justify-between gap-3 border-b border-[#351c42]/08 bg-[#faf9fc] px-4 py-3">
+                                    <div class="min-w-0">
+                                        <h3 class="font-bold text-[#351c42]">{{ $ev->title }}</h3>
+                                        <p class="mt-0.5 text-xs text-[#351c42]/55">{{ $evDate ? \Illuminate\Support\Carbon::parse($evDate)->format('d M Y') : 'Date TBD' }}</p>
+                                    </div>
+                                    <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700" title="You expressed interest">
+                                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10.5a4.5 4.5 0 016.7-3.9 5.5 5.5 0 0110.6 0A4.5 4.5 0 0122 10.5c0 3.8-3.4 6.5-8.5 11.5a1 1 0 01-1.5 0C6.4 17 3 14.3 3 10.5z"/></svg>
+                                    </span>
+                                </div>
+                                <div class="flex flex-1 flex-col gap-3 p-4">
+                                    @if($ps === 'participated')
+                                        <span class="inline-flex w-fit rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Participated — certified</span>
+                                        <p class="text-xs text-[#351c42]/60">Your participation is confirmed. Download your certificate when the event template is ready.</p>
+                                        <a href="{{ route('member.events.certificate', $ev) }}" class="inline-flex w-fit items-center rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a] transition hover:brightness-105">Download certificate</a>
+                                    @elseif($ps === 'not_participated')
+                                        <span class="inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">Recorded: did not attend</span>
+                                    @else
+                                        <span class="inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">Interest registered</span>
+                                        <p class="text-xs text-[#351c42]/60">We’ll update this when your attendance is confirmed.</p>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if($showFullMemberMenu)
             <section aria-labelledby="member-events-heading" class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="mb-6 flex items-center justify-between gap-4">
-                    <h2 id="member-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Events</h2>
+                    <h2 id="member-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">All events</h2>
                     <a href="{{ route('home') }}#events" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">View all on home</a>
                 </div>
 
@@ -362,6 +519,7 @@
                     @forelse($events as $event)
                         @php
                             $alreadyInterested = in_array($event->id, $interestedEventIds ?? [], true);
+                            $myInvite = $inviteByEventId->get($event->id);
                             $seatsFull = $event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit;
                             $eventDate = optional($event->dates->first())->event_date;
                         @endphp
@@ -381,8 +539,17 @@
                                     </p>
                                     <p class="mt-1 text-xs text-[#351c42]/55">Interested profiles: {{ $event->interested_count }}</p>
                                 </div>
-                                <div class="shrink-0">
-                                    @if($alreadyInterested)
+                                <div class="shrink-0 flex flex-col items-end gap-2">
+                                    @if($alreadyInterested && $myInvite)
+                                        @if($myInvite->participation_status === 'participated')
+                                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">Participated</span>
+                                            <a href="{{ route('member.events.certificate', $event) }}" class="text-xs font-bold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">Certificate</a>
+                                        @elseif($myInvite->participation_status === 'not_participated')
+                                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">Did not attend</span>
+                                        @else
+                                            <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">Interest registered</span>
+                                        @endif
+                                    @elseif($alreadyInterested)
                                         <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700">Interest submitted</span>
                                     @elseif($seatsFull)
                                         <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700">Seat limit reached</span>
@@ -402,7 +569,9 @@
                     @endforelse
                 </div>
             </section>
+            @endif
 
+            @if($showFullMemberMenu)
             <section aria-labelledby="history-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h2 id="history-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription history</h2>
@@ -469,6 +638,7 @@
                     @endforelse
                 </div>
             </section>
+            @endif
         </main>
     </div>
 

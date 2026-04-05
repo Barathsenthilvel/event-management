@@ -19,11 +19,55 @@
             </svg>
         </button>
         <div class="pr-10">
-            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Donation</p>
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Association</p>
             <h2 id="donate-modal-title" class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Give &amp; change a life</h2>
-            <p class="mt-2 text-sm text-white/65 leading-relaxed">Pick an amount or enter your own. Your support funds real programs in education, health, and community.</p>
+            <p class="mt-2 text-sm text-white/65 leading-relaxed">Your support funds real programs in education, health, and community.</p>
         </div>
 
+        <input type="hidden" id="donate-context-donation-id" value="" autocomplete="off" />
+
+        @auth
+            <div class="mt-5 rounded-2xl border border-[#fddc6a]/25 bg-white/5 px-4 py-3 text-sm text-white/90">
+                <span class="font-semibold text-[#fcd34d]">Signed in as {{ auth()->user()->name }}</span>
+                <span class="text-white/70"> — your donation will be saved with your member email and mobile on file.</span>
+            </div>
+        @else
+            <div id="donate-step-details" class="mt-6 space-y-4">
+                <div class="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-relaxed text-white/85">
+                    <p class="font-semibold text-[#fcd34d]">Already a GNAT member?</p>
+                    <p class="mt-1 text-white/70">Please <a href="{{ route('member.login', ['return' => url()->current()]) }}" class="font-bold text-white underline-offset-2 hover:underline">log in and pay</a> so we can link your donation to your profile.</p>
+                    <p class="mt-3 font-semibold text-white/90">Paying as a guest?</p>
+                    <p class="mt-1 text-white/65">Enter your details below, then choose an amount. Interested in membership? <a href="{{ route('member.register') }}" class="font-bold text-[#fcd34d] underline-offset-2 hover:underline">Sign up here</a>.</p>
+                </div>
+                <div class="space-y-3">
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-wider text-white/55">Full name</span>
+                        <input type="text" data-donate-detail="name" autocomplete="name" required
+                            class="mt-1.5 w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium text-white placeholder:text-white/35 outline-none focus:border-[#fcd34d]/50 focus:ring-2 focus:ring-[#fcd34d]/20" placeholder="Your name" />
+                    </label>
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-wider text-white/55">Mobile number</span>
+                        <input type="tel" data-donate-detail="mobile" inputmode="numeric" autocomplete="tel" required
+                            class="mt-1.5 w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium text-white placeholder:text-white/35 outline-none focus:border-[#fcd34d]/50 focus:ring-2 focus:ring-[#fcd34d]/20" placeholder="10-digit mobile" />
+                    </label>
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-wider text-white/55">Email</span>
+                        <input type="email" data-donate-detail="email" autocomplete="email" required
+                            class="mt-1.5 w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium text-white placeholder:text-white/35 outline-none focus:border-[#fcd34d]/50 focus:ring-2 focus:ring-[#fcd34d]/20" placeholder="you@email.com" />
+                    </label>
+                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                        <input type="checkbox" data-donate-wants-member class="mt-1 h-4 w-4 shrink-0 rounded border-white/30 bg-white/10 text-[#fcd34d] focus:ring-[#fcd34d]" />
+                        <span class="text-sm text-white/80">I’m interested in becoming a GNAT member (we may follow up with you).</span>
+                    </label>
+                </div>
+                <button type="button" data-donate-continue-details
+                    class="w-full rounded-2xl bg-[#fcd34d] py-3.5 text-sm font-extrabold text-[#351c42] shadow-lg hover:bg-[#fde68a] transition-colors">
+                    Continue to choose amount
+                </button>
+            </div>
+        @endauth
+
+        <div id="donate-step-amounts-wrapper" class="@guest hidden @endguest">
         <div id="modal-donate-amounts" class="mt-7 space-y-5">
             <div class="flex flex-col gap-3">
                 <span class="text-sm font-bold text-white/95">Choose amount:</span>
@@ -49,9 +93,15 @@
                          style="width: {{ (int) ($dm['bar_percent_demo'] ?? 52) }}%;"
                          data-donate-bar></div>
                 </div>
-                <p class="mt-2 text-xs text-white/50">GNAT Donation community goal (demo)</p>
+                <p class="mt-2 text-xs text-white/50">GNAT Association community goal (demo)</p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-3 sm:items-stretch pt-1">
+            <div class="flex flex-col gap-3 pt-1">
+                @guest
+                <button type="button" data-donate-back-details class="self-start text-xs font-bold text-[#fcd34d] underline-offset-2 hover:underline">
+                    ← Edit your details
+                </button>
+                @endguest
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-stretch">
                 <label class="relative flex-1 flex items-center rounded-2xl bg-white pl-12 pr-4 py-3.5 shadow-inner ring-1 ring-black/5">
                     <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42] font-bold text-base leading-none" aria-hidden="true">₹</span>
                     <input type="number" min="1" step="1" value="{{ (int) ($dm['default_amount'] ?? 100) }}" data-donate-input class="w-full min-w-0 border-0 bg-transparent text-[#351c42] text-lg font-bold outline-none focus:ring-0" />
@@ -62,9 +112,11 @@
                             <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    <span class="click-btn__label">Donate Now</span>
+                    <span class="click-btn__label">Pay securely</span>
                 </button>
+                </div>
             </div>
+        </div>
         </div>
     </div>
 </div>

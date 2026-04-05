@@ -46,6 +46,11 @@
         const dotsWrap = document.getElementById("bannerCarouselDots");
         const vertCurrent = document.getElementById("bannerVertCurrent");
         const vertNext = document.getElementById("bannerVertNext");
+        const lightbox = document.getElementById("bannerImageLightbox");
+        const lightboxImg = document.getElementById("bannerLightboxImg");
+        const lightboxLink = document.getElementById("bannerLightboxLink");
+        const lightboxBackdrop = lightbox?.querySelector("[data-banner-lightbox-backdrop]");
+        const lightboxCloseBtn = lightbox?.querySelector("[data-banner-lightbox-close]");
         if (!viewport || !track || !prevBtn || !nextBtn || !dotsWrap) return;
 
         const slides = () => Array.from(track.querySelectorAll(".banner-slide"));
@@ -53,6 +58,56 @@
         let autoplayId = null;
         const AUTOPLAY_MS = 5500;
         let touchStartX = null;
+        let lightboxOpen = false;
+
+        function openBannerLightbox(slideEl) {
+            if (!lightbox || !lightboxImg || !slideEl) return;
+            const img = slideEl.querySelector("img[data-banner-photo]") || slideEl.querySelector("img");
+            if (!img) return;
+            lightboxOpen = true;
+            stopAutoplay();
+            lightboxImg.src = img.currentSrc || img.src;
+            lightboxImg.alt = img.alt || "";
+            const href = slideEl.getAttribute("data-banner-href") || "#";
+            if (lightboxLink) {
+                lightboxLink.href = href;
+                lightboxLink.style.display = href === "#" ? "none" : "inline-flex";
+            }
+            lightbox.classList.remove("hidden");
+            lightbox.classList.add("flex");
+            lightbox.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+            lightboxCloseBtn?.focus();
+        }
+
+        function closeBannerLightbox() {
+            if (!lightbox || !lightboxOpen) return;
+            lightboxOpen = false;
+            lightbox.classList.add("hidden");
+            lightbox.classList.remove("flex");
+            lightbox.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+            if (lightboxImg) {
+                lightboxImg.src = "";
+                lightboxImg.alt = "";
+            }
+            restartAutoplay();
+        }
+
+        track.addEventListener("click", (e) => {
+            const expand = e.target.closest("[data-banner-expand]");
+            if (!expand) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const slide = expand.closest(".banner-slide");
+            if (slide) openBannerLightbox(slide);
+        });
+
+        lightboxCloseBtn?.addEventListener("click", () => closeBannerLightbox());
+        lightboxBackdrop?.addEventListener("click", () => closeBannerLightbox());
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && lightboxOpen) closeBannerLightbox();
+        });
 
         function gapPx() {
             const s = window.getComputedStyle(track);
@@ -139,10 +194,10 @@
         nextBtn.addEventListener("click", () => { go(1); restartAutoplay(); });
 
         const navEl = prevBtn.closest(".banner-vertical-nav");
-        viewport.addEventListener("mouseenter", stopAutoplay);
-        viewport.addEventListener("mouseleave", restartAutoplay);
-        navEl?.addEventListener("mouseenter", stopAutoplay);
-        navEl?.addEventListener("mouseleave", restartAutoplay);
+        viewport.addEventListener("mouseenter", () => { if (!lightboxOpen) stopAutoplay(); });
+        viewport.addEventListener("mouseleave", () => { if (!lightboxOpen) restartAutoplay(); });
+        navEl?.addEventListener("mouseenter", () => { if (!lightboxOpen) stopAutoplay(); });
+        navEl?.addEventListener("mouseleave", () => { if (!lightboxOpen) restartAutoplay(); });
 
         viewport.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
         viewport.addEventListener("touchend", (e) => {
@@ -584,6 +639,7 @@
             'contact' => auth()->user()->mobile ?? '',
         ])
         : [];
+    $__donationConfig = ['isAuthenticated' => auth()->check()];
 @endphp
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
@@ -600,6 +656,8 @@
         const DONATION_ORDER_URL = @json(route('donations.payment.order'));
         const DONATION_VERIFY_URL = @json(route('donations.payment.verify'));
         const donationPrefill = @json($__donationPrefill);
+        const DONATION_CONFIG = @json($__donationConfig);
+        window.__DONATION_CONFIG = DONATION_CONFIG;
 
         function donateCsrfToken() {
             const m = document.querySelector('meta[name="csrf-token"]');
@@ -619,7 +677,7 @@
             const msgEl = document.getElementById("donate-payment-success-message");
             const amtEl = document.getElementById("donate-payment-success-amount");
             const payEl = document.getElementById("donate-payment-success-payment-id");
-            if (msgEl) msgEl.textContent = payload?.message || "Thank you for supporting GNAT Donation!";
+            if (msgEl) msgEl.textContent = payload?.message || "Thank you for supporting GNAT Association!";
             if (amtEl) amtEl.textContent = formatDonateInr(payload?.amount);
             if (payEl) {
                 const pid = payload?.razorpay_payment_id;
@@ -690,8 +748,30 @@
             syncDonateBodyScrollLock();
         }
 
-        function openDonateModal() {
+        function openDonateModal(opts) {
             if (!donateModal) return;
+            const options = opts || {};
+            const donationIdRaw = options.donationId;
+            const hid = document.getElementById("donate-context-donation-id");
+            if (hid) {
+                if (donationIdRaw != null && donationIdRaw !== "") {
+                    hid.value = String(donationIdRaw);
+                } else {
+                    hid.value = "";
+                }
+            }
+
+            const details = document.getElementById("donate-step-details");
+            const amountsWrap = document.getElementById("donate-step-amounts-wrapper");
+            const auth = Boolean(DONATION_CONFIG?.isAuthenticated);
+            if (auth) {
+                details?.classList.add("hidden");
+                amountsWrap?.classList.remove("hidden");
+            } else {
+                details?.classList.remove("hidden");
+                amountsWrap?.classList.add("hidden");
+            }
+
             const homeRoot = document.getElementById("home-donate-amounts");
             const modalRoot = document.getElementById("modal-donate-amounts");
             const homeInput = homeRoot?.querySelector("[data-donate-input]");
@@ -706,7 +786,37 @@
             donateModal.classList.remove("hidden");
             donateModal.setAttribute("aria-hidden", "false");
             syncDonateBodyScrollLock();
-            modalInput?.focus({ preventScroll: true });
+            if (auth) {
+                modalInput?.focus({ preventScroll: true });
+            } else {
+                document.querySelector("[data-donate-detail=\"name\"]")?.focus({ preventScroll: true });
+            }
+        }
+
+        function buildDonationOrderPayload(amountInr) {
+            const body = { amount: amountInr };
+            const hid = document.getElementById("donate-context-donation-id");
+            const did = hid?.value?.trim();
+            if (did) {
+                const n = parseInt(did, 10);
+                if (Number.isFinite(n) && n > 0) body.donation_id = n;
+            }
+            if (!DONATION_CONFIG?.isAuthenticated) {
+                body.donor_name = document.querySelector('[data-donate-detail="name"]')?.value?.trim() || "";
+                body.donor_email = document.querySelector('[data-donate-detail="email"]')?.value?.trim() || "";
+                body.donor_mobile = document.querySelector('[data-donate-detail="mobile"]')?.value?.trim() || "";
+                body.wants_membership = Boolean(document.querySelector("[data-donate-wants-member]")?.checked);
+            }
+            return body;
+        }
+
+        function razorpayPrefillForPayload(payload) {
+            if (DONATION_CONFIG?.isAuthenticated) return donationPrefill;
+            return {
+                name: payload.donor_name || "",
+                email: payload.donor_email || "",
+                contact: payload.donor_mobile || "",
+            };
         }
 
         async function startDonationCheckout(amountInr) {
@@ -719,6 +829,24 @@
                 return;
             }
 
+            const orderPayload = buildDonationOrderPayload(amountInr);
+            if (!DONATION_CONFIG?.isAuthenticated) {
+                if (!orderPayload.donor_name) {
+                    openDonatePaymentError("Details required", "Please enter your full name.", "");
+                    return;
+                }
+                if (!orderPayload.donor_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderPayload.donor_email)) {
+                    openDonatePaymentError("Details required", "Please enter a valid email address.", "");
+                    return;
+                }
+                const mob = String(orderPayload.donor_mobile).replace(/\D/g, "");
+                if (mob.length < 10) {
+                    openDonatePaymentError("Details required", "Please enter a valid mobile number (at least 10 digits).", "");
+                    return;
+                }
+                orderPayload.donor_mobile = mob;
+            }
+
             let razorpayOutcome = "idle";
 
             try {
@@ -729,7 +857,7 @@
                         "X-CSRF-TOKEN": donateCsrfToken(),
                         Accept: "application/json",
                     },
-                    body: JSON.stringify({ amount: amountInr }),
+                    body: JSON.stringify(orderPayload),
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
@@ -745,9 +873,10 @@
                     key: data.key,
                     amount: Math.round(Number(data.amount || 0) * 100),
                     currency: "INR",
-                    name: "GNAT Donation",
+                    name: "GNAT Association",
                     description: "Charitable donation",
                     order_id: data.order_id,
+                    prefill: razorpayPrefillForPayload(orderPayload),
                     handler: async function (response) {
                         razorpayOutcome = "processing";
                         try {
@@ -789,7 +918,6 @@
                             );
                         }
                     },
-                    prefill: donationPrefill,
                     theme: { color: "#351c42" },
                     modal: {
                         ondismiss: function () {
@@ -882,6 +1010,15 @@
                     );
                     return;
                 }
+                if (!DONATION_CONFIG?.isAuthenticated && root.id === "home-donate-amounts") {
+                    openDonateModal({ donationId: null });
+                    const modalInput = document.querySelector("#modal-donate-amounts [data-donate-input]");
+                    if (modalInput) {
+                        modalInput.value = String(n);
+                        modalInput.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                    return;
+                }
                 submitBtn.disabled = true;
                 try {
                     await startDonationCheckout(n);
@@ -897,11 +1034,40 @@
         wireDonateAmounts(document.getElementById("home-donate-amounts"));
         wireDonateAmounts(document.getElementById("modal-donate-amounts"));
 
+        document.querySelector("[data-donate-continue-details]")?.addEventListener("click", () => {
+            const name = document.querySelector('[data-donate-detail="name"]')?.value?.trim();
+            const email = document.querySelector('[data-donate-detail="email"]')?.value?.trim();
+            const mobile = String(document.querySelector('[data-donate-detail="mobile"]')?.value || "").replace(/\D/g, "");
+            if (!name) {
+                openDonatePaymentError("Details required", "Please enter your full name.", "");
+                return;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                openDonatePaymentError("Details required", "Please enter a valid email address.", "");
+                return;
+            }
+            if (mobile.length < 10) {
+                openDonatePaymentError("Details required", "Please enter a valid mobile number (at least 10 digits).", "");
+                return;
+            }
+            document.getElementById("donate-step-details")?.classList.add("hidden");
+            document.getElementById("donate-step-amounts-wrapper")?.classList.remove("hidden");
+            document.querySelector("#modal-donate-amounts [data-donate-input]")?.focus({ preventScroll: true });
+        });
+
+        document.querySelector("[data-donate-back-details]")?.addEventListener("click", () => {
+            document.getElementById("donate-step-details")?.classList.remove("hidden");
+            document.getElementById("donate-step-amounts-wrapper")?.classList.add("hidden");
+            document.querySelector('[data-donate-detail="name"]')?.focus({ preventScroll: true });
+        });
+
         document.querySelectorAll("[data-open-donate-modal]").forEach((el) => {
             el.addEventListener("click", (e) => {
                 e.preventDefault();
                 document.querySelector("[data-drawer-close]")?.click();
-                openDonateModal();
+                const raw = el.getAttribute("data-donation-id");
+                const donationId = raw && /^\d+$/.test(String(raw).trim()) ? parseInt(String(raw).trim(), 10) : null;
+                openDonateModal({ donationId });
             });
         });
         donateModal?.querySelectorAll("[data-close-donate-modal]").forEach((el) => {
@@ -1061,7 +1227,7 @@
         if (fy) fy.textContent = String(new Date().getFullYear());
         document.querySelector("[data-footer-newsletter]")?.addEventListener("submit", (e) => {
             e.preventDefault();
-            alert("Thank you for subscribing to GNAT Donation!");
+            alert("Thank you for subscribing to GNAT Association!");
         });
     })();
 </script>

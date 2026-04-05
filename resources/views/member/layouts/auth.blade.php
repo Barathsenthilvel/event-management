@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Member sign in — GNAT Donation')</title>
+    <title>@yield('title', 'Member sign in — GNAT Association')</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -170,8 +170,8 @@
                     <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
                 </span>
             </button>
-            <a href="{{ route('home') }}" class="flex min-w-0 max-w-[min(48vw,200px)] shrink-0 items-center sm:max-w-[220px]" aria-label="GNAT Donation home">
-                <img src="{{ asset('images/logo.png') }}" alt="GNAT Donation" class="h-8 w-auto max-h-11 max-w-full object-contain object-left sm:h-11" width="200" height="48" />
+            <a href="{{ route('home') }}" class="flex min-w-0 max-w-[min(48vw,200px)] shrink-0 items-center sm:max-w-[220px]" aria-label="GNAT Association home">
+                <img src="{{ asset('images/logo.png') }}" alt="GNAT Association" class="h-8 w-auto max-h-11 max-w-full object-contain object-left sm:h-11" width="200" height="48" />
             </a>
             <nav class="hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-10" aria-label="Primary">
                 <a href="{{ route('home') }}#home" class="ml-nav-link">Home</a>

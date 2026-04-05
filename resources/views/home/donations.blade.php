@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donations — GNAT Donation</title>
+    <title>Donations — GNAT Association</title>
     @include('home.partials.head')
     @include('home.partials.styles')
     <style>
@@ -57,7 +57,7 @@
                             </div>
                             <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $donation->purpose }}</h4>
                             <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
-                            <button type="button" data-open-donate-modal class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
+                            <button type="button" data-open-donate-modal data-donation-id="{{ $donation->id }}" class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                 <span class="click-btn__icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
                                         <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Verify OTP — GNAT Donation</title>
+    <title>Verify OTP — GNAT Association</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -74,7 +74,7 @@
 <body class="ml-page-bg text-[#351c42] antialiased">
     <main class="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-12">
         <a href="{{ route('home') }}" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-[#965995] hover:text-[#351c42]">
-            ← GNAT Donation home
+            ← GNAT Association home
         </a>
 
         <div class="overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-8 shadow-2xl shadow-[#351c42]/12 backdrop-blur-md sm:p-10 ml-card-elevated">

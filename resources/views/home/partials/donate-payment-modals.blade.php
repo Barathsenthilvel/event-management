@@ -13,7 +13,7 @@
                     <path d="M20 6L9 17l-5-5"/>
                 </svg>
             </div>
-            <p class="mt-5 text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Donation</p>
+            <p class="mt-5 text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Association</p>
             <h2 id="donate-payment-success-title" class="mt-2 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Thank you!</h2>
             <p id="donate-payment-success-message" class="mt-2 text-sm text-white/75 leading-relaxed"></p>
             <p id="donate-payment-success-amount" class="mt-4 text-2xl font-extrabold text-[#fcd34d] tabular-nums"></p>

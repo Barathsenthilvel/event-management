@@ -1,6 +1,6 @@
 @extends('member.layouts.gnat')
 
-@section('title', 'Change password — GNAT Donation')
+@section('title', 'Change password — GNAT Association')
 
 @section('content')
     <div class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">

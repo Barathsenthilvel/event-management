@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'title' => 'GNAT Donation — Give Hope, Support Communities',
+    'title' => 'GNAT Association — Give Hope, Support Communities',
 
     'logo' => [
         'src' => 'images/logo.png',
-        'alt' => 'GNAT Donation',
+        'alt' => 'GNAT Association',
     ],
 
     'contact' => [
@@ -20,7 +20,7 @@ return [
 
     'nav' => [
         ['label' => 'Home', 'href' => '#home'],
-        ['label' => 'Association Activity', 'href' => '#association-activity'],
+        ['label' => 'Activity', 'href' => '#association-activity'],
         ['label' => 'About Us', 'href' => '#about2'],
         ['label' => 'Events', 'href' => '#events'],
         ['label' => 'Blog', 'href' => '#blog'],
@@ -30,10 +30,10 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'GNAT DONATION',
+        'badge' => 'GNAT ASSOCIATION',
         'headline_line1' => 'Give Hope.',
         'headline_line2' => 'Grow Stronger Communities',
-        'description_html' => '<strong class="text-white">GNAT Donation</strong> GNAT Association brings people together to create meaningful impact.',
+        'description_html' => '<strong class="text-white">GNAT Association</strong> brings people together to create meaningful impact across communities.',
         'registered_count' => 2603,
         'registered_label' => 'Peoples Registered',
         'avatar_image' => 'images/testimonials-images/thumb-10.2.webp',
@@ -83,9 +83,30 @@ return [
     ],
 
     'banners' => [
-        ['href' => '#events', 'src' => 'images/events/event-1-1.jpg', 'alt' => 'Community education and outreach'],
-        ['href' => '#donate', 'src' => 'images/events/event-1-2.jpg', 'alt' => 'Programs and fundraising support'],
-        ['href' => '#gallery', 'src' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteers at community events'],
+        [
+            'href' => '#events',
+            'src' => 'images/events/event-1-1.jpg',
+            'alt' => 'Community education and outreach',
+            'eyebrow' => 'EVENTS',
+            'title' => 'Together we go further',
+            'text' => 'Thank-you gatherings and impact stories from Chennai neighborhoods.',
+        ],
+        [
+            'href' => '#donate',
+            'src' => 'images/events/event-1-2.jpg',
+            'alt' => 'Programs and fundraising support',
+            'eyebrow' => 'PROGRAMS',
+            'title' => 'Support that reaches every family',
+            'text' => 'Transparent campaigns and accountable giving across education, health, and community.',
+        ],
+        [
+            'href' => '#gallery',
+            'src' => 'images/events/event-1-3.jpg',
+            'alt' => 'Volunteers at community events',
+            'eyebrow' => 'COMMUNITY',
+            'title' => 'Moments that inspire action',
+            'text' => 'Field photos from outreach, learning spaces, and celebrations with people we serve.',
+        ],
     ],
 
     'testimonials_intro' => [
@@ -95,7 +116,7 @@ return [
     ],
 
     'testimonials' => [
-        ['name' => 'Penelope Miller', 'role' => 'Sr. Volunteer', 'text' => 'GNAT Donation made giving simple and transparent. We trusted every step and loved the impact updates.', 'stars' => 5],
+        ['name' => 'Penelope Miller', 'role' => 'Sr. Volunteer', 'text' => 'GNAT Association made giving simple and transparent. We trusted every step and loved the impact updates.', 'stars' => 5],
         ['name' => 'David Johnson', 'role' => 'Volunteer', 'text' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'stars' => 5],
         ['name' => 'Sophia Brown', 'role' => 'Volunteer', 'text' => 'The team showed real expertise and delivered measurable improvements quickly.', 'stars' => 5],
         ['name' => 'Emma Wilson', 'role' => 'Volunteer', 'text' => 'From planning to delivery, everything was handled professionally and on time.', 'stars' => 5],
@@ -106,7 +127,7 @@ return [
     'testimonial_profile_image' => 'images/testimonials-images/thumb-10.2.webp',
 
     'testimonial_stack_cards' => [
-        ['image' => 'images/testimonials-images/thumb-10.2.webp', 'quote' => 'GNAT Donation made giving simple and transparent. We saw exactly how our support helped the community. Highly recommended!', 'name' => 'Penelope Miller (Arjon)', 'role' => 'Sr. Volunteer', 'rating' => '5.0', 'play' => true],
+        ['image' => 'images/testimonials-images/thumb-10.2.webp', 'quote' => 'GNAT Association made giving simple and transparent. We saw exactly how our support helped the community. Highly recommended!', 'name' => 'Penelope Miller (Arjon)', 'role' => 'Sr. Volunteer', 'rating' => '5.0', 'play' => true],
         ['image' => 'images/events/event-1-1.jpg', 'quote' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'name' => 'David Johnson (Brook)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
         ['image' => 'images/events/event-1-3.jpg', 'quote' => 'The team showed real expertise and delivered measurable improvements quickly.', 'name' => 'Sophia Brown (Karis)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
         ['image' => 'images/events/event-1-2.jpg', 'quote' => 'From planning to delivery, everything was handled professionally and on time.', 'name' => 'Emma Wilson (Nova)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
@@ -115,10 +136,10 @@ return [
     'about' => [
         'main_image' => 'images/events/event-1-2.jpg',
         'accent_image' => 'images/events/event-1-1.jpg',
-        'eyebrow' => 'ABOUT GNAT DONATION',
+        'eyebrow' => 'ABOUT GNAT ASSOCIATION',
         'title_lines' => ['Worldwide, Our', 'Community', 'One Mission'],
         'title_highlight' => 'Adopted',
-        'text' => 'GNAT Donation helps organizations run stronger CSR, grantmaking, and volunteer programs—so giving reaches the people who need it most.',
+        'text' => 'GNAT Association helps organizations run stronger CSR, grantmaking, and volunteer programs—so support reaches the people who need it most.',
     ],
 
     'events' => [
@@ -170,8 +191,8 @@ return [
 
     'donate' => [
         'intro_title' => 'Featured campaigns',
-        'intro_kicker' => 'Donations',
-        'intro_text' => 'Explore active GNAT Donation campaigns—swipe or use the arrows. Every project is designed for transparent, accountable giving.',
+        'intro_kicker' => 'Association',
+        'intro_text' => 'Explore active GNAT Association programs—swipe or use the arrows. Every project is designed for transparent, accountable community support.',
         'goal' => 500,
         'default_amount' => 100,
         'bar_percent_demo' => 52,

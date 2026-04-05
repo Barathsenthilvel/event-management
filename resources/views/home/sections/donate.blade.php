@@ -35,8 +35,8 @@
                             </div>
                             <div class="flex flex-1 flex-col justify-center p-5 sm:p-6 bg-[linear-gradient(180deg,#faf8f5_0%,#f3f0ea_100%)]">
                                 <div class="flex flex-wrap gap-2">
-                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Donation</span>
-                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Charity</span>
+                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Association</span>
+                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Community</span>
                                 </div>
                                 <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $c['title'] }}</h4>
                                 <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $c['excerpt'] }}</p>
@@ -64,7 +64,7 @@
                         <path d="M60 20c-8 0-14 6-14 14 0 5 2 9 6 12-18 4-30 18-30 36v28h76V82c0-18-12-32-30-36 4-3 6-7 6-12 0-8-6-14-14-14zm-6 52h12v8H54v-8z"/>
                     </svg>
                     <h2 class="relative text-2xl md:text-3xl lg:text-[1.65rem] xl:text-3xl font-extrabold leading-tight text-[#fddc6a]">
-                        Give Through GNAT Donation<br class="hidden sm:inline" /> &amp; Change a Life!
+                        Give Through GNAT Association<br class="hidden sm:inline" /> &amp; Change a Life!
                     </h2>
                     <p class="relative mt-3 flex items-center gap-2 text-sm text-white/85">
                         <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500/20 text-red-300" aria-hidden="true">
@@ -94,7 +94,7 @@
                         <div class="h-2.5 rounded-full bg-black/25 overflow-hidden">
                             <div class="donate-progress-bar h-full rounded-full bg-[#fddc6a] transition-all duration-500" style="width: {{ $donate['bar_percent_demo'] }}%;" data-donate-bar></div>
                         </div>
-                        <p class="mt-1.5 text-xs text-white/60">GNAT Donation community goal (demo)</p>
+                        <p class="mt-1.5 text-xs text-white/60">GNAT Association community goal (demo)</p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 sm:items-stretch">
                         <label class="relative flex-1 flex items-center rounded-2xl bg-white pl-12 pr-4 py-3.5 shadow-inner">

@@ -27,7 +27,7 @@
                     </a>
                 </div>
 
-                <div class="mt-8 flex items-center gap-4" aria-label="{{ $hero['registered_count'] }} people registered with GNAT Donation">
+                <div class="mt-8 flex items-center gap-4" aria-label="{{ $hero['registered_count'] }} people registered with GNAT Association">
                     <div class="flex shrink-0 items-center">
                         <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] bg-[#351c42] ring-2 ring-[#351c42]">
                             <img class="h-full w-full object-cover" src="{{ asset($hero['avatar_image']) }}" alt="" width="44" height="44" loading="lazy" decoding="async" />

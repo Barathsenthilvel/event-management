@@ -86,7 +86,7 @@
                 </div>
 
                 <div class="relative">
-                    <div id="carousel-viewport" class="overflow-hidden rounded-2xl bg-transparent px-0 sm:px-1" aria-label="GNAT Donation testimonials">
+                    <div id="carousel-viewport" class="overflow-hidden rounded-2xl bg-transparent px-0 sm:px-1" aria-label="GNAT Association testimonials">
                         <div id="carousel-track" class="flex items-stretch gap-5 sm:gap-6 transition-transform duration-500 ease-in-out will-change-transform"></div>
                     </div>
                     <div class="mt-4 flex justify-center gap-2" id="dots"></div>

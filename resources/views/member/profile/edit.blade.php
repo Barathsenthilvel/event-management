@@ -1,6 +1,6 @@
 @extends('member.layouts.gnat')
 
-@section('title', 'Member profile — GNAT Donation')
+@section('title', 'Member profile — GNAT Association')
 
 @push('styles')
 <style>

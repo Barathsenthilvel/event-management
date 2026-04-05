@@ -67,6 +67,9 @@
                                     @if($p->donor_mobile)
                                         <p class="text-[10px] font-bold text-slate-500 mt-0.5">{{ $p->donor_mobile }}</p>
                                     @endif
+                                    @if(!empty($p->meta['wants_membership']))
+                                        <p class="mt-1"><span class="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-indigo-800">Interested in member</span></p>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm font-bold text-slate-800">

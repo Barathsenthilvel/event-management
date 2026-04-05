@@ -12,7 +12,7 @@
                     >
                         <img
                             src="{{ asset($about['main_image']) }}"
-                            alt="GNAT Donation community support"
+                            alt="GNAT Association community support"
                             class="h-[320px] w-full object-cover"
                         />
                     </div>
@@ -20,7 +20,7 @@
                     <div class="about2-img-accent absolute -right-8 -top-2 w-44 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
                         <img
                             src="{{ asset($about['accent_image']) }}"
-                            alt="GNAT Donation team"
+                            alt="GNAT Association team"
                             class="h-32 w-full object-cover"
                         />
                     </div>

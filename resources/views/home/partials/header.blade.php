@@ -16,7 +16,7 @@
                 </span>
             </button>
 
-            <a href="{{ url('/') }}#home" class="flex items-center shrink-0 min-w-0 max-w-[min(52vw,200px)] sm:max-w-[220px]" aria-label="GNAT Donation home">
+            <a href="{{ url('/') }}#home" class="flex items-center shrink-0 min-w-0 max-w-[min(52vw,200px)] sm:max-w-[220px]" aria-label="GNAT Association home">
                 <img
                     src="{{ asset($logo['src']) }}"
                     alt="{{ $logo['alt'] }}"
@@ -79,11 +79,11 @@
     class="site-drawer"
     role="dialog"
     aria-modal="true"
-    aria-label="GNAT Donation menu"
+    aria-label="GNAT Association menu"
     aria-hidden="true"
 >
     <div class="flex items-center justify-between gap-4 p-5 border-b border-white/10 shrink-0">
-        <a href="{{ url('/') }}#home" class="flex items-center gap-2 min-w-0 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-sm" aria-label="GNAT Donation home">
+        <a href="{{ url('/') }}#home" class="flex items-center gap-2 min-w-0 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-sm" aria-label="GNAT Association home">
             <img
                 src="{{ asset($logo['src']) }}"
                 alt="{{ $logo['alt'] }}"
@@ -106,7 +106,7 @@
     </div>
     <div class="flex-1 overflow-y-auto overscroll-contain p-5 pb-8">
         <p class="text-white/75 text-sm leading-relaxed">
-            <strong class="text-white">GNAT Donation</strong> connects generous donors with trusted programs in education, health, and community support—so every contribution creates lasting impact.
+            <strong class="text-white">GNAT Association</strong> connects generous supporters with trusted programs in education, health, and community support—so every contribution creates lasting impact.
         </p>
 
         <h3 class="mt-8 text-[#fddc6a] text-xs font-extrabold tracking-[0.2em] uppercase">Information</h3>

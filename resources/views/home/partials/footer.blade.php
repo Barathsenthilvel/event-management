@@ -2,11 +2,11 @@
     <div class="mx-auto max-w-7xl px-4 pt-16 pb-12 grid gap-12 lg:grid-cols-4 lg:gap-10">
         <div>
             <h3 class="text-lg font-bold text-white relative inline-block pb-2 mb-4">
-                About GNAT Donation
+                About GNAT Association
                 <span class="absolute left-0 bottom-0 h-0.5 w-12 bg-[#fddc6a] rounded-full" aria-hidden="true"></span>
             </h3>
             <p class="text-sm text-white/75 leading-relaxed">
-                GNAT Donation connects caring people with trusted programs in education, health, and community support—so every gift and volunteer hour creates real, lasting change.
+                GNAT Association connects caring people with trusted programs in education, health, and community support—so every gift and volunteer hour creates real, lasting change.
             </p>
             <a
                 href="https://www.google.com/maps/search/?api=1&query={{ $contact['maps_query'] }}"
@@ -68,7 +68,7 @@
             <ul class="space-y-2.5 text-sm font-medium">
                 <li><a href="{{ url('/') }}#about2" class="text-white/80 hover:text-[#fddc6a] transition-colors">About Us</a></li>
                 <li><button type="button" data-open-donate-modal class="text-white/80 hover:text-[#fddc6a] transition-colors text-left bg-transparent border-0 p-0 cursor-pointer font-medium">Give Donation</button></li>
-                <li><a href="{{ url('/') }}#association-activity" class="text-white/80 hover:text-[#fddc6a] transition-colors">Association Activity</a></li>
+                <li><a href="{{ url('/') }}#association-activity" class="text-white/80 hover:text-[#fddc6a] transition-colors">Activity</a></li>
                 <li><a href="{{ url('/') }}#events" class="text-white/80 hover:text-[#fddc6a] transition-colors">Our Campaign</a></li>
                 <li><a href="{{ url('/') }}#gallery" class="text-white/80 hover:text-[#fddc6a] transition-colors">Gallery</a></li>
                 <li><a href="{{ url('/') }}#contact" class="text-white/80 hover:text-[#fddc6a] transition-colors">Contact Us</a></li>
@@ -111,7 +111,7 @@
                 <img src="{{ asset($logo['src']) }}" alt="{{ $logo['alt'] }}" class="h-10 sm:h-11 w-auto max-w-[200px] object-contain object-left" width="200" height="48" loading="lazy" />
             </a>
             <p class="text-sm font-semibold text-center order-last md:order-none">
-                © Copyright <span id="footer-year">{{ date('Y') }}</span> GNAT Donation. All Rights Reserved.
+                © Copyright <span id="footer-year">{{ date('Y') }}</span> GNAT Association. All Rights Reserved.
             </p>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="#" class="h-9 w-9 rounded-full bg-[#351c42]/10 flex items-center justify-center text-[#351c42] hover:bg-[#351c42] hover:text-[#fddc6a] transition-colors" aria-label="Facebook">

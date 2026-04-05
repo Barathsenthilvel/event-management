@@ -2,13 +2,16 @@
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-col lg:flex-row lg:items-start gap-10">
             <div class="flex-1">
-                <p class="text-sm font-semibold tracking-[0.2em] uppercase text-[#965995]">Association activity</p>
+                <div class="inline-flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase text-[#965995]">
+                    <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-[#965995]" aria-hidden="true"></span>
+                    Activity
+                </div>
                 <h2 class="mt-4 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
-                    Association Activity
+                    Programs &amp; pathways
                 </h2>
             </div>
             <p class="lg:w-1/2 text-sm md:text-base leading-7 text-[#351c42]/70">
-                From fundraising to on-the-ground programs, GNAT Donation helps supporters and partners give time, funds, and skills—with clear impact and trusted delivery.
+                From fundraising to on-the-ground programs, GNAT Association helps supporters and partners give time, funds, and skills—with clear impact and trusted delivery.
             </p>
         </div>
 

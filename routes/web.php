@@ -19,6 +19,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventInterestController;
 use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\MemberPasswordController;
+use App\Http\Controllers\MemberForgotPasswordController;
+use App\Http\Controllers\MemberResetPasswordController;
 use App\Http\Controllers\MemberEBookController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonationPaymentController;
@@ -253,11 +255,19 @@ Route::prefix('member')->name('member.')->group(function () {
     Route::post('/otp', [MemberAuthController::class, 'verifyOtp'])->name('otp.verify');
     Route::post('/resend-otp', [MemberAuthController::class, 'resendOtp'])->name('otp.resend');
 
+    Route::get('/forgot-password', [MemberForgotPasswordController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [MemberForgotPasswordController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [MemberResetPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [MemberResetPasswordController::class, 'store'])->name('password.reset.store');
+
     Route::post('/logout', [MemberAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
-        Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');
+        Route::middleware('member.subscribed')->group(function () {
+            Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');
+            Route::get('/events/{event}/certificate', [MemberDashboardController::class, 'downloadEventCertificate'])->name('events.certificate');
+        });
         Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
         Route::get('/password', [MemberPasswordController::class, 'edit'])->name('password.edit');
@@ -269,6 +279,8 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('/subscription/verify', [MemberSubscriptionController::class, 'verifyPayment'])->name('subscription.verify');
         Route::get('/subscription/invoice/{id}', [MemberSubscriptionController::class, 'downloadInvoice'])->name('subscription.invoice');
 
-        Route::get('/e-books', [MemberEBookController::class, 'index'])->name('ebooks.index');
+        Route::middleware('member.subscribed')->group(function () {
+            Route::get('/e-books', [MemberEBookController::class, 'index'])->name('ebooks.index');
+        });
     });
 });

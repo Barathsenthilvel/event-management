@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events — GNAT Donation</title>
+    <title>Events — GNAT Association</title>
     @include('home.partials.head')
     @include('home.partials.styles')
     <style>

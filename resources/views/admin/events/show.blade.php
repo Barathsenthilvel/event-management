@@ -118,9 +118,9 @@
                                             <select name="participation_status"
                                                 class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                                                 @disabled($event->status === 'cancelled')>
-                                                <option value="interested" {{ $invite->participation_status === 'interested' ? 'selected' : '' }}>Interested</option>
-                                                <option value="participated" {{ $invite->participation_status === 'participated' ? 'selected' : '' }}>Participated</option>
-                                                <option value="not_participated" {{ $invite->participation_status === 'not_participated' ? 'selected' : '' }}>Not Participated</option>
+                                                <option value="interested" {{ $invite->participation_status === 'interested' ? 'selected' : '' }}>Interested (registered)</option>
+                                                <option value="participated" {{ $invite->participation_status === 'participated' ? 'selected' : '' }}>Participated — certificate eligible</option>
+                                                <option value="not_participated" {{ $invite->participation_status === 'not_participated' ? 'selected' : '' }}>Did not participate</option>
                                             </select>
                                             <button type="submit"
                                                 class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold disabled:opacity-50"
@@ -134,7 +134,7 @@
                                         @if($invite->participation_status === 'participated')
                                             <a href="{{ route('admin.events.invites.certificate', [$event->id, $invite->id]) }}"
                                                class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-emerald-700">
-                                                Download
+                                                Certificate PDF
                                             </a>
                                         @else
                                             <span class="text-xs font-bold text-slate-400">N/A</span>

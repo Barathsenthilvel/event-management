@@ -26,7 +26,7 @@
                 </svg>
             </button>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Hello there</p>
-            <p class="mt-1.5 text-lg font-extrabold leading-snug text-[#351c42]">Welcome to GNAT Donation</p>
+            <p class="mt-1.5 text-lg font-extrabold leading-snug text-[#351c42]">Welcome to GNAT Association</p>
             <p class="mt-2 text-sm leading-relaxed text-[#351c42]/75">
                 Thanks for visiting—explore our programs, see upcoming events, and join us in turning kindness into lasting community impact.
             </p>

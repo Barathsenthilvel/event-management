@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'member.subscribed' => \App\Http\Middleware\EnsureMemberHasActiveSubscription::class,
+        ]);
+
         // Configure authentication redirect for admin guard
         \Illuminate\Auth\Middleware\Authenticate::redirectUsing(function ($request) {
             if ($request->is('admin/*')) {

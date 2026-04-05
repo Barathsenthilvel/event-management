@@ -1,6 +1,6 @@
 @extends('member.layouts.gnat')
 
-@section('title', 'Checkout — GNAT Donation')
+@section('title', 'Checkout — GNAT Association')
 
 @section('content')
 <div class="space-y-6">

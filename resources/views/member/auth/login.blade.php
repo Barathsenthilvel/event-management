@@ -1,6 +1,6 @@
 @extends('member.layouts.auth')
 
-@section('title', 'Member sign in — GNAT Donation')
+@section('title', 'Member sign in — GNAT Association')
 
 @section('content')
         <div id="auth-main">
@@ -9,6 +9,12 @@
                 <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-[#351c42] sm:text-4xl" data-auth-page-title>Welcome back</h1>
                 <p class="mx-auto mt-3 max-w-md text-base leading-relaxed text-[#351c42]/65" data-auth-page-sub>Sign in or register to track donations and volunteer activity.</p>
             </div>
+
+            @if (session('status'))
+                <div class="mx-auto mb-6 max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+                    {{ session('status') }}
+                </div>
+            @endif
 
             @if ($errors->any())
                 <div class="mx-auto mb-6 max-w-xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -43,7 +49,7 @@
                                     <input type="checkbox" name="remember" value="1" class="h-4 w-4 rounded-md border-[#351c42]/20 text-[#965995] focus:ring-[#965995]" />
                                     Remember me
                                 </label>
-                                <span class="text-sm font-semibold text-[#351c42]/40">Forgot password?</span>
+                                <a href="{{ route('member.password.request') }}" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]">Forgot password?</a>
                             </div>
                             <button type="submit" class="ml-btn-primary mt-2 w-full">Sign in</button>
                         </form>
