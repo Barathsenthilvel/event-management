@@ -1,10 +1,25 @@
 @php
-    $isEdit = isset($nomination);
-    $action = $isEdit ? route('admin.nominations.update', $nomination->id) : route('admin.nominations.store');
+    $n = $nomination ?? null;
+    $isEdit = $n !== null;
+    $action = $isEdit ? route('admin.nominations.update', $n->id) : route('admin.nominations.store');
     $oldPositions = old('positions');
     $rows = is_array($oldPositions)
         ? $oldPositions
-        : ($isEdit ? $nomination->positions->map(fn ($p) => ['position' => $p->position])->values()->all() : [['position' => '']]);
+        : ($isEdit ? $n->positions->map(fn ($p) => ['position' => $p->position])->values()->all() : [['position' => '']]);
+
+    $defaultPollingFrom = $isEdit && $n->polling_from
+        ? \Illuminate\Support\Carbon::parse($n->polling_from)->format('H:i')
+        : '';
+    $defaultPollingTo = $isEdit && $n->polling_to
+        ? \Illuminate\Support\Carbon::parse($n->polling_to)->format('H:i')
+        : '';
+
+    $initialCoverUrl = $isEdit && !empty($n->cover_image_path)
+        ? asset('storage/' . ltrim($n->cover_image_path, '/'))
+        : null;
+    $initialBannerUrl = $isEdit && !empty($n->banner_image_path)
+        ? asset('storage/' . ltrim($n->banner_image_path, '/'))
+        : null;
 @endphp
 
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="space-y-6" x-data="nominationForm()">
@@ -15,7 +30,7 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-xs font-black text-slate-600 mb-2">Title</label>
-                <input type="text" name="title" value="{{ old('title', $nomination->title ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
+                <input type="text" name="title" value="{{ old('title', $n?->title ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
                 @error('title')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
@@ -37,7 +52,7 @@
 
             <div>
                 <label class="block text-xs font-black text-slate-600 mb-2">Terms</label>
-                <textarea name="terms" rows="4" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">{{ old('terms', $nomination->terms ?? '') }}</textarea>
+                <textarea name="terms" rows="4" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">{{ old('terms', $n?->terms ?? '') }}</textarea>
             </div>
         </div>
 
@@ -46,30 +61,53 @@
                 <div class="flex items-center justify-between">
                     <p class="text-xs font-black text-slate-700">Polling Dates</p>
                 </div>
+                <p class="text-[10px] text-slate-500 mt-1">Times are saved as 24-hour <span class="font-mono">HH:MM</span>.</p>
                 <div class="grid grid-cols-3 gap-2 mt-2">
-                    <input type="date" name="polling_date" value="{{ old('polling_date', optional($nomination->polling_date ?? null)->format('Y-m-d')) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
-                    <input type="time" name="polling_from" value="{{ old('polling_from', $nomination->polling_from ?? '') }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
-                    <input type="time" name="polling_to" value="{{ old('polling_to', $nomination->polling_to ?? '') }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="date" name="polling_date" value="{{ old('polling_date', $n?->polling_date?->format('Y-m-d')) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="time" name="polling_from" step="60" value="{{ old('polling_from', $defaultPollingFrom) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    <input type="time" name="polling_to" step="60" value="{{ old('polling_to', $defaultPollingTo) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
                 </div>
+                @error('polling_date')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                @error('polling_from')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                @error('polling_to')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div class="rounded-xl border border-slate-200 p-4">
                 <p class="text-xs font-black text-slate-700 mb-2">Images</p>
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer">
-                        <span class="text-xs font-semibold text-slate-700">Cover Image</span>
-                        <input type="file" name="cover_image" class="hidden" accept="image/*">
-                    </label>
-                    <label class="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer">
-                        <span class="text-xs font-semibold text-slate-700">Banner Image</span>
-                        <input type="file" name="banner_image" class="hidden" accept="image/*">
-                    </label>
+                <p class="text-[10px] text-slate-500 mb-3">Preview updates when you choose a new file. Existing images stay until you replace them.</p>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-3">
+                        <p class="text-xs font-semibold text-slate-700 mb-2">Cover Image</p>
+                        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <template x-if="coverUrl">
+                                <img x-bind:src="coverUrl" alt="Cover preview" class="h-36 w-full object-cover">
+                            </template>
+                        </div>
+                        <label class="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">
+                            <span x-text="coverUrl ? 'Change cover image' : 'Upload cover image'"></span>
+                            <input type="file" name="cover_image" class="hidden" accept="image/*" @change="pickCover($event)">
+                        </label>
+                        @error('cover_image')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-3">
+                        <p class="text-xs font-semibold text-slate-700 mb-2">Banner Image</p>
+                        <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <template x-if="bannerUrl">
+                                <img x-bind:src="bannerUrl" alt="Banner preview" class="h-36 w-full object-cover">
+                            </template>
+                        </div>
+                        <label class="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">
+                            <span x-text="bannerUrl ? 'Change banner image' : 'Upload banner image'"></span>
+                            <input type="file" name="banner_image" class="hidden" accept="image/*" @change="pickBanner($event)">
+                        </label>
+                        @error('banner_image')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    @php $status = old('status', $nomination->status ?? 'draft'); @endphp
+                    @php $status = old('status', $n?->status ?? 'draft'); @endphp
                     <label class="block text-xs font-black text-slate-600 mb-2">Status</label>
                     <select name="status" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
                         <option value="draft" {{ $status === 'draft' ? 'selected' : '' }}>Draft</option>
@@ -79,7 +117,7 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <label class="text-xs"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $nomination->is_active ?? true) ? 'checked' : '' }}> Display Active</label>
+                    <label class="text-xs"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $n?->is_active ?? true) ? 'checked' : '' }}> Display Active</label>
                 </div>
             </div>
         </div>
@@ -95,14 +133,28 @@
 function nominationForm() {
     return {
         rows: @json($rows),
+        coverUrl: @json($initialCoverUrl),
+        bannerUrl: @json($initialBannerUrl),
         addRow() {
             this.rows.push({ position: '' });
         },
         removeRow(idx) {
             if (this.rows.length === 1) return;
             this.rows.splice(idx, 1);
+        },
+        pickCover(e) {
+            this.setImagePreview(e, 'coverUrl');
+        },
+        pickBanner(e) {
+            this.setImagePreview(e, 'bannerUrl');
+        },
+        setImagePreview(e, key) {
+            const f = e.target.files && e.target.files[0];
+            if (!f || !f.type.startsWith('image/')) return;
+            const r = new FileReader();
+            r.onload = () => { this[key] = r.result; };
+            r.readAsDataURL(f);
         }
-    }
+    };
 }
 </script>
-

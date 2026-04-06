@@ -2,12 +2,15 @@
 
 @section('content')
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
-    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm flex items-start justify-between">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h1 class="text-xl font-extrabold text-slate-900 uppercase">{{ $nomination->title }}</h1>
-            <p class="text-xs font-bold text-slate-500 mt-1">Posted On Date & Time</p>
+            <p class="text-xs font-bold text-slate-500 mt-1">Interest submissions for this nomination</p>
         </div>
-        <a href="{{ route('admin.nominations.report', $nomination->id) }}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Download Report</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.nominations.show', $nomination) }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-800 hover:bg-slate-50">View nomination (read-only)</a>
+            <a href="{{ route('admin.nominations.report', $nomination->id) }}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Download Report</a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">

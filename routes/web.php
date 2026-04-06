@@ -216,6 +216,7 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.nominations.update',
             'destroy' => 'admin.nominations.destroy',
         ]);
+        Route::get('/nominations/{nomination}', [NominationController::class, 'show'])->name('admin.nominations.show');
         Route::post('/nominations/{nomination}/cancel', [NominationController::class, 'cancel'])->name('admin.nominations.cancel');
         Route::post('/nominations/{nomination}/toggle-status', [NominationController::class, 'toggleStatus'])->name('admin.nominations.toggle-status');
         Route::get('/nominations/{nomination}/alert', [NominationController::class, 'alertForm'])->name('admin.nominations.alert');

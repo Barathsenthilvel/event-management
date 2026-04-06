@@ -38,6 +38,7 @@ class PollingController extends Controller
 
     public function store(Request $request)
     {
+        $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($request, $validated) {
@@ -59,6 +60,7 @@ class PollingController extends Controller
 
     public function update(Request $request, Polling $polling)
     {
+        $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules($polling->id));
 
         DB::transaction(function () use ($request, $validated, $polling) {
@@ -212,6 +214,27 @@ class PollingController extends Controller
             ];
         }
         return $positions;
+    }
+
+    private function mergeNormalizedPollingTimes(Request $request): void
+    {
+        $request->merge([
+            'polling_from' => $this->normalizeHiTime($request->input('polling_from')),
+            'polling_to' => $this->normalizeHiTime($request->input('polling_to')),
+        ]);
+    }
+
+    private function normalizeHiTime(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return is_string($value) ? '' : null;
+        }
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+
+        return $value;
     }
 }
 

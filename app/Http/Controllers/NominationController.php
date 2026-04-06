@@ -17,6 +17,42 @@ class NominationController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $tab = $request->query('tab', 'nominations');
+
+        $interestCount = NominationEntry::query()->count();
+
+        if ($tab === 'interests') {
+            $interestEntries = NominationEntry::query()
+                ->with([
+                    'user:id,name,email,mobile',
+                    'position:id,nomination_id,position',
+                    'nomination:id,title',
+                ])
+                ->when($q !== '', function ($query) use ($q) {
+                    $query->where(function ($sub) use ($q) {
+                        $sub->whereHas('user', function ($u) use ($q) {
+                            $u->where('name', 'like', '%' . $q . '%')
+                                ->orWhere('email', 'like', '%' . $q . '%')
+                                ->orWhere('mobile', 'like', '%' . $q . '%');
+                        })->orWhereHas('nomination', function ($n) use ($q) {
+                            $n->where('title', 'like', '%' . $q . '%');
+                        })->orWhereHas('position', function ($p) use ($q) {
+                            $p->where('position', 'like', '%' . $q . '%');
+                        });
+                    });
+                })
+                ->latest('id')
+                ->paginate(20)
+                ->withQueryString();
+
+            return view('admin.nominations.index', [
+                'tab' => 'interests',
+                'q' => $q,
+                'interestCount' => $interestCount,
+                'interestEntries' => $interestEntries,
+                'nominations' => null,
+            ]);
+        }
 
         $nominations = Nomination::query()
             ->with(['creator:id,name', 'positions:id,nomination_id,position'])
@@ -28,7 +64,20 @@ class NominationController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.nominations.index', compact('nominations', 'q'));
+        return view('admin.nominations.index', [
+            'tab' => 'nominations',
+            'q' => $q,
+            'interestCount' => $interestCount,
+            'nominations' => $nominations,
+            'interestEntries' => null,
+        ]);
+    }
+
+    public function show(Nomination $nomination)
+    {
+        $nomination->load(['positions', 'creator:id,name']);
+
+        return view('admin.nominations.show', compact('nomination'));
     }
 
     public function create()
@@ -38,6 +87,7 @@ class NominationController extends Controller
 
     public function store(Request $request)
     {
+        $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($request, $validated) {
@@ -59,6 +109,7 @@ class NominationController extends Controller
 
     public function update(Request $request, Nomination $nomination)
     {
+        $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules($nomination->id));
 
         DB::transaction(function () use ($request, $validated, $nomination) {
@@ -278,6 +329,30 @@ class NominationController extends Controller
             ];
         }
         return $positions;
+    }
+
+    /**
+     * HTML time inputs may send H:i:s; validation expects H:i.
+     */
+    private function mergeNormalizedPollingTimes(Request $request): void
+    {
+        $request->merge([
+            'polling_from' => $this->normalizeHiTime($request->input('polling_from')),
+            'polling_to' => $this->normalizeHiTime($request->input('polling_to')),
+        ]);
+    }
+
+    private function normalizeHiTime(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return is_string($value) ? '' : null;
+        }
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+
+        return $value;
     }
 }
 
