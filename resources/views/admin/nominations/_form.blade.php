@@ -4,7 +4,7 @@
     $oldPositions = old('positions');
     $rows = is_array($oldPositions)
         ? $oldPositions
-        : ($isEdit ? $nomination->positions->map(fn ($p) => ['position' => $p->position, 'member_user_id' => $p->member_user_id])->values()->all() : [['position' => '', 'member_user_id' => '']]);
+        : ($isEdit ? $nomination->positions->map(fn ($p) => ['position' => $p->position])->values()->all() : [['position' => '']]);
 @endphp
 
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="space-y-6" x-data="nominationForm()">
@@ -21,19 +21,14 @@
 
             <div>
                 <div class="flex items-center justify-between mb-2">
-                    <label class="block text-xs font-black text-slate-600">Position & Member List</label>
+                    <label class="block text-xs font-black text-slate-600">Positions</label>
                     <button type="button" @click="addRow()" class="text-xs font-black text-indigo-600">+ Add</button>
                 </div>
+                <p class="text-[11px] text-slate-500 mb-2">Announcement-style: enter each open role by title only. Members tap “I’m interested” on their side; interested members appear under Submissions. Assign candidates to roles in <span class="font-semibold text-slate-600">Polling</span>, not here.</p>
                 <template x-for="(row, idx) in rows" :key="idx">
-                    <div class="grid grid-cols-12 gap-2 mb-2">
-                        <input class="col-span-5 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position">
-                        <select class="col-span-6 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][member_user_id]`" x-model="row.member_user_id">
-                            <option value="">Search Member</option>
-                            @foreach($members as $member)
-                                <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->mobile ?: $member->email }})</option>
-                            @endforeach
-                        </select>
-                        <button type="button" @click="removeRow(idx)" class="col-span-1 text-rose-600 font-black">x</button>
+                    <div class="flex gap-2 mb-2">
+                        <input class="min-w-0 flex-1 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position title">
+                        <button type="button" @click="removeRow(idx)" class="shrink-0 px-2 text-rose-600 font-black" title="Remove row">×</button>
                     </div>
                 </template>
                 @error('positions')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
@@ -101,7 +96,7 @@ function nominationForm() {
     return {
         rows: @json($rows),
         addRow() {
-            this.rows.push({ position: '', member_user_id: '' });
+            this.rows.push({ position: '' });
         },
         removeRow(idx) {
             if (this.rows.length === 1) return;

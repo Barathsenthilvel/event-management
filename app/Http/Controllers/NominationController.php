@@ -33,8 +33,7 @@ class NominationController extends Controller
 
     public function create()
     {
-        $members = User::query()->where('is_approved', true)->latest('id')->get(['id', 'name', 'email', 'mobile']);
-        return view('admin.nominations.create', compact('members'));
+        return view('admin.nominations.create');
     }
 
     public function store(Request $request)
@@ -54,8 +53,8 @@ class NominationController extends Controller
     public function edit(Nomination $nomination)
     {
         $nomination->load('positions');
-        $members = User::query()->where('is_approved', true)->latest('id')->get(['id', 'name', 'email', 'mobile']);
-        return view('admin.nominations.edit', compact('nomination', 'members'));
+
+        return view('admin.nominations.edit', compact('nomination'));
     }
 
     public function update(Request $request, Nomination $nomination)
@@ -149,12 +148,7 @@ class NominationController extends Controller
             return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
         }
 
-        $positionIds = NominationPosition::query()
-            ->where('nomination_id', $nomination->id)
-            ->pluck('id')
-            ->all();
-
-        DB::transaction(function () use ($memberIds, $positionIds, $nomination, $notifyWhatsApp, $notifySms, $notifyEmail) {
+        DB::transaction(function () use ($memberIds, $nomination, $notifyWhatsApp, $notifySms, $notifyEmail) {
             foreach ($memberIds as $userId) {
                 NominationAlert::updateOrCreate(
                     ['nomination_id' => $nomination->id, 'user_id' => $userId],
@@ -165,17 +159,10 @@ class NominationController extends Controller
                         'alert_sent_at' => now(),
                     ]
                 );
-
-                foreach ($positionIds as $positionId) {
-                    NominationEntry::firstOrCreate(
-                        ['nomination_id' => $nomination->id, 'position_id' => $positionId, 'user_id' => $userId],
-                        ['submitted_at' => now()]
-                    );
-                }
             }
         });
 
-        return redirect()->route('admin.nominations.submissions', $nomination->id)->with('success', 'Nomination alert sent successfully.');
+        return redirect()->route('admin.nominations.submissions', $nomination->id)->with('success', 'Nomination alert sent. Members register interest from their dashboard; submissions appear here as they respond.');
     }
 
     public function submissions(Nomination $nomination, Request $request)
@@ -249,7 +236,6 @@ class NominationController extends Controller
             'is_active' => 'nullable|boolean',
             'positions' => 'required|array|min:1',
             'positions.*.position' => 'required|string|max:255',
-            'positions.*.member_user_id' => 'nullable|integer|exists:users,id',
         ];
     }
 
@@ -288,7 +274,7 @@ class NominationController extends Controller
             }
             $positions[] = [
                 'position' => (string) $row['position'],
-                'member_user_id' => !empty($row['member_user_id']) ? (int) $row['member_user_id'] : null,
+                'member_user_id' => null,
             ];
         }
         return $positions;

@@ -19,14 +19,15 @@
             </div>
             <div>
                 <div class="flex items-center justify-between mb-2">
-                    <label class="block text-xs font-black text-slate-600">Position & Member List</label>
+                    <label class="block text-xs font-black text-slate-600">Positions & candidates</label>
                     <button type="button" @click="addRow()" class="text-xs font-black text-indigo-600">+ Add</button>
                 </div>
+                <p class="text-[11px] text-slate-500 mb-2">For each position, choose the member who will receive votes. Members see this poll on their dashboard during the scheduled window.</p>
                 <template x-for="(row, idx) in rows" :key="idx">
                     <div class="grid grid-cols-12 gap-2 mb-2">
-                        <input class="col-span-5 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position">
+                        <input class="col-span-5 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position title">
                         <select class="col-span-6 px-3 py-2 rounded-lg border border-slate-200 text-xs" :name="`positions[${idx}][member_user_id]`" x-model="row.member_user_id">
-                            <option value="">Search Member</option>
+                            <option value="">Select candidate (member)</option>
                             @foreach($members as $member)
                                 <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->mobile ?: $member->email }})</option>
                             @endforeach

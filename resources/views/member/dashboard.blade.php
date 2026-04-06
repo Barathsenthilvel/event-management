@@ -192,9 +192,9 @@
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
-                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Meetings</a>
+                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
-                    <a href="#" class="md-sidebar-link opacity-60 pointer-events-none" tabindex="-1"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Polling</a>
+                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Polling</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @elseif($canSeeMembership)
@@ -345,6 +345,15 @@
             @endif
 
             @if($showFullMemberMenu)
+            <section aria-labelledby="gov-quick-heading" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
+                <p id="gov-quick-heading" class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Governance</p>
+                <h2 class="mt-1 text-lg font-extrabold text-[#351c42] sm:text-xl">Nominations &amp; polling</h2>
+                <p class="mt-1 max-w-2xl text-sm text-[#351c42]/60">Open roles and live votes each have their own page.</p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <a href="{{ route('member.nominations.index') }}" class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/15 bg-[#faf9fc] px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995]/40 hover:bg-white">Nominations</a>
+                    <a href="{{ route('member.pollings.index') }}" class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/15 bg-[#f6f3e9] px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995]/40 hover:bg-white">Polling</a>
+                </div>
+            </section>
             <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
