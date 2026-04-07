@@ -17,5 +17,6 @@
     @include('member.partials.member-pollings-panel', [
         'memberPollings' => $memberPollings,
         'pollingVotedPositionIds' => $pollingVotedPositionIds,
+        'memberPollingVotes' => $memberPollingVotes ?? collect(),
     ])
 @endsection

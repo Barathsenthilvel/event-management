@@ -115,7 +115,7 @@ class MemberDashboardController extends Controller
         }
 
         $memberPollings = Polling::query()
-            ->with(['positions' => fn ($q) => $q->with('member:id,name')])
+            ->with(['positions' => fn ($q) => $q->with('candidates:id,name')])
             ->where('is_active', true)
             ->where('publish_status', 'published')
             ->where('polling_status', 'live')
@@ -127,10 +127,17 @@ class MemberDashboardController extends Controller
             ->where('voter_user_id', $user->id)
             ->pluck('position_id');
 
+        $memberPollingVotes = PollingVote::query()
+            ->where('voter_user_id', $user->id)
+            ->whereIn('polling_id', $memberPollings->pluck('id'))
+            ->get(['id', 'polling_id', 'position_id', 'candidate_user_id'])
+            ->keyBy('position_id');
+
         return view('member.pollings', [
             'activeSubscription' => $user->activeSubscription,
             'memberPollings' => $memberPollings,
             'pollingVotedPositionIds' => $pollingVotedPositionIds,
+            'memberPollingVotes' => $memberPollingVotes,
         ]);
     }
 
@@ -178,6 +185,7 @@ class MemberDashboardController extends Controller
 
         $validated = $request->validate([
             'position_id' => 'required|exists:polling_positions,id',
+            'candidate_user_id' => 'required|exists:users,id',
         ]);
 
         $position = PollingPosition::query()
@@ -185,8 +193,8 @@ class MemberDashboardController extends Controller
             ->where('polling_id', $polling->id)
             ->firstOrFail();
 
-        if (! $position->member_user_id) {
-            return back()->with('polling_error', 'Voting is not configured for this position yet.');
+        if (! $position->candidates()->where('users.id', (int) $validated['candidate_user_id'])->exists()) {
+            return back()->with('polling_error', 'That candidate is not listed for this position.');
         }
 
         if (! $polling->is_active || $polling->publish_status !== 'published' || $polling->polling_status !== 'live') {
@@ -205,7 +213,7 @@ class MemberDashboardController extends Controller
                     'voter_user_id' => $user->id,
                 ],
                 [
-                    'candidate_user_id' => $position->member_user_id,
+                    'candidate_user_id' => (int) $validated['candidate_user_id'],
                     'voted_at' => now(),
                 ]
             );
@@ -213,7 +221,9 @@ class MemberDashboardController extends Controller
             return back()->with('polling_error', 'Could not save your vote. Please try again.');
         }
 
-        return back()->with('polling_success', 'Your vote has been recorded.');
+        return back()
+            ->with('polling_success', 'Your vote has been recorded.')
+            ->with('polling_thanks_modal', true);
     }
 
     private function pollingIsWithinSchedule(Polling $polling): bool

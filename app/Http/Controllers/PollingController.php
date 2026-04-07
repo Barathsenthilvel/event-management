@@ -44,7 +44,12 @@ class PollingController extends Controller
         DB::transaction(function () use ($request, $validated) {
             $polling = Polling::create($this->buildPayload($request, $validated, true));
             foreach ($this->extractPositions($request) as $position) {
-                $polling->positions()->create($position);
+                $candidateIds = $position['candidate_ids'];
+                unset($position['candidate_ids']);
+                $model = $polling->positions()->create($position);
+                if ($candidateIds !== []) {
+                    $model->candidates()->sync($candidateIds);
+                }
             }
         });
 
@@ -53,7 +58,7 @@ class PollingController extends Controller
 
     public function edit(Polling $polling)
     {
-        $polling->load('positions');
+        $polling->load(['positions.candidates:id,name,email,mobile']);
         $members = User::query()->where('is_approved', true)->latest('id')->get(['id', 'name', 'email', 'mobile']);
         return view('admin.pollings.edit', compact('polling', 'members'));
     }
@@ -67,7 +72,12 @@ class PollingController extends Controller
             $polling->update($this->buildPayload($request, $validated, false));
             $polling->positions()->delete();
             foreach ($this->extractPositions($request) as $position) {
-                $polling->positions()->create($position);
+                $candidateIds = $position['candidate_ids'];
+                unset($position['candidate_ids']);
+                $model = $polling->positions()->create($position);
+                if ($candidateIds !== []) {
+                    $model->candidates()->sync($candidateIds);
+                }
             }
         });
 
@@ -94,30 +104,33 @@ class PollingController extends Controller
 
     public function stats(Polling $polling)
     {
-        $polling->load(['positions.member:id,name,email,mobile']);
+        $polling->load(['positions.candidates:id,name']);
 
         $positionStats = [];
         foreach ($polling->positions as $position) {
-            $votes = PollingVote::query()
-                ->select('candidate_user_id', DB::raw('COUNT(*) as total_votes'))
+            $counts = PollingVote::query()
                 ->where('polling_id', $polling->id)
                 ->where('position_id', $position->id)
+                ->selectRaw('candidate_user_id, COUNT(*) as c')
                 ->groupBy('candidate_user_id')
-                ->orderByDesc('total_votes')
-                ->with('candidate:id,name')
-                ->get();
+                ->pluck('c', 'candidate_user_id');
 
-            $max = max((int) ($votes->max('total_votes') ?? 1), 1);
+            $totalVotes = (int) $counts->sum();
+
+            $candidates = $position->candidates->map(function ($c) use ($counts, $totalVotes) {
+                $v = (int) ($counts[$c->id] ?? 0);
+
+                return [
+                    'name' => $c->name,
+                    'votes' => $v,
+                    'bar_percent' => $totalVotes > 0 ? round(($v / $totalVotes) * 100) : 0,
+                ];
+            })->sortByDesc('votes')->values()->all();
+
             $positionStats[] = [
                 'position' => $position,
-                'total_votes' => (int) $votes->sum('total_votes'),
-                'candidates' => $votes->map(function ($row) use ($max) {
-                    return [
-                        'name' => $row->candidate->name ?? 'Candidate',
-                        'votes' => (int) $row->total_votes,
-                        'percent' => round(((int) $row->total_votes / $max) * 100),
-                    ];
-                }),
+                'total_votes' => $totalVotes,
+                'candidates' => $candidates,
             ];
         }
 
@@ -169,7 +182,8 @@ class PollingController extends Controller
             'is_active' => 'nullable|boolean',
             'positions' => 'required|array|min:1',
             'positions.*.position' => 'required|string|max:255',
-            'positions.*.member_user_id' => 'nullable|integer|exists:users,id',
+            'positions.*.candidate_ids' => 'nullable|array',
+            'positions.*.candidate_ids.*' => 'integer|exists:users,id',
         ];
     }
 
@@ -208,9 +222,13 @@ class PollingController extends Controller
             if (!is_array($row) || empty($row['position'])) {
                 continue;
             }
+            $ids = [];
+            if (!empty($row['candidate_ids']) && is_array($row['candidate_ids'])) {
+                $ids = array_values(array_unique(array_map('intval', $row['candidate_ids'])));
+            }
             $positions[] = [
                 'position' => (string) $row['position'],
-                'member_user_id' => !empty($row['member_user_id']) ? (int) $row['member_user_id'] : null,
+                'candidate_ids' => $ids,
             ];
         }
         return $positions;

@@ -27,25 +27,28 @@
             </div>
         </div>
 
-        <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-6 space-y-8">
+        <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-6 space-y-10">
             @forelse($positionStats as $block)
                 <div>
-                    <div class="flex items-center gap-3 mb-3">
-                        <h3 class="text-lg font-extrabold text-slate-800">{{ $block['position']->position }}</h3>
-                        <span class="px-3 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-black">{{ $block['total_votes'] }}</span>
+                    <div class="flex items-center gap-3 mb-4">
+                        <h3 class="text-lg font-extrabold text-[#351c42]">{{ $block['position']->position }}</h3>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">{{ $block['total_votes'] }} {{ $block['total_votes'] === 1 ? 'vote' : 'votes' }}</span>
                     </div>
                     @forelse($block['candidates'] as $candidate)
-                        <div class="grid grid-cols-12 gap-3 items-center mb-3">
-                            <div class="col-span-2 text-sm text-slate-700">{{ $candidate['name'] }}</div>
-                            <div class="col-span-8">
-                                <div class="w-full h-2.5 rounded bg-slate-200 overflow-hidden">
-                                    <div class="h-full bg-indigo-500 rounded" style="width: {{ $candidate['percent'] }}%"></div>
+                        <div class="relative mb-3 overflow-hidden rounded-2xl border border-[#c4b5d5]/60 bg-[#f3eef9]/50">
+                            <div
+                                class="pointer-events-none absolute inset-y-0 left-0 rounded-2xl bg-gradient-to-r from-[#d4c4e8] to-[#c9b6e0]"
+                                style="width: {{ $candidate['bar_percent'] }}%"
+                            ></div>
+                            <div class="relative flex items-center justify-between gap-3 px-4 py-3.5">
+                                <div class="flex min-w-0 items-center gap-2">
+                                    <span class="truncate text-sm font-bold text-[#351c42]">{{ $candidate['name'] }}</span>
                                 </div>
+                                <span class="shrink-0 text-sm font-black tabular-nums text-[#351c42]">{{ $candidate['votes'] }}</span>
                             </div>
-                            <div class="col-span-2 text-sm font-bold text-slate-800">{{ $candidate['votes'] }}</div>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500">No votes yet for this position.</p>
+                        <p class="text-sm text-slate-500">No candidates listed for this position.</p>
                     @endforelse
                 </div>
             @empty
@@ -55,4 +58,3 @@
     </div>
 </div>
 @endsection
-
