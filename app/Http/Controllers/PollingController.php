@@ -32,7 +32,13 @@ class PollingController extends Controller
 
     public function create()
     {
-        $members = User::query()->where('is_approved', true)->latest('id')->get(['id', 'name', 'email', 'mobile']);
+        $members = User::query()
+            ->where('is_approved', true)
+            ->whereIn('id', function ($q) {
+                $q->from('nomination_entries')->select('user_id')->distinct();
+            })
+            ->latest('id')
+            ->get(['id', 'name', 'email', 'mobile']);
         return view('admin.pollings.create', compact('members'));
     }
 
@@ -59,7 +65,25 @@ class PollingController extends Controller
     public function edit(Polling $polling)
     {
         $polling->load(['positions.candidates:id,name,email,mobile']);
-        $members = User::query()->where('is_approved', true)->latest('id')->get(['id', 'name', 'email', 'mobile']);
+        $selectedCandidateIds = $polling->positions
+            ->flatMap(fn ($position) => $position->candidates->pluck('id'))
+            ->unique()
+            ->values()
+            ->all();
+
+        $members = User::query()
+            ->where('is_approved', true)
+            ->where(function ($query) use ($selectedCandidateIds) {
+                $query->whereIn('id', function ($q) {
+                    $q->from('nomination_entries')->select('user_id')->distinct();
+                });
+
+                if ($selectedCandidateIds !== []) {
+                    $query->orWhereIn('id', $selectedCandidateIds);
+                }
+            })
+            ->latest('id')
+            ->get(['id', 'name', 'email', 'mobile']);
         return view('admin.pollings.edit', compact('polling', 'members'));
     }
 

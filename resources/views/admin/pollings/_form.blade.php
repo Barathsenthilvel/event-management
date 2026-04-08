@@ -48,7 +48,7 @@
                     <label class="block text-xs font-black text-slate-600">Positions & candidates</label>
                     <button type="button" @click="addRow()" class="text-xs font-black text-indigo-600">+ Add</button>
                 </div>
-                <p class="text-[11px] text-slate-500 mb-2">For each position, search and select one or more members who will appear on the ballot. Members vote during the scheduled window.</p>
+                <p class="text-[11px] text-slate-500 mb-2">For each position, search and select one or more interested members (from nomination submissions) who will appear on the ballot.</p>
                 <template x-for="(row, idx) in rows" :key="idx">
                     <div class="mb-3 rounded-xl border border-slate-200 bg-slate-50/40 p-3">
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-start">
