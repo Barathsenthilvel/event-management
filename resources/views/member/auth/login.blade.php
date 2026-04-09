@@ -42,7 +42,13 @@
                             </div>
                             <div>
                                 <label class="ml-label" for="signin-password">Password</label>
-                                <input id="signin-password" name="password" type="password" autocomplete="current-password" required class="ml-inp" placeholder="••••••••" />
+                                <div class="ml-password-wrap">
+                                    <input id="signin-password" name="password" type="password" autocomplete="current-password" required class="ml-inp" placeholder="••••••••" data-password-input />
+                                    <button type="button" class="ml-password-toggle" data-password-toggle aria-label="Show password" aria-pressed="false">
+                                        <svg class="h-5 w-5" data-icon-show viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <svg class="hidden h-5 w-5" data-icon-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                                 <label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-[#351c42]/75">
@@ -62,21 +68,22 @@
                             @csrf
                             <input type="hidden" name="country_code" value="+91" />
                             <div class="grid gap-6 sm:grid-cols-2 sm:gap-x-8">
+                                {{-- Row 1: First name, Last name --}}
                                 <div>
                                     <label class="ml-label" for="su-first">First name <span class="text-red-500">*</span></label>
                                     <input id="su-first" name="first_name" type="text" autocomplete="given-name" required class="ml-inp" placeholder="Given name" value="{{ old('first_name') }}" />
-                                </div>
-                                <div>
-                                    <label class="ml-label" for="su-email">Email <span class="text-red-500">*</span></label>
-                                    <input id="su-email" name="email" type="email" autocomplete="email" required class="ml-inp" placeholder="name@email.com" value="{{ old('email') }}" />
+                                    @error('first_name')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-last">Last name <span class="text-red-500">*</span></label>
                                     <input id="su-last" name="last_name" type="text" autocomplete="family-name" required class="ml-inp" placeholder="Family name" value="{{ old('last_name') }}" />
+                                    @error('last_name')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
+                                {{-- Row 2: Email, Mobile --}}
                                 <div>
-                                    <label class="ml-label" for="su-pass">Password <span class="text-red-500">*</span></label>
-                                    <input id="su-pass" name="password" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Min. 6 characters" />
+                                    <label class="ml-label" for="su-email">Email <span class="text-red-500">*</span></label>
+                                    <input id="su-email" name="email" type="email" autocomplete="email" required class="ml-inp" placeholder="name@email.com" value="{{ old('email') }}" />
+                                    @error('email')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-mobile">Mobile <span class="text-red-500">*</span></label>
@@ -87,10 +94,29 @@
                                             title="Please enter exactly 10 digits" value="{{ old('mobile') }}" aria-describedby="su-mobile-hint" />
                                     </div>
                                     <p id="su-mobile-hint" class="sr-only">Enter 10 digits; country code +91 is already included.</p>
+                                    @error('mobile')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                </div>
+                                {{-- Row 3: Password, Confirm password --}}
+                                <div>
+                                    <label class="ml-label" for="su-pass">Password <span class="text-red-500">*</span></label>
+                                    <div class="ml-password-wrap">
+                                        <input id="su-pass" name="password" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Min. 6 characters" data-password-input />
+                                        <button type="button" class="ml-password-toggle" data-password-toggle aria-label="Show password" aria-pressed="false">
+                                            <svg class="h-5 w-5" data-icon-show viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <svg class="hidden h-5 w-5" data-icon-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                        </button>
+                                    </div>
+                                    @error('password')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-pass2">Confirm password <span class="text-red-500">*</span></label>
-                                    <input id="su-pass2" name="password_confirmation" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Repeat password" />
+                                    <div class="ml-password-wrap">
+                                        <input id="su-pass2" name="password_confirmation" type="password" autocomplete="new-password" required minlength="6" class="ml-inp" placeholder="Repeat password" data-password-input />
+                                        <button type="button" class="ml-password-toggle" data-password-toggle aria-label="Show password" aria-pressed="false">
+                                            <svg class="h-5 w-5" data-icon-show viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <svg class="hidden h-5 w-5" data-icon-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="sm:col-span-2 flex justify-end pt-1">
                                     <button type="button" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]" data-back-to-login>Back to sign in</button>
@@ -209,6 +235,22 @@
             @elseif($errors->any())
                 setTab("signin");
             @endif
+
+            document.querySelectorAll("[data-password-toggle]").forEach((btn) => {
+                const wrap = btn.closest(".ml-password-wrap");
+                const input = wrap?.querySelector("[data-password-input]");
+                const iconShow = btn.querySelector("[data-icon-show]");
+                const iconHide = btn.querySelector("[data-icon-hide]");
+                if (!input) return;
+                btn.addEventListener("click", () => {
+                    const isHidden = input.type === "password";
+                    input.type = isHidden ? "text" : "password";
+                    btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+                    btn.setAttribute("aria-pressed", isHidden ? "true" : "false");
+                    iconShow?.classList.toggle("hidden", isHidden);
+                    iconHide?.classList.toggle("hidden", !isHidden);
+                });
+            });
         })();
     </script>
 @endsection

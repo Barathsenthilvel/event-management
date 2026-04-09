@@ -23,8 +23,8 @@ class EnsureMemberHasActiveSubscription
 
         if (!$user->activeSubscription()->exists()) {
             return redirect()
-                ->route('member.dashboard')
-                ->with('member_gate_error', 'Choose and pay for a membership plan on your dashboard to unlock this area.');
+                ->route('member.subscription.index')
+                ->with('member_gate_error', 'Choose and pay for a membership plan below to unlock this area.');
         }
 
         return $next($request);

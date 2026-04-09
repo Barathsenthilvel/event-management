@@ -23,7 +23,11 @@ class AdminMemberController extends Controller
         $inactiveCount = $totalCount - $activeCount;
 
         $members = $base
-            ->with('designation')
+            ->with([
+                'designation',
+                'activeSubscription.plan',
+                'paymentTransactions' => fn ($q) => $q->orderByDesc('id')->limit(5),
+            ])
             ->when($tab === 'active', function ($query) {
                 $query->where('profile_completed', true)
                     ->where('is_approved', true);

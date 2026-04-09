@@ -28,6 +28,12 @@ class MemberDashboardController extends Controller
         $user?->refresh();
         $user?->loadMissing('designation');
 
+        $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
+        $hasActiveSubscription = $user?->activeSubscription()->exists();
+        if ($canSeeMembership && !$hasActiveSubscription) {
+            return redirect()->route('member.subscription.index');
+        }
+
         $latestReceiptTransaction = PaymentTransaction::query()
             ->with('subscriptionPlan')
             ->where('user_id', $user?->id)
@@ -40,8 +46,6 @@ class MemberDashboardController extends Controller
             ->where('status', 'successful')
             ->sum('amount');
 
-        $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
-        $hasActiveSubscription = $user?->activeSubscription()->exists();
         $showFullMemberMenu = $canSeeMembership && $hasActiveSubscription;
 
         return view('member.dashboard', [

@@ -93,6 +93,8 @@
 @section('content')
     @php
         $isApproved = (bool) $user->is_approved;
+        $profileLocked = (bool) $user->profile_completed || $isApproved;
+        $pendingProfileDocs = $pendingProfileDocs ?? [];
         $stateOptions = [
             'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
             'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
@@ -107,7 +109,7 @@
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
                         <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">My profile</h1>
-                        <p class="mt-2 text-sm text-[#351c42]/65">Complete your details to activate your membership.</p>
+                        <p class="mt-2 text-sm text-[#351c42]/65">{{ $profileLocked ? 'Your submitted details are shown below (read-only).' : 'Complete your details to activate your membership.' }}</p>
                     </div>
                     <span class="rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a]">Required fields marked *</span>
                 </div>
@@ -132,9 +134,13 @@
                     <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
                         Your profile is already approved and cannot be updated now. Please contact admin for any correction.
                     </div>
+                @elseif($user->profile_completed)
+                    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                        You have already submitted your profile once. Further edits are not allowed. Please contact admin if you need a correction.
+                    </div>
                 @endif
 
-                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form">
+                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" @if($profileLocked) data-profile-locked @endif>
                     @csrf
 
                     <div class="space-y-8">
@@ -145,11 +151,11 @@
                             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 <div>
                                     <label class="ml-label">First name <span class="text-red-500">*</span></label>
-                                    <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" @disabled($isApproved) />
+                                    <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">Last name <span class="text-red-500">*</span></label>
-                                    <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" @disabled($isApproved) />
+                                    <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">Email ID</label>
@@ -157,17 +163,17 @@
                                 </div>
                                 <div>
                                     <label class="ml-label">Mobile <span class="text-red-500">*</span></label>
-                                    <input name="mobile" value="{{ old('mobile', $user->mobile) }}" required class="ml-inp" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" data-validate="required|digits:10" data-label="Mobile" @disabled($isApproved) />
+                                    <input name="mobile" value="{{ old('mobile', $user->mobile) }}" required class="ml-inp" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" data-validate="required|digits:10" data-label="Mobile" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="mobile"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" max="{{ now()->format('Y-m-d') }}" @disabled($isApproved) />
+                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" max="{{ now()->format('Y-m-d') }}" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">Gender <span class="text-red-500">*</span></label>
                                     @php($gender = old('gender', $user->gender))
-                                    <select name="gender" required class="ml-inp" @disabled($isApproved)>
+                                    <select name="gender" required class="ml-inp" @disabled($profileLocked)>
                                         <option value="">Select</option>
                                         <option value="Male" @selected($gender === 'Male')>Male</option>
                                         <option value="Female" @selected($gender === 'Female')>Female</option>
@@ -185,7 +191,7 @@
                                 <div>
                                     <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
                                     @php($qualification = old('qualification', $user->qualification))
-                                    <select name="qualification" required class="ml-inp" @disabled($isApproved)>
+                                    <select name="qualification" required class="ml-inp" @disabled($profileLocked)>
                                         <option value="">Select</option>
                                         <option value="Diploma" @selected($qualification === 'Diploma')>Diploma</option>
                                         <option value="B.Sc" @selected($qualification === 'B.Sc')>B.Sc</option>
@@ -199,7 +205,7 @@
                                 <div>
                                     <label class="ml-label">Blood group <span class="text-red-500">*</span></label>
                                     @php($blood = old('blood_group', $user->blood_group))
-                                    <select name="blood_group" required class="ml-inp" @disabled($isApproved)>
+                                    <select name="blood_group" required class="ml-inp" @disabled($profileLocked)>
                                         <option value="">Select</option>
                                         @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
                                             <option value="{{ $bg }}" @selected($blood === $bg)>{{ $bg }}</option>
@@ -208,25 +214,25 @@
                                 </div>
                                 <div>
                                     <label class="ml-label">RNRM number with date <span class="text-red-500">*</span></label>
-                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" required class="ml-inp" @disabled($isApproved) />
+                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" required class="ml-inp" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">College name <span class="text-red-500">*</span></label>
-                                    <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" @disabled($isApproved) />
+                                    <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">Door no <span class="text-red-500">*</span></label>
-                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" @disabled($isApproved) />
+                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">Locality / area <span class="text-red-500">*</span></label>
-                                    <input name="locality_area" value="{{ old('locality_area', $user->locality_area) }}" required class="ml-inp" data-validate="required|min:3" data-label="Locality / area" @disabled($isApproved) />
+                                    <input name="locality_area" value="{{ old('locality_area', $user->locality_area) }}" required class="ml-inp" data-validate="required|min:3" data-label="Locality / area" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="locality_area"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">State <span class="text-red-500">*</span></label>
                                     @php($selectedState = old('state', $user->state))
-                                    <select name="state" required class="ml-inp" data-validate="required" data-label="State" @disabled($isApproved)>
+                                    <select name="state" required class="ml-inp" data-validate="required" data-label="State" @disabled($profileLocked)>
                                         <option value="">Select state</option>
                                         @foreach($stateOptions as $state)
                                             <option value="{{ $state }}" @selected($selectedState === $state)>{{ $state }}</option>
@@ -243,17 +249,17 @@
                                 </div>
                                 <div>
                                     <label class="ml-label">Pin code <span class="text-red-500">*</span></label>
-                                    <input name="pin_code" value="{{ old('pin_code', $user->pin_code) }}" required maxlength="6" inputmode="numeric" pattern="[0-9]*" class="ml-inp" data-validate="required|digits:6" data-label="Pin code" @disabled($isApproved) />
+                                    <input name="pin_code" value="{{ old('pin_code', $user->pin_code) }}" required maxlength="6" inputmode="numeric" pattern="[0-9]*" class="ml-inp" data-validate="required|digits:6" data-label="Pin code" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="pin_code"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Council state <span class="text-red-500">*</span></label>
-                                    <input name="council_state" value="{{ old('council_state', $user->council_state) }}" required class="ml-inp" data-validate="required|min:2" data-label="Council state" @disabled($isApproved) />
+                                    <input name="council_state" value="{{ old('council_state', $user->council_state) }}" required class="ml-inp" data-validate="required|min:2" data-label="Council state" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="council_state"></p>
                                 </div>
                                 <div class="md:col-span-2 xl:col-span-3">
                                     <label class="ml-label">Currently working</label>
-                                    <textarea name="currently_working" rows="3" class="ml-inp" placeholder="Role, hospital/clinic, and experience (optional)" @disabled($isApproved)>{{ old('currently_working', $user->currently_working) }}</textarea>
+                                    <textarea name="currently_working" rows="3" class="ml-inp" placeholder="Role, hospital/clinic, and experience (optional)" @disabled($profileLocked)>{{ old('currently_working', $user->currently_working) }}</textarea>
                                 </div>
                             </div>
                         </section>
@@ -268,21 +274,42 @@
                                     @if($user->educational_certificate_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->educational_certificate_path) }}">View current</a>
                                     @endif
-                                    <input type="file" name="educational_certificate" class="w-full text-sm" @disabled($isApproved) />
+                                    @if(!empty($pendingProfileDocs['educational_certificate']))
+                                        <p class="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                                            New file saved from your last attempt — it will be kept when you fix other fields.
+                                            <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['educational_certificate']) }}">Preview</a>
+                                        </p>
+                                    @endif
+                                    <input type="file" name="educational_certificate" class="w-full text-sm" @disabled($profileLocked) />
+                                    @error('educational_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4">
                                     <label class="ml-label">Aadhar card <span class="text-red-500">*</span></label>
                                     @if($user->aadhar_card_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->aadhar_card_path) }}">View current</a>
                                     @endif
-                                    <input type="file" name="aadhar_card" class="w-full text-sm" @disabled($isApproved) />
+                                    @if(!empty($pendingProfileDocs['aadhar_card']))
+                                        <p class="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                                            New file saved from your last attempt — it will be kept when you fix other fields.
+                                            <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['aadhar_card']) }}">Preview</a>
+                                        </p>
+                                    @endif
+                                    <input type="file" name="aadhar_card" class="w-full text-sm" @disabled($profileLocked) />
+                                    @error('aadhar_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4">
                                     <label class="ml-label">Passport size photo <span class="text-red-500">*</span></label>
                                     @if($user->passport_photo_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->passport_photo_path) }}">View current</a>
                                     @endif
-                                    <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" @disabled($isApproved) />
+                                    @if(!empty($pendingProfileDocs['passport_photo']))
+                                        <p class="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                                            New file saved from your last attempt — it will be kept when you fix other fields.
+                                            <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['passport_photo']) }}">Preview</a>
+                                        </p>
+                                    @endif
+                                    <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" @disabled($profileLocked) />
+                                    @error('passport_photo')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                             </div>
 
@@ -290,9 +317,11 @@
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t border-[#351c42]/10 pt-6 sm:flex-row sm:justify-end sm:gap-4">
-                        @unless($isApproved)
+                        @if($profileLocked)
+                            <button type="button" disabled class="ml-btn-primary w-full sm:w-auto cursor-not-allowed opacity-55" aria-disabled="true">Save &amp; continue</button>
+                        @else
                             <button type="submit" class="ml-btn-primary w-full sm:w-auto">Save &amp; continue</button>
-                        @endunless
+                        @endif
                     </div>
                 </form>
             </div>
@@ -304,6 +333,7 @@
         (() => {
             const form = document.getElementById("member-profile-form");
             if (!form) return;
+            if (form.hasAttribute("data-profile-locked")) return;
 
             const fields = Array.from(form.querySelectorAll("[data-validate]"));
             const getErrorEl = (name) => form.querySelector(`[data-error-for="${name}"]`);

@@ -156,6 +156,26 @@
             cursor: pointer;
         }
         .ml-btn-secondary:hover { background: rgba(53, 28, 66, 0.04); border-color: rgba(53, 28, 66, 0.22); }
+        .ml-password-wrap { position: relative; }
+        .ml-password-wrap .ml-inp { padding-right: 3rem; }
+        .ml-password-toggle {
+            position: absolute;
+            right: 0.65rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: none;
+            border-radius: 0.65rem;
+            background: transparent;
+            color: rgba(53, 28, 66, 0.45);
+            cursor: pointer;
+            transition: color 0.15s ease, background 0.15s ease;
+        }
+        .ml-password-toggle:hover { color: #965995; background: rgba(150, 89, 149, 0.1); }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     </style>
     @stack('styles')

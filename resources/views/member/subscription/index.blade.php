@@ -10,10 +10,17 @@
                 <h1 class="text-2xl md:text-3xl font-extrabold text-[#351c42] tracking-tight">Hello, {{ $user->first_name ?? 'Member' }}</h1>
                 <p class="mt-1 text-sm text-[#351c42]/60">Choose a subscription plan from the admin-added list and continue.</p>
             </div>
-            <a href="{{ route('member.dashboard') }}"
-                class="px-6 py-3 rounded-2xl bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] text-xs font-extrabold shadow-lg transition-all text-center">
-                Back to Dashboard
-            </a>
+            @if(!empty($activeSubscription))
+                <a href="{{ route('member.dashboard') }}"
+                    class="px-6 py-3 rounded-2xl bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] text-xs font-extrabold shadow-lg transition-all text-center">
+                    Back to Dashboard
+                </a>
+            @else
+                <a href="{{ route('member.profile.edit') }}"
+                    class="px-6 py-3 rounded-2xl border-2 border-[#351c42]/20 bg-white text-[#351c42] hover:bg-[#faf8fc] text-xs font-extrabold shadow-sm transition-all text-center">
+                    Account profile
+                </a>
+            @endif
         </div>
     </div>
 
@@ -63,6 +70,12 @@
                 @if(session('error'))
                     <div class="mb-5 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm text-rose-700 font-bold">
                         {{ session('error') }}
+                    </div>
+                @endif
+
+                @if(session('member_gate_error'))
+                    <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950">
+                        {{ session('member_gate_error') }}
                     </div>
                 @endif
 

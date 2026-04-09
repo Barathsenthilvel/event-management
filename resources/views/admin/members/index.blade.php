@@ -77,11 +77,12 @@
                                 <th class="px-6 py-4 text-center">Profile</th>
                                 <th class="px-6 py-4 text-center">Approval</th>
                                 <th class="px-6 py-4 min-w-[200px]">Designation</th>
+                                <th class="px-6 py-4 text-right">Details</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($members as $m)
-                                <tr>
+                                <tr class="bg-white">
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-700">
@@ -126,6 +127,68 @@
                                             </button>
                                         </form>
                                     </td>
+                                    <td class="px-6 py-4 text-right align-middle">
+                                        <button type="button"
+                                            class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:border-[#965995]/40 hover:text-[#351c42]"
+                                            aria-expanded="false"
+                                            data-member-detail-toggle="{{ $m->id }}">
+                                            View
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="member-detail-{{ $m->id }}" class="hidden bg-slate-50/90">
+                                    <td colspan="6" class="px-6 py-5">
+                                        <div class="grid gap-6 lg:grid-cols-2">
+                                            <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Profile details</p>
+                                                <dl class="grid gap-2 text-[11px] font-bold text-slate-800 sm:grid-cols-2">
+                                                    <div><dt class="text-slate-400">DOB</dt><dd>{{ $m->dob?->format('M j, Y') ?? '—' }}</dd></div>
+                                                    <div><dt class="text-slate-400">Gender</dt><dd>{{ $m->gender ?? '—' }}</dd></div>
+                                                    <div><dt class="text-slate-400">Qualification</dt><dd>{{ $m->qualification ?? '—' }}</dd></div>
+                                                    <div><dt class="text-slate-400">Blood group</dt><dd>{{ $m->blood_group ?? '—' }}</dd></div>
+                                                    <div class="sm:col-span-2"><dt class="text-slate-400">RNRM</dt><dd>{{ $m->rnrm_number_with_date ?? '—' }}</dd></div>
+                                                    <div class="sm:col-span-2"><dt class="text-slate-400">College</dt><dd>{{ $m->college_name ?? '—' }}</dd></div>
+                                                    <div class="sm:col-span-2"><dt class="text-slate-400">Address</dt><dd class="font-semibold text-slate-700">{{ trim(implode(', ', array_filter([$m->door_no, $m->locality_area, $m->state, $m->pin_code]))) ?: '—' }}</dd></div>
+                                                    <div class="sm:col-span-2"><dt class="text-slate-400">Council state</dt><dd>{{ $m->council_state ?? '—' }}</dd></div>
+                                                    <div class="sm:col-span-2"><dt class="text-slate-400">Currently working</dt><dd class="font-normal text-slate-600">{{ $m->currently_working ?: '—' }}</dd></div>
+                                                </dl>
+                                            </div>
+                                            <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership &amp; payments</p>
+                                                @php($activeSub = $m->activeSubscription)
+                                                @if($activeSub)
+                                                    <div class="rounded-xl bg-emerald-50/80 px-3 py-2 text-[11px] font-bold text-emerald-950">
+                                                        <p class="text-[10px] font-black uppercase tracking-widest text-emerald-800/80">Active subscription</p>
+                                                        <p class="mt-1">{{ $activeSub->plan?->subscription_type ?? 'Plan' }} · {{ strtoupper((string) $activeSub->status) }}</p>
+                                                        <p class="mt-1 text-[10px] font-semibold text-emerald-900/80">
+                                                            {{ $activeSub->start_date?->format('M j, Y') ?? '—' }} — {{ $activeSub->end_date?->format('M j, Y') ?? '—' }}
+                                                            <span class="text-slate-600">·</span> {{ $activeSub->currency ?? 'INR' }} {{ number_format((float) $activeSub->amount, 2) }}
+                                                        </p>
+                                                    </div>
+                                                @else
+                                                    <p class="text-[11px] font-bold text-slate-500">No active subscription on file.</p>
+                                                @endif
+                                                <div>
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Recent payments</p>
+                                                    @if($m->paymentTransactions->isEmpty())
+                                                        <p class="text-[11px] font-bold text-slate-500">No payment records.</p>
+                                                    @else
+                                                        <ul class="space-y-2">
+                                                            @foreach($m->paymentTransactions as $pt)
+                                                                <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-[10px] font-bold text-slate-800">
+                                                                    <span class="uppercase tracking-widest text-slate-500">{{ $pt->status }}</span>
+                                                                    <span>{{ $pt->subscriptionPlan?->subscription_type ?? 'Membership' }}</span>
+                                                                    <span>₹{{ number_format((float) $pt->amount, 2) }}</span>
+                                                                    <span class="text-slate-500">{{ $pt->paid_at?->format('M j, Y H:i') ?? '—' }}</span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -140,6 +203,17 @@
     </div>
 </div>
 <script>
+    document.getElementById('members-table-root')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-member-detail-toggle]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-member-detail-toggle');
+        const row = document.getElementById('member-detail-' + id);
+        if (!row) return;
+        row.classList.toggle('hidden');
+        const open = !row.classList.contains('hidden');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
     document.addEventListener('alpine:init', () => {
         Alpine.data('membersPage', () => ({
             tab: @json($tab),
