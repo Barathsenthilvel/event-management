@@ -265,6 +265,8 @@ Route::prefix('member')->name('member.')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard/announcements/dismiss', [MemberDashboardController::class, 'dismissDashboardAnnouncement'])
+            ->name('dashboard.announcements.dismiss');
         Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
         Route::get('/nominations', [MemberDashboardController::class, 'nominationsPage'])->name('nominations.index');
         Route::get('/pollings', [MemberDashboardController::class, 'pollingsPage'])->name('pollings.index');

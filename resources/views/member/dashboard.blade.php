@@ -145,6 +145,63 @@
             transform: rotate(12deg);
             pointer-events: none;
         }
+        .md-id-card-classic {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 1px solid rgba(253, 220, 106, 0.35);
+            background:
+                radial-gradient(ellipse 120% 80% at 100% 0%, rgba(150, 89, 149, 0.26), transparent 55%),
+                linear-gradient(155deg, #2b1635 0%, #351c42 50%, #47245a 100%);
+            box-shadow: 0 14px 30px rgba(53, 28, 66, 0.32);
+        }
+        .md-id-card-classic::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+            pointer-events: none;
+        }
+        .md-kebab-menu { position: relative; }
+        .md-kebab-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.35rem);
+            min-width: 12rem;
+            border-radius: 0.85rem;
+            border: 1px solid rgba(53, 28, 66, 0.12);
+            background: #fff;
+            box-shadow: 0 12px 28px rgba(53, 28, 66, 0.18);
+            padding: 0.3rem;
+            display: none;
+            z-index: 10;
+        }
+        .md-kebab-dropdown.is-open { display: block; }
+        .md-announce-card {
+            border-radius: 1.1rem;
+            border: 1px solid rgba(253, 220, 106, 0.28);
+            background:
+                radial-gradient(ellipse 120% 85% at 100% 0%, rgba(150, 89, 149, 0.3), transparent 60%),
+                #351c42;
+            box-shadow: 0 12px 28px rgba(53, 28, 66, 0.35);
+        }
+        .md-btn-interest-card {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #fddc6a 0%, #f3c94b 100%);
+            color: #351c42;
+            font-size: 0.875rem;
+            font-weight: 800;
+            padding: 0.625rem 1.25rem;
+            box-shadow: 0 8px 18px rgba(243, 201, 75, 0.35);
+            transition: transform 0.15s ease, filter 0.2s ease;
+        }
+        .md-btn-interest-card:hover {
+            filter: brightness(1.03);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body class="md-page-bg text-[#351c42] antialiased" id="top">
@@ -192,9 +249,7 @@
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
-                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
-                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Polling</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @elseif($canSeeMembership)
@@ -227,6 +282,81 @@
                     <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
                 @endif
             </header>
+
+            @if($showFullMemberMenu && ($showNominationPrompt || $showPollingPrompt))
+                <section class="pointer-events-none fixed bottom-4 right-4 z-[95] flex w-[min(92vw,24rem)] flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Member announcements">
+                    @if($showNominationPrompt && $nominationPrompt)
+                        <article class="md-announce-card pointer-events-auto p-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fddc6a]">Hello there</p>
+                                    <h3 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Nominations open now</h3>
+                                    <p class="mt-2 text-sm leading-relaxed text-white/85">{{ $nominationPrompt->title }}</p>
+                                    <p class="mt-1 text-xs font-semibold text-white/70">
+                                        From: {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_from ? \Carbon\Carbon::parse($nominationPrompt->polling_from)->format('h:i A') : '—' }}
+                                    </p>
+                                    <p class="mt-0.5 text-xs font-semibold text-white/70">
+                                        To: {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_to ? \Carbon\Carbon::parse($nominationPrompt->polling_to)->format('h:i A') : '—' }}
+                                    </p>
+                                </div>
+                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
+                                    @csrf
+                                    <input type="hidden" name="type" value="nomination">
+                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
+                                    <button type="submit" class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Dismiss nomination prompt">✕</button>
+                                </form>
+                            </div>
+                            <div class="mt-4 flex flex-wrap items-center gap-3">
+                                @php
+                                    $nextNominationPosition = $nominationPrompt->positions->first(
+                                        fn ($position) => !collect($nominationInterestedPositionIds ?? [])->contains($position->id)
+                                    );
+                                @endphp
+                                @if($nextNominationPosition)
+                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $nextNominationPosition]) }}">
+                                        @csrf
+                                        <button type="submit" class="md-btn-interest-card">I'm interested</button>
+                                    </form>
+                                @endif
+                                <button type="button" data-popup-open="nomination-info-modal" class="text-sm font-bold text-[#fddc6a] hover:text-[#ffe79d]">View positions</button>
+                            </div>
+                        </article>
+                    @endif
+
+                    @if($showPollingPrompt && $pollingPrompt)
+                        <article class="md-announce-card pointer-events-auto p-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fddc6a]">Hello there</p>
+                                    <h3 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Polling is live</h3>
+                                    <p class="mt-2 text-sm leading-relaxed text-white/85">{{ $pollingPrompt->title }}</p>
+                                    <p class="mt-1 text-xs font-semibold text-white/70">
+                                        From: {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_from ? \Carbon\Carbon::parse($pollingPrompt->polling_from)->format('h:i A') : '—' }}
+                                    </p>
+                                    <p class="mt-0.5 text-xs font-semibold text-white/70">
+                                        To: {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_to ? \Carbon\Carbon::parse($pollingPrompt->polling_to)->format('h:i A') : '—' }}
+                                    </p>
+                                </div>
+                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
+                                    @csrf
+                                    <input type="hidden" name="type" value="polling">
+                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
+                                    <button type="submit" class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Dismiss polling prompt">✕</button>
+                                </form>
+                            </div>
+                            <div class="mt-4 flex flex-wrap items-center gap-3">
+                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
+                                    @csrf
+                                    <input type="hidden" name="type" value="polling">
+                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
+                                    <button type="submit" class="inline-flex items-center justify-center rounded-full bg-[#351c42] px-5 py-2.5 text-sm font-bold text-[#fddc6a] shadow-md shadow-[#351c42]/20">Got it</button>
+                                </form>
+                                <button type="button" data-popup-open="polling-info-modal" class="text-sm font-bold text-[#fddc6a] hover:text-[#ffe79d]">Learn more</button>
+                            </div>
+                        </article>
+                    @endif
+                </section>
+            @endif
 
             @if(!$canSeeMembership || $showFullMemberMenu)
             <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Account summary">
@@ -302,59 +432,108 @@
                     <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
                         <div>
                             <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
-                            <h2 id="digital-id-heading" class="text-lg font-extrabold tracking-tight text-[#351c42] sm:text-xl">Digital member ID</h2>
+                            <h2 id="digital-id-heading" class="text-lg font-extrabold tracking-tight text-[#351c42] sm:text-xl">Digital member ID &amp; subscription</h2>
                         </div>
-                        <p class="text-[11px] text-[#351c42]/50">Show at GNAT programs</p>
+                        <p class="text-[11px] text-[#351c42]/50">Show your ID and latest plan details</p>
                     </div>
-                    <div class="md-id-card rounded-xl p-4 text-white shadow-md sm:p-4">
-                        <div class="relative z-[1] flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                            <div class="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl border-2 border-[#fddc6a]/45 bg-white/10">
-                                @if($member->passport_photo_path)
-                                    <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="72" height="72" />
-                                @else
-                                    <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/75">
-                                        <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                    </div>
-                                @endif
+
+                    <div class="grid gap-4 lg:grid-cols-2">
+                        <article class="md-id-card-classic p-0 text-white shadow-md">
+                            <div class="relative z-[1] border-b border-white/15 bg-[#4c2b5d] px-4 py-1.5 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.2em] text-white/95">ID Card</p>
                             </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-[9px] font-bold uppercase tracking-[0.28em] text-[#fddc6a]/85">GNAT Association</p>
-                                <p class="mt-0.5 truncate text-base font-extrabold leading-snug sm:text-lg">{{ $member->name }}</p>
-                                @if($member->designation?->name)
-                                    <p class="mt-0.5 truncate text-xs text-white/70">{{ $member->designation->name }}</p>
-                                @endif
-                                <p class="mt-1.5 font-mono text-xs font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
+                            <div class="relative z-[1] grid grid-cols-[4.5rem_minmax(0,1fr)_2rem] items-center gap-3 px-4 py-3">
+                                <div class="relative h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-md border border-[#fddc6a]/40 bg-white/10">
+                                    @if($member->passport_photo_path)
+                                        <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="72" height="72" />
+                                    @else
+                                        <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/75">
+                                            <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[13px] font-extrabold leading-snug text-white">{{ $member->name }}</p>
+                                    @if($member->designation?->name)
+                                        <p class="mt-0.5 truncate text-[11px] text-white/75">{{ $member->designation->name }}</p>
+                                    @endif
+                                    <p class="mt-1 font-mono text-[11px] font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
+                                    <p class="mt-0.5 text-[10px] text-white/75">Valid till: {{ $sub?->end_date?->format('d M Y') ?? '—' }}</p>
+                                </div>
+                                <div class="flex h-[4.25rem] flex-col justify-between rounded-sm bg-black/20 px-1 py-1">
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                </div>
                             </div>
-                            <div class="flex shrink-0 flex-col gap-2 border-t border-white/10 pt-3 sm:border-t-0 sm:border-l sm:pl-4 sm:pt-0">
-                                <span class="inline-flex w-fit rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-100 ring-1 ring-emerald-300/35">
-                                    {{ $sub ? 'Active' : 'No plan' }}
-                                </span>
-                                <dl class="grid gap-1 text-[11px] leading-tight text-white/90 sm:text-xs">
-                                    <div class="flex justify-between gap-4 sm:flex-col sm:gap-0">
-                                        <dt class="text-white/45">Valid</dt>
-                                        <dd class="font-semibold tabular-nums">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</dd>
+                        </article>
+
+                        <article class="rounded-xl border border-[#351c42]/10 bg-white p-4 shadow-md sm:p-5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#965995]">Subscription purchased</p>
+                                    <h3 class="mt-1 text-base font-extrabold text-[#351c42]">Current plan</h3>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <span class="inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $sub ? 'bg-emerald-100 text-emerald-800' : 'bg-[#965995]/15 text-[#351c42]/80' }}">
+                                        {{ $sub ? 'Active' : 'No plan' }}
+                                    </span>
+                                    <div class="md-kebab-menu" data-sub-menu-wrap>
+                                        <button type="button" class="rounded-lg p-1.5 text-[#351c42]/60 hover:bg-[#351c42]/5" aria-label="Subscription actions" data-sub-menu-btn>⋮</button>
+                                        <div class="md-kebab-dropdown" data-sub-menu>
+                                            @if($latestReceiptTransaction)
+                                                <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener" class="block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
+                                                    Download receipt
+                                                </a>
+                                            @else
+                                                <span class="block rounded-lg px-3 py-2 text-sm text-[#351c42]/45">No receipt yet</span>
+                                            @endif
+                                            @if($showFullMemberMenu && $canSeeMembership)
+                                                <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="mt-0.5 block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
+                                                    Pay &amp; renew
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
-                                    <div class="flex justify-between gap-4 sm:flex-col sm:gap-0">
-                                        <dt class="text-white/45">Since</dt>
-                                        <dd class="font-semibold">{{ $member->created_at?->format('M Y') ?? '—' }}</dd>
-                                    </div>
-                                </dl>
+                                </div>
                             </div>
-                        </div>
+
+                            <dl class="mt-4 grid gap-3 text-sm text-[#351c42] sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Plan purchased</dt>
+                                    <dd class="mt-1 font-semibold">
+                                        @if($sub)
+                                            {{ $sub->subscription_type }} · {{ ucfirst(str_replace('_', ' ', (string) $sub->payment_type)) }}
+                                        @else
+                                            —
+                                        @endif
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Valid till</dt>
+                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Purchased on</dt>
+                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub?->start_date?->format('d M Y') ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Member since</dt>
+                                    <dd class="mt-1 font-semibold">{{ $member->created_at?->format('M Y') ?? '—' }}</dd>
+                                </div>
+                            </dl>
+                        </article>
                     </div>
                 </section>
             @endif
 
             @if($showFullMemberMenu)
-            <section aria-labelledby="gov-quick-heading" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
-                <p id="gov-quick-heading" class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Governance</p>
-                <h2 class="mt-1 text-lg font-extrabold text-[#351c42] sm:text-xl">Nominations &amp; polling</h2>
-                <p class="mt-1 max-w-2xl text-sm text-[#351c42]/60">Open roles and live votes each have their own page.</p>
-                <div class="mt-4 flex flex-wrap gap-3">
-                    <a href="{{ route('member.nominations.index') }}" class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/15 bg-[#faf9fc] px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995]/40 hover:bg-white">Nominations</a>
-                    <a href="{{ route('member.pollings.index') }}" class="inline-flex items-center justify-center rounded-full border-2 border-[#351c42]/15 bg-[#f6f3e9] px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995]/40 hover:bg-white">Polling</a>
-                </div>
-            </section>
             <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -399,22 +578,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex shrink-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                        @if($showFullMemberMenu && $latestReceiptTransaction)
-                            <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener"
-                                class="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#351c42]/20 bg-white px-5 py-2.5 text-center text-sm font-bold text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#faf8fc]">
-                                <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                    <polyline points="7 10 12 15 17 10"/>
-                                    <line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                                Download latest receipt
-                            </a>
-                        @endif
-                        @if($showFullMemberMenu && $canSeeMembership)
-                            <a href="{{ route('member.subscription.index', array_filter(['type' => 'Renewal'])) }}" class="md-btn-pay text-center">Pay &amp; renew</a>
-                        @endif
-                    </div>
+                    <div class="hidden shrink-0 sm:block"></div>
                 </div>
             </section>
             @endif
@@ -430,33 +594,61 @@
                     @endif
                 </div>
 
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
-                <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
-                        <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
-                        <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
-                        <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
-                            <li>Includes registration where applicable</li>
-                            <li>Pay securely via Razorpay</li>
-                        </ul>
-                        @if($canSeeMembership)
-                            <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
-                        @else
-                            <span class="mt-6 inline-block text-sm font-semibold text-[#351c42]/45">Complete profile &amp; approval required</span>
-                        @endif
-                    </article>
-                </div>
-
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
-                <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
-                <div class="flex flex-wrap gap-3">
-                    @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay">Renewal plans</a>
+                @if($showFullMemberMenu)
+                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal plans</h3>
+                    @if(($renewalPlans ?? collect())->isNotEmpty())
+                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach($renewalPlans as $plan)
+                                @php
+                                    $paymentLabel = match($plan->payment_type) {
+                                        'monthly' => 'Monthly',
+                                        'quarterly' => 'Quarterly',
+                                        'half_yearly' => 'Half yearly',
+                                        'yearly' => 'Yearly',
+                                        default => ucfirst(str_replace('_', ' ', (string) $plan->payment_type)),
+                                    };
+                                @endphp
+                                <article class="md-plan-card p-5">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">Renewal</p>
+                                    <p class="mt-2 text-xl font-extrabold text-[#351c42]">{{ $paymentLabel }}</p>
+                                    <p class="mt-1 text-sm text-[#351c42]/65">Membership fee: ₹{{ number_format((float) $plan->membership_fee, 0) }}</p>
+                                    <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay mt-5 inline-flex w-full justify-center">Choose plan</a>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="rounded-2xl border border-[#351c42]/10 bg-white px-5 py-4 text-sm font-semibold text-[#351c42]/70">
+                            No renewal found.
+                        </div>
                     @endif
-                </div>
-            </section>
+                @else
+                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
+                    <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
+                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
+                            <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
+                            <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
+                                <li>Includes registration where applicable</li>
+                                <li>Pay securely via Razorpay</li>
+                            </ul>
+                            @if($canSeeMembership)
+                                <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
+                            @else
+                                <span class="mt-6 inline-block text-sm font-semibold text-[#351c42]/45">Complete profile &amp; approval required</span>
+                            @endif
+                        </article>
+                    </div>
 
+                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
+                    <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
+                    <div class="flex flex-wrap gap-3">
+                        @if($canSeeMembership)
+                            <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay">Renewal plans</a>
+                        @endif
+                    </div>
+                @endif
+            </section>
             @if($showFullMemberMenu)
             <section class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -466,73 +658,6 @@
                         <p class="mt-1 text-sm text-[#351c42]/60">Register interest, see attendance, and download certificates on the member events page.</p>
                     </div>
                     <a href="{{ route('member.events.index') }}" class="md-btn-pay shrink-0 text-center">Open events page</a>
-                </div>
-            </section>
-
-            <section aria-labelledby="history-heading">
-                <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 id="history-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription history</h2>
-                    <input type="search" id="md-history-search" placeholder="Search…" class="rounded-full border border-[#351c42]/15 bg-white px-4 py-2 text-sm text-[#351c42] outline-none placeholder:text-[#351c42]/40 focus:border-[#965995]/40 focus:ring-2 focus:ring-[#965995]/25" aria-label="Search history" />
-                </div>
-                <p class="mb-4 text-xs text-[#351c42]/50">Recent transactions · Download invoice when payment is successful.</p>
-
-                <div class="space-y-4" id="md-history-list">
-                    @forelse($transactions as $t)
-                        @php
-                            $status = strtolower((string) $t->status);
-                            $planLabel = trim(($t->subscriptionPlan?->subscription_type ?? '') . ' · ' . ucfirst(str_replace('_', ' ', (string) ($t->subscriptionPlan?->payment_type ?? ''))));
-                        @endphp
-                        <article class="md-history-card overflow-hidden p-5 sm:p-6" data-history-row="{{ strtolower($planLabel . ' ' . $t->type . ' ' . $status . ' ' . $t->amount) }}">
-                            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div class="flex flex-wrap gap-3">
-                                    <span class="rounded-lg bg-[#351c42]/10 px-2.5 py-1 text-xs font-bold text-[#351c42]">{{ $t->type }}</span>
-                                    @if($planLabel)
-                                        <span class="rounded-lg bg-[#965995]/15 px-2.5 py-1 text-xs font-semibold text-[#351c42]">{{ $t->subscriptionPlan?->subscription_type ?? 'Plan' }}</span>
-                                    @endif
-                                </div>
-                                <div class="relative" data-history-menu-wrap>
-                                    <button type="button" class="rounded-lg p-2 text-[#351c42]/60 hover:bg-[#351c42]/5" aria-label="Actions" data-history-menu-btn>⋮</button>
-                                    <div class="absolute right-0 top-full z-10 mt-1 hidden min-w-[11rem] rounded-xl border border-[#351c42]/10 bg-white py-1 shadow-xl" data-history-menu>
-                                        @if($status === 'successful')
-                                            <a href="{{ route('member.subscription.invoice', $t->id) }}" target="_blank" class="block w-full px-4 py-2.5 text-left text-sm font-medium text-[#351c42] hover:bg-[#351c42]/5">Download receipt</a>
-                                        @else
-                                            <span class="block px-4 py-2.5 text-sm text-[#351c42]/45">Receipt when paid</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                <div>
-                                    <p class="text-xs font-bold uppercase text-[#351c42]/45">Paid / created</p>
-                                    <p class="mt-0.5 text-sm font-semibold">{{ optional($t->paid_at ?? $t->created_at)->format('d M Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold uppercase text-[#351c42]/45">Reference</p>
-                                    <p class="mt-0.5 break-all font-mono text-xs">{{ $t->razorpay_payment_id ?? '—' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold uppercase text-[#351c42]/45">Amount</p>
-                                    <p class="mt-0.5 text-sm font-bold">₹ {{ number_format((float) $t->amount, 0) }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold uppercase text-[#351c42]/45">Status</p>
-                                    <p class="mt-1">
-                                        @if($status === 'successful')
-                                            <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">Paid</span>
-                                        @elseif($status === 'pending')
-                                            <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-900">Pending</span>
-                                        @else
-                                            <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">{{ $t->status }}</span>
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-                        </article>
-                    @empty
-                        <div class="md-history-card p-8 text-center text-sm text-[#351c42]/60">
-                            No transactions yet. Use <strong>Pay now</strong> or <strong>Membership</strong> to subscribe.
-                        </div>
-                    @endforelse
                 </div>
             </section>
             @endif
@@ -545,6 +670,69 @@
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
     @include('home.partials.scripts')
+
+    @if($showFullMemberMenu && $showNominationPrompt && $nominationPrompt)
+        <div id="nomination-info-modal" class="md-modal-overlay" data-popup-modal>
+            <div class="w-full max-w-lg rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Nominations details</p>
+                        <h3 class="mt-1 text-xl font-extrabold text-[#351c42]">{{ $nominationPrompt->title }}</h3>
+                    </div>
+                    <button type="button" data-popup-close class="rounded-full p-1.5 text-[#351c42]/50 hover:bg-[#351c42]/5">✕</button>
+                </div>
+                <div class="mt-4 space-y-2 text-sm text-[#351c42]/80">
+                    <p><span class="font-bold text-[#351c42]">From:</span> {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_from ? \Carbon\Carbon::parse($nominationPrompt->polling_from)->format('h:i A') : '—' }}</p>
+                    <p><span class="font-bold text-[#351c42]">To:</span> {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_to ? \Carbon\Carbon::parse($nominationPrompt->polling_to)->format('h:i A') : '—' }}</p>
+                </div>
+                <div class="mt-4 space-y-3">
+                    <p class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">Open positions</p>
+                    <div class="max-h-56 space-y-2 overflow-auto pr-1">
+                        @forelse($nominationPrompt->positions as $position)
+                            @php $isInterested = collect($nominationInterestedPositionIds ?? [])->contains($position->id); @endphp
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2.5">
+                                <p class="text-sm font-semibold text-[#351c42]">{{ $position->title }}</p>
+                                @if($isInterested)
+                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Interested</span>
+                                @else
+                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}">
+                                        @csrf
+                                        <button type="submit" class="rounded-full bg-[#351c42] px-3 py-1.5 text-xs font-bold text-[#fddc6a]">Interested</button>
+                                    </form>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2 text-sm text-[#351c42]/70">No positions configured yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+                <div class="mt-5 flex justify-end">
+                    <button type="button" data-popup-close class="rounded-full bg-[#351c42] px-5 py-2 text-sm font-bold text-[#fddc6a]">Done</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($showFullMemberMenu && $showPollingPrompt && $pollingPrompt)
+        <div id="polling-info-modal" class="md-modal-overlay" data-popup-modal>
+            <div class="w-full max-w-lg rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Polling details</p>
+                        <h3 class="mt-1 text-xl font-extrabold text-[#351c42]">{{ $pollingPrompt->title }}</h3>
+                    </div>
+                    <button type="button" data-popup-close class="rounded-full p-1.5 text-[#351c42]/50 hover:bg-[#351c42]/5">✕</button>
+                </div>
+                <div class="mt-4 space-y-2 text-sm text-[#351c42]/80">
+                    <p><span class="font-bold text-[#351c42]">From:</span> {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_from ? \Carbon\Carbon::parse($pollingPrompt->polling_from)->format('h:i A') : '—' }}</p>
+                    <p><span class="font-bold text-[#351c42]">To:</span> {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_to ? \Carbon\Carbon::parse($pollingPrompt->polling_to)->format('h:i A') : '—' }}</p>
+                </div>
+                <div class="mt-5 flex justify-end">
+                    <button type="button" data-popup-close class="rounded-full bg-[#351c42] px-5 py-2 text-sm font-bold text-[#fddc6a]">Close</button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <script>
         (() => {
@@ -583,28 +771,36 @@
                 });
             });
 
-            document.querySelectorAll("[data-history-menu-btn]").forEach((btn) => {
-                const wrap = btn.closest("[data-history-menu-wrap]");
-                const menu = wrap?.querySelector("[data-history-menu]");
+            document.querySelectorAll("[data-sub-menu-btn]").forEach((btn) => {
+                const wrap = btn.closest("[data-sub-menu-wrap]");
+                const menu = wrap?.querySelector("[data-sub-menu]");
                 btn.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    document.querySelectorAll("[data-history-menu]").forEach((m) => {
-                        if (m !== menu) m.classList.add("hidden");
+                    document.querySelectorAll("[data-sub-menu]").forEach((m) => {
+                        if (m !== menu) m.classList.remove("is-open");
                     });
-                    menu?.classList.toggle("hidden");
+                    menu?.classList.toggle("is-open");
                 });
-                menu?.addEventListener("click", (e) => e.stopPropagation());
             });
             document.addEventListener("click", () => {
-                document.querySelectorAll("[data-history-menu]").forEach((m) => m.classList.add("hidden"));
+                document.querySelectorAll("[data-sub-menu]").forEach((m) => m.classList.remove("is-open"));
             });
 
-            const search = document.getElementById("md-history-search");
-            search?.addEventListener("input", () => {
-                const q = (search.value || "").toLowerCase().trim();
-                document.querySelectorAll("[data-history-row]").forEach((row) => {
-                    const hay = (row.getAttribute("data-history-row") || "").toLowerCase();
-                    row.classList.toggle("hidden", q.length > 0 && !hay.includes(q));
+            document.querySelectorAll("[data-popup-open]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const id = btn.getAttribute("data-popup-open");
+                    const modal = id ? document.getElementById(id) : null;
+                    modal?.classList.add("is-open");
+                });
+            });
+            document.querySelectorAll("[data-popup-close]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    btn.closest("[data-popup-modal]")?.classList.remove("is-open");
+                });
+            });
+            document.querySelectorAll("[data-popup-modal]").forEach((modal) => {
+                modal.addEventListener("click", (e) => {
+                    if (e.target === modal) modal.classList.remove("is-open");
                 });
             });
 

@@ -6,6 +6,7 @@ use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
 use App\Models\NominationEntry;
 use App\Models\NominationPosition;
@@ -48,10 +49,60 @@ class MemberDashboardController extends Controller
 
         $showFullMemberMenu = $canSeeMembership && $hasActiveSubscription;
 
+        $renewalPlans = collect();
+        $nominationPrompt = null;
+        $pollingPrompt = null;
+        $nominationInterestedPositionIds = collect();
+        $nominationPendingPositionsCount = 0;
+
+        if ($showFullMemberMenu && $user) {
+            $renewalPlans = MembershipSubscriptionSetting::query()
+                ->where('is_active', true)
+                ->where('subscription_type', 'Renewal')
+                ->orderBy('payment_type')
+                ->get();
+
+            $nominationPrompt = Nomination::query()
+                ->with(['positions' => fn ($q) => $q->orderBy('id')])
+                ->where('is_active', true)
+                ->where('status', 'active')
+                ->latest('id')
+                ->first();
+
+            $pollingPrompt = Polling::query()
+                ->where('is_active', true)
+                ->where('publish_status', 'published')
+                ->where('polling_status', 'live')
+                ->whereDate('polling_date', '>=', now()->toDateString())
+                ->latest('id')
+                ->first();
+        }
+
+        if ($nominationPrompt && $user) {
+            $nominationInterestedPositionIds = NominationEntry::query()
+                ->where('nomination_id', $nominationPrompt->id)
+                ->where('user_id', $user->id)
+                ->pluck('position_id');
+
+            $nominationPendingPositionsCount = $nominationPrompt->positions
+                ->reject(fn ($position) => $nominationInterestedPositionIds->contains($position->id))
+                ->count();
+        }
+
+        $showNominationPrompt = (bool) $nominationPrompt && $nominationPendingPositionsCount > 0;
+        $showPollingPrompt = (bool) $pollingPrompt;
+
         return view('member.dashboard', [
             'activeSubscription' => $user?->activeSubscription,
             'latestReceiptTransaction' => $latestReceiptTransaction,
             'memberDonationsTotal' => $memberDonationsTotal,
+            'renewalPlans' => $renewalPlans,
+            'nominationPrompt' => $nominationPrompt,
+            'pollingPrompt' => $pollingPrompt,
+            'showNominationPrompt' => $showNominationPrompt,
+            'showPollingPrompt' => $showPollingPrompt,
+            'nominationInterestedPositionIds' => $nominationInterestedPositionIds,
+            'nominationPendingPositionsCount' => $nominationPendingPositionsCount,
             'transactions' => PaymentTransaction::query()
                 ->with('subscriptionPlan')
                 ->where('user_id', $user?->id)
@@ -59,6 +110,23 @@ class MemberDashboardController extends Controller
                 ->limit(10)
                 ->get(),
         ]);
+    }
+
+    public function dismissDashboardAnnouncement(Request $request)
+    {
+        $data = $request->validate([
+            'type' => 'required|in:nomination,polling',
+            'next' => 'nullable|string',
+        ]);
+
+        session()->put('member.dashboard.dismissed_'.$data['type'], true);
+
+        $next = $data['next'] ?? route('member.dashboard');
+        if (!str_starts_with($next, url('/')) && !str_starts_with($next, '/')) {
+            $next = route('member.dashboard');
+        }
+
+        return redirect($next);
     }
 
     protected function memberPortalUnlocked($user): bool
