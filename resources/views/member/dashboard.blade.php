@@ -253,9 +253,8 @@
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
                 @elseif($canSeeMembership)
-                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Choose and pay for a plan in the main area. The full menu unlocks after your subscription is active. Use Profile and Change password below.</p>
-                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Profile</a>
-                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Change password</a>
+                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Please purchase a membership plan to unlock the full member menu.</p>
+                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Membership</a>
                 @else
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
@@ -587,67 +586,46 @@
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 id="plans-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription plans</h2>
-                        <p class="mt-1 text-sm text-[#351c42]/60">Choose a plan from the admin-configured list. Payment is handled on the next step.</p>
+                        <p class="mt-1 text-sm text-[#351c42]/60">
+                            @if(!$canSeeMembership)
+                                Plans unlock after your profile is complete and an administrator approves your account.
+                            @elseif($hasActiveSubscription)
+                                Your membership is active. When it is time to renew, use renewal plans only.
+                            @else
+                                Choose a plan from the admin-configured list. Payment is handled on the next step.
+                            @endif
+                        </p>
                     </div>
                     @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">View all plans →</a>
+                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
                     @endif
                 </div>
 
-                @if($showFullMemberMenu)
-                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal plans</h3>
-                    @if(($renewalPlans ?? collect())->isNotEmpty())
-                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            @foreach($renewalPlans as $plan)
-                                @php
-                                    $paymentLabel = match($plan->payment_type) {
-                                        'monthly' => 'Monthly',
-                                        'quarterly' => 'Quarterly',
-                                        'half_yearly' => 'Half yearly',
-                                        'yearly' => 'Yearly',
-                                        default => ucfirst(str_replace('_', ' ', (string) $plan->payment_type)),
-                                    };
-                                @endphp
-                                <article class="md-plan-card p-5">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">Renewal</p>
-                                    <p class="mt-2 text-xl font-extrabold text-[#351c42]">{{ $paymentLabel }}</p>
-                                    <p class="mt-1 text-sm text-[#351c42]/65">Membership fee: ₹{{ number_format((float) $plan->membership_fee, 0) }}</p>
-                                    <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay mt-5 inline-flex w-full justify-center">Choose plan</a>
-                                </article>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="rounded-2xl border border-[#351c42]/10 bg-white px-5 py-4 text-sm font-semibold text-[#351c42]/70">
-                            No renewal found.
-                        </div>
-                    @endif
-                @else
-                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
-                    <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
-                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
-                            <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
-                            <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
-                                <li>Includes registration where applicable</li>
-                                <li>Pay securely via Razorpay</li>
-                            </ul>
-                            @if($canSeeMembership)
-                                <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
-                            @else
-                                <span class="mt-6 inline-block text-sm font-semibold text-[#351c42]/45">Complete profile &amp; approval required</span>
-                            @endif
-                        </article>
-                    </div>
-
-                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
-                    <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
-                    <div class="flex flex-wrap gap-3">
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
+                <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
+                        <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
+                        <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
+                        <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
+                        <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
+                            <li>Includes registration where applicable</li>
+                            <li>Pay securely via Razorpay</li>
+                        </ul>
                         @if($canSeeMembership)
-                            <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay">Renewal plans</a>
+                            <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
+                        @else
+                            <span class="mt-6 inline-block text-sm font-semibold text-[#351c42]/45">Complete profile &amp; approval required</span>
                         @endif
-                    </div>
-                @endif
+                    </article>
+                </div>
+
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
+                <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
+                <div class="flex flex-wrap gap-3">
+                    @if($canSeeMembership)
+                        <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay">Renewal plans</a>
+                    @endif
+                </div>
             </section>
             @if($showFullMemberMenu)
             <section class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
