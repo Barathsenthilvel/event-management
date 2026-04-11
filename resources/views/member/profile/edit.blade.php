@@ -136,7 +136,7 @@
                     </div>
                 @elseif($user->profile_completed)
                     <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                        You have already submitted your profile once. Further edits are not allowed. Please contact admin if you need a correction.
+                        Please wait for admin approval. You can review your submitted profile details below.
                     </div>
                 @endif
 

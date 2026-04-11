@@ -20,6 +20,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MemberDashboardController extends Controller
 {
@@ -50,10 +51,8 @@ class MemberDashboardController extends Controller
         $showFullMemberMenu = $canSeeMembership && $hasActiveSubscription;
 
         $renewalPlans = collect();
-        $nominationPrompt = null;
-        $pollingPrompt = null;
-        $nominationInterestedPositionIds = collect();
-        $nominationPendingPositionsCount = 0;
+        $dashboardNominations = collect();
+        $dashboardPolls = collect();
 
         if ($showFullMemberMenu && $user) {
             $renewalPlans = MembershipSubscriptionSetting::query()
@@ -62,47 +61,96 @@ class MemberDashboardController extends Controller
                 ->orderBy('payment_type')
                 ->get();
 
-            $nominationPrompt = Nomination::query()
+            $dismissedNominationIds = collect(session('member.dashboard.dismissed_nomination_ids', []))->map(fn ($id) => (int) $id)->filter();
+            $dismissedPollingIds = collect(session('member.dashboard.dismissed_polling_ids', []))->map(fn ($id) => (int) $id)->filter();
+
+            $rawNominations = Nomination::query()
                 ->with(['positions' => fn ($q) => $q->orderBy('id')])
                 ->where('is_active', true)
                 ->where('status', 'active')
                 ->latest('id')
-                ->first();
+                ->limit(30)
+                ->get();
 
-            $pollingPrompt = Polling::query()
+            $nominationIds = $rawNominations->pluck('id');
+            $entriesByNomination = NominationEntry::query()
+                ->where('user_id', $user->id)
+                ->whereIn('nomination_id', $nominationIds)
+                ->get(['nomination_id', 'position_id'])
+                ->groupBy('nomination_id');
+
+            foreach ($rawNominations as $nom) {
+                if ($dismissedNominationIds->contains($nom->id)) {
+                    continue;
+                }
+                $endDay = ($nom->polling_date_to ?? $nom->polling_date)->toDateString();
+                if (Carbon::today()->toDateString() > $endDay) {
+                    continue;
+                }
+                $interested = $entriesByNomination->get($nom->id, collect())->pluck('position_id');
+                $pendingPositions = $nom->positions->filter(fn ($p) => ! $interested->contains($p->id));
+                if ($pendingPositions->isEmpty()) {
+                    continue;
+                }
+                $dashboardNominations->push([
+                    'nomination' => $nom,
+                    'pendingPositions' => $pendingPositions,
+                    'interestedPositionIds' => $interested,
+                ]);
+            }
+
+            $rawPolls = Polling::query()
+                ->with(['positions' => fn ($q) => $q->with('candidates:id,name')])
                 ->where('is_active', true)
                 ->where('publish_status', 'published')
                 ->where('polling_status', 'live')
-                ->whereDate('polling_date', '>=', now()->toDateString())
                 ->latest('id')
-                ->first();
+                ->limit(30)
+                ->get();
+
+            $votesByPolling = PollingVote::query()
+                ->where('voter_user_id', $user->id)
+                ->whereIn('polling_id', $rawPolls->pluck('id'))
+                ->get(['id', 'polling_id', 'position_id', 'candidate_user_id'])
+                ->groupBy('polling_id');
+
+            foreach ($rawPolls as $poll) {
+                if ($dismissedPollingIds->contains($poll->id)) {
+                    continue;
+                }
+                $endDay = ($poll->polling_date_to ?? $poll->polling_date)->toDateString();
+                if (Carbon::today()->toDateString() > $endDay) {
+                    continue;
+                }
+                if (! $this->pollingIsWithinSchedule($poll)) {
+                    continue;
+                }
+                $votes = $votesByPolling->get($poll->id, collect());
+                $votedPositionIds = $votes->pluck('position_id');
+                $pendingPositions = $poll->positions->filter(fn ($p) => ! $votedPositionIds->contains($p->id));
+                if ($pendingPositions->isEmpty()) {
+                    continue;
+                }
+                $dashboardPolls->push([
+                    'polling' => $poll,
+                    'pollingDashboardVotedIds' => $votedPositionIds,
+                    'pollingDashboardVotes' => $votes->keyBy('position_id'),
+                ]);
+            }
         }
 
-        if ($nominationPrompt && $user) {
-            $nominationInterestedPositionIds = NominationEntry::query()
-                ->where('nomination_id', $nominationPrompt->id)
-                ->where('user_id', $user->id)
-                ->pluck('position_id');
-
-            $nominationPendingPositionsCount = $nominationPrompt->positions
-                ->reject(fn ($position) => $nominationInterestedPositionIds->contains($position->id))
-                ->count();
-        }
-
-        $showNominationPrompt = (bool) $nominationPrompt && $nominationPendingPositionsCount > 0;
-        $showPollingPrompt = (bool) $pollingPrompt;
+        $showNominationDashboard = $dashboardNominations->isNotEmpty();
+        $showPollingDashboard = $dashboardPolls->isNotEmpty();
 
         return view('member.dashboard', [
             'activeSubscription' => $user?->activeSubscription,
             'latestReceiptTransaction' => $latestReceiptTransaction,
             'memberDonationsTotal' => $memberDonationsTotal,
             'renewalPlans' => $renewalPlans,
-            'nominationPrompt' => $nominationPrompt,
-            'pollingPrompt' => $pollingPrompt,
-            'showNominationPrompt' => $showNominationPrompt,
-            'showPollingPrompt' => $showPollingPrompt,
-            'nominationInterestedPositionIds' => $nominationInterestedPositionIds,
-            'nominationPendingPositionsCount' => $nominationPendingPositionsCount,
+            'dashboardNominations' => $dashboardNominations,
+            'dashboardPolls' => $dashboardPolls,
+            'showNominationDashboard' => $showNominationDashboard,
+            'showPollingDashboard' => $showPollingDashboard,
             'transactions' => PaymentTransaction::query()
                 ->with('subscriptionPlan')
                 ->where('user_id', $user?->id)
@@ -116,13 +164,40 @@ class MemberDashboardController extends Controller
     {
         $data = $request->validate([
             'type' => 'required|in:nomination,polling',
+            'entity_id' => 'required|integer|min:1',
             'next' => 'nullable|string',
         ]);
 
-        session()->put('member.dashboard.dismissed_'.$data['type'], true);
+        $table = $data['type'] === 'nomination' ? 'nominations' : 'pollings';
+        $request->validate([
+            'entity_id' => Rule::exists($table, 'id'),
+        ]);
+
+        $sessionKey = $data['type'] === 'nomination'
+            ? 'dismissed_nomination_ids'
+            : 'dismissed_polling_ids';
+
+        $ids = collect(session('member.dashboard.'.$sessionKey, []))
+            ->map(fn ($id) => (int) $id)
+            ->push((int) $data['entity_id'])
+            ->unique()
+            ->values()
+            ->all();
+
+        session()->put('member.dashboard.'.$sessionKey, $ids);
+
+        if ($data['type'] === 'nomination') {
+            session()->forget('member.dashboard.dismissed_nomination');
+        } else {
+            session()->forget('member.dashboard.dismissed_polling');
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['ok' => true]);
+        }
 
         $next = $data['next'] ?? route('member.dashboard');
-        if (!str_starts_with($next, url('/')) && !str_starts_with($next, '/')) {
+        if (! str_starts_with($next, url('/')) && ! str_starts_with($next, '/')) {
             $next = route('member.dashboard');
         }
 
@@ -295,14 +370,17 @@ class MemberDashboardController extends Controller
 
         return back()
             ->with('polling_success', 'Your vote has been recorded.')
-            ->with('polling_thanks_modal', true);
+            ->with('polling_success_poll_id', $polling->id)
+            ->with('polling_thanks_modal', true)
+            ->with('polling_thanks_poll_id', $polling->id);
     }
 
     private function pollingIsWithinSchedule(Polling $polling): bool
     {
-        $date = $polling->polling_date->format('Y-m-d');
-        $start = Carbon::parse($date.' '.$polling->polling_from);
-        $end = Carbon::parse($date.' '.$polling->polling_to);
+        $fromDate = $polling->polling_date->format('Y-m-d');
+        $toDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+        $start = Carbon::parse($fromDate.' '.$polling->polling_from);
+        $end = Carbon::parse($toDate.' '.$polling->polling_to);
 
         return now()->between($start, $end);
     }

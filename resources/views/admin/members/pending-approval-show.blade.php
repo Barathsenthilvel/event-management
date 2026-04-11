@@ -4,17 +4,21 @@
 @php
     $m = $member;
     $doc = fn ($path) => $path ? asset('storage/' . ltrim($path, '/')) : null;
+    $showApprovalActions = $showApprovalActions ?? true;
+    $backUrl = $backUrl ?? route('admin.members.pending-approvals.index', request()->only('q'));
+    $backLabel = $backLabel ?? 'Back to pending list';
+    $statusTitle = $m->is_approved ? 'Approved member' : 'Pending approval';
 @endphp
 <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6">
     {{-- Modal-style frame: unique GNAT-inspired panel --}}
     <div class="mx-auto max-w-4xl">
         <div class="mb-4 flex flex-wrap items-center gap-3">
-            <a href="{{ route('admin.members.pending-approvals.index', request()->only('q')) }}"
+            <a href="{{ $backUrl }}"
                class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-[#351c42]/20">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Back to pending list
+                {{ $backLabel }}
             </a>
         </div>
 
@@ -29,11 +33,12 @@
                             {{ strtoupper(substr($m->name ?? 'ME', 0, 2)) }}
                         </div>
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.25em] text-[#fddc6a]/90">Pending approval</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.25em] text-[#fddc6a]/90">{{ $statusTitle }}</p>
                             <h1 class="mt-1 text-xl font-extrabold tracking-tight sm:text-2xl">{{ $m->name }}</h1>
                             <p class="mt-1 text-xs font-semibold text-white/80">{{ $m->email }}</p>
                         </div>
                     </div>
+                    @if($showApprovalActions)
                     <div class="flex flex-wrap gap-2">
                         <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}">
                             @csrf
@@ -48,6 +53,7 @@
                             </button>
                         </form>
                     </div>
+                    @endif
                 </div>
             </div>
 

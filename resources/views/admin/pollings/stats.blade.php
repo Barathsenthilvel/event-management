@@ -13,7 +13,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-100 p-4">
             <p class="text-sm font-extrabold text-slate-800 mb-2">{{ $polling->title }}</p>
-            <p class="text-xs text-slate-500">{{ optional($polling->polling_date)->format('d M Y') }}</p>
+            <p class="text-xs text-slate-500">
+                @if($polling->polling_date_to && $polling->polling_date_to->toDateString() !== $polling->polling_date->toDateString())
+                    {{ optional($polling->polling_date)->format('d M Y') }} – {{ $polling->polling_date_to->format('d M Y') }}
+                @else
+                    {{ optional($polling->polling_date)->format('d M Y') }}
+                @endif
+            </p>
             <p class="text-xs text-slate-500">{{ $polling->polling_from }} - {{ $polling->polling_to }}</p>
             <div class="mt-3">
                 <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $polling->polling_status === 'live' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">

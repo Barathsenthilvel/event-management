@@ -16,6 +16,7 @@ class Nomination extends Model
         'title',
         'terms',
         'polling_date',
+        'polling_date_to',
         'polling_from',
         'polling_to',
         'cover_image_path',
@@ -28,6 +29,7 @@ class Nomination extends Model
     {
         return [
             'polling_date' => 'date',
+            'polling_date_to' => 'date',
             'is_active' => 'boolean',
         ];
     }

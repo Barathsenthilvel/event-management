@@ -128,13 +128,11 @@
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 text-right align-middle">
-                                        <button type="button"
-                                            class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:border-[#965995]/40 hover:text-[#351c42]"
-                                            aria-expanded="false"
-                                            data-member-detail-toggle="{{ $m->id }}">
+                                        <a href="{{ route('admin.members.show', ['user' => $m->id, 'tab' => $tab, 'q' => $q]) }}"
+                                            class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:border-[#965995]/40 hover:text-[#351c42]">
                                             View
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                        </button>
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        </a>
                                     </td>
                                 </tr>
                                 <tr id="member-detail-{{ $m->id }}" class="hidden bg-slate-50/90">

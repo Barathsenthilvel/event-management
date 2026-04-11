@@ -55,7 +55,13 @@
                                 </form>
                             </td>
                             <td class="px-4 py-3">
-                                <p>{{ optional($polling->polling_date)->format('d M Y') }}</p>
+                                <p>
+                                    @if($polling->polling_date_to && $polling->polling_date_to->toDateString() !== $polling->polling_date->toDateString())
+                                        {{ optional($polling->polling_date)->format('d M Y') }} – {{ $polling->polling_date_to->format('d M Y') }}
+                                    @else
+                                        {{ optional($polling->polling_date)->format('d M Y') }}
+                                    @endif
+                                </p>
                                 <p class="text-[10px] text-slate-500">{{ $polling->polling_from }} - {{ $polling->polling_to }}</p>
                             </td>
                             <td class="px-4 py-3">

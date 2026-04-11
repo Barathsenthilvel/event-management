@@ -102,7 +102,7 @@
         .md-modal-overlay {
             position: fixed;
             inset: 0;
-            z-index: 90;
+            z-index: 110;
             display: none;
             align-items: center;
             justify-content: center;
@@ -197,9 +197,39 @@
             padding: 0.625rem 1.25rem;
             box-shadow: 0 8px 18px rgba(243, 201, 75, 0.35);
             transition: transform 0.15s ease, filter 0.2s ease;
+            text-decoration: none;
         }
         .md-btn-interest-card:hover {
             filter: brightness(1.03);
+            transform: translateY(-1px);
+        }
+        .md-nom-announce-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border-radius: 1.15rem;
+            border: 1px solid rgba(53, 28, 66, 0.1);
+            background: rgba(248, 246, 242, 0.98);
+            padding: 0.75rem 1rem;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+        }
+        .md-nom-announce-row .md-nom-interest-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            padding: 0.45rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: #24122e;
+            color: #fddc6a;
+            border: none;
+            cursor: pointer;
+            transition: filter 0.15s ease, transform 0.15s ease;
+        }
+        .md-nom-announce-row .md-nom-interest-pill:hover {
+            filter: brightness(1.08);
             transform: translateY(-1px);
         }
     </style>
@@ -216,15 +246,14 @@
             </div>
         </div>
     @elseif(!$member?->is_approved)
-        <div x-data="{ open: true }" x-cloak>
-            <div x-show="open" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+        <div x-data x-cloak>
+            <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
                 <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
                     <p class="text-xs font-bold uppercase tracking-widest text-[#965995]">Approval pending</p>
                     <h3 class="mt-2 text-xl font-extrabold text-[#351c42]">Please wait for admin approval</h3>
                     <p class="mt-3 text-sm text-[#351c42]/75">We received your profile. Once approved, you can purchase membership plans.</p>
                     <div class="mt-6 flex flex-wrap justify-end gap-3">
-                        <a href="{{ route('member.profile.edit') }}" class="rounded-full border border-[#351c42]/15 px-5 py-2.5 text-sm font-bold text-[#351c42] hover:bg-[#351c42]/5">Review profile</a>
-                        <button type="button" @click="open = false" class="rounded-full bg-[#351c42] px-5 py-2.5 text-sm font-bold text-[#fddc6a]">OK</button>
+                        <a href="{{ route('member.profile.edit') }}" class="rounded-full bg-[#351c42] px-5 py-2.5 text-sm font-bold text-[#fddc6a]">Review profile</a>
                     </div>
                 </div>
             </div>
@@ -242,22 +271,30 @@
             id="md-sidebar"
             class="fixed inset-y-0 left-0 z-50 w-[min(100%,280px)] -translate-x-full border-r border-[#351c42]/10 bg-white/95 p-5 shadow-2xl transition-transform duration-300 lg:static lg:z-0 lg:w-60 lg:translate-x-0 lg:rounded-2xl lg:border lg:bg-white/80 lg:p-4 lg:shadow-lg lg:shadow-[#351c42]/5"
         >
-            <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">{{ $showFullMemberMenu ? 'Menu' : ($canSeeMembership ? 'Membership' : 'Account') }}</p>
+            <p class="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#965995]">
+                @if(!$canSeeMembership)
+                    Account
+                @elseif(!$hasActiveSubscription)
+                    Membership
+                @else
+                    Menu
+                @endif
+            </p>
             <nav class="flex flex-col gap-1" aria-label="Member">
-                @if($showFullMemberMenu)
+                @if(!$canSeeMembership)
+                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.edit') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.edit') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> My profile</a>
+                @elseif(!$hasActiveSubscription)
+                    <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Subscription plans</a>
+                @else
                     <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Dashboard</a>
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
-                    <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Membership</a>
-                    <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
-                    <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
-                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Profile</a>
-                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
-                @elseif($canSeeMembership)
-                    <p class="mb-2 rounded-xl bg-[#965995]/10 px-3 py-2 text-xs font-semibold leading-relaxed text-[#351c42]/85">Please purchase a membership plan to unlock the full member menu.</p>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Membership</a>
-                @else
-                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link is-active" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Profile</a>
-                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link" data-md-nav><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Change password</a>
+                    <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
+                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
+                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Polling</a>
+                    <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
+                    <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Profile</a>
+                    <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Change password</a>
                 @endif
             </nav>
             @include('member.partials.sidebar-logout')
@@ -282,82 +319,83 @@
                 @endif
             </header>
 
-            @if($showFullMemberMenu && ($showNominationPrompt || $showPollingPrompt))
-                <section class="pointer-events-none fixed bottom-4 right-4 z-[95] flex w-[min(92vw,24rem)] flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Member announcements">
-                    @if($showNominationPrompt && $nominationPrompt)
-                        <article class="md-announce-card pointer-events-auto p-5">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fddc6a]">Hello there</p>
-                                    <h3 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Nominations open now</h3>
-                                    <p class="mt-2 text-sm leading-relaxed text-white/85">{{ $nominationPrompt->title }}</p>
-                                    <p class="mt-1 text-xs font-semibold text-white/70">
-                                        From: {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_from ? \Carbon\Carbon::parse($nominationPrompt->polling_from)->format('h:i A') : '—' }}
-                                    </p>
-                                    <p class="mt-0.5 text-xs font-semibold text-white/70">
-                                        To: {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_to ? \Carbon\Carbon::parse($nominationPrompt->polling_to)->format('h:i A') : '—' }}
-                                    </p>
-                                </div>
-                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
-                                    @csrf
-                                    <input type="hidden" name="type" value="nomination">
-                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
-                                    <button type="submit" class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Dismiss nomination prompt">✕</button>
-                                </form>
-                            </div>
-                            <div class="mt-4 flex flex-wrap items-center gap-3">
-                                @php
-                                    $nextNominationPosition = $nominationPrompt->positions->first(
-                                        fn ($position) => !collect($nominationInterestedPositionIds ?? [])->contains($position->id)
-                                    );
-                                @endphp
-                                @if($nextNominationPosition)
-                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $nextNominationPosition]) }}">
-                                        @csrf
-                                        <button type="submit" class="md-btn-interest-card">I'm interested</button>
-                                    </form>
-                                @endif
-                                <button type="button" data-popup-open="nomination-info-modal" class="text-sm font-bold text-[#fddc6a] hover:text-[#ffe79d]">View positions</button>
-                            </div>
-                        </article>
-                    @endif
+            @if($showFullMemberMenu && $showPollingDashboard)
+                <div id="dashboard-polling-slot" class="mb-6 space-y-6 @if($showNominationDashboard) hidden @endif">
+                    @foreach($dashboardPolls as $pollRow)
+                        @php $dashPoll = $pollRow['polling']; @endphp
+                        <div id="dashboard-polling-card-{{ $dashPoll->id }}" class="dashboard-polling-card">
+                            @include('member.partials.dashboard-live-polling', [
+                                'poll' => $dashPoll,
+                                'pollingDashboardVotedIds' => $pollRow['pollingDashboardVotedIds'],
+                                'pollingDashboardVotes' => $pollRow['pollingDashboardVotes'],
+                            ])
+                        </div>
+                    @endforeach
+                </div>
+            @endif
 
-                    @if($showPollingPrompt && $pollingPrompt)
-                        <article class="md-announce-card pointer-events-auto p-5">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fddc6a]">Hello there</p>
-                                    <h3 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Polling is live</h3>
-                                    <p class="mt-2 text-sm leading-relaxed text-white/85">{{ $pollingPrompt->title }}</p>
-                                    <p class="mt-1 text-xs font-semibold text-white/70">
-                                        From: {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_from ? \Carbon\Carbon::parse($pollingPrompt->polling_from)->format('h:i A') : '—' }}
-                                    </p>
-                                    <p class="mt-0.5 text-xs font-semibold text-white/70">
-                                        To: {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_to ? \Carbon\Carbon::parse($pollingPrompt->polling_to)->format('h:i A') : '—' }}
-                                    </p>
+            @if($showFullMemberMenu && $showNominationDashboard)
+                <section id="dashboard-nomination-stack" class="pointer-events-none fixed bottom-4 right-4 z-[95] flex w-[min(92vw,24rem)] flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Member announcements">
+                    @foreach($dashboardNominations as $nomRow)
+                        @php
+                            $nominationPrompt = $nomRow['nomination'];
+                            $pendingNominationPositions = $nomRow['pendingPositions'];
+                        @endphp
+                        <div id="dashboard-nomination-card-{{ $nominationPrompt->id }}" class="dashboard-nomination-card pointer-events-auto">
+                            <article class="md-announce-card p-5">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="min-w-0 pr-2">
+                                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fddc6a]">Hello there</p>
+                                        <p class="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">Nominations open now</p>
+                                        <h3 class="mt-2 text-3xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-4xl">{{ $nominationPrompt->title }}</h3>
+                                        <p class="mt-3 text-xs font-semibold text-white/70">
+                                            From: {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }}
+                                        </p>
+                                        <p class="mt-0.5 text-xs font-semibold text-white/70">
+                                            To: {{ ($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->format('d M Y') ?? '—' }}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                                        aria-label="Dismiss nomination prompt"
+                                        data-dashboard-dismiss-nomination
+                                        data-nomination-id="{{ $nominationPrompt->id }}"
+                                    >✕</button>
                                 </div>
-                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
-                                    @csrf
-                                    <input type="hidden" name="type" value="polling">
-                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
-                                    <button type="submit" class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Dismiss polling prompt">✕</button>
-                                </form>
-                            </div>
-                            <div class="mt-4 flex flex-wrap items-center gap-3">
-                                <form method="POST" action="{{ route('member.dashboard.announcements.dismiss') }}">
-                                    @csrf
-                                    <input type="hidden" name="type" value="polling">
-                                    <input type="hidden" name="next" value="{{ route('member.dashboard') }}">
-                                    <button type="submit" class="inline-flex items-center justify-center rounded-full bg-[#351c42] px-5 py-2.5 text-sm font-bold text-[#fddc6a] shadow-md shadow-[#351c42]/20">Got it</button>
-                                </form>
-                                <button type="button" data-popup-open="polling-info-modal" class="text-sm font-bold text-[#fddc6a] hover:text-[#ffe79d]">Learn more</button>
-                            </div>
-                        </article>
-                    @endif
+                                <div class="mt-4 border-t border-white/10 pt-4">
+                                    <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Open positions</p>
+                                    <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5">
+                                        @forelse($pendingNominationPositions as $position)
+                                            <div class="md-nom-announce-row">
+                                                <p class="min-w-0 flex-1 text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
+                                                <div class="flex shrink-0 items-center gap-2">
+                                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="md-nom-interest-pill">Interested</button>
+                                                    </form>
+                                                    <button
+                                                        type="button"
+                                                        data-popup-open="nomination-detail-modal-{{ $nominationPrompt->id }}"
+                                                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#351c42]/14 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#965995]/8"
+                                                        aria-label="View nomination details"
+                                                    >
+                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">You have registered interest for every open role, or there are no roles listed yet.</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    @endforeach
                 </section>
             @endif
 
-            @if(!$canSeeMembership || $showFullMemberMenu)
+            @if($showFullMemberMenu)
             <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Account summary">
                 {{-- Profile --}}
                 <article class="relative overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-md transition hover:border-[#965995]/35 hover:shadow-lg">
@@ -532,101 +570,68 @@
                 </section>
             @endif
 
-            @if($showFullMemberMenu)
-            <section id="section-membership" class="scroll-mt-28 rounded-2xl border border-[#351c42]/10 bg-white/90 p-6 shadow-md sm:p-8">
-                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">From / to</p>
-                            <p class="mt-1 font-semibold text-[#351c42]">
-                                @if($sub)
-                                    {{ $sub->start_date?->format('d M Y') }} — {{ $sub->end_date?->format('d M Y') }}
-                                @else
-                                    —
-                                @endif
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Membership ends</p>
-                            <p class="mt-1">
-                                @if($sub?->end_date)
-                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">{{ $sub->end_date->format('d M Y') }}</span>
-                                @else
-                                    <span class="text-sm text-[#351c42]/50">—</span>
-                                @endif
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Status</p>
-                            <p class="mt-1">
-                                @if($sub)
-                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Active</span>
-                                @else
-                                    <span class="rounded-full bg-[#965995]/15 px-2.5 py-1 text-xs font-bold text-[#351c42]/80">No active plan</span>
-                                @endif
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#351c42]/50">Plan</p>
-                            <p class="mt-1 text-sm font-semibold text-[#351c42]">
-                                @if($sub)
-                                    {{ $sub->subscription_type }} · {{ ucfirst(str_replace('_', ' ', (string) $sub->payment_type)) }}
-                                @else
-                                    —
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                    <div class="hidden shrink-0 sm:block"></div>
-                </div>
-            </section>
-            @endif
-
+            @if($canSeeMembership)
             <section aria-labelledby="plans-heading">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 id="plans-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription plans</h2>
                         <p class="mt-1 text-sm text-[#351c42]/60">
-                            @if(!$canSeeMembership)
-                                Plans unlock after your profile is complete and an administrator approves your account.
-                            @elseif($hasActiveSubscription)
+                            @if($hasActiveSubscription)
                                 Your membership is active. When it is time to renew, use renewal plans only.
                             @else
-                                Choose a plan from the admin-configured list. Payment is handled on the next step.
+                                Your account is approved. Choose a new subscription plan to activate membership.
                             @endif
                         </p>
                     </div>
-                    @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
-                    @endif
+                    <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
                 </div>
 
+                @if(!$hasActiveSubscription)
                 <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
                 <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
                         <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[#351c42]">From admin settings</p>
-                        <p class="mt-1 text-sm text-[#351c42]/65">Pricing is set under Membership in admin.</p>
+                        <p class="mt-2 text-2xl font-extrabold text-[#351c42]">Subscription plan</p>
+                        <p class="mt-1 text-sm text-[#351c42]/65">Choose and purchase your membership plan.</p>
                         <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
                             <li>Includes registration where applicable</li>
                             <li>Pay securely via Razorpay</li>
                         </ul>
-                        @if($canSeeMembership)
-                            <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
-                        @else
-                            <span class="mt-6 inline-block text-sm font-semibold text-[#351c42]/45">Complete profile &amp; approval required</span>
-                        @endif
+                        <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
                     </article>
                 </div>
+                @endif
 
+                @if($hasActiveSubscription)
                 <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
-                <p class="mb-4 text-sm text-[#351c42]/55">Monthly, quarterly, and yearly renewal amounts are defined in admin. Open the membership page to pay.</p>
-                <div class="flex flex-wrap gap-3">
-                    @if($canSeeMembership)
-                        <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay">Renewal plans</a>
-                    @endif
+                <p class="mb-4 text-sm text-[#351c42]/55">Your current subscription is active. Use renewal plans for your next membership period.</p>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @forelse($renewalPlans as $plan)
+                        @php
+                            $cycleLabel = match($plan->payment_type) {
+                                'monthly' => 'Monthly',
+                                'bi_monthly' => 'Bi - Monthly',
+                                'quarterly' => 'Quarterly',
+                                'half_yearly' => 'Half Yearly',
+                                'yearly' => 'Yearly',
+                                default => ucfirst((string) $plan->payment_type),
+                            };
+                        @endphp
+                        <article class="md-plan-card p-6">
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">Renewal · {{ $cycleLabel }}</p>
+                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">₹{{ number_format((float) $plan->membership_fee, 0) }}</p>
+                            <p class="mt-1 text-sm text-[#351c42]/65">{{ (int) ($plan->grace_period ?? 0) }} days grace period</p>
+                            <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose renewal</a>
+                        </article>
+                    @empty
+                        <div class="sm:col-span-2 lg:col-span-3 rounded-2xl border border-dashed border-[#351c42]/15 bg-white/70 p-8 text-center">
+                            <p class="text-sm font-bold text-[#351c42]/70">No renewal plans available right now. Please contact admin.</p>
+                        </div>
+                    @endforelse
                 </div>
+                @endif
             </section>
+            @endif
             @if($showFullMemberMenu)
             <section class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -649,67 +654,91 @@
     @include('home.partials.donate-payment-modals')
     @include('home.partials.scripts')
 
-    @if($showFullMemberMenu && $showNominationPrompt && $nominationPrompt)
-        <div id="nomination-info-modal" class="md-modal-overlay" data-popup-modal>
-            <div class="w-full max-w-lg rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Nominations details</p>
-                        <h3 class="mt-1 text-xl font-extrabold text-[#351c42]">{{ $nominationPrompt->title }}</h3>
+    @if($showFullMemberMenu && $showNominationDashboard)
+        @foreach($dashboardNominations as $nomRow)
+            @php
+                $nominationPrompt = $nomRow['nomination'];
+                $nomDetailCover = $nominationPrompt->cover_image_path ? asset('storage/' . ltrim($nominationPrompt->cover_image_path, '/')) : null;
+                $nomDetailBanner = $nominationPrompt->banner_image_path ? asset('storage/' . ltrim($nominationPrompt->banner_image_path, '/')) : null;
+                $nomStatusLabel = match ($nominationPrompt->status) {
+                    'draft' => 'Draft',
+                    'active' => 'Active',
+                    'closed' => 'Closed',
+                    'cancelled' => 'Cancelled',
+                    default => ucfirst((string) $nominationPrompt->status),
+                };
+            @endphp
+            <div id="nomination-detail-modal-{{ $nominationPrompt->id }}" class="md-modal-overlay" data-popup-modal>
+                <div class="max-h-[min(90vh,40rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
+                    <div class="flex items-start justify-between gap-4">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Nomination details</p>
+                        <button type="button" data-popup-close class="rounded-full p-1.5 text-[#351c42]/50 hover:bg-[#351c42]/5">✕</button>
                     </div>
-                    <button type="button" data-popup-close class="rounded-full p-1.5 text-[#351c42]/50 hover:bg-[#351c42]/5">✕</button>
-                </div>
-                <div class="mt-4 space-y-2 text-sm text-[#351c42]/80">
-                    <p><span class="font-bold text-[#351c42]">From:</span> {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_from ? \Carbon\Carbon::parse($nominationPrompt->polling_from)->format('h:i A') : '—' }}</p>
-                    <p><span class="font-bold text-[#351c42]">To:</span> {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_to ? \Carbon\Carbon::parse($nominationPrompt->polling_to)->format('h:i A') : '—' }}</p>
-                </div>
-                <div class="mt-4 space-y-3">
-                    <p class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">Open positions</p>
-                    <div class="max-h-56 space-y-2 overflow-auto pr-1">
-                        @forelse($nominationPrompt->positions as $position)
-                            @php $isInterested = collect($nominationInterestedPositionIds ?? [])->contains($position->id); @endphp
-                            <div class="flex items-center justify-between gap-3 rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2.5">
-                                <p class="text-sm font-semibold text-[#351c42]">{{ $position->title }}</p>
-                                @if($isInterested)
-                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">Interested</span>
-                                @else
-                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}">
-                                        @csrf
-                                        <button type="submit" class="rounded-full bg-[#351c42] px-3 py-1.5 text-xs font-bold text-[#fddc6a]">Interested</button>
-                                    </form>
-                                @endif
+                    <div class="mt-4 space-y-6 text-sm text-[#351c42]/85">
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">1. Title</h3>
+                            <p class="mt-1.5 text-lg font-extrabold leading-snug text-[#351c42]">{{ $nominationPrompt->title }}</p>
+                        </section>
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">2. Positions</h3>
+                            @if($nominationPrompt->positions->isEmpty())
+                                <p class="mt-1.5 text-[#351c42]/60">No positions listed.</p>
+                            @else
+                                <ul class="mt-2 list-inside list-disc space-y-1 font-semibold text-[#351c42]">
+                                    @foreach($nominationPrompt->positions as $p)
+                                        <li>{{ $p->position }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </section>
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">3. Terms</h3>
+                            <div class="mt-2 whitespace-pre-wrap rounded-xl border border-[#351c42]/10 bg-[#faf9fc] p-3 text-[#351c42]/90">
+                                {{ $nominationPrompt->terms ? $nominationPrompt->terms : '—' }}
                             </div>
-                        @empty
-                            <p class="rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2 text-sm text-[#351c42]/70">No positions configured yet.</p>
-                        @endforelse
+                        </section>
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">4. Polling dates</h3>
+                            <div class="mt-2 space-y-1 font-medium">
+                                <p><span class="font-bold text-[#351c42]">From:</span> {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_from ? \Carbon\Carbon::parse($nominationPrompt->polling_from)->format('h:i A') : '—' }}</p>
+                                <p><span class="font-bold text-[#351c42]">To:</span> {{ ($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->format('d M Y') ?? '—' }} {{ $nominationPrompt->polling_to ? \Carbon\Carbon::parse($nominationPrompt->polling_to)->format('h:i A') : '—' }}</p>
+                            </div>
+                        </section>
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">5. Images</h3>
+                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div class="rounded-xl border border-[#351c42]/10 bg-[#faf9fc] p-2">
+                                    <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#351c42]/50">Cover</p>
+                                    @if($nomDetailCover)
+                                        <img src="{{ $nomDetailCover }}" alt="Nomination cover" class="h-32 w-full rounded-lg object-cover" loading="lazy">
+                                    @else
+                                        <p class="py-6 text-center text-xs text-[#351c42]/45">No cover image</p>
+                                    @endif
+                                </div>
+                                <div class="rounded-xl border border-[#351c42]/10 bg-[#faf9fc] p-2">
+                                    <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#351c42]/50">Banner</p>
+                                    @if($nomDetailBanner)
+                                        <img src="{{ $nomDetailBanner }}" alt="Nomination banner" class="h-32 w-full rounded-lg object-cover" loading="lazy">
+                                    @else
+                                        <p class="py-6 text-center text-xs text-[#351c42]/45">No banner image</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </section>
+                        <section>
+                            <h3 class="text-xs font-black uppercase tracking-[0.16em] text-[#965995]">6. Status</h3>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span class="inline-flex rounded-full bg-[#351c42] px-3 py-1 text-xs font-bold text-[#fddc6a]">{{ $nomStatusLabel }}</span>
+                                <span class="text-xs text-[#351c42]/65">Visible on portal: {{ $nominationPrompt->is_active ? 'Yes' : 'No' }}</span>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="mt-6 flex justify-end border-t border-[#351c42]/08 pt-4">
+                        <button type="button" data-popup-close class="rounded-full bg-[#351c42] px-5 py-2 text-sm font-bold text-[#fddc6a]">Close</button>
                     </div>
                 </div>
-                <div class="mt-5 flex justify-end">
-                    <button type="button" data-popup-close class="rounded-full bg-[#351c42] px-5 py-2 text-sm font-bold text-[#fddc6a]">Done</button>
-                </div>
             </div>
-        </div>
-    @endif
-
-    @if($showFullMemberMenu && $showPollingPrompt && $pollingPrompt)
-        <div id="polling-info-modal" class="md-modal-overlay" data-popup-modal>
-            <div class="w-full max-w-lg rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Polling details</p>
-                        <h3 class="mt-1 text-xl font-extrabold text-[#351c42]">{{ $pollingPrompt->title }}</h3>
-                    </div>
-                    <button type="button" data-popup-close class="rounded-full p-1.5 text-[#351c42]/50 hover:bg-[#351c42]/5">✕</button>
-                </div>
-                <div class="mt-4 space-y-2 text-sm text-[#351c42]/80">
-                    <p><span class="font-bold text-[#351c42]">From:</span> {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_from ? \Carbon\Carbon::parse($pollingPrompt->polling_from)->format('h:i A') : '—' }}</p>
-                    <p><span class="font-bold text-[#351c42]">To:</span> {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }} {{ $pollingPrompt->polling_to ? \Carbon\Carbon::parse($pollingPrompt->polling_to)->format('h:i A') : '—' }}</p>
-                </div>
-                <div class="mt-5 flex justify-end">
-                    <button type="button" data-popup-close class="rounded-full bg-[#351c42] px-5 py-2 text-sm font-bold text-[#fddc6a]">Close</button>
-                </div>
-            </div>
-        </div>
+        @endforeach
     @endif
 
     <script>
@@ -764,18 +793,25 @@
                 document.querySelectorAll("[data-sub-menu]").forEach((m) => m.classList.remove("is-open"));
             });
 
-            document.querySelectorAll("[data-popup-open]").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    const id = btn.getAttribute("data-popup-open");
-                    const modal = id ? document.getElementById(id) : null;
-                    modal?.classList.add("is-open");
-                });
-            });
-            document.querySelectorAll("[data-popup-close]").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    btn.closest("[data-popup-modal]")?.classList.remove("is-open");
-                });
-            });
+            document.addEventListener(
+                "click",
+                (e) => {
+                    const closeBtn = e.target.closest("[data-popup-close]");
+                    if (closeBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeBtn.closest("[data-popup-modal]")?.classList.remove("is-open");
+                        return;
+                    }
+                    const openBtn = e.target.closest("[data-popup-open]");
+                    if (openBtn) {
+                        const id = openBtn.getAttribute("data-popup-open");
+                        const modal = id ? document.getElementById(id) : null;
+                        modal?.classList.add("is-open");
+                    }
+                },
+                true
+            );
             document.querySelectorAll("[data-popup-modal]").forEach((modal) => {
                 modal.addEventListener("click", (e) => {
                     if (e.target === modal) modal.classList.remove("is-open");
@@ -785,6 +821,75 @@
             if (window.location.hash === "#member-dashboard-top") {
                 document.getElementById("member-dashboard-top")?.scrollIntoView({ behavior: "smooth" });
             }
+
+            document.addEventListener(
+                "click",
+                async (e) => {
+                    const nomBtn = e.target.closest("[data-dashboard-dismiss-nomination]");
+                    if (nomBtn) {
+                        e.preventDefault();
+                        const id = nomBtn.getAttribute("data-nomination-id");
+                        if (!id) return;
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+                        if (!token) return;
+                        const fd = new FormData();
+                        fd.append("_token", token);
+                        fd.append("type", "nomination");
+                        fd.append("entity_id", id);
+                        fd.append("next", window.location.href);
+                        try {
+                            const res = await fetch("{{ route('member.dashboard.announcements.dismiss') }}", {
+                                method: "POST",
+                                headers: {
+                                    Accept: "application/json",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                },
+                                body: fd,
+                            });
+                            if (!res.ok) return;
+                            document.getElementById(`dashboard-nomination-card-${id}`)?.classList.add("hidden");
+                            document.getElementById(`nomination-detail-modal-${id}`)?.classList.remove("is-open");
+                            const anyNom = Array.from(document.querySelectorAll(".dashboard-nomination-card")).some(
+                                (el) => !el.classList.contains("hidden")
+                            );
+                            if (!anyNom) {
+                                document.getElementById("dashboard-polling-slot")?.classList.remove("hidden");
+                            }
+                        } catch (_) {
+                            /* ignore */
+                        }
+                        return;
+                    }
+                    const polBtn = e.target.closest("[data-dashboard-dismiss-polling]");
+                    if (polBtn) {
+                        e.preventDefault();
+                        const pid = polBtn.getAttribute("data-polling-id");
+                        if (!pid) return;
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+                        if (!token) return;
+                        const fd = new FormData();
+                        fd.append("_token", token);
+                        fd.append("type", "polling");
+                        fd.append("entity_id", pid);
+                        fd.append("next", window.location.href);
+                        try {
+                            const res = await fetch("{{ route('member.dashboard.announcements.dismiss') }}", {
+                                method: "POST",
+                                headers: {
+                                    Accept: "application/json",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                },
+                                body: fd,
+                            });
+                            if (!res.ok) return;
+                            document.getElementById(`dashboard-polling-card-${pid}`)?.classList.add("hidden");
+                        } catch (_) {
+                            /* ignore */
+                        }
+                    }
+                },
+                true
+            );
         })();
     </script>
 </body>

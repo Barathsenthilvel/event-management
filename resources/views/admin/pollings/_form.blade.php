@@ -114,14 +114,30 @@
 
         <div class="space-y-4">
             <div class="rounded-xl border border-slate-200 p-4">
-                <p class="text-xs font-black text-slate-700 mb-2">Polling Dates</p>
-                <p class="text-[10px] text-slate-500 mb-2">Times are saved as 24-hour <span class="font-mono">HH:MM</span>.</p>
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="date" name="polling_date" value="{{ old('polling_date', $p?->polling_date?->format('Y-m-d')) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
-                    <input type="time" name="polling_from" step="60" value="{{ old('polling_from', $defaultPollingFrom) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
-                    <input type="time" name="polling_to" step="60" value="{{ old('polling_to', $defaultPollingTo) }}" class="px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                <p class="text-xs font-black text-slate-700 mb-1">Polling window</p>
+                <p class="text-[10px] text-slate-500 mb-3">Set <span class="font-semibold">From date</span> and <span class="font-semibold">To date</span> (leave To date empty for a single day). Times use 24-hour <span class="font-mono">HH:MM</span>.</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">From date</label>
+                        <input type="date" name="polling_date" value="{{ old('polling_date', $p?->polling_date?->format('Y-m-d')) }}" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">To date</label>
+                        <input type="date" name="polling_date_to" value="{{ old('polling_date_to', $p?->polling_date_to?->format('Y-m-d') ?? '') }}" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs" title="Optional — defaults to From date">
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Start time</label>
+                        <input type="time" name="polling_from" step="60" value="{{ old('polling_from', $defaultPollingFrom) }}" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">End time</label>
+                        <input type="time" name="polling_to" step="60" value="{{ old('polling_to', $defaultPollingTo) }}" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                    </div>
                 </div>
                 @error('polling_date')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                @error('polling_date_to')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
                 @error('polling_from')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
                 @error('polling_to')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>

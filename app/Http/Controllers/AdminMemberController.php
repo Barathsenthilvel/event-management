@@ -8,6 +8,28 @@ use Illuminate\Http\Request;
 
 class AdminMemberController extends Controller
 {
+    public function show(Request $request, User $user)
+    {
+        $tab = (string) $request->query('tab', 'all');
+        $q = trim((string) $request->query('q', ''));
+
+        $query = ['tab' => $tab];
+        if ($q !== '') {
+            $query['q'] = $q;
+        }
+
+        return view('admin.members.pending-approval-show', [
+            'member' => $user->load([
+                'designation',
+                'activeSubscription.plan',
+                'paymentTransactions' => fn ($q) => $q->orderByDesc('id')->limit(5),
+            ]),
+            'showApprovalActions' => false,
+            'backUrl' => route('admin.members.index', $query),
+            'backLabel' => 'Back to members list',
+        ]);
+    }
+
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'all'); // all | active | inactive

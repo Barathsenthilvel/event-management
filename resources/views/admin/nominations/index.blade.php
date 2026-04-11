@@ -98,7 +98,13 @@
                             <tr>
                                 <td class="px-4 py-3 font-extrabold text-slate-800">{{ $nomination->title }}</td>
                                 <td class="px-4 py-3">
-                                    <p>{{ optional($nomination->polling_date)->format('d M Y') }}</p>
+                                    <p>
+                                        @if($nomination->polling_date_to && $nomination->polling_date_to->toDateString() !== $nomination->polling_date->toDateString())
+                                            {{ optional($nomination->polling_date)->format('d M Y') }} – {{ $nomination->polling_date_to->format('d M Y') }}
+                                        @else
+                                            {{ optional($nomination->polling_date)->format('d M Y') }}
+                                        @endif
+                                    </p>
                                     <p class="text-[10px] text-slate-500">{{ $nomination->polling_from }} - {{ $nomination->polling_to }}</p>
                                 </td>
                                 <td class="px-4 py-3">{{ $nomination->positions->count() }}</td>

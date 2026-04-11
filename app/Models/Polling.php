@@ -15,6 +15,7 @@ class Polling extends Model
         'created_by_admin_id',
         'title',
         'polling_date',
+        'polling_date_to',
         'polling_from',
         'polling_to',
         'cover_image_path',
@@ -30,6 +31,7 @@ class Polling extends Model
     {
         return [
             'polling_date' => 'date',
+            'polling_date_to' => 'date',
             'promote_front' => 'boolean',
             'show_stats' => 'boolean',
             'is_active' => 'boolean',

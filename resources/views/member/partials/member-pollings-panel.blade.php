@@ -4,16 +4,28 @@
 @php
     $votedSet = collect($pollingVotedPositionIds ?? []);
     $votesByPosition = collect($memberPollingVotes ?? []);
+    $thanksPollId = session('polling_thanks_poll_id');
+    $thanksRelevant = session('polling_thanks_modal') && (
+        $thanksPollId === null
+        || $memberPollings->contains(fn ($p) => (int) $p->id === (int) $thanksPollId)
+    );
+    $successPollId = session('polling_success_poll_id');
+    $showVoteSuccessBanner = session('polling_success')
+        && ! session('polling_thanks_modal')
+        && (
+            $successPollId === null
+            || $memberPollings->contains(fn ($p) => (int) $p->id === (int) $successPollId)
+        );
 @endphp
 
-<section id="member-pollings" class="scroll-mt-28 space-y-6 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6" x-data="{ thanksOpen: {{ session('polling_thanks_modal') ? 'true' : 'false' }} }">
+<section id="member-pollings" class="scroll-mt-28 space-y-6 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6" x-data="{ thanksOpen: {{ $thanksRelevant ? 'true' : 'false' }} }">
     <div class="flex flex-col gap-2 border-b border-[#351c42]/10 pb-4">
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Governance</p>
         <h2 class="mt-1 text-xl font-extrabold text-[#351c42] sm:text-2xl">Polling</h2>
         <p class="mt-1 max-w-2xl text-sm text-[#351c42]/60">Cast your vote for each position during the scheduled window. Tap a name to choose — your selection is private; vote totals are not shown here.</p>
     </div>
 
-    @if(session('polling_success') && !session('polling_thanks_modal'))
+    @if($showVoteSuccessBanner)
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900" role="status">{{ session('polling_success') }}</div>
     @endif
     @if(session('polling_error'))
@@ -22,15 +34,20 @@
 
     @forelse($memberPollings as $poll)
         @php
-            $pollDate = $poll->polling_date?->format('Y-m-d');
-            $start = $pollDate ? \Carbon\Carbon::parse($pollDate.' '.$poll->polling_from) : null;
-            $end = $pollDate ? \Carbon\Carbon::parse($pollDate.' '.$poll->polling_to) : null;
+            $pollStartDate = $poll->polling_date?->format('Y-m-d');
+            $pollEndDate = ($poll->polling_date_to ?? $poll->polling_date)?->format('Y-m-d');
+            $start = $pollStartDate ? \Carbon\Carbon::parse($pollStartDate.' '.$poll->polling_from) : null;
+            $end = $pollEndDate ? \Carbon\Carbon::parse($pollEndDate.' '.$poll->polling_to) : null;
             $open = $start && $end && now()->between($start, $end);
         @endphp
         <article class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4 sm:p-5">
             <h3 class="text-lg font-bold text-[#351c42]">{{ $poll->title }}</h3>
             <p class="mt-1 text-xs font-semibold text-[#351c42]/55">
-                {{ $poll->polling_date?->format('d M Y') }}
+                @if($poll->polling_date_to && $poll->polling_date_to->toDateString() !== $poll->polling_date->toDateString())
+                    {{ $poll->polling_date?->format('d M Y') }} – {{ $poll->polling_date_to->format('d M Y') }}
+                @else
+                    {{ $poll->polling_date?->format('d M Y') }}
+                @endif
                 · {{ \Illuminate\Support\Carbon::parse($poll->polling_from)->format('g:i A') }} – {{ \Illuminate\Support\Carbon::parse($poll->polling_to)->format('g:i A') }}
                 @if($open)
                     <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Open</span>

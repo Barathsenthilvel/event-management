@@ -30,6 +30,13 @@ class MemberProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
+        $hasActiveSubscription = $user?->activeSubscription()->exists();
+
+        if ($user->profile_completed && $user->is_approved && !$hasActiveSubscription) {
+            return redirect()
+                ->route('member.subscription.index', ['type' => 'New'])
+                ->with('success', 'Your profile is approved. Please purchase a subscription plan.');
+        }
 
         if ($user->profile_completed || $user->is_approved) {
             session()->forget(self::PENDING_SESSION_KEY);
@@ -51,6 +58,14 @@ class MemberProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+        $hasActiveSubscription = $user?->activeSubscription()->exists();
+
+        if ($user->profile_completed && $user->is_approved && !$hasActiveSubscription) {
+            return redirect()
+                ->route('member.subscription.index', ['type' => 'New'])
+                ->with('success', 'Your profile is approved. Please purchase a subscription plan.');
+        }
+
         if ($user->profile_completed || $user->is_approved) {
             $message = $user->is_approved
                 ? 'Approved profiles cannot be updated. Please contact admin.'

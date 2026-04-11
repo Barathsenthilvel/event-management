@@ -7,10 +7,12 @@ use App\Models\NominationAlert;
 use App\Models\NominationEntry;
 use App\Models\NominationPosition;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class NominationController extends Controller
 {
@@ -89,6 +91,7 @@ class NominationController extends Controller
     {
         $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules());
+        $this->assertNominationPollingWindowCoherent($validated);
 
         DB::transaction(function () use ($request, $validated) {
             $nomination = Nomination::create($this->buildPayload($request, $validated, true));
@@ -111,6 +114,7 @@ class NominationController extends Controller
     {
         $this->mergeNormalizedPollingTimes($request);
         $validated = $request->validate($this->rules($nomination->id));
+        $this->assertNominationPollingWindowCoherent($validated);
 
         DB::transaction(function () use ($request, $validated, $nomination) {
             $nomination->update($this->buildPayload($request, $validated, false));
@@ -279,8 +283,9 @@ class NominationController extends Controller
             'title' => 'required|string|max:255',
             'terms' => 'nullable|string',
             'polling_date' => 'required|date',
+            'polling_date_to' => 'nullable|date|after_or_equal:polling_date',
             'polling_from' => 'required|date_format:H:i',
-            'polling_to' => 'required|date_format:H:i|after:polling_from',
+            'polling_to' => 'required|date_format:H:i',
             'cover_image' => 'nullable|image|max:5120',
             'banner_image' => 'nullable|image|max:5120',
             'status' => 'required|in:draft,active,closed,cancelled',
@@ -296,6 +301,7 @@ class NominationController extends Controller
             'title' => $validated['title'],
             'terms' => $validated['terms'] ?? null,
             'polling_date' => $validated['polling_date'],
+            'polling_date_to' => $validated['polling_date_to'] ?? null,
             'polling_from' => $validated['polling_from'],
             'polling_to' => $validated['polling_to'],
             'status' => $validated['status'],
@@ -331,12 +337,26 @@ class NominationController extends Controller
         return $positions;
     }
 
+    private function assertNominationPollingWindowCoherent(array $validated): void
+    {
+        $fromDate = (string) $validated['polling_date'];
+        $toDate = ! empty($validated['polling_date_to']) ? (string) $validated['polling_date_to'] : $fromDate;
+        $start = Carbon::parse($fromDate.' '.$validated['polling_from']);
+        $end = Carbon::parse($toDate.' '.$validated['polling_to']);
+        if ($end->lte($start)) {
+            throw ValidationException::withMessages([
+                'polling_to' => 'The closing date and time must be after the opening date and time.',
+            ]);
+        }
+    }
+
     /**
      * HTML time inputs may send H:i:s; validation expects H:i.
      */
     private function mergeNormalizedPollingTimes(Request $request): void
     {
         $request->merge([
+            'polling_date_to' => $request->filled('polling_date_to') ? $request->input('polling_date_to') : null,
             'polling_from' => $this->normalizeHiTime($request->input('polling_from')),
             'polling_to' => $this->normalizeHiTime($request->input('polling_to')),
         ]);

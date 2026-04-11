@@ -45,8 +45,14 @@
                 </div>
                 <div class="space-y-4">
                     <div class="rounded-xl border border-slate-100 p-4">
-                        <p class="text-xs font-black text-slate-600">Polling window</p>
-                        <p class="mt-2 text-sm font-semibold text-slate-900">{{ optional($n->polling_date)->format('d M Y') }}</p>
+                        <p class="text-xs font-black text-slate-600">Interest window</p>
+                        <p class="mt-2 text-sm font-semibold text-slate-900">
+                            @if($n->polling_date_to && $n->polling_date_to->toDateString() !== $n->polling_date->toDateString())
+                                {{ optional($n->polling_date)->format('d M Y') }} – {{ $n->polling_date_to->format('d M Y') }}
+                            @else
+                                {{ optional($n->polling_date)->format('d M Y') }}
+                            @endif
+                        </p>
                         <p class="mt-1 text-sm text-slate-600">{{ $n->polling_from }} – {{ $n->polling_to }}</p>
                     </div>
                     <div class="rounded-xl border border-slate-100 p-4">
