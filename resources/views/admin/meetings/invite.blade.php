@@ -11,7 +11,17 @@
             <a href="{{ route('admin.meetings.index') }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-700">Back</a>
         </div>
 
-        <form method="POST" action="{{ route('admin.meetings.invite.store', $meeting->id) }}" class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-5">
+        {{-- Search must not be nested inside the POST form (invalid HTML breaks submit). --}}
+        <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs font-black uppercase tracking-wider text-slate-500">Find members</p>
+            <form method="GET" action="{{ route('admin.meetings.invite', $meeting) }}" class="flex items-center gap-2">
+                <input type="text" name="q" value="{{ $q }}" placeholder="Search by name, email, mobile"
+                    class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200 min-w-[12rem]">
+                <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-extrabold">Search</button>
+            </form>
+        </div>
+
+        <form method="POST" action="{{ route('admin.meetings.invite.store', $meeting) }}" class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-5">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-5">
@@ -35,7 +45,7 @@
                         <p class="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Notify Members Via</p>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700 p-2 rounded-lg border border-slate-200">
-                                <input type="checkbox" name="notify_whatsapp" value="1" {{ old('notify_whatsapp') ? 'checked' : '' }}>
+                                <input type="checkbox" name="notify_whatsapp" value="1" {{ old('notify_whatsapp', true) ? 'checked' : '' }}>
                                 WhatsApp
                             </label>
                             <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700 p-2 rounded-lg border border-slate-200">
@@ -43,7 +53,7 @@
                                 SMS
                             </label>
                             <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700 p-2 rounded-lg border border-slate-200 col-span-2">
-                                <input type="checkbox" name="notify_email" value="1" {{ old('notify_email') ? 'checked' : '' }}>
+                                <input type="checkbox" name="notify_email" value="1" {{ old('notify_email', true) ? 'checked' : '' }}>
                                 Email
                             </label>
                         </div>
@@ -52,13 +62,7 @@
                 </div>
 
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <p class="text-xs font-black uppercase tracking-wider text-slate-500">Approved Members</p>
-                        <form method="GET">
-                            <input type="text" name="q" value="{{ $q }}" placeholder="Search"
-                                class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
-                        </form>
-                    </div>
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Approved Members</p>
                     <div class="max-h-80 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-100">
                         @foreach($members as $m)
                             @php $checked = in_array($m->id, old('member_ids', $invitedUserIds)); @endphp
@@ -118,4 +122,3 @@
     </div>
 </div>
 @endsection
-

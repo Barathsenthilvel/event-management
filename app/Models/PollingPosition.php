@@ -15,7 +15,13 @@ class PollingPosition extends Model
     protected $fillable = [
         'polling_id',
         'position',
+        'winner_user_id',
     ];
+
+    public function winner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'winner_user_id');
+    }
 
     public function polling(): BelongsTo
     {
@@ -34,4 +40,3 @@ class PollingPosition extends Model
         return $this->hasMany(PollingVote::class, 'position_id');
     }
 }
-

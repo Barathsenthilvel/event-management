@@ -2,6 +2,43 @@
 
 @section('content')
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
+    @if(session('success'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{{ session('success') }}</div>
+    @endif
+
+    <form method="POST" action="{{ route('admin.pollings.results', $polling) }}" class="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 shadow-sm space-y-4">
+        @csrf
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-extrabold text-slate-900">Member-facing results</h2>
+                <p class="text-xs text-slate-600 mt-1">When voting has ended, turn this on so members see totals and the official winner you select below.</p>
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-800">
+                <input type="hidden" name="results_visible_to_members" value="0">
+                <input type="checkbox" name="results_visible_to_members" value="1" class="rounded border-slate-300" {{ old('results_visible_to_members', $polling->results_visible_to_members) ? 'checked' : '' }}>
+                Show results to members
+            </label>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($positionStats as $block)
+                @php $pos = $block['position']; @endphp
+                <div class="rounded-xl border border-white bg-white p-3 shadow-sm">
+                    <p class="text-[10px] font-black uppercase text-slate-500">Official winner</p>
+                    <p class="text-xs font-bold text-slate-800 mb-2">{{ $pos->position }}</p>
+                    <select name="winners[{{ $pos->id }}]" class="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-800">
+                        <option value="">— Not set —</option>
+                        @foreach($pos->candidates as $cand)
+                            <option value="{{ $cand->id }}" {{ (int) old('winners.'.$pos->id, $pos->winner_user_id ?? 0) === (int) $cand->id ? 'selected' : '' }}>{{ $cand->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endforeach
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-700 text-white text-sm font-extrabold">Save results &amp; visibility</button>
+        </div>
+    </form>
+
     <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm flex items-start justify-between">
         <div>
             <h1 class="text-xl font-extrabold text-slate-900 uppercase">{{ $polling->title }}</h1>

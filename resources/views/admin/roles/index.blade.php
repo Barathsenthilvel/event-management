@@ -46,16 +46,25 @@ document.addEventListener('alpine:init', () => {
       }
       return roles.map(r => {
         const nameAttr = this.escapeAttr(r.name);
-        var permBtn = this.canManageMenuPermissions
+        const permBtn = this.canManageMenuPermissions
           ? '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Menu Permissions"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></button>'
           : '';
+        const isActive = r.is_active === true || r.is_active === 1 || r.is_active === '1';
+        const pc = Number(r.permissions_count) || 0;
+        const mc = Number(r.menu_permissions_count) || 0;
+        const noMods = pc === 0 && mc === 0;
+        const accessLine = noMods
+          ? '<span class="inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-800">Permission not provided</span>'
+          : '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[9px] text-emerald-600 font-bold uppercase">Access configured</span>';
+        const statusCell = isActive
+          ? '<span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span>'
+          : '<span class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-black text-[9px] uppercase border border-slate-200">Inactive</span>';
         return '<tr class="group transition-all">' +
           '<td class="px-6 py-4 bg-white border-y border-l border-slate-100 first:rounded-l-2xl"><div class="flex items-center gap-3">' +
           '<div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
-          '<div><p class="font-bold text-slate-800">' + this.escapeAttr(r.name) + '</p><div class="flex items-center gap-1 mt-0.5">' +
-          '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[9px] text-emerald-600 font-bold uppercase">Access Provided</span></div></div></td>' +
+          '<div><p class="font-bold text-slate-800">' + this.escapeAttr(r.name) + '</p><div class="flex items-center gap-1 mt-0.5">' + accessLine + '</div></div></td>' +
           '<td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-400 font-medium">' + (r.created_at || '') + '</td>' +
-          '<td class="px-6 py-4 bg-white border-y border-slate-100 text-center"><span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span></td>' +
+          '<td class="px-6 py-4 bg-white border-y border-slate-100 text-center">' + statusCell + '</td>' +
           '<td class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">' +
           '<div class="flex items-center justify-end gap-1">' + permBtn +
           '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Edit Role"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
@@ -71,10 +80,20 @@ document.addEventListener('alpine:init', () => {
         const permBtn = this.canManageMenuPermissions
           ? '<button type="button" data-action="permissions" data-role-id="' + r.id + '" data-role-name="' + nameAttr + '" class="flex-1 py-2 bg-slate-50 text-[10px] font-bold text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors">Menu Permissions</button>'
           : '';
+        const isActive = r.is_active === true || r.is_active === 1 || r.is_active === '1';
+        const pc = Number(r.permissions_count) || 0;
+        const mc = Number(r.menu_permissions_count) || 0;
+        const noMods = pc === 0 && mc === 0;
+        const statusBadge = isActive
+          ? '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase border border-emerald-100">Active</span>'
+          : '<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[9px] uppercase border border-slate-200">Inactive</span>';
+        const permAlert = noMods
+          ? '<p class="text-[10px] font-black uppercase text-amber-700 mb-2">Permission not provided</p>'
+          : '';
         return '<div class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">' +
           '<div class="flex justify-between items-start mb-4"><div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">' + (r.initial || r.name.charAt(0).toUpperCase()) + '</div>' +
-          '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase">Active</span></div>' +
-          '<h4 class="font-bold text-slate-800 mb-1">' + this.escapeAttr(r.name) + '</h4>' +
+          statusBadge + '</div>' +
+          '<h4 class="font-bold text-slate-800 mb-1">' + this.escapeAttr(r.name) + '</h4>' + permAlert +
           '<p class="text-xs text-slate-400 mb-4 line-clamp-2">' + this.escapeAttr(desc) + '</p>' +
           '<div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">' + permBtn +
           '<button type="button" data-action="edit" data-role-id="' + r.id + '" class="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>' +
@@ -349,6 +368,9 @@ document.addEventListener('alpine:init', () => {
             </thead>
             <tbody class="text-xs">
                 @forelse($roles as $role)
+                @php
+                    $roleNoModules = ($role->permissions_count ?? 0) === 0 && ($role->menu_permissions_count ?? 0) === 0;
+                @endphp
                 <tr class="group transition-all">
                     <td
                         class="px-6 py-4 bg-white border-y border-l border-slate-100 first:rounded-l-2xl">
@@ -358,8 +380,12 @@ document.addEventListener('alpine:init', () => {
                             <div>
                                 <p class="font-bold text-slate-800">{{ $role->name }}</p>
                                 <div class="flex items-center gap-1 mt-0.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span class="text-[9px] text-emerald-600 font-bold uppercase">Access Provided</span>
+                                    @if($roleNoModules)
+                                        <span class="inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-800">Permission not provided</span>
+                                    @else
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span class="text-[9px] text-emerald-600 font-bold uppercase">Access configured</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -367,8 +393,11 @@ document.addEventListener('alpine:init', () => {
                     <td class="px-6 py-4 bg-white border-y border-slate-100 text-slate-400 font-medium">
                         {{ $role->created_at->format('d M Y') }}</td>
                     <td class="px-6 py-4 bg-white border-y border-slate-100 text-center">
-                        <span
-                            class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span>
+                        @if($role->is_active)
+                            <span class="px-2 py-1 rounded-md bg-emerald-50 text-emerald-600 font-black text-[9px] uppercase border border-emerald-100">Active</span>
+                        @else
+                            <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-600 font-black text-[9px] uppercase border border-slate-200">Inactive</span>
+                        @endif
                     </td>
                     <td
                         class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">
@@ -433,15 +462,24 @@ document.addEventListener('alpine:init', () => {
             :class="viewType === 'grid' ? '!block' : ''"
             @click="handleTableClick($event)">
             @foreach($roles as $role)
+            @php
+                $gridNoModules = ($role->permissions_count ?? 0) === 0 && ($role->menu_permissions_count ?? 0) === 0;
+            @endphp
             <div
                 class="p-5 border border-slate-100 rounded-[20px] hover:shadow-lg hover:-translate-y-1 transition-all bg-white group relative">
                 <div class="flex justify-between items-start mb-4">
                     <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-indigo-500 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-colors">
                         {{ strtoupper(substr($role->name, 0, 1)) }}</div>
-                    <span
-                        class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase">Active</span>
+                    @if($role->is_active)
+                        <span class="px-2 py-0.5 rounded border border-emerald-100 bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase">Active</span>
+                    @else
+                        <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-100 text-slate-600 font-bold text-[9px] uppercase">Inactive</span>
+                    @endif
                 </div>
                 <h4 class="font-bold text-slate-800 mb-1">{{ $role->name }}</h4>
+                @if($gridNoModules)
+                    <p class="mb-2 text-[10px] font-black uppercase text-amber-700">Permission not provided</p>
+                @endif
                 <p class="text-xs text-slate-400 mb-4 line-clamp-2">{{ $role->description ?? 'Manages access levels and permissions for this specific user group.' }}</p>
 
                 <div class="mt-4 flex gap-2 pt-4 border-t border-slate-50">

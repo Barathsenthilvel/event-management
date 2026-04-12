@@ -32,8 +32,9 @@
             </div>
 
             <div>
-                <label class="block text-xs font-black text-slate-600 mb-2">Meeting Link @include('admin.partials.required-mark')</label>
-                <input type="text" name="meeting_link" value="{{ old('meeting_link', $meeting->meeting_link ?? '') }}" required
+                <label class="block text-xs font-black text-slate-600 mb-2">Meeting link <span class="text-slate-400 font-normal">(optional)</span></label>
+                <p class="text-[11px] text-slate-500 mb-1">Add a Zoom / Meet / WhatsApp link when ready. Members still see the meeting on their dashboard from the schedule.</p>
+                <input type="url" name="meeting_link" value="{{ old('meeting_link', $meeting->meeting_link ?? '') }}" placeholder="https://…"
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
                 @error('meeting_link')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>

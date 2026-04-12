@@ -6,6 +6,7 @@ use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\Meeting;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
 use App\Models\NominationEntry;
@@ -173,6 +174,36 @@ class MemberDashboardController extends Controller
         $showNominationDashboard = $dashboardNominations->isNotEmpty();
         $showPollingDashboard = $dashboardPolls->isNotEmpty();
 
+        $upcomingMeetings = collect();
+        if ($showFullMemberMenu && $user) {
+            // Open meetings (no invites) appear for everyone; once the office adds invites,
+            // only listed members see that meeting — same pattern as events.
+            $upcomingMeetings = Meeting::query()
+                ->with([
+                    'schedules' => fn ($q) => $q->orderBy('meeting_date')->orderBy('from_time'),
+                    'invites' => fn ($q) => $q->where('user_id', $user->id),
+                ])
+                ->where('is_active', true)
+                ->whereIn('status', ['upcoming', 'live'])
+                ->whereHas('schedules', fn ($q) => $q->whereDate('meeting_date', '>=', Carbon::today()->toDateString()))
+                ->where(function ($q) use ($user) {
+                    $q->whereDoesntHave('invites')
+                        ->orWhereHas('invites', fn ($iq) => $iq->where('user_id', $user->id));
+                })
+                ->get()
+                ->sortBy(function (Meeting $m) {
+                    $s = $m->schedules->first();
+                    if (! $s) {
+                        return '9999-12-31 99:99:99';
+                    }
+                    $from = $s->from_time ?? '00:00:00';
+
+                    return $s->meeting_date->format('Y-m-d').' '.(string) $from;
+                })
+                ->take(12)
+                ->values();
+        }
+
         return view('member.dashboard', [
             'activeSubscription' => $user?->activeSubscription,
             'latestReceiptTransaction' => $latestReceiptTransaction,
@@ -184,6 +215,7 @@ class MemberDashboardController extends Controller
             'pollingSlotQueue' => $pollingSlotQueue,
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,
+            'upcomingMeetings' => $upcomingMeetings,
             'transactions' => PaymentTransaction::query()
                 ->with('subscriptionPlan')
                 ->where('user_id', $user?->id)
@@ -281,12 +313,20 @@ class MemberDashboardController extends Controller
         }
 
         $memberPollings = Polling::query()
-            ->with(['positions' => fn ($q) => $q->with('candidates:id,name')])
+            ->with([
+                'positions' => fn ($q) => $q->with(['candidates:id,name', 'winner:id,name']),
+            ])
             ->where('is_active', true)
             ->where('publish_status', 'published')
-            ->where('polling_status', 'live')
+            ->where(function ($q) {
+                $q->where('polling_status', 'live')
+                    ->orWhere(function ($q2) {
+                        $q2->where('polling_status', 'ends')
+                            ->where('results_visible_to_members', true);
+                    });
+            })
             ->latest('id')
-            ->limit(20)
+            ->limit(30)
             ->get();
 
         $pollingVotedPositionIds = PollingVote::query()
@@ -299,11 +339,44 @@ class MemberDashboardController extends Controller
             ->get(['id', 'polling_id', 'position_id', 'candidate_user_id'])
             ->keyBy('position_id');
 
+        $pollingResultStats = [];
+        foreach ($memberPollings as $poll) {
+            if (! $poll->results_visible_to_members) {
+                continue;
+            }
+            $byPosition = [];
+            foreach ($poll->positions as $position) {
+                $counts = PollingVote::query()
+                    ->where('polling_id', $poll->id)
+                    ->where('position_id', $position->id)
+                    ->selectRaw('candidate_user_id, COUNT(*) as c')
+                    ->groupBy('candidate_user_id')
+                    ->pluck('c', 'candidate_user_id');
+                $total = (int) $counts->sum();
+                $rows = [];
+                foreach ($position->candidates as $cand) {
+                    $v = (int) ($counts[$cand->id] ?? 0);
+                    $rows[] = [
+                        'name' => $cand->name,
+                        'votes' => $v,
+                        'bar_percent' => $total > 0 ? round(($v / $total) * 100) : 0,
+                    ];
+                }
+                $byPosition[$position->id] = [
+                    'total' => $total,
+                    'candidates' => collect($rows)->sortByDesc('votes')->values()->all(),
+                    'winner_name' => $position->winner?->name,
+                ];
+            }
+            $pollingResultStats[$poll->id] = $byPosition;
+        }
+
         return view('member.pollings', [
             'activeSubscription' => $user->activeSubscription,
             'memberPollings' => $memberPollings,
             'pollingVotedPositionIds' => $pollingVotedPositionIds,
             'memberPollingVotes' => $memberPollingVotes,
+            'pollingResultStats' => $pollingResultStats,
         ]);
     }
 
@@ -485,13 +558,6 @@ class MemberDashboardController extends Controller
             );
         }
 
-        if ($event->status !== 'completed') {
-            return redirect()->route('member.events.index')->with(
-                'event_interest_error',
-                'Certificate download opens after the event is marked completed and the office has uploaded the certificate file.'
-            );
-        }
-
         $event->loadMissing('dates');
 
         if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
@@ -535,7 +601,7 @@ class MemberDashboardController extends Controller
             DB::transaction(function () use ($event, $user) {
                 $event->refresh();
                 if ($event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit) {
-                    throw new \RuntimeException('Seat limit reached for this event.');
+                    throw new \RuntimeException('Registration closed — this event has reached its seat limit.');
                 }
 
                 $alreadyCountedViaPublic = EventInterest::query()

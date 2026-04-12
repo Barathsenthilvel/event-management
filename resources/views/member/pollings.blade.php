@@ -18,5 +18,6 @@
         'memberPollings' => $memberPollings,
         'pollingVotedPositionIds' => $pollingVotedPositionIds,
         'memberPollingVotes' => $memberPollingVotes ?? collect(),
+        'pollingResultStats' => $pollingResultStats ?? [],
     ])
 @endsection

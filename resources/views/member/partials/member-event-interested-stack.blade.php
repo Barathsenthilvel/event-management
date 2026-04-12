@@ -25,6 +25,13 @@
     $ring = 'relative inline-flex shrink-0 overflow-hidden rounded-full border-2 border-[#2dd4bf] bg-[#4a2660] text-[10px] font-extrabold text-white shadow-sm ring-2 ring-[#351c42]';
     $size = 'h-8 w-8 sm:h-9 sm:w-9';
     $overlap = '-ml-2 sm:-ml-2.5';
+    $placeholderFaces = [
+        asset('images/facepile/1.jpg'),
+        asset('images/facepile/2.jpg'),
+        asset('images/facepile/3.jpg'),
+        asset('images/facepile/4.jpg'),
+        asset('images/facepile/5.jpg'),
+    ];
 @endphp
 <div class="flex min-w-0 flex-1 items-center" aria-label="Members interested in this event">
     <div class="flex min-w-0 items-center overflow-x-auto py-0.5 pl-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -56,16 +63,26 @@
                 @endif
             </span>
         @else
-            @for ($i = 0; $i < 4; $i++)
+            @foreach ($placeholderFaces as $i => $src)
                 <span
-                    class="{{ $i > 0 ? $overlap.' ' : '' }}inline-flex {{ $size }} rounded-full border-2 border-[#2dd4bf]/55 bg-gradient-to-br from-[#965995]/35 to-[#351c42]/40 ring-2 ring-[#351c42]"
+                    class="{{ $i > 0 ? $overlap.' ' : '' }}relative inline-flex {{ $size }} shrink-0 overflow-hidden rounded-full border-2 border-[#2dd4bf] ring-2 ring-[#351c42] shadow-sm"
                     style="z-index: {{ $i + 1 }}"
                     aria-hidden="true"
-                ></span>
-            @endfor
+                >
+                    <img
+                        src="{{ $src }}"
+                        alt=""
+                        width="36"
+                        height="36"
+                        class="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                    />
+                </span>
+            @endforeach
             <span
                 class="{{ $overlap }} inline-flex {{ $size }} items-center justify-center rounded-full border-2 border-[#2dd4bf] bg-gradient-to-br from-[#5c3560] to-[#351c42] text-sm font-bold text-[#fddc6a] ring-2 ring-[#351c42]"
-                style="z-index: 5"
+                style="z-index: 6"
                 aria-hidden="true"
             >+</span>
         @endif

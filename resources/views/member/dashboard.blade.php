@@ -546,6 +546,10 @@
             </section>
             @endif
 
+            @if($showFullMemberMenu && isset($upcomingMeetings) && $upcomingMeetings->isNotEmpty())
+                @include('member.partials.dashboard-meetings', ['upcomingMeetings' => $upcomingMeetings])
+            @endif
+
             @if($showFullMemberMenu)
                 <section aria-labelledby="digital-id-heading" class="scroll-mt-28">
                     <div class="mb-3 flex flex-wrap items-end justify-between gap-2">

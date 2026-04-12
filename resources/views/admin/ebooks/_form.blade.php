@@ -1,7 +1,6 @@
 @php
     $isEdit = isset($ebook) && $ebook;
     $action = $isEdit ? route('admin.ebooks.update', $ebook->id) : route('admin.ebooks.store');
-    $pricingDefault = old('pricing_type', $isEdit ? $ebook->pricing_type : 'free');
     $coverUrl = ($isEdit && !empty($ebook->cover_image_path)) ? asset('storage/' . $ebook->cover_image_path) : '';
     $bannerUrl = ($isEdit && !empty($ebook->banner_image_path)) ? asset('storage/' . $ebook->banner_image_path) : '';
     $materialUrl = ($isEdit && !empty($ebook->material_path)) ? asset('storage/' . $ebook->material_path) : '';
@@ -14,6 +13,8 @@
     @if($isEdit)
         @method('PUT')
     @endif
+    <input type="hidden" name="pricing_type" value="free">
+    <input type="hidden" name="price" value="0">
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
         <!-- Left: text fields -->
@@ -39,35 +40,9 @@
                 @error('description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
-            <div class="pt-4">
-                <label class="block text-[11px] font-bold text-slate-700 mb-2">Pricing Type @include('admin.partials.required-mark')</label>
-                <div x-data="{ type: '{{ $pricingDefault }}' }" class="space-y-4">
-                    <div class="flex items-center gap-6">
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
-                            <input type="radio" name="pricing_type" value="free" x-model="type"
-                                   class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500/30">
-                            <span>Free</span>
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
-                            <input type="radio" name="pricing_type" value="paid" x-model="type"
-                                   class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500/30">
-                            <span>Paid</span>
-                        </label>
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-700 mb-2">
-                            Price
-                            <span class="text-red-500 font-bold" x-show="type === 'paid'" x-cloak aria-hidden="true">*</span>
-                        </label>
-                        <input type="number" step="0.01" name="price" min="0"
-                               value="{{ old('price', $isEdit ? $ebook->price : '') }}"
-                               :disabled="type === 'free'"
-                               :required="type === 'paid'"
-                               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400">
-                        @error('price')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                    </div>
-                </div>
+            <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
+                <p class="text-sm font-semibold text-emerald-900">Pricing</p>
+                <p class="mt-1 text-xs text-emerald-800/90">E-Books are <strong>free</strong> for members. Payment options are hidden by policy.</p>
             </div>
 
             <div>

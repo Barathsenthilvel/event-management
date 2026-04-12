@@ -1,36 +1,36 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminDesignationController;
+use App\Http\Controllers\AdminDonationPaymentController;
+use App\Http\Controllers\AdminJobController;
+use App\Http\Controllers\AdminMemberApprovalController;
+use App\Http\Controllers\AdminMemberController;
+use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\MenuController;
 use App\Http\Controllers\DefaultSettingsController;
-use App\Http\Controllers\EBookController;
-use App\Http\Controllers\MembershipController;
-use App\Http\Controllers\MemberAuthController;
-use App\Http\Controllers\MemberDashboardController;
-use App\Http\Controllers\MemberProfileController;
-use App\Http\Controllers\MemberSubscriptionController;
-use App\Http\Controllers\AdminMemberApprovalController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\EventInterestController;
-use App\Http\Controllers\AdminSubscriptionController;
-use App\Http\Controllers\MemberPasswordController;
-use App\Http\Controllers\MemberForgotPasswordController;
-use App\Http\Controllers\MemberResetPasswordController;
-use App\Http\Controllers\MemberEBookController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\DonationPaymentController;
-use App\Http\Controllers\AdminDonationPaymentController;
+use App\Http\Controllers\EBookController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventInterestController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MeetingController;
-use App\Http\Controllers\AdminJobController;
+use App\Http\Controllers\MemberAuthController;
+use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\MemberEBookController;
+use App\Http\Controllers\MemberForgotPasswordController;
+use App\Http\Controllers\MemberPasswordController;
+use App\Http\Controllers\MemberProfileController;
+use App\Http\Controllers\MemberResetPasswordController;
+use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MemberSubscriptionController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NominationController;
 use App\Http\Controllers\PollingController;
-use App\Http\Controllers\AdminMemberController;
-use App\Http\Controllers\AdminDesignationController;
+use App\Http\Controllers\RoleController;
+use Illuminate\Support\Facades\Route;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -151,6 +151,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/events/{event}/send-reminder', [EventController::class, 'sendReminder'])->name('admin.events.send-reminder');
         Route::post('/events/{event}/invites/{invite}/status', [EventController::class, 'updateInviteStatus'])->name('admin.events.invites.status');
         Route::get('/events/{event}/invites/{invite}/certificate', [EventController::class, 'downloadInviteCertificate'])->name('admin.events.invites.certificate');
+        Route::post('/events/{event}/interests/{interest}/attendance', [EventController::class, 'updateInterestAttendance'])->name('admin.events.interests.attendance');
+        Route::get('/events/{event}/interests/{interest}/certificate', [EventController::class, 'downloadInterestCertificate'])->name('admin.events.interests.certificate');
         Route::get('/events/{event}/album', [EventController::class, 'album'])->name('admin.events.album');
         Route::post('/events/{event}/album', [EventController::class, 'albumStore'])->name('admin.events.album.store');
         Route::delete('/events/{event}/album/{photo}', [EventController::class, 'albumDestroy'])->name('admin.events.album.destroy');
@@ -238,6 +240,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/pollings/{polling}/toggle-status', [PollingController::class, 'toggleStatus'])->name('admin.pollings.toggle-status');
         Route::get('/pollings/{polling}/stats', [PollingController::class, 'stats'])->name('admin.pollings.stats');
         Route::get('/pollings/{polling}/report', [PollingController::class, 'downloadReport'])->name('admin.pollings.report');
+        Route::post('/pollings/{polling}/results', [PollingController::class, 'saveResults'])->name('admin.pollings.results');
     });
 });
 

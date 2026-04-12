@@ -87,13 +87,71 @@
 
         @php
             $canMarkAttendance = in_array($event->status, ['live', 'completed'], true);
+            $guestAttendanceEnabled = \Illuminate\Support\Facades\Schema::hasColumn('event_interests', 'participation_status');
         @endphp
+
+        @if($guestAttendanceEnabled && $event->interests->count() > 0)
+            <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+                <h2 class="text-sm font-extrabold text-slate-900 mb-1">Public registrations — attendance</h2>
+                <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                    Non-member interest from the website. Mark <strong>Attended</strong> for certificate eligibility (same template PDF as members).
+                </p>
+                @if(!$canMarkAttendance && $event->status !== 'cancelled')
+                    <p class="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
+                        Attendance unlocks when the event is <strong>Live</strong> or <strong>Completed</strong>.
+                    </p>
+                @endif
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-xs">
+                        <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">Email / Phone</th>
+                                <th class="px-4 py-3">Attendance</th>
+                                <th class="px-4 py-3 text-right">Certificate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($event->interests as $row)
+                                <tr>
+                                    <td class="px-4 py-3 font-bold text-slate-800">{{ $row->name }}</td>
+                                    <td class="px-4 py-3 text-slate-600">
+                                        <p>{{ $row->email }}</p>
+                                        <p class="text-[11px] text-slate-500">{{ $row->phone ?? '—' }}</p>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <form method="POST" action="{{ route('admin.events.interests.attendance', [$event->id, $row->id]) }}" class="flex flex-wrap items-center gap-2">
+                                            @csrf
+                                            <select name="participation_status"
+                                                class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                                @disabled(!$canMarkAttendance)>
+                                                <option value="interested" {{ ($row->participation_status ?? 'interested') === 'interested' ? 'selected' : '' }}>Interested</option>
+                                                <option value="participated" {{ ($row->participation_status ?? '') === 'participated' ? 'selected' : '' }}>Attended</option>
+                                                <option value="not_participated" {{ ($row->participation_status ?? '') === 'not_participated' ? 'selected' : '' }}>Did not attend</option>
+                                            </select>
+                                            <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold disabled:opacity-50" @disabled(!$canMarkAttendance)>Save</button>
+                                        </form>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        @if(($row->participation_status ?? '') === 'participated')
+                                            <a href="{{ route('admin.events.interests.certificate', [$event->id, $row->id]) }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-emerald-700">Certificate PDF</a>
+                                        @else
+                                            <span class="text-xs font-bold text-slate-400">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
 
         <div id="event-member-attendance" class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm scroll-mt-6">
             <h2 class="text-sm font-extrabold text-slate-900 mb-1">Invited &amp; interested members</h2>
             <p class="text-xs text-slate-600 mb-3 leading-relaxed">
                 When the event is <strong class="text-slate-800">Live</strong> or <strong class="text-slate-800">Completed</strong>, set <strong>Attended</strong> or <strong>Did not attend</strong> for each member.
-                Members can <strong>download the certificate</strong> only after the event is <strong>Completed</strong>, they are marked <strong>Participated — certificate eligible</strong>, and you upload the <strong>template PDF</strong> on <a href="{{ route('admin.events.edit', $event) }}" class="font-bold text-indigo-600 hover:underline">Edit event</a>.
+                Members can <strong>download the certificate</strong> after they are marked <strong>Attended</strong> and you upload the <strong>template PDF</strong> on <a href="{{ route('admin.events.edit', $event) }}" class="font-bold text-indigo-600 hover:underline">Edit event</a>.
             </p>
             @if(!$canMarkAttendance && $event->status !== 'cancelled')
                 <p class="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">

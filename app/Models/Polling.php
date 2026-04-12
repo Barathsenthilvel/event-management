@@ -24,6 +24,7 @@ class Polling extends Model
         'publish_status',
         'polling_status',
         'show_stats',
+        'results_visible_to_members',
         'is_active',
     ];
 
@@ -34,6 +35,7 @@ class Polling extends Model
             'polling_date_to' => 'date',
             'promote_front' => 'boolean',
             'show_stats' => 'boolean',
+            'results_visible_to_members' => 'boolean',
             'is_active' => 'boolean',
         ];
     }
@@ -53,4 +55,3 @@ class Polling extends Model
         return $this->hasMany(PollingVote::class);
     }
 }
-

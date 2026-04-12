@@ -179,6 +179,7 @@
             <div class="grid grid-cols-2 gap-3">
                 <label class="text-xs"><input type="checkbox" name="promote_front" value="1" {{ old('promote_front', $p?->promote_front ?? false) ? 'checked' : '' }}> Promote Front</label>
                 <label class="text-xs"><input type="checkbox" name="show_stats" value="1" {{ old('show_stats', $p?->show_stats ?? true) ? 'checked' : '' }}> Show Stats</label>
+                <label class="text-xs col-span-2"><input type="checkbox" name="results_visible_to_members" value="1" {{ old('results_visible_to_members', $p?->results_visible_to_members ?? false) ? 'checked' : '' }}> Publish results to members (after voting ends)</label>
                 <div>
                     @php $publish = old('publish_status', $p?->publish_status ?? 'published'); @endphp
                     <label class="block text-xs font-black text-slate-600 mb-1">Publish Status</label>

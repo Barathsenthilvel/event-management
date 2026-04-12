@@ -22,6 +22,8 @@
     $seatLimited = ($event->seat_mode ?? '') === 'limited';
     $seatCap = max(0, (int) ($event->seat_limit ?? 0));
     $filled = (int) ($event->interested_count ?? 0);
+    $seatsFullComputed = $seatLimited && $seatCap > 0 && $filled >= $seatCap;
+    $seatsFull = isset($seatsFull) ? (bool) $seatsFull : $seatsFullComputed;
 @endphp
 <article class="overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-sm">
     <div class="grid gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,280px)_1fr] md:items-stretch">
@@ -46,8 +48,13 @@
                 </div>
                 <div class="shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
                     @if ($seatLimited)
-                        <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
-                        <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $filled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
+                        @if($seatsFull)
+                            <div class="text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">Registration</div>
+                            <div class="mt-0.5 text-[10px] font-extrabold uppercase text-rose-800">Closed</div>
+                        @else
+                            <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
+                            <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $filled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
+                        @endif
                     @else
                         <div class="py-0.5 text-[10px] font-black uppercase tracking-wide leading-tight text-[#351c42]">Unlimited</div>
                     @endif
@@ -92,18 +99,13 @@
         @php $ps = $invite->participation_status; @endphp
         @if($ps === 'participated')
             <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
-                @php
-                    $evDone = $event->status === 'completed';
-                    $certReady = $evDone && !empty($event->template_pdf_path);
-                @endphp
+                @php $certReady = ! empty($event->template_pdf_path); @endphp
                 <div class="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
                     <span class="text-sm font-extrabold text-[#351c42]/85">Attended</span>
                     @if($certReady)
                         <a href="{{ route('member.events.certificate', $event) }}" class="inline-flex w-full items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-bold text-[#fddc6a] transition hover:brightness-105 sm:w-auto">Download certificate</a>
-                    @elseif($evDone)
-                        <span class="text-xs font-semibold text-[#351c42]/55">Certificate will be uploaded soon.</span>
                     @else
-                        <span class="text-xs font-semibold text-[#351c42]/55">Certificate available after the event is completed.</span>
+                        <span class="text-xs font-semibold text-[#351c42]/55">Certificate will be uploaded soon.</span>
                     @endif
                 </div>
             </div>
@@ -124,23 +126,17 @@
         @php
             $alreadyInterested = $alreadyInterested ?? false;
             $myInvite = $myInvite ?? null;
-            $seatsFull = $seatsFull ?? false;
         @endphp
         @if($alreadyInterested && $myInvite)
             @if($myInvite->participation_status === 'participated')
                 <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
-                    @php
-                        $evDoneList = $event->status === 'completed';
-                        $certReadyList = $evDoneList && !empty($event->template_pdf_path);
-                    @endphp
+                    @php $certReadyList = ! empty($event->template_pdf_path); @endphp
                     <div class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
                         <span class="text-sm font-extrabold text-[#351c42]/85">Attended</span>
                         @if($certReadyList)
                             <a href="{{ route('member.events.certificate', $event) }}" class="text-sm font-bold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">Download certificate</a>
-                        @elseif($evDoneList)
-                            <span class="text-xs font-semibold text-[#351c42]/55">Certificate coming soon</span>
                         @else
-                            <span class="text-xs font-semibold text-[#351c42]/55">Certificate after event completes</span>
+                            <span class="text-xs font-semibold text-[#351c42]/55">Certificate coming soon</span>
                         @endif
                     </div>
                 </div>
@@ -160,18 +156,21 @@
                 <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</p>
             </div>
         @elseif($seatsFull)
-            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+            <div class="rounded-b-2xl border-t border-rose-200 bg-rose-50 px-4 py-3 sm:px-6">
+                <p class="text-center text-sm font-extrabold text-rose-900">Registration closed</p>
+                <p class="mt-1 text-center text-xs font-semibold text-rose-800/90">Seat limit reached ({{ $filled }} / {{ $seatCap }}).</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6">
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
-                <p class="min-w-0 shrink-0 text-sm font-extrabold text-amber-200 sm:ml-auto">Seat limit reached</p>
             </div>
         @else
             <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
-                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 sm:ml-auto">
+                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 sm:ml-auto" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
                     @csrf
                     <button
                         type="submit"
-                        class="inline-flex min-h-[2.5rem] min-w-[7.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                        class="inline-flex min-h-[2.5rem] min-w-[7.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Interested
                     </button>

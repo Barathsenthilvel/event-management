@@ -79,9 +79,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}">
+                                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}" onsubmit="return confirm('Approve this member? They will be able to sign in and purchase membership plans.');">
                                             @csrf
-                                            <button class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-lg transition-all">
+                                            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-lg transition-all">
                                                 Approve
                                             </button>
                                         </form>

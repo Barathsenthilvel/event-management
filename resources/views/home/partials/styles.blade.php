@@ -212,6 +212,59 @@
         box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
     }
 
+    /* Desktop primary nav — clear hover / focus affordance */
+    .site-nav-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 0.85rem;
+        border-radius: 0.65rem;
+        color: #3d4d5c;
+        transition:
+            color 0.2s ease,
+            background-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .site-nav-link:hover {
+        color: #351c42;
+        background-color: rgba(53, 28, 66, 0.07);
+        box-shadow: 0 1px 0 rgba(150, 89, 149, 0.25);
+    }
+
+    .site-nav-link:focus-visible {
+        outline: none;
+        color: #351c42;
+        background-color: rgba(150, 89, 149, 0.12);
+        box-shadow: 0 0 0 2px rgba(150, 89, 149, 0.45);
+    }
+
+    .site-nav-link::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 0.2rem;
+        width: 0;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #965995, #351c42);
+        transform: translateX(-50%);
+        transition: width 0.22s ease;
+        pointer-events: none;
+    }
+
+    .site-nav-link:hover::after,
+    .site-nav-link:focus-visible::after {
+        width: calc(100% - 1.2rem);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .site-nav-link,
+        .site-nav-link::after {
+            transition: none;
+        }
+    }
+
     .click-btn--nav {
         height: 50px;
         padding: 0 16px 0 52px;

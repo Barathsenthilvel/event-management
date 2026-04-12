@@ -20,9 +20,9 @@ class MeetingController extends Controller
             ->withCount('invites')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('title', 'like', '%' . $q . '%')
-                        ->orWhere('meeting_mode', 'like', '%' . $q . '%')
-                        ->orWhere('status', 'like', '%' . $q . '%');
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('meeting_mode', 'like', '%'.$q.'%')
+                        ->orWhere('status', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -52,6 +52,7 @@ class MeetingController extends Controller
     public function edit(Meeting $meeting)
     {
         $meeting->load('schedules');
+
         return view('admin.meetings.edit', compact('meeting'));
     }
 
@@ -71,12 +72,14 @@ class MeetingController extends Controller
     public function destroy(Meeting $meeting)
     {
         $meeting->delete();
+
         return redirect()->route('admin.meetings.index')->with('success', 'Meeting deleted successfully.');
     }
 
     public function cancel(Meeting $meeting)
     {
         $meeting->update(['status' => 'cancelled', 'is_active' => false]);
+
         return redirect()->route('admin.meetings.index')->with('success', 'Meeting cancelled.');
     }
 
@@ -91,7 +94,8 @@ class MeetingController extends Controller
 
     public function toggleDisplay(Meeting $meeting)
     {
-        $meeting->update(['is_active' => !$meeting->is_active]);
+        $meeting->update(['is_active' => ! $meeting->is_active]);
+
         return redirect()->route('admin.meetings.index')->with('success', 'Display status updated.');
     }
 
@@ -102,9 +106,9 @@ class MeetingController extends Controller
             ->where('is_approved', true)
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('mobile', 'like', '%' . $q . '%');
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -140,7 +144,7 @@ class MeetingController extends Controller
         $notifySms = $request->boolean('notify_sms');
         $notifyEmail = $request->boolean('notify_email');
 
-        if (!$notifyWhatsApp && !$notifySms && !$notifyEmail) {
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
             return back()->withErrors([
                 'notify_channel' => 'Select at least one notification channel.',
             ])->withInput();
@@ -187,7 +191,7 @@ class MeetingController extends Controller
     {
         return [
             'title' => 'required|string|max:255',
-            'meeting_link' => 'required|string|max:500',
+            'meeting_link' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'meeting_mode' => 'required|in:whatsapp,teams,others,direct,phone_call',
             'status' => 'required|in:upcoming,live,completed,cancelled',
@@ -204,7 +208,9 @@ class MeetingController extends Controller
     {
         $payload = [
             'title' => $validated['title'],
-            'meeting_link' => $validated['meeting_link'],
+            'meeting_link' => isset($validated['meeting_link']) && $validated['meeting_link'] !== ''
+                ? $validated['meeting_link']
+                : null,
             'description' => $validated['description'] ?? null,
             'meeting_mode' => $validated['meeting_mode'],
             'status' => $validated['status'],
@@ -234,4 +240,3 @@ class MeetingController extends Controller
         ];
     }
 }
-

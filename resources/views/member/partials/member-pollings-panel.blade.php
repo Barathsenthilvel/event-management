@@ -2,6 +2,7 @@
     Expects: $memberPollings, $pollingVotedPositionIds, $memberPollingVotes
 --}}
 @php
+    $pollingResultStats = $pollingResultStats ?? [];
     $votedSet = collect($pollingVotedPositionIds ?? []);
     $votesByPosition = collect($memberPollingVotes ?? []);
     $thanksPollId = session('polling_thanks_poll_id');
@@ -124,9 +125,36 @@
                     </li>
                 @endforeach
             </ul>
+
+            @if(isset($pollingResultStats[$poll->id]) && $pollingResultStats[$poll->id] !== [])
+                <div class="mt-6 space-y-4 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4">
+                    <p class="text-[11px] font-extrabold uppercase tracking-wide text-emerald-900">Results (published by office)</p>
+                    @foreach($poll->positions as $ppos)
+                        @php $stats = $pollingResultStats[$poll->id][$ppos->id] ?? null; @endphp
+                        @continue(!$stats)
+                        <div class="rounded-xl border border-white/60 bg-white/90 p-3">
+                            <p class="text-sm font-extrabold text-[#351c42]">{{ $ppos->position }}</p>
+                            @if(! empty($stats['winner_name']))
+                                <p class="mt-1 text-xs text-[#351c42]/80">Official winner: <strong class="text-[#351c42]">{{ $stats['winner_name'] }}</strong></p>
+                            @endif
+                            <ul class="mt-3 space-y-2">
+                                @foreach($stats['candidates'] as $row)
+                                    <li class="relative overflow-hidden rounded-xl border border-[#351c42]/10 bg-[#faf9fc]">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 rounded-xl bg-gradient-to-r from-emerald-200/80 to-emerald-100/40" style="width: {{ $row['bar_percent'] }}%"></div>
+                                        <div class="relative flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                                            <span class="font-bold text-[#351c42]">{{ $row['name'] }}</span>
+                                            <span class="tabular-nums font-extrabold text-[#351c42]">{{ $row['votes'] }}</span>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </article>
     @empty
-        <p class="rounded-xl border border-dashed border-[#351c42]/20 bg-[#faf9fc] px-4 py-6 text-center text-sm font-semibold text-[#351c42]/55">No live polls right now.</p>
+        <p class="rounded-xl border border-dashed border-[#351c42]/20 bg-[#faf9fc] px-4 py-6 text-center text-sm font-semibold text-[#351c42]/55">No polls to show right now.</p>
     @endforelse
 
     {{-- Thank-you modal (after successful vote) --}}

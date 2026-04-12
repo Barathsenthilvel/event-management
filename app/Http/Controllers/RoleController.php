@@ -14,7 +14,10 @@ class RoleController extends Controller
 
     public function index()
     {
-        $roles = Role::with('permissions')->latest()->paginate(10);
+        $roles = Role::with('permissions')
+            ->withCount(['permissions', 'menuPermissions'])
+            ->latest()
+            ->paginate(10);
 
         // If it's an AJAX request, return JSON (for table-only refresh after create/update)
         if (request()->expectsJson() || request()->ajax()) {
@@ -25,7 +28,9 @@ class RoleController extends Controller
                         'name' => $role->name,
                         'slug' => $role->slug,
                         'description' => $role->description,
-                        'is_active' => $role->is_active,
+                        'is_active' => (bool) $role->is_active,
+                        'permissions_count' => (int) $role->permissions_count,
+                        'menu_permissions_count' => (int) $role->menu_permissions_count,
                         'created_at' => $role->created_at->format('d M Y'),
                         'initial' => strtoupper(substr($role->name, 0, 1)),
                     ];

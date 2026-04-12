@@ -16,8 +16,8 @@ class EBookController extends Controller
             ->with('creator:id,name')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('title', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%');
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('code', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -69,7 +69,7 @@ class EBookController extends Controller
 
     public function togglePromote(EBook $e_book)
     {
-        $e_book->update(['promote_front' => !$e_book->promote_front]);
+        $e_book->update(['promote_front' => ! $e_book->promote_front]);
 
         return redirect()
             ->route('admin.ebooks.index')
@@ -78,7 +78,7 @@ class EBookController extends Controller
 
     public function toggleStatus(EBook $e_book)
     {
-        $e_book->update(['is_active' => !$e_book->is_active]);
+        $e_book->update(['is_active' => ! $e_book->is_active]);
 
         return redirect()
             ->route('admin.ebooks.index')
@@ -91,8 +91,8 @@ class EBookController extends Controller
             'title' => 'required|string|max:255',
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
-            'pricing_type' => 'required|in:free,paid',
-            'price' => 'nullable|numeric|min:0|required_if:pricing_type,paid',
+            'pricing_type' => 'nullable|in:free',
+            'price' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|max:5120',
             'banner_image' => 'nullable|image|max:5120',
             'material' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
@@ -106,8 +106,8 @@ class EBookController extends Controller
             'title' => $validated['title'],
             'short_description' => $validated['short_description'] ?? null,
             'description' => $validated['description'] ?? null,
-            'pricing_type' => $validated['pricing_type'],
-            'price' => $validated['pricing_type'] === 'paid' ? (float) $validated['price'] : 0,
+            'pricing_type' => 'free',
+            'price' => 0.0,
             'is_active' => $request->boolean('is_active', true),
         ];
 
@@ -141,7 +141,7 @@ class EBookController extends Controller
     private function generateCode(): string
     {
         $nextId = ((int) EBook::max('id')) + 1;
-        return 'EBK-' . str_pad((string) $nextId, 5, '0', STR_PAD_LEFT);
+
+        return 'EBK-'.str_pad((string) $nextId, 5, '0', STR_PAD_LEFT);
     }
 }
-

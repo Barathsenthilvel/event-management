@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\EventPhoto;
+use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\EventPhoto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +23,9 @@ class EventController extends Controller
             ->withCount('invites')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('title', 'like', '%' . $q . '%')
-                        ->orWhere('venue', 'like', '%' . $q . '%')
-                        ->orWhere('status', 'like', '%' . $q . '%');
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('venue', 'like', '%'.$q.'%')
+                        ->orWhere('status', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -61,14 +62,16 @@ class EventController extends Controller
             'dates',
             'creator:id,name',
             'invites.user:id,name,email,mobile',
-            'interests',
+            'interests' => fn ($q) => $q->orderBy('created_at'),
         ]);
+
         return view('admin.events.show', compact('event'));
     }
 
     public function edit(Event $event)
     {
         $event->load('dates');
+
         return view('admin.events.edit', compact('event'));
     }
 
@@ -91,24 +94,28 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         $event->delete();
+
         return redirect()->route('admin.events.index')->with('success', 'Event deleted successfully.');
     }
 
     public function cancel(Event $event)
     {
         $event->update(['status' => 'cancelled', 'is_active' => false]);
+
         return redirect()->route('admin.events.index')->with('success', 'Event cancelled.');
     }
 
     public function togglePromote(Event $event)
     {
-        $event->update(['promote_front' => !$event->promote_front]);
+        $event->update(['promote_front' => ! $event->promote_front]);
+
         return redirect()->route('admin.events.index')->with('success', 'Event promotion status updated.');
     }
 
     public function toggleDisplay(Event $event)
     {
-        $event->update(['is_active' => !$event->is_active]);
+        $event->update(['is_active' => ! $event->is_active]);
+
         return redirect()->route('admin.events.index')->with('success', 'Display status updated.');
     }
 
@@ -149,6 +156,58 @@ class EventController extends Controller
         return back()->with('success', 'Participation status updated.');
     }
 
+    public function updateInterestAttendance(Request $request, Event $event, EventInterest $interest)
+    {
+        if ($interest->event_id !== $event->id) {
+            abort(404);
+        }
+
+        if ($event->status === 'cancelled') {
+            return back()->with('error', 'Attendance cannot be changed for a cancelled event.');
+        }
+
+        if (! in_array($event->status, ['live', 'completed'], true)) {
+            return back()->with(
+                'error',
+                'Set the event to Live or Completed before recording attendance for public registrations.'
+            );
+        }
+
+        $validated = $request->validate([
+            'participation_status' => 'required|in:interested,participated,not_participated',
+        ]);
+
+        $interest->update([
+            'participation_status' => $validated['participation_status'],
+        ]);
+
+        return back()->with('success', 'Public registration attendance updated.');
+    }
+
+    public function downloadInterestCertificate(Event $event, EventInterest $interest)
+    {
+        if ($interest->event_id !== $event->id) {
+            abort(404);
+        }
+
+        if ($interest->participation_status !== 'participated') {
+            return back()->with('error', 'Certificate is available only for attended registrations.');
+        }
+
+        if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
+            return back()->with('error', 'Certificate template PDF is not available for this event.');
+        }
+
+        $guestName = preg_replace('/[^A-Za-z0-9\-]+/', '-', (string) ($interest->name ?? 'guest'));
+        $eventTitle = preg_replace('/[^A-Za-z0-9\-]+/', '-', (string) $event->title);
+        $fileName = trim("{$eventTitle}-{$guestName}-certificate.pdf", '-');
+
+        return response()->download(
+            Storage::disk('public')->path($event->template_pdf_path),
+            $fileName
+        );
+    }
+
     public function downloadInviteCertificate(Event $event, EventInvite $invite)
     {
         if ($invite->event_id !== $event->id) {
@@ -159,7 +218,7 @@ class EventController extends Controller
             return back()->with('error', 'Certificate download is available only for participated members.');
         }
 
-        if (empty($event->template_pdf_path) || !Storage::disk('public')->exists($event->template_pdf_path)) {
+        if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
             return back()->with('error', 'Certificate template PDF is not available for this event.');
         }
 
@@ -180,9 +239,9 @@ class EventController extends Controller
             ->where('is_approved', true)
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('mobile', 'like', '%' . $q . '%');
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -212,7 +271,7 @@ class EventController extends Controller
         $notifySms = $request->boolean('notify_sms');
         $notifyEmail = $request->boolean('notify_email');
 
-        if (!$notifyWhatsApp && !$notifySms && !$notifyEmail) {
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
             return back()->withErrors([
                 'notify_channel' => 'Select at least one notification channel.',
             ])->withInput();
@@ -249,6 +308,7 @@ class EventController extends Controller
     public function album(Event $event)
     {
         $event->load(['photos' => fn ($q) => $q->latest('id')]);
+
         return view('admin.events.album', compact('event'));
     }
 
@@ -277,7 +337,7 @@ class EventController extends Controller
             abort(404);
         }
 
-        if (!empty($photo->photo_path) && Storage::disk('public')->exists($photo->photo_path)) {
+        if (! empty($photo->photo_path) && Storage::disk('public')->exists($photo->photo_path)) {
             Storage::disk('public')->delete($photo->photo_path);
         }
         $photo->delete();
@@ -340,7 +400,7 @@ class EventController extends Controller
     {
         $result = [];
         foreach ((array) $request->input('event_dates', []) as $item) {
-            if (!is_array($item) || empty($item['date'])) {
+            if (! is_array($item) || empty($item['date'])) {
                 continue;
             }
 
@@ -350,6 +410,7 @@ class EventController extends Controller
                 'end_time' => $item['end_time'] ?: null,
             ];
         }
+
         return $result;
     }
 }

@@ -40,7 +40,7 @@
                     </div>
                     @if($showApprovalActions)
                     <div class="flex flex-wrap gap-2">
-                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}">
+                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}" onsubmit="return confirm('Approve this member? They will be able to sign in and purchase membership plans.');">
                             @csrf
                             <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400">
                                 Approve member

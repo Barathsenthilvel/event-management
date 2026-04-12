@@ -27,9 +27,9 @@
                 />
             </a>
 
-            <nav class="hidden lg:flex flex-1 justify-center items-center gap-6 xl:gap-8 text-sm font-semibold text-[#3d4d5c]" aria-label="Primary">
+            <nav class="hidden lg:flex flex-1 justify-center items-center gap-2 xl:gap-3 text-sm font-semibold text-[#3d4d5c]" aria-label="Primary">
                 @foreach ($nav as $link)
-                    <a href="{{ url('/') }}{{ $link['href'] }}" class="hover:text-[#351c42] transition-colors">{{ $link['label'] }}</a>
+                    <a href="{{ url('/') }}{{ $link['href'] }}" class="site-nav-link">{{ $link['label'] }}</a>
                 @endforeach
             </nav>
 

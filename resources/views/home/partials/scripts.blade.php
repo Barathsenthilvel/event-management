@@ -44,8 +44,7 @@
         const prevBtn = document.getElementById("bannerCarouselPrev");
         const nextBtn = document.getElementById("bannerCarouselNext");
         const dotsWrap = document.getElementById("bannerCarouselDots");
-        const vertCurrent = document.getElementById("bannerVertCurrent");
-        const vertNext = document.getElementById("bannerVertNext");
+        const slideLabel = document.getElementById("bannerSlideLabel");
         const lightbox = document.getElementById("bannerImageLightbox");
         const lightboxImg = document.getElementById("bannerLightboxImg");
         const lightboxLink = document.getElementById("bannerLightboxLink");
@@ -68,7 +67,7 @@
             stopAutoplay();
             lightboxImg.src = img.currentSrc || img.src;
             lightboxImg.alt = img.alt || "";
-            const href = slideEl.getAttribute("data-banner-href") || "#";
+            const href = slideEl.getAttribute("href") || slideEl.getAttribute("data-banner-href") || "#";
             if (lightboxLink) {
                 lightboxLink.href = href;
                 lightboxLink.style.display = href === "#" ? "none" : "inline-flex";
@@ -112,24 +111,19 @@
         function gapPx() {
             const s = window.getComputedStyle(track);
             const g = parseFloat(s.gap || s.columnGap || "0");
-            return Number.isFinite(g) ? g : 16;
-        }
-
-        function peekFraction() {
-            const w = window.innerWidth;
-            if (w >= 1024) return 1.18;
-            if (w >= 640) return 1.2;
-            return 1.12;
+            return Number.isFinite(g) ? g : 0;
         }
 
         function pad2(i) { return String(i).padStart(2, "0"); }
 
-        function updateVerticalNav() {
-            if (!vertCurrent || !vertNext) return;
+        function updateSlideLabel() {
+            if (!slideLabel) return;
             const n = slides().length;
             if (n === 0) return;
-            vertCurrent.textContent = pad2(index + 1);
-            vertNext.textContent = pad2(((index + 1) % n) + 1);
+            slideLabel.innerHTML =
+                `<span class="text-[#fddc6a]">${pad2(index + 1)}</span>` +
+                `<span class="text-white/50"> / </span>` +
+                `<span class="text-white/75">${pad2(n)}</span>`;
         }
 
         function layout() {
@@ -137,17 +131,21 @@
             if (n === 0) return;
             const vw = viewport.getBoundingClientRect().width;
             const gap = gapPx();
-            const frac = peekFraction();
-            const slideW = Math.max(200, (vw - gap) / frac);
-            slides().forEach((el) => { el.style.width = `${slideW}px`; });
+            const slideW = Math.max(1, vw);
+            slides().forEach((el) => {
+                el.style.width = `${slideW}px`;
+                el.style.flex = "0 0 auto";
+            });
             const step = slideW + gap;
             track.style.transform = `translateX(${-index * step}px)`;
             dotsWrap.querySelectorAll("[data-banner-dot]").forEach((btn, i) => {
                 const on = i === index;
-                btn.style.background = on ? "rgb(147 51 234)" : "rgb(209 213 219)";
-                btn.style.transform = on ? "scale(1.2)" : "scale(1)";
+                btn.setAttribute("aria-current", on ? "true" : "false");
+                btn.className =
+                    "group relative h-2 rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " +
+                    (on ? "w-8 bg-[#fddc6a] shadow-[0_0_16px_rgba(253,220,106,0.45)]" : "w-2 bg-white/35 hover:bg-white/55");
             });
-            updateVerticalNav();
+            updateSlideLabel();
         }
 
         function renderDots() {
@@ -157,13 +155,10 @@
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.setAttribute("data-banner-dot", "");
-                btn.className = "h-2.5 w-2.5 rounded-full transition-all duration-300 ease-in-out";
-                btn.style.background = i === index ? "rgb(147 51 234)" : "rgb(209 213 219)";
-                btn.style.transform = i === index ? "scale(1.2)" : "scale(1)";
                 btn.setAttribute("aria-label", `Show banner ${i + 1} of ${n}`);
                 btn.addEventListener("click", () => {
                     index = i;
-                    track.style.transition = "transform 500ms ease-out";
+                    track.style.transition = "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
                     layout();
                     restartAutoplay();
                 });
@@ -175,7 +170,7 @@
             const n = slides().length;
             if (n === 0) return;
             index = (index + delta + n) % n;
-            track.style.transition = "transform 500ms ease-out";
+            track.style.transition = "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
             layout();
         }
 
@@ -193,11 +188,11 @@
         prevBtn.addEventListener("click", () => { go(-1); restartAutoplay(); });
         nextBtn.addEventListener("click", () => { go(1); restartAutoplay(); });
 
-        const navEl = prevBtn.closest(".banner-vertical-nav");
+        const chrome = document.querySelector(".banner-carousel-chrome");
         viewport.addEventListener("mouseenter", () => { if (!lightboxOpen) stopAutoplay(); });
         viewport.addEventListener("mouseleave", () => { if (!lightboxOpen) restartAutoplay(); });
-        navEl?.addEventListener("mouseenter", () => { if (!lightboxOpen) stopAutoplay(); });
-        navEl?.addEventListener("mouseleave", () => { if (!lightboxOpen) restartAutoplay(); });
+        chrome?.addEventListener("mouseenter", () => { if (!lightboxOpen) stopAutoplay(); });
+        chrome?.addEventListener("mouseleave", () => { if (!lightboxOpen) restartAutoplay(); });
 
         viewport.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
         viewport.addEventListener("touchend", (e) => {

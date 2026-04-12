@@ -23,7 +23,7 @@ class PollingController extends Controller
             ->with('creator:id,name')
             ->withCount('votes')
             ->when($q !== '', function ($query) use ($q) {
-                $query->where('title', 'like', '%' . $q . '%');
+                $query->where('title', 'like', '%'.$q.'%');
             })
             ->latest('id')
             ->paginate(12)
@@ -41,6 +41,7 @@ class PollingController extends Controller
             })
             ->latest('id')
             ->get(['id', 'name', 'email', 'mobile']);
+
         return view('admin.pollings.create', compact('members'));
     }
 
@@ -87,6 +88,7 @@ class PollingController extends Controller
             })
             ->latest('id')
             ->get(['id', 'name', 'email', 'mobile']);
+
         return view('admin.pollings.edit', compact('polling', 'members'));
     }
 
@@ -115,24 +117,30 @@ class PollingController extends Controller
     public function destroy(Polling $polling)
     {
         $polling->delete();
+
         return back()->with('success', 'Polling deleted.');
     }
 
     public function togglePromote(Polling $polling)
     {
-        $polling->update(['promote_front' => !$polling->promote_front]);
+        $polling->update(['promote_front' => ! $polling->promote_front]);
+
         return back()->with('success', 'Promote front updated.');
     }
 
     public function toggleStatus(Polling $polling)
     {
         $polling->update(['polling_status' => $polling->polling_status === 'live' ? 'ends' : 'live']);
+
         return back()->with('success', 'Polling status updated.');
     }
 
     public function stats(Polling $polling)
     {
-        $polling->load(['positions.candidates:id,name']);
+        $polling->load([
+            'positions.candidates:id,name,email,mobile',
+            'positions.winner:id,name',
+        ]);
 
         $positionStats = [];
         foreach ($polling->positions as $position) {
@@ -165,6 +173,42 @@ class PollingController extends Controller
         return view('admin.pollings.stats', compact('polling', 'positionStats'));
     }
 
+    public function saveResults(Request $request, Polling $polling)
+    {
+        $validated = $request->validate([
+            'results_visible_to_members' => 'nullable|boolean',
+            'winners' => 'nullable|array',
+            'winners.*' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $polling->update([
+            'results_visible_to_members' => $request->boolean('results_visible_to_members'),
+        ]);
+
+        foreach ($validated['winners'] ?? [] as $positionId => $winnerUserId) {
+            $positionId = (int) $positionId;
+            $position = PollingPosition::query()
+                ->where('polling_id', $polling->id)
+                ->where('id', $positionId)
+                ->first();
+            if (! $position) {
+                continue;
+            }
+            $winnerUserId = $winnerUserId ? (int) $winnerUserId : null;
+            if ($winnerUserId) {
+                $position->load('candidates');
+                if (! $position->candidates->contains('id', $winnerUserId)) {
+                    continue;
+                }
+            }
+            $position->update(['winner_user_id' => $winnerUserId]);
+        }
+
+        return redirect()
+            ->route('admin.pollings.stats', $polling)
+            ->with('success', 'Results visibility and winners saved.');
+    }
+
     public function downloadReport(Polling $polling)
     {
         $rows = PollingVote::query()
@@ -187,11 +231,11 @@ class PollingController extends Controller
             );
         }
 
-        $fileName = 'polling-' . $polling->id . '-report.csv';
-        $tmpPath = 'reports/' . $fileName;
+        $fileName = 'polling-'.$polling->id.'-report.csv';
+        $tmpPath = 'reports/'.$fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 
-        return response()->download(storage_path('app/' . $tmpPath), $fileName)->deleteFileAfterSend(true);
+        return response()->download(storage_path('app/'.$tmpPath), $fileName)->deleteFileAfterSend(true);
     }
 
     private function rules(?int $id = null): array
@@ -208,6 +252,7 @@ class PollingController extends Controller
             'publish_status' => 'required|in:na,pending,published',
             'polling_status' => 'required|in:live,ends',
             'show_stats' => 'nullable|boolean',
+            'results_visible_to_members' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'positions' => 'required|array|min:1',
             'positions.*.position' => 'required|string|max:255',
@@ -228,6 +273,7 @@ class PollingController extends Controller
             'publish_status' => $validated['publish_status'],
             'polling_status' => $validated['polling_status'],
             'show_stats' => $request->boolean('show_stats', true),
+            'results_visible_to_members' => $request->boolean('results_visible_to_members', false),
             'is_active' => $request->boolean('is_active', true),
         ];
 
@@ -249,11 +295,11 @@ class PollingController extends Controller
     {
         $positions = [];
         foreach ((array) $request->input('positions', []) as $row) {
-            if (!is_array($row) || empty($row['position'])) {
+            if (! is_array($row) || empty($row['position'])) {
                 continue;
             }
             $ids = [];
-            if (!empty($row['candidate_ids']) && is_array($row['candidate_ids'])) {
+            if (! empty($row['candidate_ids']) && is_array($row['candidate_ids'])) {
                 $ids = array_values(array_unique(array_map('intval', $row['candidate_ids'])));
             }
             $positions[] = [
@@ -261,6 +307,7 @@ class PollingController extends Controller
                 'candidate_ids' => $ids,
             ];
         }
+
         return $positions;
     }
 
@@ -299,4 +346,3 @@ class PollingController extends Controller
         return $value;
     }
 }
-

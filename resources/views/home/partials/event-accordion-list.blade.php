@@ -29,6 +29,7 @@
             $seatLimited = ($event->seat_mode ?? '') === 'limited';
             $seatFilled = (int) ($event->invites_count ?? 0);
             $seatCap = max(0, (int) ($event->seat_limit ?? 0));
+            $seatsFull = $seatLimited && $seatCap > 0 && $seatFilled >= $seatCap;
             $isAdminEvent = filled($event->created_by_admin_id);
             $memberInterestReturn = request()->fullUrl();
         @endphp
@@ -90,8 +91,13 @@
                             </div>
                             <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm min-w-[5.5rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
                                 @if ($seatLimited)
-                                    <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
-                                    <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
+                                    @if($seatsFull)
+                                        <div class="text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">Registration</div>
+                                        <div class="mt-0.5 text-[10px] font-extrabold uppercase text-rose-700">Closed</div>
+                                    @else
+                                        <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
+                                        <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
+                                    @endif
                                 @else
                                     <div class="text-[10px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">Unlimited</div>
                                 @endif
@@ -135,7 +141,7 @@
                         @if(in_array($event->id, $interestedEventIds ?? [], true) || in_array($event->id, $guestInterestedEventIds ?? [], true))
                             @if($isAdminEvent)
                                 <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
-                                    @include('home.partials.event-interested-facepile-static')
+                                    @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
                                     <span class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">
                                         Interest registered
                                     </span>
@@ -148,68 +154,73 @@
                                 </div>
                             @endif
                         @elseif($isAdminEvent)
-                            <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
-                                @include('home.partials.event-interested-facepile-static')
-                                <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto">
+                            @if($seatsFull)
+                                <div class="mt-6 space-y-3 rounded-2xl border border-rose-200/80 bg-rose-50/90 px-4 py-4 sm:px-5">
+                                    <p class="text-center text-sm font-extrabold text-rose-900">Registration closed</p>
+                                    <p class="text-center text-xs font-semibold text-rose-800/90">This event has reached its seat limit ({{ $seatFilled }} / {{ $seatCap }}).</p>
+                                </div>
+                                <div class="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
+                                    @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
+                                </div>
+                            @else
+                                <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
+                                    @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
+                                    <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto">
+                                        @auth
+                                            <form
+                                                method="POST"
+                                                action="{{ route('member.events.interest', $event) }}"
+                                                id="home-event-interest-form-{{ $event->id }}"
+                                                class="flex flex-wrap items-center justify-end"
+                                                onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')"
+                                            >
+                                                @csrf
+                                                <button
+                                                    type="submit"
+                                                    class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-6 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    Interested
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button
+                                                type="button"
+                                                class="interest-open-btn inline-flex min-h-[2.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-6 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                                                data-interest-url="{{ route('events.interest', $event) }}"
+                                            >
+                                                Interested
+                                            </button>
+                                        @endauth
+                                    </div>
+                                </div>
+                            @endif
+                        @else
+                            <div class="mt-6">
+                                @if($seatsFull)
+                                    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-center text-sm font-extrabold text-rose-900">
+                                        Registration closed — seat limit reached ({{ $seatFilled }} / {{ $seatCap }}).
+                                    </div>
+                                @else
                                     @auth
-                                        <form
-                                            method="POST"
-                                            action="{{ route('member.events.interest', $event) }}"
-                                            id="home-event-interest-form-{{ $event->id }}"
-                                            class="flex flex-wrap items-center justify-end gap-2"
-                                        >
+                                        <form method="POST" action="{{ route('member.events.interest', $event) }}" class="w-full" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
                                             @csrf
                                             <button
                                                 type="submit"
-                                                class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border-2 border-[#fddc6a] bg-transparent px-4 py-2 text-sm font-extrabold text-[#fddc6a] shadow-sm transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
-                                            >
-                                                Interested member
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                                                class="inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 Interested
                                             </button>
                                         </form>
                                     @else
-                                        <a
-                                            href="{{ route('member.login', ['return' => $memberInterestReturn]) }}"
-                                            class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border-2 border-[#fddc6a] bg-transparent px-4 py-2 text-sm font-extrabold text-[#fddc6a] shadow-sm transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
-                                        >
-                                            Interested member
-                                        </a>
                                         <button
                                             type="button"
-                                            class="interest-open-btn inline-flex min-h-[2.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                                            class="interest-open-btn inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors"
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                         >
                                             Interested
                                         </button>
                                     @endauth
-                                </div>
-                            </div>
-                        @else
-                            <div class="mt-6">
-                                @auth
-                                    <form method="POST" action="{{ route('member.events.interest', $event) }}" class="w-full">
-                                        @csrf
-                                        <button
-                                            type="submit"
-                                            class="inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors"
-                                        >
-                                            Interested
-                                        </button>
-                                    </form>
-                                @else
-                                    <button
-                                        type="button"
-                                        class="interest-open-btn inline-flex w-full items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:bg-[#4d2a5c] transition-colors"
-                                        data-interest-url="{{ route('events.interest', $event) }}"
-                                    >
-                                        Interested
-                                    </button>
-                                @endauth
+                                @endif
                             </div>
                         @endif
                     </div>
