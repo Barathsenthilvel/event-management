@@ -9,15 +9,12 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Events</p>
             <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Your events</h1>
-            <p class="mt-1 max-w-2xl text-sm text-[#351c42]/65">Register interest and track attendance and certificates here.</p>
+            <p class="mt-1 max-w-2xl text-sm text-[#351c42]/65">Events you’ve shown interest in — attendance and certificates appear here.</p>
         </div>
         <a href="{{ route('member.dashboard') }}" class="shrink-0 text-sm font-semibold text-[#965995] hover:text-[#351c42]">← Back to dashboard</a>
     </header>
 
     @include('member.partials.member-events-panel', [
-        'events' => $events,
-        'interestedEventIds' => $interestedEventIds,
         'myEventInvites' => $myEventInvites,
-        'inviteByEventId' => $inviteByEventId,
     ])
 @endsection

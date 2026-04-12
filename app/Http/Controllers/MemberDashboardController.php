@@ -15,8 +15,8 @@ use App\Models\Polling;
 use App\Models\PollingPosition;
 use App\Models\PollingVote;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -32,7 +32,7 @@ class MemberDashboardController extends Controller
 
         $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
         $hasActiveSubscription = $user?->activeSubscription()->exists();
-        if ($canSeeMembership && !$hasActiveSubscription) {
+        if ($canSeeMembership && ! $hasActiveSubscription) {
             return redirect()->route('member.subscription.index');
         }
 
@@ -53,6 +53,8 @@ class MemberDashboardController extends Controller
         $renewalPlans = collect();
         $dashboardNominations = collect();
         $dashboardPolls = collect();
+        $nominationSlotQueue = collect();
+        $pollingSlotQueue = collect();
 
         if ($showFullMemberMenu && $user) {
             $renewalPlans = MembershipSubscriptionSetting::query()
@@ -60,9 +62,6 @@ class MemberDashboardController extends Controller
                 ->where('subscription_type', 'Renewal')
                 ->orderBy('payment_type')
                 ->get();
-
-            $dismissedNominationIds = collect(session('member.dashboard.dismissed_nomination_ids', []))->map(fn ($id) => (int) $id)->filter();
-            $dismissedPollingIds = collect(session('member.dashboard.dismissed_polling_ids', []))->map(fn ($id) => (int) $id)->filter();
 
             $rawNominations = Nomination::query()
                 ->with(['positions' => fn ($q) => $q->orderBy('id')])
@@ -80,22 +79,26 @@ class MemberDashboardController extends Controller
                 ->groupBy('nomination_id');
 
             foreach ($rawNominations as $nom) {
-                if ($dismissedNominationIds->contains($nom->id)) {
-                    continue;
-                }
                 $endDay = ($nom->polling_date_to ?? $nom->polling_date)->toDateString();
                 if (Carbon::today()->toDateString() > $endDay) {
                     continue;
                 }
-                $interested = $entriesByNomination->get($nom->id, collect())->pluck('position_id');
-                $pendingPositions = $nom->positions->filter(fn ($p) => ! $interested->contains($p->id));
-                if ($pendingPositions->isEmpty()) {
+                $interestedPositionIds = $entriesByNomination->get($nom->id, collect())
+                    ->pluck('position_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
+                $pendingPositions = $nom->positions->filter(
+                    fn ($p) => ! $interestedPositionIds->contains((int) $p->id)
+                );
+                // Hide only after interest is recorded for every listed role (or user dismissed).
+                if ($nom->positions->isNotEmpty() && $pendingPositions->isEmpty()) {
                     continue;
                 }
                 $dashboardNominations->push([
                     'nomination' => $nom,
                     'pendingPositions' => $pendingPositions,
-                    'interestedPositionIds' => $interested,
+                    'interestedPositionIds' => $interestedPositionIds,
                 ]);
             }
 
@@ -115,9 +118,6 @@ class MemberDashboardController extends Controller
                 ->groupBy('polling_id');
 
             foreach ($rawPolls as $poll) {
-                if ($dismissedPollingIds->contains($poll->id)) {
-                    continue;
-                }
                 $endDay = ($poll->polling_date_to ?? $poll->polling_date)->toDateString();
                 if (Carbon::today()->toDateString() > $endDay) {
                     continue;
@@ -126,8 +126,13 @@ class MemberDashboardController extends Controller
                     continue;
                 }
                 $votes = $votesByPolling->get($poll->id, collect());
-                $votedPositionIds = $votes->pluck('position_id');
-                $pendingPositions = $poll->positions->filter(fn ($p) => ! $votedPositionIds->contains($p->id));
+                $votedPositionIds = $votes->pluck('position_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
+                $pendingPositions = $poll->positions->filter(
+                    fn ($p) => ! $votedPositionIds->contains((int) $p->id)
+                );
                 if ($pendingPositions->isEmpty()) {
                     continue;
                 }
@@ -136,6 +141,32 @@ class MemberDashboardController extends Controller
                     'pollingDashboardVotedIds' => $votedPositionIds,
                     'pollingDashboardVotes' => $votes->keyBy('position_id'),
                 ]);
+            }
+
+            foreach ($dashboardNominations as $nomRow) {
+                foreach ($nomRow['pendingPositions'] as $position) {
+                    $nominationSlotQueue->push([
+                        'nomination' => $nomRow['nomination'],
+                        'position' => $position,
+                    ]);
+                }
+            }
+
+            foreach ($dashboardPolls as $pollRow) {
+                $poll = $pollRow['polling'];
+                $votedIds = $pollRow['pollingDashboardVotedIds'];
+                $votesKeyed = $pollRow['pollingDashboardVotes'];
+                foreach ($poll->positions as $ppos) {
+                    if ($votedIds->contains((int) $ppos->id)) {
+                        continue;
+                    }
+                    $pollingSlotQueue->push([
+                        'polling' => $poll,
+                        'position' => $ppos,
+                        'pollingDashboardVotedIds' => $votedIds,
+                        'pollingDashboardVotes' => $votesKeyed,
+                    ]);
+                }
             }
         }
 
@@ -149,6 +180,8 @@ class MemberDashboardController extends Controller
             'renewalPlans' => $renewalPlans,
             'dashboardNominations' => $dashboardNominations,
             'dashboardPolls' => $dashboardPolls,
+            'nominationSlotQueue' => $nominationSlotQueue,
+            'pollingSlotQueue' => $pollingSlotQueue,
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,
             'transactions' => PaymentTransaction::query()
@@ -160,6 +193,11 @@ class MemberDashboardController extends Controller
         ]);
     }
 
+    /**
+     * Legacy endpoint: closing a card is only hidden in the browser until refresh.
+     * Dismissal is not stored; cards reappear on the next visit unless the member
+     * completed all required actions (interest / votes), which hides them server-side.
+     */
     public function dismissDashboardAnnouncement(Request $request)
     {
         $data = $request->validate([
@@ -172,25 +210,6 @@ class MemberDashboardController extends Controller
         $request->validate([
             'entity_id' => Rule::exists($table, 'id'),
         ]);
-
-        $sessionKey = $data['type'] === 'nomination'
-            ? 'dismissed_nomination_ids'
-            : 'dismissed_polling_ids';
-
-        $ids = collect(session('member.dashboard.'.$sessionKey, []))
-            ->map(fn ($id) => (int) $id)
-            ->push((int) $data['entity_id'])
-            ->unique()
-            ->values()
-            ->all();
-
-        session()->put('member.dashboard.'.$sessionKey, $ids);
-
-        if ($data['type'] === 'nomination') {
-            session()->forget('member.dashboard.dismissed_nomination');
-        } else {
-            session()->forget('member.dashboard.dismissed_polling');
-        }
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json(['ok' => true]);
@@ -409,22 +428,20 @@ class MemberDashboardController extends Controller
             'creator:id,name',
         ];
 
-        $events = Event::query()
-            ->with($eventCardWith)
-            ->where('is_active', true)
-            ->whereIn('status', ['upcoming', 'live', 'completed'])
-            ->latest('id')
-            ->get();
-
-        $interestedEventIds = EventInvite::query()
-            ->where('user_id', $user->id)
-            ->pluck('event_id')
-            ->all();
+        $interestedInvitesWith = [
+            'invites' => static function ($query) {
+                $query->select('id', 'event_id', 'user_id', 'participation_status', 'invited_at')
+                    ->where('participation_status', 'interested')
+                    ->orderByDesc('invited_at')
+                    ->limit(16)
+                    ->with(['user:id,name,first_name,last_name,passport_photo_path']);
+            },
+        ];
 
         $myEventInvites = EventInvite::query()
             ->where('user_id', $user->id)
             ->with([
-                'event' => function ($q) use ($eventCardWith) {
+                'event' => function ($q) use ($eventCardWith, $interestedInvitesWith) {
                     $q->select(
                         'id',
                         'title',
@@ -437,7 +454,7 @@ class MemberDashboardController extends Controller
                         'seat_limit',
                         'interested_count',
                         'created_by_admin_id'
-                    )->with($eventCardWith);
+                    )->with(array_merge($eventCardWith, $interestedInvitesWith));
                 },
             ])
             ->latest('id')
@@ -445,17 +462,14 @@ class MemberDashboardController extends Controller
 
         return view('member.events', [
             'activeSubscription' => $user->activeSubscription,
-            'events' => $events,
-            'interestedEventIds' => $interestedEventIds,
             'myEventInvites' => $myEventInvites,
-            'inviteByEventId' => $myEventInvites->keyBy('event_id'),
         ]);
     }
 
     public function downloadEventCertificate(Event $event)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
@@ -464,7 +478,7 @@ class MemberDashboardController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        if (!$invite || $invite->participation_status !== 'participated') {
+        if (! $invite || $invite->participation_status !== 'participated') {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Your certificate is available only after the admin marks you as attended for this event.'
@@ -480,7 +494,7 @@ class MemberDashboardController extends Controller
 
         $event->loadMissing('dates');
 
-        if (empty($event->template_pdf_path) || !Storage::disk('public')->exists($event->template_pdf_path)) {
+        if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Certificate file is not available for this event yet. Please contact the office.'
@@ -500,11 +514,11 @@ class MemberDashboardController extends Controller
     public function submitInterest(Request $request, Event $event)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
-        if (!$event->is_active || $event->status === 'cancelled') {
+        if (! $event->is_active || $event->status === 'cancelled') {
             return back()->with('event_interest_error', 'This event is not available for interest now.');
         }
 
@@ -536,7 +550,7 @@ class MemberDashboardController extends Controller
                     'invited_at' => now(),
                 ]);
 
-                if (!$alreadyCountedViaPublic) {
+                if (! $alreadyCountedViaPublic) {
                     $event->update([
                         'interested_count' => (int) $event->interested_count + 1,
                     ]);
@@ -551,4 +565,3 @@ class MemberDashboardController extends Controller
         return back()->with('event_interest_success', 'Interest submitted successfully.');
     }
 }
-

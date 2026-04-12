@@ -56,6 +56,18 @@
             box-shadow: inset 0 0 0 1px rgba(53, 28, 66, 0.08);
         }
         [x-cloak] { display: none !important; }
+        .md-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+        }
+        .md-modal-overlay.is-open { display: flex; }
     </style>
     @stack('styles')
 </head>
@@ -83,8 +95,6 @@
                 @if($gnatPortalUnlocked)
                     <a href="{{ route('member.dashboard') }}" class="md-sidebar-link {{ request()->routeIs('member.dashboard') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.dashboard') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Dashboard</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Events</a>
-                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Nominations</a>
-                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Polling</a>
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Membership</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}"><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-slate-300' }}"></span> Profile</a>
@@ -111,6 +121,7 @@
     @include('home.partials.donate-payment-modals')
     @include('home.partials.scripts')
 
+    @include('member.partials.event-interest-success-modal')
     @stack('scripts')
 </body>
 </html>

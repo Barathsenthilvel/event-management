@@ -43,22 +43,22 @@
                 <label class="block text-xs font-black text-slate-600 mb-2">Polling Title</label>
                 <input type="text" name="title" value="{{ old('title', $p?->title ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
             </div>
-            <div>
+            <div @click.outside="closeSelect()" class="relative">
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-xs font-black text-slate-600">Positions & candidates</label>
-                    <button type="button" @click="addRow()" class="text-xs font-black text-indigo-600">+ Add</button>
+                    <button type="button" @click.stop="addRow()" class="text-xs font-black text-indigo-600">+ Add</button>
                 </div>
                 <p class="text-[11px] text-slate-500 mb-2">For each position, search and select one or more interested members (from nomination submissions) who will appear on the ballot.</p>
-                <template x-for="(row, idx) in rows" :key="idx">
+                <template x-for="(row, idx) in rows" :key="row._key">
                     <div class="mb-3 rounded-xl border border-slate-200 bg-slate-50/40 p-3">
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-start">
                             <div class="sm:col-span-5">
                                 <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Position</label>
                                 <input class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position title">
                             </div>
-                            <div class="relative sm:col-span-6" @click.outside="closeSelect()">
+                            <div class="relative sm:col-span-6">
                                 <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Candidates</label>
-                                <button type="button" @click="toggleSelect(idx)" class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-xs font-semibold text-slate-800 shadow-sm">
+                                <button type="button" @click.stop="toggleSelect(idx)" class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-xs font-semibold text-slate-800 shadow-sm">
                                     <span class="truncate" x-text="selectSummary(row)"></span>
                                     <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                 </button>
@@ -66,7 +66,8 @@
                                     x-show="openSelectIdx === idx"
                                     x-cloak
                                     x-transition
-                                    class="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+                                    @click.stop
+                                    class="absolute left-0 right-0 top-full z-[100] mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
                                 >
                                     <div class="border-b border-slate-100 p-2">
                                         <div class="relative">
@@ -104,7 +105,7 @@
                                 </template>
                             </div>
                             <div class="flex justify-end sm:col-span-1">
-                                <button type="button" @click="removeRow(idx)" class="mt-6 rounded-lg px-2 py-1 text-rose-600 font-black sm:mt-0" title="Remove row">×</button>
+                                <button type="button" @click.stop="removeRow(idx)" class="mt-6 rounded-lg px-2 py-1 text-rose-600 font-black sm:mt-0" title="Remove row">×</button>
                             </div>
                         </div>
                     </div>
@@ -209,6 +210,10 @@
 
 <script>
 function pollingForm() {
+    const newRowKey = () =>
+        (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : 'row-' + Date.now() + '-' + Math.random().toString(16).slice(2);
     return {
         rows: @json($rows),
         members: @json($membersJson),
@@ -216,17 +221,26 @@ function pollingForm() {
         bannerUrl: @json($initialBannerUrl),
         openSelectIdx: null,
         selectSearch: '',
+        init() {
+            this.rows = this.rows.map((r) => ({
+                position: r.position ?? '',
+                candidate_ids: Array.isArray(r.candidate_ids) ? [...r.candidate_ids] : [],
+                _key: r._key || newRowKey(),
+            }));
+        },
         addRow() {
-            this.rows.push({ position: '', candidate_ids: [] });
+            this.rows.push({ position: '', candidate_ids: [], _key: newRowKey() });
         },
         removeRow(idx) {
-            if (this.rows.length > 1) {
-                this.rows.splice(idx, 1);
-                if (this.openSelectIdx === idx) {
-                    this.openSelectIdx = null;
-                    this.selectSearch = '';
-                }
+            if (this.rows.length <= 1) return;
+            const open = this.openSelectIdx;
+            if (open === idx) {
+                this.openSelectIdx = null;
+                this.selectSearch = '';
+            } else if (open !== null && open > idx) {
+                this.openSelectIdx = open - 1;
             }
+            this.rows.splice(idx, 1);
         },
         closeSelect() {
             this.openSelectIdx = null;

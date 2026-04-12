@@ -1,6 +1,19 @@
 @php
     $isEdit = isset($donation) && $donation;
     $action = $isEdit ? route('admin.donations.update', $donation->id) : route('admin.donations.store');
+    if ($isEdit) {
+        [$pill1Src, $pill1Custom] = \App\Models\Donation::sourceAndCustomFromStored($donation->pill_tag_1 ?? null);
+        [$pill2Src, $pill2Custom] = \App\Models\Donation::sourceAndCustomFromStored($donation->pill_tag_2 ?? null);
+    } else {
+        $pill1Src = 'donation';
+        $pill1Custom = '';
+        $pill2Src = 'charity';
+        $pill2Custom = '';
+    }
+    $pill1Src = old('pill_tag_1_source', $pill1Src);
+    $pill1Custom = old('pill_tag_1_custom', $pill1Custom);
+    $pill2Src = old('pill_tag_2_source', $pill2Src);
+    $pill2Custom = old('pill_tag_2_custom', $pill2Custom);
 @endphp
 
 <form action="{{ $action }}" method="POST" enctype="multipart/form-data"
@@ -26,6 +39,53 @@
                 <textarea name="short_description" rows="3" required
                           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">{{ old('short_description', $donation->short_description ?? '') }}</textarea>
                 @error('short_description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-4 space-y-4">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-800">Card tags (exactly two)</p>
+                    <p class="mt-0.5 text-[11px] text-slate-500">Shown as pills on the donation card. Pick a default or Custom and type your own (max 48 characters each).</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold text-slate-700">Tag 1 @include('admin.partials.required-mark')</label>
+                        <select name="pill_tag_1_source" id="pill_tag_1_source" data-pill-slot="1"
+                                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 bg-white">
+                            <option value="donation" @selected($pill1Src === 'donation')>Donation</option>
+                            <option value="charity" @selected($pill1Src === 'charity')>Charity</option>
+                            <option value="association" @selected($pill1Src === 'association')>Association</option>
+                            <option value="community" @selected($pill1Src === 'community')>Community</option>
+                            <option value="custom" @selected($pill1Src === 'custom')>Custom…</option>
+                        </select>
+                        <div id="pill_tag_1_custom_wrap" class="{{ $pill1Src === 'custom' ? '' : 'hidden' }}">
+                            <input type="text" name="pill_tag_1_custom" value="{{ $pill1Custom }}"
+                                   maxlength="48"
+                                   placeholder="Your label"
+                                   class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 bg-white">
+                        </div>
+                        @error('pill_tag_1_source')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                        @error('pill_tag_1_custom')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold text-slate-700">Tag 2 @include('admin.partials.required-mark')</label>
+                        <select name="pill_tag_2_source" id="pill_tag_2_source" data-pill-slot="2"
+                                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 bg-white">
+                            <option value="donation" @selected($pill2Src === 'donation')>Donation</option>
+                            <option value="charity" @selected($pill2Src === 'charity')>Charity</option>
+                            <option value="association" @selected($pill2Src === 'association')>Association</option>
+                            <option value="community" @selected($pill2Src === 'community')>Community</option>
+                            <option value="custom" @selected($pill2Src === 'custom')>Custom…</option>
+                        </select>
+                        <div id="pill_tag_2_custom_wrap" class="{{ $pill2Src === 'custom' ? '' : 'hidden' }}">
+                            <input type="text" name="pill_tag_2_custom" value="{{ $pill2Custom }}"
+                                   maxlength="48"
+                                   placeholder="Your label"
+                                   class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 bg-white">
+                        </div>
+                        @error('pill_tag_2_source')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                        @error('pill_tag_2_custom')<p class="text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
             </div>
 
             <div>
@@ -228,6 +288,17 @@
 
 <script>
     (function () {
+        document.querySelectorAll('[data-pill-slot]').forEach(function (sel) {
+            const slot = sel.getAttribute('data-pill-slot');
+            const wrap = document.getElementById('pill_tag_' + slot + '_custom_wrap');
+            if (!wrap) return;
+            function sync() {
+                wrap.classList.toggle('hidden', sel.value !== 'custom');
+            }
+            sel.addEventListener('change', sync);
+            sync();
+        });
+
         window.donationZoomFrom = function (src) {
             const modal = document.getElementById('donation-zoom-modal');
             const img = document.getElementById('donation-zoom-img');

@@ -28,29 +28,67 @@
 
             <div class="overflow-hidden -mx-0" data-donate-viewport>
                 <div class="flex gap-4 will-change-transform transition-transform duration-500 ease-out" data-donate-track>
-                    @foreach ($donate['campaigns'] as $c)
-                        <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
-                            <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
-                                <img src="{{ asset($c['image']) }}" alt="{{ $c['alt'] }}" class="absolute inset-0 h-full w-full object-cover" width="400" height="300" />
-                            </div>
-                            <div class="flex flex-1 flex-col justify-center p-5 sm:p-6 bg-[linear-gradient(180deg,#faf8f5_0%,#f3f0ea_100%)]">
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Association</span>
-                                    <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">Community</span>
+                    @if(isset($homeDonations) && $homeDonations->isNotEmpty())
+                        @foreach ($homeDonations as $donation)
+                            @php
+                                $coverSrc = $donation->cover_image_path
+                                    ? asset('storage/' . $donation->cover_image_path)
+                                    : asset('images/events/event-1-2.jpg');
+                                $excerpt = $donation->short_description
+                                    ?: \Illuminate\Support\Str::limit(strip_tags((string) $donation->description), 220);
+                                [$pillA, $pillB] = $donation->pillTagLabels();
+                            @endphp
+                            <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
+                                <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
+                                    <img src="{{ $coverSrc }}" alt="{{ $donation->purpose }}" class="absolute inset-0 h-full w-full object-cover" width="400" height="300" />
                                 </div>
-                                <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $c['title'] }}</h4>
-                                <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $c['excerpt'] }}</p>
-                                <button type="button" data-open-donate-modal class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
-                                    <span class="click-btn__icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
-                                            <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </span>
-                                    <span class="click-btn__label">Donate Now</span>
-                                </button>
-                            </div>
-                        </article>
-                    @endforeach
+                                <div class="flex flex-1 flex-col justify-center p-5 sm:p-6 bg-[linear-gradient(180deg,#faf8f5_0%,#f3f0ea_100%)]">
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">{{ $pillA }}</span>
+                                        <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">{{ $pillB }}</span>
+                                    </div>
+                                    <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $donation->purpose }}</h4>
+                                    <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
+                                    <button type="button" data-open-donate-modal data-donation-id="{{ $donation->id }}" class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
+                                        <span class="click-btn__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+                                                <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </span>
+                                        <span class="click-btn__label">Donate Now</span>
+                                    </button>
+                                </div>
+                            </article>
+                        @endforeach
+                    @else
+                        @foreach ($donate['campaigns'] as $c)
+                            @php
+                                $fallbackPills = $c['pill_tags'] ?? ['Donation', 'Charity'];
+                            @endphp
+                            <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
+                                <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
+                                    <img src="{{ asset($c['image']) }}" alt="{{ $c['alt'] }}" class="absolute inset-0 h-full w-full object-cover" width="400" height="300" />
+                                </div>
+                                <div class="flex flex-1 flex-col justify-center p-5 sm:p-6 bg-[linear-gradient(180deg,#faf8f5_0%,#f3f0ea_100%)]">
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach ($fallbackPills as $pill)
+                                            <span class="rounded-full border border-[#351c42]/20 bg-white px-3 py-1 text-xs font-semibold text-[#351c42]">{{ $pill }}</span>
+                                        @endforeach
+                                    </div>
+                                    <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $c['title'] }}</h4>
+                                    <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $c['excerpt'] }}</p>
+                                    <button type="button" data-open-donate-modal class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
+                                        <span class="click-btn__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+                                                <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </span>
+                                        <span class="click-btn__label">Donate Now</span>
+                                    </button>
+                                </div>
+                            </article>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </div>

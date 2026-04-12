@@ -6,6 +6,8 @@ use App\Models\Donation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class DonationController extends Controller
 {
@@ -17,8 +19,8 @@ class DonationController extends Controller
             ->with('creator:id,name')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('purpose', 'like', '%' . $q . '%')
-                        ->orWhere('short_description', 'like', '%' . $q . '%');
+                    $sub->where('purpose', 'like', '%'.$q.'%')
+                        ->orWhere('short_description', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
@@ -38,7 +40,8 @@ class DonationController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate($this->rules($request));
+        $this->assertCustomPillTagsFilled($validated);
 
         DB::transaction(function () use ($request, $validated) {
             Donation::create($this->buildPayload($request, $validated, true));
@@ -56,7 +59,8 @@ class DonationController extends Controller
 
     public function update(Request $request, Donation $donation)
     {
-        $validated = $request->validate($this->rules($donation->id));
+        $validated = $request->validate($this->rules($request, $donation->id));
+        $this->assertCustomPillTagsFilled($validated);
 
         $payload = $this->buildPayload($request, $validated, false, $donation);
         $donation->update($payload);
@@ -77,24 +81,26 @@ class DonationController extends Controller
 
     public function togglePromote(Donation $donation)
     {
-        $donation->update(['promote_front' => !$donation->promote_front]);
+        $donation->update(['promote_front' => ! $donation->promote_front]);
 
         return redirect()->route('admin.donations.index')->with('success', 'Promote front updated.');
     }
 
     public function toggleStatus(Donation $donation)
     {
-        $donation->update(['is_active' => !$donation->is_active]);
+        $donation->update(['is_active' => ! $donation->is_active]);
 
         return redirect()->route('admin.donations.index')->with('success', 'Display status updated.');
     }
 
-    private function rules(?int $id = null): array
+    private function rules(Request $request, ?int $id = null): array
     {
         $creating = $id === null;
         $coverRules = $creating
             ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120']
             : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'];
+
+        $pillIn = Rule::in(Donation::PILL_SOURCES);
 
         return [
             'purpose' => ['required', 'string', 'max:255'],
@@ -104,15 +110,40 @@ class DonationController extends Controller
             'banner_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
             'promote_front' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
+            'pill_tag_1_source' => ['required', 'string', $pillIn],
+            'pill_tag_1_custom' => [
+                Rule::requiredIf(fn () => (string) $request->input('pill_tag_1_source') === 'custom'),
+                'nullable',
+                'string',
+                'max:48',
+            ],
+            'pill_tag_2_source' => ['required', 'string', $pillIn],
+            'pill_tag_2_custom' => [
+                Rule::requiredIf(fn () => (string) $request->input('pill_tag_2_source') === 'custom'),
+                'nullable',
+                'string',
+                'max:48',
+            ],
         ];
     }
 
     private function buildPayload(Request $request, array $validated, bool $creating, ?Donation $donation = null): array
     {
+        $pill1 = Donation::pillLabelFromSource(
+            $validated['pill_tag_1_source'],
+            $validated['pill_tag_1_custom'] ?? null
+        );
+        $pill2 = Donation::pillLabelFromSource(
+            $validated['pill_tag_2_source'],
+            $validated['pill_tag_2_custom'] ?? null
+        );
+
         $payload = [
             'purpose' => $validated['purpose'],
             'short_description' => $validated['short_description'] ?? null,
             'description' => $validated['description'] ?? null,
+            'pill_tag_1' => $pill1,
+            'pill_tag_2' => $pill2,
             'promote_front' => $request->boolean('promote_front'),
             'is_active' => $request->boolean('is_active', true),
         ];
@@ -135,5 +166,19 @@ class DonationController extends Controller
 
         return $payload;
     }
-}
 
+    private function assertCustomPillTagsFilled(array $validated): void
+    {
+        $errors = [];
+        foreach ([1, 2] as $i) {
+            $srcKey = "pill_tag_{$i}_source";
+            $customKey = "pill_tag_{$i}_custom";
+            if (($validated[$srcKey] ?? '') === 'custom' && trim((string) ($validated[$customKey] ?? '')) === '') {
+                $errors[$customKey] = ['Please enter text for this custom tag.'];
+            }
+        }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+}

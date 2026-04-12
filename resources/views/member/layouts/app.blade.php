@@ -99,15 +99,6 @@
                     <span x-show="sidebarOpen" class="text-sm font-medium">Search Jobs</span>
                 </a>
 
-                <a href="#"
-                    class="flex items-center gap-3 p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                    <svg class="w-5 h-5 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 17v-2a2 2 0 012-2h2m4 4a9 9 0 11-18 0 9 9 0 0118 0zm-9-7h.01" />
-                    </svg>
-                    <span x-show="sidebarOpen" class="text-sm font-medium">Polling</span>
-                </a>
-
             @endif
 
             {{-- Always available profile / password --}}

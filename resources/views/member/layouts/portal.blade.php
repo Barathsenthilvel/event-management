@@ -50,6 +50,7 @@
     @include('home.partials.scripts')
 
     @include('member.partials.member-portal-drawer-script')
+    @include('member.partials.event-interest-success-modal')
     @stack('scripts')
 </body>
 </html>

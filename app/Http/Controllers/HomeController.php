@@ -51,9 +51,16 @@ class HomeController extends Controller
             ->values()
             ->all();
 
+        $homeDonations = Donation::query()
+            ->where('is_active', true)
+            ->orderByDesc('promote_front')
+            ->latest('id')
+            ->limit(12)
+            ->get();
+
         return view(
             'home.index',
-            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds'))
+            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations'))
         );
     }
 
@@ -62,7 +69,7 @@ class HomeController extends Controller
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', 'all'));
         $allowedStatuses = ['all', 'upcoming', 'live', 'completed', 'cancelled'];
-        if (!in_array($status, $allowedStatuses, true)) {
+        if (! in_array($status, $allowedStatuses, true)) {
             $status = 'all';
         }
 
@@ -72,9 +79,9 @@ class HomeController extends Controller
             ->where('is_active', true)
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('title', 'like', '%' . $q . '%')
-                        ->orWhere('description', 'like', '%' . $q . '%')
-                        ->orWhere('venue', 'like', '%' . $q . '%');
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('description', 'like', '%'.$q.'%')
+                        ->orWhere('venue', 'like', '%'.$q.'%');
                 });
             })
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
@@ -123,9 +130,9 @@ class HomeController extends Controller
             ->where('is_active', true)
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('purpose', 'like', '%' . $q . '%')
-                        ->orWhere('short_description', 'like', '%' . $q . '%')
-                        ->orWhere('description', 'like', '%' . $q . '%');
+                    $sub->where('purpose', 'like', '%'.$q.'%')
+                        ->orWhere('short_description', 'like', '%'.$q.'%')
+                        ->orWhere('description', 'like', '%'.$q.'%');
                 });
             })
             ->orderByDesc('promote_front')

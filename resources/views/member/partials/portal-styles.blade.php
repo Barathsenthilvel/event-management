@@ -59,4 +59,16 @@
         transition: transform 0.15s ease, filter 0.2s ease;
     }
     .md-btn-interest:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .md-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 110;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(8px);
+    }
+    .md-modal-overlay.is-open { display: flex; }
 </style>

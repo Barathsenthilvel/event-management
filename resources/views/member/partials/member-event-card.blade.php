@@ -87,11 +87,11 @@
         </div>
     </div>
 
-    {{-- Full-width footer bar (same as homepage “Interest registered” strip) --}}
-    <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
-        @if($mode === 'tracking' && isset($invite))
-            @php $ps = $invite->participation_status; @endphp
-            @if($ps === 'participated')
+    {{-- Footer: light strip for attendance / certificate; dark bar with member avatar stack + action for interest --}}
+    @if($mode === 'tracking' && isset($invite))
+        @php $ps = $invite->participation_status; @endphp
+        @if($ps === 'participated')
+            <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                 @php
                     $evDone = $event->status === 'completed';
                     $certReady = $evDone && !empty($event->template_pdf_path);
@@ -106,20 +106,29 @@
                         <span class="text-xs font-semibold text-[#351c42]/55">Certificate available after the event is completed.</span>
                     @endif
                 </div>
-            @elseif($ps === 'not_participated')
+            </div>
+        @elseif($ps === 'not_participated')
+            <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                 <p class="text-center text-sm font-extrabold text-[#351c42]/75">Did not attend</p>
-            @else
-                <p class="text-center text-sm font-extrabold text-[#351c42]/75">Interest registered</p>
-                <p class="mt-1 text-center text-xs text-[#351c42]/55">We’ll update when your attendance is confirmed.</p>
-            @endif
+            </div>
         @else
-            @php
-                $alreadyInterested = $alreadyInterested ?? false;
-                $myInvite = $myInvite ?? null;
-                $seatsFull = $seatsFull ?? false;
-            @endphp
-            @if($alreadyInterested && $myInvite)
-                @if($myInvite->participation_status === 'participated')
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                @include('member.partials.member-event-interested-stack', ['event' => $event])
+                <div class="min-w-0 shrink-0 text-right sm:ml-auto">
+                    <p class="text-sm font-extrabold text-[#fddc6a]">Interest registered</p>
+                    <p class="mt-0.5 text-xs text-white/70">We’ll update when your attendance is confirmed.</p>
+                </div>
+            </div>
+        @endif
+    @else
+        @php
+            $alreadyInterested = $alreadyInterested ?? false;
+            $myInvite = $myInvite ?? null;
+            $seatsFull = $seatsFull ?? false;
+        @endphp
+        @if($alreadyInterested && $myInvite)
+            @if($myInvite->participation_status === 'participated')
+                <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                     @php
                         $evDoneList = $event->status === 'completed';
                         $certReadyList = $evDoneList && !empty($event->template_pdf_path);
@@ -134,21 +143,40 @@
                             <span class="text-xs font-semibold text-[#351c42]/55">Certificate after event completes</span>
                         @endif
                     </div>
-                @elseif($myInvite->participation_status === 'not_participated')
+                </div>
+            @elseif($myInvite->participation_status === 'not_participated')
+                <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                     <p class="text-center text-sm font-extrabold text-[#351c42]/75">Did not attend</p>
-                @else
-                    <p class="text-center text-sm font-extrabold text-[#351c42]/75">Interest registered</p>
-                @endif
-            @elseif($alreadyInterested)
-                <p class="text-center text-sm font-extrabold text-[#351c42]/75">Interest registered</p>
-            @elseif($seatsFull)
-                <p class="text-center text-sm font-extrabold text-amber-800">Seat limit reached</p>
+                </div>
             @else
-                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="flex justify-center">
-                    @csrf
-                    <button type="submit" class="md-btn-interest w-full max-w-xs sm:w-auto">Interested</button>
-                </form>
+                <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                    @include('member.partials.member-event-interested-stack', ['event' => $event])
+                    <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</p>
+                </div>
             @endif
+        @elseif($alreadyInterested)
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                @include('member.partials.member-event-interested-stack', ['event' => $event])
+                <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</p>
+            </div>
+        @elseif($seatsFull)
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                @include('member.partials.member-event-interested-stack', ['event' => $event])
+                <p class="min-w-0 shrink-0 text-sm font-extrabold text-amber-200 sm:ml-auto">Seat limit reached</p>
+            </div>
+        @else
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                @include('member.partials.member-event-interested-stack', ['event' => $event])
+                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 sm:ml-auto">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="inline-flex min-h-[2.5rem] min-w-[7.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                    >
+                        Interested
+                    </button>
+                </form>
+            </div>
         @endif
-    </div>
+    @endif
 </article>
