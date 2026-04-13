@@ -17,7 +17,7 @@
                         </span>
                     </h2>
                 </div>
-                <a href="{{ url('/') }}#contact" class="shrink-0 self-start text-sm font-semibold text-[#965995] underline-offset-4 hover:text-[#351c42] hover:underline transition-colors min-[520px]:pt-8 sm:pt-10">
+                <a href="{{ route('gallery.index') }}" class="shrink-0 self-start text-sm font-semibold text-[#965995] underline-offset-4 hover:text-[#351c42] hover:underline transition-colors min-[520px]:pt-8 sm:pt-10">
                     View more
                 </a>
             </div>

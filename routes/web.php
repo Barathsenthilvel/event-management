@@ -3,6 +3,8 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDesignationController;
 use App\Http\Controllers\AdminDonationPaymentController;
+use App\Http\Controllers\AdminHomeBlogController;
+use App\Http\Controllers\AdminHomeGalleryController;
 use App\Http\Controllers\AdminHomeBannerController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\AdminMemberApprovalController;
@@ -35,6 +37,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/blogs', [HomeController::class, 'blogs'])->name('blogs.index');
+Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery.index');
 Route::get('/events', [HomeController::class, 'events'])->name('events.index');
 Route::get('/donations', [HomeController::class, 'donations'])->name('donations.index');
 Route::post('/donations/payment/order', [DonationPaymentController::class, 'createOrder'])->name('donations.payment.order');
@@ -100,6 +104,44 @@ Route::prefix('admin')->group(function () {
             ]);
         Route::post('/home-banners/{homeBanner}/toggle-status', [AdminHomeBannerController::class, 'toggleStatus'])
             ->name('admin.home-banners.toggle-status');
+
+        // Homepage Blog Management
+        Route::resource('home-blogs', AdminHomeBlogController::class)
+            ->except(['show'])
+            ->parameters([
+                'home-blogs' => 'homeBlog',
+            ])
+            ->names([
+                'index' => 'admin.home-blogs.index',
+                'create' => 'admin.home-blogs.create',
+                'store' => 'admin.home-blogs.store',
+                'edit' => 'admin.home-blogs.edit',
+                'update' => 'admin.home-blogs.update',
+                'destroy' => 'admin.home-blogs.destroy',
+            ]);
+        Route::post('/home-blogs/{homeBlog}/toggle-status', [AdminHomeBlogController::class, 'toggleStatus'])
+            ->name('admin.home-blogs.toggle-status');
+        Route::post('/home-blogs/section/update', [AdminHomeBlogController::class, 'updateSection'])
+            ->name('admin.home-blogs.section.update');
+
+        // Homepage Gallery Management
+        Route::resource('home-galleries', AdminHomeGalleryController::class)
+            ->except(['show'])
+            ->parameters([
+                'home-galleries' => 'homeGallery',
+            ])
+            ->names([
+                'index' => 'admin.home-galleries.index',
+                'create' => 'admin.home-galleries.create',
+                'store' => 'admin.home-galleries.store',
+                'edit' => 'admin.home-galleries.edit',
+                'update' => 'admin.home-galleries.update',
+                'destroy' => 'admin.home-galleries.destroy',
+            ]);
+        Route::post('/home-galleries/{homeGallery}/toggle-status', [AdminHomeGalleryController::class, 'toggleStatus'])
+            ->name('admin.home-galleries.toggle-status');
+        Route::post('/home-galleries/section/update', [AdminHomeGalleryController::class, 'updateSection'])
+            ->name('admin.home-galleries.section.update');
 
         // Settings > Default Settings
         Route::get('/settings/default-settings', [DefaultSettingsController::class, 'index'])->name('admin.settings.default-settings');

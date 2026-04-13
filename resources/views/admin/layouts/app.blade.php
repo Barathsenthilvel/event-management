@@ -323,6 +323,26 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Home Banners</span>
             </a>
 
+            <a href="{{ route('admin.home-blogs.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-blogs.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-blogs.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Home Blogs</span>
+            </a>
+
+            <a href="{{ route('admin.home-galleries.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-galleries.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-galleries.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Home Galleries</span>
+            </a>
+
             <a href="{{ route('admin.members.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.members.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"

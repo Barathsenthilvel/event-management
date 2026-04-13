@@ -4,25 +4,25 @@
             <div class="lg:sticky lg:top-8">
                 <div class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-[#965995]">
                     <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-[#965995]" aria-hidden="true"></span>
-                    Our blog
+                    {{ $blog['section_badge'] ?? 'Our blog' }}
                 </div>
 
                 <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
-                    Insights &amp; Updates
+                    {{ $blog['section_title'] ?? 'Insights & Updates' }}
                 </h2>
 
                 <p class="mt-6 text-[#351c42]/65 text-base leading-7 max-w-sm">
-                    Stay informed with the latest news, stories, and updates from GNAT Association. Explore ideas and initiatives shaping our communities.
+                    {{ $blog['section_description'] ?? 'Stay informed with the latest news, stories, and updates from GNAT Association. Explore ideas and initiatives shaping our communities.' }}
                 </p>
 
-                <button type="button" class="click-btn btn-style506 mt-8">
+                <a href="{{ route('blogs.index') }}" class="click-btn btn-style506 mt-8 inline-flex">
                     <span class="click-btn__icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" aria-hidden="true">
                             <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    <span class="click-btn__label">Explore All Posts</span>
-                </button>
+                    <span class="click-btn__label">{{ $blog['section_button_text'] ?? 'Explore All Posts' }}</span>
+                </a>
             </div>
 
             <div>
@@ -43,14 +43,14 @@
                                     <h3 class="text-3xl font-extrabold text-[#351c42]">{{ $post['title'] }}</h3>
                                     <p class="mt-2 text-[#351c42]/65 leading-6">{{ $post['excerpt'] }}</p>
                                     <div class="mt-4 flex items-center justify-between">
-                                        <button type="button" class="click-btn click-btn--sm btn-style506">
+                                        <a href="{{ $post['read_more_url'] ?? '#' }}" class="click-btn click-btn--sm btn-style506">
                                             <span class="click-btn__icon">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
                                                     <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 </svg>
                                             </span>
                                             <span class="click-btn__label">Read More</span>
-                                        </button>
+                                        </a>
                                         <span class="text-sm font-semibold text-[#351c42]/70 inline-flex items-center gap-1.5">
                                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M18 8L20 10L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

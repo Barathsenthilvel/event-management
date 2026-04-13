@@ -6,7 +6,10 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\HomeBlogPost;
 use App\Models\HomeBanner;
+use App\Models\HomeGalleryItem;
+use App\Models\HomeGallerySection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -80,6 +83,63 @@ class HomeController extends Controller
         return view(
             'home.index',
             array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations', 'banners'))
+        );
+    }
+
+    public function blogs(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $posts = HomeBlogPost::query()
+            ->where('is_active', true)
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('tag', 'like', '%'.$q.'%')
+                        ->orWhere('excerpt', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderBy('sort_order')
+            ->latest('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view(
+            'home.blogs',
+            array_merge(config('homepage', []), compact('posts', 'q'))
+        );
+    }
+
+    public function gallery(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $category = trim((string) $request->query('category', 'all'));
+
+        $allowedCategories = ['all', 'programs', 'events', 'community'];
+        if (! in_array($category, $allowedCategories, true)) {
+            $category = 'all';
+        }
+
+        $items = HomeGalleryItem::query()
+            ->where('is_active', true)
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('eyebrow', 'like', '%'.$q.'%')
+                        ->orWhere('description_text', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($category !== 'all', fn ($query) => $query->where('category_key', $category))
+            ->orderBy('sort_order')
+            ->latest('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $section = HomeGallerySection::query()->first();
+
+        return view(
+            'home.gallery',
+            array_merge(config('homepage', []), compact('items', 'q', 'category', 'section'))
         );
     }
 
