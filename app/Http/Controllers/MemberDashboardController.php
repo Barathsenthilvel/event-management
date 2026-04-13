@@ -410,7 +410,10 @@ class MemberDashboardController extends Controller
             return back()->with('nomination_error', 'Could not save your interest. Please try again.');
         }
 
-        return back()->with('nomination_success', 'Your interest for this position has been recorded.');
+        return back()
+            ->with('nomination_success', 'Your interest for this position has been recorded.')
+            ->with('nomination_thanks_modal', true)
+            ->with('nomination_thanks_nomination_id', $nomination->id);
     }
 
     public function submitPollingVote(Request $request, Polling $polling)

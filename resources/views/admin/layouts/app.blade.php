@@ -313,6 +313,16 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Events</span>
             </a>
 
+            <a href="{{ route('admin.home-banners.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-banners.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-banners.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 7h18M3 12h18M3 17h18" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Home Banners</span>
+            </a>
+
             <a href="{{ route('admin.members.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
                 <svg class="w-5 h-5 {{ request()->routeIs('admin.members.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"

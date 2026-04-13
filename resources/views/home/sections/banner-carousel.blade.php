@@ -13,9 +13,15 @@
                     style="transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);"
                 >
                     @foreach ($banners as $banner)
+                        @php
+                            $rawHref = (string) ($banner['href'] ?? '#');
+                            $slideHref = \Illuminate\Support\Str::startsWith($rawHref, ['#', 'http://', 'https://', 'mailto:', 'tel:'])
+                                ? $rawHref
+                                : url('/').'/'.ltrim($rawHref, '/');
+                        @endphp
                         <a
-                            href="{{ url('/') }}{{ $banner['href'] }}"
-                            class="banner-slide group relative block min-h-[220px] shrink-0 overflow-hidden sm:min-h-[280px] md:min-h-[320px] lg:min-h-[380px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
+                            href="{{ $slideHref }}"
+                            class="banner-slide group relative block h-[160px] shrink-0 overflow-hidden sm:h-[200px] md:h-[240px] lg:h-[280px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
                         >
                             <img
                                 src="{{ asset($banner['src']) }}"

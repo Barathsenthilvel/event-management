@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDesignationController;
 use App\Http\Controllers\AdminDonationPaymentController;
+use App\Http\Controllers\AdminHomeBannerController;
 use App\Http\Controllers\AdminJobController;
 use App\Http\Controllers\AdminMemberApprovalController;
 use App\Http\Controllers\AdminMemberController;
@@ -85,6 +86,20 @@ Route::prefix('admin')->group(function () {
             'update' => 'admin.menus.update',
             'destroy' => 'admin.menus.destroy',
         ]);
+
+        // Homepage Banner Management
+        Route::resource('home-banners', AdminHomeBannerController::class)
+            ->except(['show'])
+            ->names([
+                'index' => 'admin.home-banners.index',
+                'create' => 'admin.home-banners.create',
+                'store' => 'admin.home-banners.store',
+                'edit' => 'admin.home-banners.edit',
+                'update' => 'admin.home-banners.update',
+                'destroy' => 'admin.home-banners.destroy',
+            ]);
+        Route::post('/home-banners/{homeBanner}/toggle-status', [AdminHomeBannerController::class, 'toggleStatus'])
+            ->name('admin.home-banners.toggle-status');
 
         // Settings > Default Settings
         Route::get('/settings/default-settings', [DefaultSettingsController::class, 'index'])->name('admin.settings.default-settings');

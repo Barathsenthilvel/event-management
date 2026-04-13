@@ -338,6 +338,10 @@
                 @php
                     $nomQ = $nominationSlotQueue ?? collect();
                     $pollQ = $pollingSlotQueue ?? collect();
+                    $thanksNominationId = (int) session('nomination_thanks_nomination_id', 0);
+                    $nominationThanksOpen = (bool) session('nomination_thanks_modal')
+                        && $thanksNominationId > 0
+                        && $dashboardNominations->contains(fn ($s) => (int) ($s['nomination']->id ?? 0) === $thanksNominationId);
                     $thanksPollId = (int) session('polling_thanks_poll_id', 0);
                     $pollingThanksOpen = (bool) session('polling_thanks_modal')
                         && $thanksPollId > 0
@@ -349,8 +353,7 @@
                             <article class="md-announce-card md-announce-card--compact">
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="min-w-0 pr-1">
-                                        <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">Nominations</p>
-                                        <h3 class="mt-0.5 text-base font-extrabold leading-tight tracking-tight text-white">Open roles</h3>
+                                        <h3 class="text-sm font-extrabold uppercase tracking-[0.14em] text-white">NOMINATION ALERT</h3>
                                     </div>
                                     <button
                                         type="button"
@@ -452,6 +455,29 @@
                         </div>
                     @endif
                 </section>
+
+                @if($nominationThanksOpen)
+                    <div
+                        id="dashboard-nomination-thanks-overlay"
+                        class="fixed inset-0 z-[131] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="dashboard-nomination-summary-thanks-title"
+                    >
+                        <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
+                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <h3 id="dashboard-nomination-summary-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thanks for showing interest</h3>
+                            <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
+                                Your interest has been recorded successfully. The office team can now review your submission in the nomination list.
+                            </p>
+                            <button type="button" class="dashboard-nomination-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                @endif
 
                 @if($pollingThanksOpen)
                     <div
@@ -744,6 +770,7 @@
         @foreach($dashboardNominations as $nomRow)
             @php
                 $nominationPrompt = $nomRow['nomination'];
+                $detailInterestedPositionIds = collect($nomRow['interestedPositionIds'] ?? []);
                 $nomDetailCover = $nominationPrompt->cover_image_path ? asset('storage/' . ltrim($nominationPrompt->cover_image_path, '/')) : null;
                 $nomDetailBanner = $nominationPrompt->banner_image_path ? asset('storage/' . ltrim($nominationPrompt->banner_image_path, '/')) : null;
                 $nomStatusLabel = match ($nominationPrompt->status) {
@@ -769,9 +796,6 @@
                                 <h2 id="nom-detail-title-{{ $nominationPrompt->id }}" class="mt-2 text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">{{ $nominationPrompt->title }}</h2>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-[#fddc6a] backdrop-blur-sm">{{ $nomStatusLabel }}</span>
-                                    <span class="inline-flex rounded-full border border-white/20 bg-black/20 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
-                                        {{ $nominationPrompt->is_active ? 'Shown on portal' : 'Hidden on portal' }}
-                                    </span>
                                 </div>
                             </div>
                             <button type="button" data-popup-close class="shrink-0 rounded-full border border-white/20 bg-white/10 p-2 text-white/90 transition hover:bg-white/20" aria-label="Close">✕</button>
@@ -809,9 +833,19 @@
                                 @if($nominationPrompt->positions->isEmpty())
                                     <p class="mt-3 text-sm text-[#351c42]/55">No positions listed yet.</p>
                                 @else
-                                    <ul class="mt-3 flex flex-wrap gap-2">
+                                    <ul class="mt-3 space-y-2">
                                         @foreach($nominationPrompt->positions as $p)
-                                            <li class="inline-flex max-w-full items-center rounded-full border border-[#351c42]/12 bg-[#faf9fc] px-3 py-1.5 text-xs font-semibold text-[#351c42]">{{ $p->position }}</li>
+                                            <li class="flex items-center justify-between gap-2 rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2">
+                                                <span class="min-w-0 truncate text-xs font-semibold text-[#351c42]">{{ $p->position }}</span>
+                                                @if($detailInterestedPositionIds->contains((int) $p->id))
+                                                    <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-extrabold text-emerald-800">Interested</span>
+                                                @else
+                                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $p]) }}">
+                                                        @csrf
+                                                        <button type="submit" class="rounded-full bg-[#351c42] px-3 py-1 text-[10px] font-extrabold text-[#fddc6a] transition hover:brightness-110">Interested</button>
+                                                    </form>
+                                                @endif
+                                            </li>
                                         @endforeach
                                     </ul>
                                 @endif
@@ -948,6 +982,11 @@
                         document.getElementById("dashboard-floating-polling-wrap")?.classList.add("hidden");
                         return;
                     }
+                    if (e.target.closest(".dashboard-nomination-thanks-dismiss")) {
+                        e.preventDefault();
+                        document.getElementById("dashboard-nomination-thanks-overlay")?.classList.add("hidden");
+                        return;
+                    }
                     if (e.target.closest(".dashboard-polling-thanks-dismiss")) {
                         e.preventDefault();
                         document.getElementById("dashboard-polling-thanks-overlay")?.classList.add("hidden");
@@ -956,6 +995,11 @@
                 },
                 true
             );
+            document.getElementById("dashboard-nomination-thanks-overlay")?.addEventListener("click", (e) => {
+                if (e.target === e.currentTarget) {
+                    e.currentTarget.classList.add("hidden");
+                }
+            });
             document.getElementById("dashboard-polling-thanks-overlay")?.addEventListener("click", (e) => {
                 if (e.target === e.currentTarget) {
                     e.currentTarget.classList.add("hidden");

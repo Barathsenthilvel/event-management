@@ -6,6 +6,7 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\HomeBanner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,6 +19,24 @@ class HomeController extends Controller
     public function index()
     {
         $config = config('homepage', []);
+        $dbBanners = HomeBanner::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest('id')
+            ->get();
+
+        $banners = $dbBanners->isNotEmpty()
+            ? $dbBanners->map(function (HomeBanner $banner) {
+                return [
+                    'href' => $banner->link_url ?: '#',
+                    'src' => 'storage/' . ltrim((string) $banner->image_path, '/'),
+                    'alt' => $banner->alt_text ?: ($banner->title ?: 'Homepage banner'),
+                    'eyebrow' => $banner->eyebrow,
+                    'title' => $banner->caption_title ?: $banner->title,
+                    'text' => $banner->caption_text,
+                ];
+            })->values()->all()
+            : ($config['banners'] ?? []);
 
         $homeEvents = Event::query()
             ->with(['dates:id,event_id,event_date,start_time,end_time', 'creator:id,name'])
@@ -60,7 +79,7 @@ class HomeController extends Controller
 
         return view(
             'home.index',
-            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations'))
+            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations', 'banners'))
         );
     }
 
