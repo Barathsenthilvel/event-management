@@ -265,6 +265,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/jobs/{job}/alert', [AdminJobController::class, 'alertForm'])->name('admin.jobs.alert');
         Route::post('/jobs/{job}/alert', [AdminJobController::class, 'alertStore'])->name('admin.jobs.alert.store');
         Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
+        Route::get('/jobs/{job}/report', [AdminJobController::class, 'downloadReport'])->name('admin.jobs.report');
         Route::post('/jobs/{job}/applications/{application}/status', [AdminJobController::class, 'updateApplicationStatus'])->name('admin.jobs.applications.status');
 
         // Nominations Management

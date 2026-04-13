@@ -8,7 +8,10 @@
             <p class="text-xs font-bold text-slate-500 mt-1">Posted On Date & Time</p>
             <p class="text-xs font-bold text-slate-700 mt-1">No. of Seats - {{ $job->no_of_openings }} | Applied - {{ $applications->total() }}</p>
         </div>
-        <a href="{{ route('admin.jobs.index') }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">Back</a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.jobs.report', $job->id) }}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">Download Report</a>
+            <a href="{{ route('admin.jobs.index') }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">Back</a>
+        </div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4">

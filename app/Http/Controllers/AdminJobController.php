@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AdminJob;
 use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
+use App\Models\Designation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminJobController extends Controller
 {
@@ -35,24 +37,31 @@ class AdminJobController extends Controller
 
     public function create()
     {
-        return view('admin.jobs.create');
+        return view('admin.jobs.create', [
+            'hospitalSuggestions' => $this->hospitalSuggestions(),
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate($this->rules());
+        $this->validateChoiceGroups($request);
         AdminJob::create($this->buildPayload($request, $validated, true));
         return redirect()->route('admin.jobs.index')->with('success', 'Job created successfully.');
     }
 
     public function edit(AdminJob $job)
     {
-        return view('admin.jobs.edit', compact('job'));
+        return view('admin.jobs.edit', [
+            'job' => $job,
+            'hospitalSuggestions' => $this->hospitalSuggestions(),
+        ]);
     }
 
     public function update(Request $request, AdminJob $job)
     {
         $validated = $request->validate($this->rules($job->id));
+        $this->validateChoiceGroups($request);
         $job->update($this->buildPayload($request, $validated, false));
         return redirect()->route('admin.jobs.index')->with('success', 'Job updated successfully.');
     }
@@ -84,8 +93,15 @@ class AdminJobController extends Controller
     public function alertForm(AdminJob $job, Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $designationId = (int) $request->query('designation_id', 0);
+        $leadersOnly = $request->boolean('leaders_only');
+
         $members = User::query()
             ->where('is_approved', true)
+            ->when($designationId > 0, fn ($query) => $query->where('designation_id', $designationId))
+            ->when($leadersOnly, function ($query) {
+                $query->whereHas('designation', fn ($d) => $d->where('name', 'like', '%leader%'));
+            })
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('name', 'like', '%' . $q . '%')
@@ -93,37 +109,52 @@ class AdminJobController extends Controller
                         ->orWhere('mobile', 'like', '%' . $q . '%');
                 });
             })
+            ->with('designation:id,name')
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
         $alertedIds = AdminJobAlert::query()->where('job_id', $job->id)->pluck('user_id')->all();
+        $designations = Designation::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
 
-        return view('admin.jobs.alert', compact('job', 'members', 'alertedIds', 'q'));
+        return view('admin.jobs.alert', compact('job', 'members', 'alertedIds', 'q', 'designationId', 'designations', 'leadersOnly'));
     }
 
     public function alertStore(AdminJob $job, Request $request)
     {
         $validated = $request->validate([
-            'target' => 'required|in:all,specific',
+            'target' => 'required|in:all,specific,leaders_only',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'integer|exists:users,id',
             'notify_whatsapp' => 'nullable|boolean',
             'notify_sms' => 'nullable|boolean',
             'notify_email' => 'nullable|boolean',
+            'notify_all' => 'nullable|boolean',
         ]);
 
+        $notifyAll = $request->boolean('notify_all');
         $notifyWhatsApp = $request->boolean('notify_whatsapp');
         $notifySms = $request->boolean('notify_sms');
         $notifyEmail = $request->boolean('notify_email');
+        if ($notifyAll) {
+            $notifyWhatsApp = true;
+            $notifySms = true;
+            $notifyEmail = true;
+        }
 
         if (!$notifyWhatsApp && !$notifySms && !$notifyEmail) {
             return back()->withErrors(['notify_channel' => 'Select at least one notification channel.'])->withInput();
         }
 
-        $memberIds = $validated['target'] === 'all'
-            ? User::query()->where('is_approved', true)->pluck('id')->all()
-            : array_values(array_unique($validated['member_ids'] ?? []));
+        $memberIds = match ($validated['target']) {
+            'all' => User::query()->where('is_approved', true)->pluck('id')->all(),
+            'leaders_only' => User::query()
+                ->where('is_approved', true)
+                ->whereHas('designation', fn ($d) => $d->where('name', 'like', '%leader%'))
+                ->pluck('id')
+                ->all(),
+            default => array_values(array_unique($validated['member_ids'] ?? [])),
+        };
 
         if (empty($memberIds)) {
             return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
@@ -172,6 +203,41 @@ class AdminJobController extends Controller
         return view('admin.jobs.applications', compact('job', 'applications', 'q'));
     }
 
+    public function downloadReport(AdminJob $job): StreamedResponse
+    {
+        $applications = AdminJobApplication::query()
+            ->with('user:id,name,email,mobile')
+            ->where('job_id', $job->id)
+            ->orderBy('id')
+            ->get();
+
+        $filename = 'job-report-' . $job->id . '-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () use ($applications, $job) {
+            $stream = fopen('php://output', 'w');
+            fputcsv($stream, ['Job', $job->title]);
+            fputcsv($stream, ['Job Code', $job->code]);
+            fputcsv($stream, ['No. Of Openings', $job->no_of_openings]);
+            fputcsv($stream, []);
+            fputcsv($stream, ['Member Name', 'Email', 'Mobile', 'Status', 'Submitted At', 'Status Mail Triggered At']);
+
+            foreach ($applications as $application) {
+                fputcsv($stream, [
+                    $application->user->name ?? '',
+                    $application->user->email ?? '',
+                    $application->user->mobile ?? '',
+                    $application->application_status,
+                    optional($application->submitted_at)->format('Y-m-d H:i:s'),
+                    optional($application->status_emailed_at)->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($stream);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
     public function updateApplicationStatus(AdminJob $job, AdminJobApplication $application, Request $request)
     {
         if ($application->job_id !== $job->id) {
@@ -193,7 +259,7 @@ class AdminJobController extends Controller
     private function rules(?int $jobId = null): array
     {
         return [
-            'hospital' => 'nullable|string|max:255',
+            'hospital' => 'required|string|max:255',
             'title' => 'required|string|max:255',
             'code' => 'required|string|max:100|unique:admin_jobs,code,' . ($jobId ?? 'NULL') . ',id',
             'no_of_openings' => 'required|integer|min:0',
@@ -236,6 +302,32 @@ class AdminJobController extends Controller
         }
 
         return $payload;
+    }
+
+    private function hospitalSuggestions(): array
+    {
+        return AdminJob::query()
+            ->whereNotNull('hospital')
+            ->where('hospital', '!=', '')
+            ->distinct()
+            ->orderBy('hospital')
+            ->pluck('hospital')
+            ->all();
+    }
+
+    private function validateChoiceGroups(Request $request): void
+    {
+        if (! $request->boolean('vacancy_permanent') && ! $request->boolean('vacancy_temporary') && ! $request->boolean('vacancy_any')) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'vacancy_type' => 'Select at least one vacancy type.',
+            ]);
+        }
+
+        if (! $request->boolean('preference_wfh') && ! $request->boolean('preference_onsite') && ! $request->boolean('preference_any')) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'preference' => 'Select at least one preference type.',
+            ]);
+        }
     }
 }
 
