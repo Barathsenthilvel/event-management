@@ -262,6 +262,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/jobs/{job}/toggle-promote', [AdminJobController::class, 'togglePromote'])->name('admin.jobs.toggle-promote');
         Route::post('/jobs/{job}/toggle-status', [AdminJobController::class, 'toggleStatus'])->name('admin.jobs.toggle-status');
         Route::post('/jobs/{job}/toggle-listing', [AdminJobController::class, 'toggleListing'])->name('admin.jobs.toggle-listing');
+        Route::post('/jobs/hospitals', [AdminJobController::class, 'storeHospital'])->name('admin.jobs.hospitals.store');
         Route::get('/jobs/{job}/alert', [AdminJobController::class, 'alertForm'])->name('admin.jobs.alert');
         Route::post('/jobs/{job}/alert', [AdminJobController::class, 'alertStore'])->name('admin.jobs.alert.store');
         Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
@@ -329,6 +330,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/announcements/dismiss', [MemberDashboardController::class, 'dismissDashboardAnnouncement'])
             ->name('dashboard.announcements.dismiss');
+        Route::get('/jobs', [MemberDashboardController::class, 'jobsPage'])->name('jobs.index');
         Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
         Route::get('/nominations', [MemberDashboardController::class, 'nominationsPage'])->name('nominations.index');
         Route::get('/pollings', [MemberDashboardController::class, 'pollingsPage'])->name('pollings.index');

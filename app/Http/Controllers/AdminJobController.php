@@ -6,6 +6,7 @@ use App\Models\AdminJob;
 use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
 use App\Models\Designation;
+use App\Models\Hospital;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,7 @@ class AdminJobController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $hospital = trim((string) $request->query('hospital', ''));
 
         $jobs = AdminJob::query()
             ->with('creator:id,name')
@@ -28,17 +30,21 @@ class AdminJobController extends Controller
                         ->orWhere('code', 'like', '%' . $q . '%');
                 });
             })
+            ->when($hospital !== '', fn ($query) => $query->where('hospital', $hospital))
             ->latest('id')
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.jobs.index', compact('jobs', 'q'));
+        $hospitalSuggestions = $this->hospitalSuggestions();
+
+        return view('admin.jobs.index', compact('jobs', 'q', 'hospital', 'hospitalSuggestions'));
     }
 
     public function create()
     {
         return view('admin.jobs.create', [
             'hospitalSuggestions' => $this->hospitalSuggestions(),
+            'hospitalDirectory' => $this->hospitalDirectory(),
         ]);
     }
 
@@ -55,7 +61,39 @@ class AdminJobController extends Controller
         return view('admin.jobs.edit', [
             'job' => $job,
             'hospitalSuggestions' => $this->hospitalSuggestions(),
+            'hospitalDirectory' => $this->hospitalDirectory(),
         ]);
+    }
+
+    public function storeHospital(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
+        ]);
+
+        $hospital = Hospital::query()->updateOrCreate(
+            ['name' => trim((string) $validated['name'])],
+            [
+                'address' => trim((string) $validated['address']),
+                'is_active' => true,
+                'created_by_admin_id' => Auth::guard('admin')->id(),
+            ]
+        );
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Hospital added successfully.',
+                'hospital' => [
+                    'id' => $hospital->id,
+                    'name' => $hospital->name,
+                    'address' => $hospital->address,
+                ],
+            ]);
+        }
+
+        return back()->with('success', 'Hospital added successfully.');
     }
 
     public function update(Request $request, AdminJob $job)
@@ -306,13 +344,33 @@ class AdminJobController extends Controller
 
     private function hospitalSuggestions(): array
     {
-        return AdminJob::query()
+        $fromDirectory = Hospital::query()
+            ->where('is_active', true)
+            ->pluck('name');
+
+        $fromJobs = AdminJob::query()
             ->whereNotNull('hospital')
             ->where('hospital', '!=', '')
             ->distinct()
-            ->orderBy('hospital')
-            ->pluck('hospital')
+            ->pluck('hospital');
+
+        return $fromDirectory
+            ->merge($fromJobs)
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
             ->all();
+    }
+
+    private function hospitalDirectory()
+    {
+        return Hospital::query()
+            ->where('is_active', true)
+            ->latest('id')
+            ->limit(12)
+            ->get(['id', 'name', 'address']);
     }
 
     private function validateChoiceGroups(Request $request): void

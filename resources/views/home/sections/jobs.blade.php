@@ -11,7 +11,10 @@
             and tell us how you’d like to contribute.
         </p>
         <div class="mt-8">
-            <a href="{{ route('member.login') }}#signup" class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-6 py-3 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 transition hover:brightness-105">
+            <a
+                href="{{ Auth::check() ? route('member.jobs.index') : route('member.login', ['return' => route('member.jobs.index')]) }}"
+                class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-6 py-3 text-sm font-bold text-[#fddc6a] shadow-lg shadow-[#351c42]/25 transition hover:brightness-105"
+            >
                 Join Now
             </a>
         </div>

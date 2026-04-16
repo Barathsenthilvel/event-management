@@ -16,7 +16,7 @@
                 </p>
 
                 <div class="mt-7 flex items-center gap-4">
-                    <a href="{{ url('/') }}#volunteer" class="click-btn btn-style506">
+                    <a href="{{ Auth::check() ? route('member.jobs.index') : route('member.login', ['return' => route('member.jobs.index')]) }}" class="click-btn btn-style506">
                         <span class="click-btn__icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7" fill="none" aria-hidden="true">
                                 <path d="M7 17L17 7" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/>

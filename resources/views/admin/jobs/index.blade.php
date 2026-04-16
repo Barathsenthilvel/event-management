@@ -13,7 +13,7 @@
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <form method="GET" class="flex items-center gap-2 w-full sm:max-w-md min-w-0">
+            <form method="GET" class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:max-w-3xl">
                 <div class="relative flex-1 min-w-0">
                     <input type="search" name="q" value="{{ $q }}" placeholder="Search"
                         class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
@@ -21,7 +21,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
+                <select name="hospital" class="min-w-[13rem] rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-200">
+                    <option value="">All hospitals</option>
+                    @foreach(($hospitalSuggestions ?? []) as $hospitalOption)
+                        <option value="{{ $hospitalOption }}" {{ ($hospital ?? '') === $hospitalOption ? 'selected' : '' }}>{{ $hospitalOption }}</option>
+                    @endforeach
+                </select>
                 <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+                @if(($q ?? '') !== '' || ($hospital ?? '') !== '')
+                    <a href="{{ route('admin.jobs.index') }}" class="shrink-0 px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700">Reset</a>
+                @endif
             </form>
             <div class="flex shrink-0 justify-end">
                 <a href="{{ route('admin.jobs.create') }}" class="inline-flex px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>

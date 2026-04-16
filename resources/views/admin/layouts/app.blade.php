@@ -290,7 +290,9 @@
                 @endif
             @endforeach
 
-            {{-- 3. Users, Roles & Permissions, Menu Management, Settings (last) --}}
+            {{-- 3. Legacy static admin links (super-admin only).
+                 Non-super-admin sidebar is fully role-menu-permission driven (dynamic menus above). --}}
+            @if($admin && $admin->is_super_admin)
             @if($admin && $admin->hasPermission('user.view'))
             <a href="{{ route('admin.admins.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.admins.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
@@ -440,6 +442,7 @@
                     </a>
                 </div>
             </div>
+            @endif
             @endif
         </nav>
 

@@ -6,6 +6,7 @@ use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\AdminJob;
 use App\Models\Meeting;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
@@ -25,6 +26,29 @@ use Illuminate\Validation\Rule;
 
 class MemberDashboardController extends Controller
 {
+    public function jobsPage(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $jobs = AdminJob::query()
+            ->where('is_active', true)
+            ->where('listing_status', 'listed')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('title', 'like', '%'.$q.'%')
+                        ->orWhere('hospital', 'like', '%'.$q.'%')
+                        ->orWhere('code', 'like', '%'.$q.'%')
+                        ->orWhere('key_skills', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderByDesc('promote_front')
+            ->latest('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('member.jobs', compact('jobs', 'q'));
+    }
+
     public function index()
     {
         $user = Auth::user();
