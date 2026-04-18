@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
 
 class MemberProfileController extends Controller
 {
@@ -15,6 +16,14 @@ class MemberProfileController extends Controller
     private const DOCUMENT_FIELDS = [
         'educational_certificate' => [
             'column' => 'educational_certificate_path',
+            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+        ],
+        'rnrm_certificate' => [
+            'column' => 'rnrm_certificate_path',
+            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+        ],
+        'student_id_card' => [
+            'column' => 'student_id_card_path',
             'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
         ],
         'aadhar_card' => [
@@ -48,10 +57,19 @@ class MemberProfileController extends Controller
             ->latest()
             ->first();
 
+        $referrers = User::query()
+            ->where('is_approved', true)
+            ->where('profile_completed', true)
+            ->where('id', '!=', $user->id)
+            ->orderBy('name')
+            ->limit(500)
+            ->get(['id', 'name']);
+
         return view('member.profile.edit', [
             'user' => $user,
             'activeSubscription' => $activeSubscription,
             'pendingProfileDocs' => session(self::PENDING_SESSION_KEY, []),
+            'referrers' => $referrers,
         ]);
     }
 
@@ -79,6 +97,8 @@ class MemberProfileController extends Controller
         $pending = $this->stageNewUploads($request, $user);
 
         $data = $request->validate([
+            'profile_type' => ['required', 'in:registered_nurse,student_nurse,volunteer'],
+            'referred_by_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'mobile' => ['required', 'digits:10'],
@@ -86,7 +106,8 @@ class MemberProfileController extends Controller
             'gender' => ['required', 'string', 'max:30'],
             'qualification' => ['required', 'string', 'max:120'],
             'blood_group' => ['required', 'string', 'max:30'],
-            'rnrm_number_with_date' => ['required', 'string', 'max:120'],
+            'rnrm_number_with_date' => ['nullable', 'string', 'max:120'],
+            'student_id' => ['nullable', 'string', 'max:120'],
             'college_name' => ['required', 'string', 'max:190'],
             'door_no' => ['required', 'string', 'max:80'],
             'locality_area' => ['required', 'string', 'max:190'],
@@ -98,17 +119,53 @@ class MemberProfileController extends Controller
             'new_password' => ['nullable', 'string', 'min:6', 'confirmed'],
         ]);
 
-        foreach (self::DOCUMENT_FIELDS as $field => $spec) {
-            $col = $spec['column'];
-            if (!empty($user->$col) || !empty($pending[$field])) {
-                continue;
-            }
+        $profileType = (string) $data['profile_type'];
 
-            throw ValidationException::withMessages([
-                $field => ['Please upload this document.'],
-            ]);
+        if ($profileType === 'registered_nurse' && empty($data['rnrm_number_with_date'])) {
+            throw ValidationException::withMessages(['rnrm_number_with_date' => ['RNRM No is required for Registered Nurse.']]);
+        }
+        if ($profileType === 'student_nurse' && empty($data['student_id'])) {
+            throw ValidationException::withMessages(['student_id' => ['Student ID is required for Student Nurse.']]);
         }
 
+        $hasDoc = function (string $field) use ($user, $pending): bool {
+            $spec = self::DOCUMENT_FIELDS[$field] ?? null;
+            if (!$spec) return false;
+            $col = $spec['column'];
+            return !empty($user->$col) || !empty($pending[$field]);
+        };
+
+        // Always required documents
+        foreach (['aadhar_card', 'passport_photo'] as $field) {
+            if ($hasDoc($field)) continue;
+            throw ValidationException::withMessages([$field => ['Please upload this document.']]);
+        }
+
+        if ($profileType === 'student_nurse') {
+            foreach (['educational_certificate', 'student_id_card'] as $field) {
+                if ($hasDoc($field)) continue;
+                throw ValidationException::withMessages([$field => ['Please upload this document.']]);
+            }
+        }
+
+        if ($profileType === 'volunteer') {
+            if (! $hasDoc('educational_certificate')) {
+                throw ValidationException::withMessages(['educational_certificate' => ['Please upload this document.']]);
+            }
+        }
+
+        if ($profileType === 'registered_nurse') {
+            // Require either RNRM certificate OR educational certificate.
+            if (! $hasDoc('rnrm_certificate') && ! $hasDoc('educational_certificate')) {
+                throw ValidationException::withMessages([
+                    'rnrm_certificate' => ['Upload RNRM certificate OR Educational certificate.'],
+                    'educational_certificate' => ['Upload Educational certificate OR RNRM certificate.'],
+                ]);
+            }
+        }
+
+        $user->profile_type = $profileType;
+        $user->referred_by_user_id = $data['referred_by_user_id'] ?? null;
         $user->first_name = $data['first_name'];
         $user->last_name = $data['last_name'];
         $user->mobile = $data['mobile'];
@@ -118,7 +175,8 @@ class MemberProfileController extends Controller
         $user->gender = $data['gender'];
         $user->qualification = $data['qualification'];
         $user->blood_group = $data['blood_group'];
-        $user->rnrm_number_with_date = $data['rnrm_number_with_date'];
+        $user->rnrm_number_with_date = $data['rnrm_number_with_date'] ?? null;
+        $user->student_id = $data['student_id'] ?? null;
         $user->college_name = $data['college_name'];
         $user->door_no = $data['door_no'];
         $user->locality_area = $data['locality_area'];
@@ -220,22 +278,37 @@ class MemberProfileController extends Controller
 
     private function isProfileComplete($user): bool
     {
-        return !empty($user?->first_name)
+        $type = (string) ($user?->profile_type ?? '');
+        $hasBase = !empty($user?->first_name)
             && !empty($user?->last_name)
             && !empty($user?->mobile)
             && !empty($user?->dob)
             && !empty($user?->gender)
             && !empty($user?->qualification)
             && !empty($user?->blood_group)
-            && !empty($user?->rnrm_number_with_date)
             && !empty($user?->college_name)
             && !empty($user?->door_no)
             && !empty($user?->locality_area)
             && !empty($user?->state)
             && !empty($user?->pin_code)
             && !empty($user?->council_state)
-            && !empty($user?->educational_certificate_path)
             && !empty($user?->aadhar_card_path)
             && !empty($user?->passport_photo_path);
+
+        if (!$hasBase) return false;
+
+        if ($type === 'registered_nurse') {
+            return !empty($user?->rnrm_number_with_date)
+                && (!empty($user?->educational_certificate_path) || !empty($user?->rnrm_certificate_path));
+        }
+        if ($type === 'student_nurse') {
+            return !empty($user?->student_id)
+                && !empty($user?->educational_certificate_path)
+                && !empty($user?->student_id_card_path);
+        }
+        if ($type === 'volunteer') {
+            return !empty($user?->educational_certificate_path);
+        }
+        return false;
     }
 }

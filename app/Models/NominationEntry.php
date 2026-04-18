@@ -14,12 +14,14 @@ class NominationEntry extends Model
         'nomination_id',
         'position_id',
         'user_id',
+        'response_status',
         'submitted_at',
     ];
 
     protected function casts(): array
     {
         return [
+            'response_status' => 'string',
             'submitted_at' => 'datetime',
         ];
     }

@@ -353,6 +353,8 @@ Route::prefix('member')->name('member.')->group(function () {
             Route::get('/e-books', [MemberEBookController::class, 'index'])->name('ebooks.index');
             Route::post('/nominations/{nomination}/positions/{nominationPosition}/interest', [MemberDashboardController::class, 'submitNominationInterest'])
                 ->name('nominations.interest');
+            Route::post('/nominations/{nomination}/positions/{nominationPosition}/not-interested', [MemberDashboardController::class, 'submitNominationNotInterested'])
+                ->name('nominations.not-interested');
             Route::post('/pollings/{polling}/vote', [MemberDashboardController::class, 'submitPollingVote'])
                 ->name('pollings.vote');
         });

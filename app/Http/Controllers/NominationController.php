@@ -20,8 +20,11 @@ class NominationController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $tab = $request->query('tab', 'nominations');
+        $response = $request->query('response', 'all');
 
-        $interestCount = NominationEntry::query()->count();
+        $interestCount = NominationEntry::query()->where('response_status', 'interested')->count();
+        $notInterestCount = NominationEntry::query()->where('response_status', 'not_interested')->count();
+        $responseCount = $interestCount + $notInterestCount;
 
         if ($tab === 'interests') {
             $interestEntries = NominationEntry::query()
@@ -30,6 +33,9 @@ class NominationController extends Controller
                     'position:id,nomination_id,position',
                     'nomination:id,title',
                 ])
+                ->when(in_array($response, ['interested', 'not_interested'], true), function ($query) use ($response) {
+                    $query->where('response_status', $response);
+                })
                 ->when($q !== '', function ($query) use ($q) {
                     $query->where(function ($sub) use ($q) {
                         $sub->whereHas('user', function ($u) use ($q) {
@@ -50,7 +56,10 @@ class NominationController extends Controller
             return view('admin.nominations.index', [
                 'tab' => 'interests',
                 'q' => $q,
+                'response' => $response,
                 'interestCount' => $interestCount,
+                'notInterestCount' => $notInterestCount,
+                'responseCount' => $responseCount,
                 'interestEntries' => $interestEntries,
                 'nominations' => null,
             ]);
@@ -69,7 +78,10 @@ class NominationController extends Controller
         return view('admin.nominations.index', [
             'tab' => 'nominations',
             'q' => $q,
+            'response' => $response,
             'interestCount' => $interestCount,
+            'notInterestCount' => $notInterestCount,
+            'responseCount' => $responseCount,
             'nominations' => $nominations,
             'interestEntries' => null,
         ]);
@@ -223,6 +235,7 @@ class NominationController extends Controller
     public function submissions(Nomination $nomination, Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $response = $request->query('response', 'all');
 
         $entries = NominationEntry::query()
             ->with([
@@ -230,6 +243,9 @@ class NominationController extends Controller
                 'position:id,nomination_id,position',
             ])
             ->where('nomination_id', $nomination->id)
+            ->when(in_array($response, ['interested', 'not_interested'], true), function ($query) use ($response) {
+                $query->where('response_status', $response);
+            })
             ->when($q !== '', function ($query) use ($q) {
                 $query->whereHas('user', function ($userQ) use ($q) {
                     $userQ->where('name', 'like', '%' . $q . '%')
@@ -245,10 +261,13 @@ class NominationController extends Controller
 
         $positions = NominationPosition::query()
             ->where('nomination_id', $nomination->id)
-            ->withCount('entries')
+            ->withCount([
+                'entries as interested_entries_count' => fn ($q) => $q->where('response_status', 'interested'),
+                'entries as not_interested_entries_count' => fn ($q) => $q->where('response_status', 'not_interested'),
+            ])
             ->get();
 
-        return view('admin.nominations.submissions', compact('nomination', 'entries', 'positions', 'q'));
+        return view('admin.nominations.submissions', compact('nomination', 'entries', 'positions', 'q', 'response'));
     }
 
     public function downloadReport(Nomination $nomination)
@@ -258,14 +277,15 @@ class NominationController extends Controller
             ->where('nomination_id', $nomination->id)
             ->get();
 
-        $csv = "Position,Member Name,Email,Mobile,Submitted On\n";
+        $csv = "Position,Member Name,Email,Mobile,Response,Submitted On\n";
         foreach ($rows as $row) {
             $csv .= sprintf(
-                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                 str_replace('"', '""', (string) ($row->position->position ?? '')),
                 str_replace('"', '""', (string) ($row->user->name ?? '')),
                 str_replace('"', '""', (string) ($row->user->email ?? '')),
                 str_replace('"', '""', (string) ($row->user->mobile ?? '')),
+                str_replace('"', '""', (string) str_replace('_', ' ', (string) $row->response_status)),
                 optional($row->submitted_at)->format('d M Y h:i A') ?? ''
             );
         }

@@ -47,6 +47,7 @@
     @endphp
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
+    @include('shared.read-more-modal')
     @include('home.partials.scripts')
 
     @include('member.partials.member-portal-drawer-script')

@@ -3,6 +3,11 @@
 --}}
 @php
     $interestSet = collect($nominationInterestPositionIds ?? []);
+    $thanksNomId = session('nomination_thanks_nomination_id');
+    $thanksRelevant = session('nomination_thanks_modal') && (
+        $thanksNomId === null
+        || $memberNominations->contains(fn ($n) => (int) $n->id === (int) $thanksNomId)
+    );
 @endphp
 
 <style>
@@ -65,6 +70,22 @@
                         <h3 class="text-xl font-extrabold leading-tight tracking-tight text-[#351c42] sm:text-2xl">{{ $nom->title }}</h3>
                         @if($nom->terms)
                             <p class="line-clamp-3 text-sm leading-relaxed text-[#351c42]/70">{{ $nom->terms }}</p>
+                            @php
+                                $termsText = trim(strip_tags((string) $nom->terms));
+                                $showReadMore = \Illuminate\Support\Str::length($termsText) > 220;
+                            @endphp
+                            @if($showReadMore)
+                                <button
+                                    type="button"
+                                    data-read-more
+                                    data-read-more-title="{{ e($nom->title) }}"
+                                    data-read-more-content="{{ e($termsText) }}"
+                                    class="inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                >
+                                    Read more
+                                    <span aria-hidden="true">→</span>
+                                </button>
+                            @endif
                         @endif
                         <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#351c42]/55">
                             <span class="inline-flex items-center gap-1.5 rounded-lg bg-[#351c42]/10 px-2.5 py-1 text-[#351c42]">
@@ -118,4 +139,41 @@
             </div>
         @endforelse
     </div>
+
+    {{-- Thank-you modal (after interest submission) --}}
+    @if($thanksRelevant)
+        <div
+            id="nomination-thanks-overlay"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="nomination-thanks-title"
+        >
+            <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 id="nomination-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you</h3>
+                <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
+                    Your interest has been recorded. The team will review submissions and reach out if needed.
+                </p>
+                <button type="button" class="nomination-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
+                    Continue
+                </button>
+            </div>
+        </div>
+        <script>
+            (() => {
+                const overlay = document.getElementById("nomination-thanks-overlay");
+                if (!overlay) return;
+                function close() { overlay.classList.add("hidden"); }
+                overlay.addEventListener("click", (e) => {
+                    if (e.target === overlay || e.target.closest(".nomination-thanks-dismiss")) close();
+                });
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+                });
+            })();
+        </script>
+    @endif
 </section>

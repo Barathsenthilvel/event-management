@@ -19,7 +19,7 @@
         );
 @endphp
 
-<section id="member-pollings" class="scroll-mt-28 space-y-6 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6" x-data="{ thanksOpen: {{ $thanksRelevant ? 'true' : 'false' }} }">
+<section id="member-pollings" class="scroll-mt-28 space-y-6 rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
     <div class="flex flex-col gap-2 border-b border-[#351c42]/10 pb-4">
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Governance</p>
         <h2 class="mt-1 text-xl font-extrabold text-[#351c42] sm:text-2xl">Polling</h2>
@@ -158,31 +158,39 @@
     @endforelse
 
     {{-- Thank-you modal (after successful vote) --}}
-    <div
-        x-show="thanksOpen"
-        x-cloak
-        x-transition.opacity
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="polling-thanks-title"
-    >
+    @if($thanksRelevant)
         <div
-            @click.outside="thanksOpen = false"
-            class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl"
+            id="polling-thanks-overlay"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="polling-thanks-title"
         >
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 id="polling-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you for voting</h3>
+                <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
+                    Your ballot has been recorded. The association may publish aggregated results according to its own schedule; individual votes stay private.
+                </p>
+                <button type="button" class="polling-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
+                    Continue
+                </button>
             </div>
-            <h3 id="polling-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you for voting</h3>
-            <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
-                Your ballot has been recorded. The association may publish aggregated results according to its own schedule; individual votes stay private.
-            </p>
-            <button type="button" @click="thanksOpen = false" class="mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
-                Continue
-            </button>
         </div>
-    </div>
+        <script>
+            (() => {
+                const overlay = document.getElementById("polling-thanks-overlay");
+                if (!overlay) return;
+                function close() { overlay.classList.add("hidden"); }
+                overlay.addEventListener("click", (e) => {
+                    if (e.target === overlay || e.target.closest(".polling-thanks-dismiss")) close();
+                });
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+                });
+            })();
+        </script>
+    @endif
 </section>
-
-<style>[x-cloak]{display:none!important}</style>

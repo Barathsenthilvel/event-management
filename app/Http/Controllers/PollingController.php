@@ -37,7 +37,10 @@ class PollingController extends Controller
         $members = User::query()
             ->where('is_approved', true)
             ->whereIn('id', function ($q) {
-                $q->from('nomination_entries')->select('user_id')->distinct();
+                $q->from('nomination_entries')
+                    ->select('user_id')
+                    ->where('response_status', 'interested')
+                    ->distinct();
             })
             ->latest('id')
             ->get(['id', 'name', 'email', 'mobile']);
@@ -79,7 +82,10 @@ class PollingController extends Controller
             ->where('is_approved', true)
             ->where(function ($query) use ($selectedCandidateIds) {
                 $query->whereIn('id', function ($q) {
-                    $q->from('nomination_entries')->select('user_id')->distinct();
+                    $q->from('nomination_entries')
+                        ->select('user_id')
+                        ->where('response_status', 'interested')
+                        ->distinct();
                 });
 
                 if ($selectedCandidateIds !== []) {

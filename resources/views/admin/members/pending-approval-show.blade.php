@@ -91,8 +91,10 @@
                     </h2>
                     <dl class="mt-4 space-y-3 text-xs">
                         @foreach([
+                            'Profile type' => $m->profile_type ? ucwords(str_replace('_', ' ', (string) $m->profile_type)) : null,
                             'Qualification' => $m->qualification,
                             'RNRM number & date' => $m->rnrm_number_with_date,
+                            'Student ID' => $m->student_id,
                             'College' => $m->college_name,
                             'Door no.' => $m->door_no,
                             'Locality / area' => $m->locality_area,
@@ -117,6 +119,8 @@
                     <div class="mt-4 grid gap-3 sm:grid-cols-3">
                         @foreach([
                             'Educational certificate' => $doc($m->educational_certificate_path),
+                            'RNRM certificate' => $doc($m->rnrm_certificate_path),
+                            'Student ID card' => $doc($m->student_id_card_path),
                             'Aadhar card' => $doc($m->aadhar_card_path),
                             'Passport photo' => $doc($m->passport_photo_path),
                         ] as $label => $url)

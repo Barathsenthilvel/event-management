@@ -30,7 +30,9 @@ class User extends Authenticatable implements CanResetPasswordContract
         'gender',
         'qualification',
         'blood_group',
+        'profile_type',
         'rnrm_number_with_date',
+        'student_id',
         'college_name',
         'door_no',
         'locality_area',
@@ -39,6 +41,8 @@ class User extends Authenticatable implements CanResetPasswordContract
         'council_state',
         'currently_working',
         'educational_certificate_path',
+        'rnrm_certificate_path',
+        'student_id_card_path',
         'aadhar_card_path',
         'passport_photo_path',
         'email',
@@ -46,6 +50,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'profile_completed',
         'is_approved',
         'designation_id',
+        'referred_by_user_id',
         'password',
     ];
 

@@ -1406,3 +1406,57 @@
         openOnly(items[0]);
     })();
 </script>
+
+<script>
+    (() => {
+        const modal = document.getElementById("read-more-modal");
+        if (!modal) return;
+
+        const titleEl = document.getElementById("read-more-modal-title");
+        const bodyEl = document.getElementById("read-more-modal-body");
+        const backdrop = modal.querySelector("[data-read-more-backdrop]");
+        const closeEls = modal.querySelectorAll("[data-close-read-more]");
+
+        let lastActive = null;
+
+        function setOpen(open) {
+            modal.classList.toggle("hidden", !open);
+            modal.classList.toggle("flex", open);
+            modal.setAttribute("aria-hidden", open ? "false" : "true");
+            document.body.style.overflow = open ? "hidden" : "";
+            if (!open && lastActive && typeof lastActive.focus === "function") {
+                lastActive.focus();
+            }
+        }
+
+        function openFromTrigger(btn) {
+            if (!btn) return;
+            lastActive = btn;
+            const title = btn.getAttribute("data-read-more-title") || "Details";
+            const content = btn.getAttribute("data-read-more-content") || "";
+            if (titleEl) titleEl.textContent = title;
+            if (bodyEl) bodyEl.textContent = content;
+            setOpen(true);
+            (closeEls[0] || modal).focus?.({ preventScroll: true });
+        }
+
+        function close() { setOpen(false); }
+
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-read-more]");
+            if (btn) {
+                e.preventDefault();
+                openFromTrigger(btn);
+                return;
+            }
+            if (!modal.classList.contains("hidden")) {
+                if (e.target.closest("[data-close-read-more]")) close();
+                else if (backdrop && e.target === backdrop) close();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) close();
+        });
+    })();
+</script>

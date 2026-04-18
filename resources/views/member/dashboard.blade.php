@@ -185,6 +185,24 @@
                 #351c42;
             box-shadow: 0 12px 28px rgba(53, 28, 66, 0.35);
         }
+        .md-popup-compact {
+            padding: 0.8rem !important;
+        }
+        .md-popup-compact .md-popup-title {
+            font-size: 1.25rem;
+            line-height: 1.15;
+        }
+        .md-popup-compact .md-popup-subtitle {
+            font-size: 0.7rem;
+            letter-spacing: 0.16em;
+        }
+        .md-popup-compact .md-popup-meta {
+            font-size: 0.7rem;
+        }
+        .md-popup-compact .md-nom-announce-row {
+            padding: 0.5rem 0.65rem;
+            border-radius: 1rem;
+        }
         .md-btn-interest-card {
             display: inline-flex;
             align-items: center;
@@ -205,7 +223,7 @@
         }
         .md-nom-announce-row {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 0.75rem;
             border-radius: 1.15rem;
@@ -213,6 +231,7 @@
             background: rgba(248, 246, 242, 0.98);
             padding: 0.75rem 1rem;
             box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+            flex-wrap: wrap;
         }
         .md-nom-announce-row .md-nom-interest-pill {
             display: inline-flex;
@@ -231,11 +250,6 @@
         .md-nom-announce-row .md-nom-interest-pill:hover {
             filter: brightness(1.08);
             transform: translateY(-1px);
-        }
-        .md-announce-card--compact {
-            border-radius: 0.95rem;
-            padding: 0.65rem 0.75rem;
-            box-shadow: 0 8px 20px rgba(53, 28, 66, 0.28);
         }
     </style>
 </head>
@@ -295,6 +309,8 @@
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Membership</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
+                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
+                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Polling</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Change password</a>
@@ -305,6 +321,75 @@
         <div id="md-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" aria-hidden="true"></div>
 
         <main class="min-w-0 flex-1 space-y-10 lg:space-y-12" id="member-dashboard-main">
+            @php
+                $showNomThanks = (bool) session('nomination_thanks_modal');
+                $nomThanksType = (string) session('nomination_thanks_type', '');
+                $nomThanksNomId = (int) session('nomination_thanks_nomination_id', 0);
+                $nomThanksPos = (string) session('nomination_thanks_position', '');
+
+                $showPollThanks = (bool) session('polling_thanks_modal');
+                $pollThanksPollId = (int) session('polling_thanks_poll_id', 0);
+                $pollThanksPosId = (int) session('polling_thanks_position_id', 0);
+            @endphp
+
+            @if($showNomThanks)
+                <div id="nomination-thanks-modal" class="fixed inset-0 z-[120] flex items-center justify-center bg-[#351c42]/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+                    <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-7 shadow-2xl">
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl {{ $nomThanksType === 'not_interested' ? 'bg-slate-100 text-slate-700' : 'bg-emerald-100 text-emerald-700' }}">
+                            @if($nomThanksType === 'not_interested')
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            @else
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            @endif
+                        </div>
+                        <h3 class="mt-5 text-center text-xl font-extrabold text-[#351c42]">
+                            {{ $nomThanksType === 'not_interested' ? 'Response saved' : 'Thanks for your interest' }}
+                        </h3>
+                        <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
+                            @if($nomThanksType === 'not_interested')
+                                No problem — we won’t count you for this role.
+                            @else
+                                Great — we recorded your interest for this role.
+                            @endif
+                            @if($nomThanksPos !== '')
+                                <span class="block mt-1 font-semibold text-[#351c42]">{{ $nomThanksPos }}</span>
+                            @endif
+                        </p>
+                        <button
+                            type="button"
+                            class="mt-7 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
+                            data-thanks-close="nomination"
+                            data-nomination-id="{{ $nomThanksNomId }}"
+                        >
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            @if($showPollThanks)
+                <div id="polling-thanks-modal" class="fixed inset-0 z-[120] flex items-center justify-center bg-[#351c42]/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+                    <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-7 shadow-2xl">
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <h3 class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you for voting</h3>
+                        <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
+                            Your vote has been recorded. You can return anytime to vote on other positions while polling is open.
+                        </p>
+                        <button
+                            type="button"
+                            class="mt-7 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
+                            data-thanks-close="polling"
+                            data-polling-id="{{ $pollThanksPollId }}"
+                            data-position-id="{{ $pollThanksPosId }}"
+                        >
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            @endif
+
             @if(session('member_gate_error'))
                 <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
                     {{ session('member_gate_error') }}
@@ -322,185 +407,182 @@
                 @endif
             </header>
 
-            @if($showFullMemberMenu && ($showPollingDashboard || $showNominationDashboard))
-                <p class="mb-3 max-w-3xl text-xs font-semibold leading-relaxed text-[#351c42]/70" role="status">
-                    @if($showPollingDashboard && $showNominationDashboard)
-                        Nominations first, then polling, bottom-right — compact cards; scroll inside each card when there are many open roles or votes. Close with ✕ until refresh.
-                    @elseif($showPollingDashboard)
-                        Polling summary bottom-right — scroll the card to see all open votes. Close with ✕ until refresh.
-                    @else
-                        Nominations summary bottom-right — scroll the card to see all open roles. Close with ✕ until refresh.
-                    @endif
-                </p>
+            @if($showFullMemberMenu && $showPollingDashboard)
+                <section
+                    id="dashboard-polling-slot"
+                    data-queue-root-kind="polling"
+                    data-popup-stack="polling"
+                    class="pointer-events-none fixed right-4 z-[94] flex w-[min(92vw,24rem)] flex-col gap-3 sm:right-6 @if($showNominationDashboard) bottom-[26rem] sm:bottom-[28rem] @else bottom-4 sm:bottom-6 @endif"
+                >
+                    @foreach($dashboardPolls as $pollRow)
+                        @php
+                            $dashPoll = $pollRow['polling'];
+                            $dashTotalPositions = $dashPoll->positions->count();
+                            $dashVotedCount = collect($pollRow['pollingDashboardVotedIds'] ?? [])
+                                ->intersect($dashPoll->positions->pluck('id'))
+                                ->count();
+                            $dashPollCompleted = $dashTotalPositions > 0 && $dashVotedCount >= $dashTotalPositions;
+                        @endphp
+                        <div
+                            id="dashboard-polling-card-{{ $dashPoll->id }}"
+                            class="dashboard-polling-card pointer-events-auto @if(!$loop->first) hidden @endif"
+                            data-queue-item
+                            data-queue-kind="polling"
+                            data-queue-completed="{{ $dashPollCompleted ? '1' : '0' }}"
+                        >
+                            @include('member.partials.dashboard-polling-popup', [
+                                'poll' => $dashPoll,
+                                'pollingDashboardVotedIds' => $pollRow['pollingDashboardVotedIds'],
+                                'pollingDashboardVotes' => $pollRow['pollingDashboardVotes'],
+                            ])
+                            @if($dashboardPolls->count() > 1)
+                                <div class="mt-2 flex justify-end">
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                                        data-queue-next
+                                        data-queue-kind="polling"
+                                    >
+                                        View more
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </section>
             @endif
 
-            @if($showFullMemberMenu && ($showPollingDashboard || $showNominationDashboard))
-                @php
-                    $nomQ = $nominationSlotQueue ?? collect();
-                    $pollQ = $pollingSlotQueue ?? collect();
-                    $thanksNominationId = (int) session('nomination_thanks_nomination_id', 0);
-                    $nominationThanksOpen = (bool) session('nomination_thanks_modal')
-                        && $thanksNominationId > 0
-                        && $dashboardNominations->contains(fn ($s) => (int) ($s['nomination']->id ?? 0) === $thanksNominationId);
-                    $thanksPollId = (int) session('polling_thanks_poll_id', 0);
-                    $pollingThanksOpen = (bool) session('polling_thanks_modal')
-                        && $thanksPollId > 0
-                        && $pollQ->contains(fn ($s) => (int) $s['polling']->id === $thanksPollId);
-                @endphp
-                <section id="dashboard-floating-stack" class="pointer-events-none fixed bottom-4 right-4 z-[95] flex max-h-[calc(100dvh-5rem)] w-[min(92vw,19.5rem)] flex-col gap-2 overflow-y-auto overscroll-contain sm:bottom-5 sm:right-5 isolate" aria-label="Member announcements">
-                    @if($showNominationDashboard)
-                        <div id="dashboard-floating-nominations-wrap" class="dashboard-nomination-summary relative z-[3] w-full shrink-0 pointer-events-auto">
-                            <article class="md-announce-card md-announce-card--compact">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="min-w-0 pr-1">
-                                        <h3 class="text-sm font-extrabold uppercase tracking-[0.14em] text-white">NOMINATION ALERT</h3>
+            @if($showFullMemberMenu && $showNominationDashboard)
+                <section id="dashboard-nomination-stack" data-queue-root-kind="nomination" data-popup-stack="nomination" class="pointer-events-none fixed bottom-4 right-4 z-[95] flex w-[min(92vw,24rem)] flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Member announcements">
+                    @foreach($dashboardNominations as $nomRow)
+                        @php
+                            $nominationPrompt = $nomRow['nomination'];
+                            $interestedNominationPositionIds = collect($nomRow['interestedPositionIds'] ?? []);
+                            $dismissedNominationPositionIds = collect($nomRow['dismissedPositionIds'] ?? []);
+                            $nominationTotalPositions = $nominationPrompt->positions->count();
+                            $nominationHandledCount = $nominationPrompt->positions
+                                ->filter(fn ($position) => $interestedNominationPositionIds->contains($position->id) || $dismissedNominationPositionIds->contains($position->id))
+                                ->count();
+                            $nominationEndDate = ($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->format('Y-m-d');
+                            $nominationEndDateTimeIso = $nominationEndDate && $nominationPrompt->polling_to
+                                ? \Illuminate\Support\Carbon::parse($nominationEndDate.' '.$nominationPrompt->polling_to)->toIso8601String()
+                                : null;
+                        @endphp
+                        <div
+                            id="dashboard-nomination-card-{{ $nominationPrompt->id }}"
+                            class="dashboard-nomination-card pointer-events-auto @if(!$loop->first) hidden @endif"
+                            data-queue-item
+                            data-queue-kind="nomination"
+                            data-queue-completed="{{ $nominationTotalPositions > 0 && $nominationHandledCount >= $nominationTotalPositions ? '1' : '0' }}"
+                        >
+                            <article class="md-announce-card md-popup-compact p-4">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="min-w-0 pr-2">
+                                        <p class="md-popup-subtitle text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">Nominations</p>
+                                        <h3 class="md-popup-title mt-1 break-all text-2xl font-extrabold leading-[1.15] tracking-tight text-white">{{ $nominationPrompt->title }}</h3>
+                                        <p class="md-popup-meta mt-2 text-[12px] font-semibold text-white/70">
+                                            {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }}
+                                            @if(($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->toDateString() !== $nominationPrompt->polling_date?->toDateString())
+                                                – {{ ($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->format('d M Y') ?? '—' }}
+                                            @endif
+                                        </p>
+                                        <p class="mt-2">
+                                            <span
+                                                class="inline-flex items-center rounded-full border border-sky-300/60 bg-sky-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-100"
+                                                data-dashboard-countdown
+                                                data-countdown-prefix="Ends in"
+                                                data-countdown-end="{{ $nominationEndDateTimeIso }}"
+                                            >
+                                                Ends in --
+                                            </span>
+                                        </p>
                                     </div>
                                     <button
                                         type="button"
-                                        class="shrink-0 rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
-                                        aria-label="Hide nominations card until refresh"
-                                        data-dashboard-dismiss-nomination-summary
+                                        class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                                        aria-label="Dismiss nomination prompt"
+                                        data-dashboard-dismiss-nomination
+                                        data-nomination-id="{{ $nominationPrompt->id }}"
                                     >✕</button>
                                 </div>
-                                <div class="mt-2 border-t border-white/10 pt-2">
-                                    <p class="mb-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-[#fddc6a]/90">Open positions</p>
-                                    <div class="max-h-40 space-y-1.5 overflow-y-auto overflow-x-hidden pr-0.5 min-h-0 sm:max-h-48">
-                                        @forelse($nomQ as $slot)
-                                            @php
-                                                $nominationPrompt = $slot['nomination'];
-                                                $position = $slot['position'];
-                                            @endphp
-                                            <div class="md-nom-announce-row flex-col gap-1.5 py-2 sm:flex-row sm:items-center sm:gap-2">
-                                                <div class="min-w-0 flex-1">
-                                                    <p class="text-[9px] font-bold uppercase tracking-wide text-[#351c42]/50">{{ $nominationPrompt->title }}</p>
-                                                    <p class="text-xs font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
-                                                </div>
-                                                <div class="flex shrink-0 items-center gap-1.5">
-                                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}" class="inline">
-                                                        @csrf
-                                                        <button type="submit" class="md-nom-interest-pill !px-3 !py-1.5 !text-[11px]">Interested</button>
-                                                    </form>
+                                <div class="mt-3 border-t border-white/10 pt-3">
+                                    <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Open positions</p>
+                                    <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5" data-nom-positions-wrap>
+                                        @forelse($nominationPrompt->positions as $position)
+                                            <div class="md-nom-announce-row @if(!$loop->first) hidden @endif" data-nom-position-row>
+                                                <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
+                                                <div class="flex w-full flex-wrap items-center justify-between gap-2">
+                                                    @if($interestedNominationPositionIds->contains($position->id))
+                                                        <span class="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                                                            Interested sent
+                                                        </span>
+                                                    @elseif($dismissedNominationPositionIds->contains($position->id))
+                                                        <span class="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700">
+                                                            Not interested
+                                                        </span>
+                                                    @else
+                                                        <div class="inline-flex flex-wrap items-center gap-1.5">
+                                                            <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}" class="inline">
+                                                                @csrf
+                                                                <button type="submit" class="md-nom-interest-pill">Interested</button>
+                                                            </form>
+                                                            <form method="POST" action="{{ route('member.nominations.not-interested', [$nominationPrompt, $position]) }}" class="inline">
+                                                                @csrf
+                                                                <button
+                                                                    type="submit"
+                                                                    class="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200"
+                                                                >
+                                                                    Not interested
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    @endif
                                                     <button
                                                         type="button"
                                                         data-popup-open="nomination-detail-modal-{{ $nominationPrompt->id }}"
-                                                        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#351c42]/14 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#965995]/8"
+                                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#351c42]/14 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#965995]/8"
                                                         aria-label="View nomination details"
                                                     >
-                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                     </button>
                                                 </div>
                                             </div>
                                         @empty
-                                            @php
-                                                $row0 = $dashboardNominations->first();
-                                                $firstNom = is_array($row0) ? ($row0['nomination'] ?? null) : null;
-                                            @endphp
-                                            @if($firstNom && $firstNom->positions->isEmpty())
-                                                <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">No open roles are listed for this nomination yet. Open the Nominations page to read full details.</p>
-                                            @else
-                                                <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">You have registered interest for every listed role. Visit Nominations to review past campaigns.</p>
-                                            @endif
+                                            <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">No positions listed yet.</p>
                                         @endforelse
                                     </div>
                                 </div>
-                            </article>
-                        </div>
-                    @endif
-
-                    @if($showPollingDashboard)
-                        <div
-                            id="dashboard-floating-polling-wrap"
-                            class="dashboard-polling-summary relative z-[2] w-full shrink-0 pointer-events-auto"
-                        >
-                            @if(session('polling_success') && $pollQ->contains(fn ($s) => (int) $s['polling']->id === (int) session('polling_success_poll_id', 0)))
-                                <div class="mb-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900" role="status">{{ session('polling_success') }}</div>
-                            @endif
-                            @if(session('polling_error'))
-                                <div class="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800" role="alert">{{ session('polling_error') }}</div>
-                            @endif
-                            <article class="md-announce-card md-announce-card--compact min-h-0">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="min-w-0 pr-1">
-                                        <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">Live polling</p>
-                                        <h3 class="mt-0.5 text-base font-extrabold leading-tight tracking-tight text-white">Open votes</h3>
+                                @php
+                                    $morePositions = max(0, (int) $nominationPrompt->positions->count() - 1);
+                                    $moreNominations = max(0, (int) $dashboardNominations->count() - 1);
+                                @endphp
+                                @if($morePositions > 0 || $moreNominations > 0)
+                                    <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+                                        @if($morePositions > 0)
+                                            <button
+                                                type="button"
+                                                class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                                                data-nom-toggle
+                                            >
+                                                View positions ({{ $morePositions }})
+                                            </button>
+                                        @endif
+                                        @if($moreNominations > 0)
+                                            <button
+                                                type="button"
+                                                class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                                                data-queue-next
+                                                data-queue-kind="nomination"
+                                            >
+                                                View more nominations ({{ $moreNominations }})
+                                            </button>
+                                        @endif
                                     </div>
-                                    <button
-                                        type="button"
-                                        class="shrink-0 rounded-full p-1 text-white/70 transition hover:bg-white/10 hover:text-white"
-                                        aria-label="Hide polling card until refresh"
-                                        data-dashboard-dismiss-polling-summary
-                                    >✕</button>
-                                </div>
-                                <div class="mt-2 border-t border-white/10 pt-2">
-                                    <p class="mb-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-[#fddc6a]/90">Open positions</p>
-                                    <ul class="max-h-40 space-y-2 overflow-y-auto overflow-x-hidden pr-0.5 min-h-0 sm:max-h-48">
-                                        @foreach($pollQ as $slot)
-                                            @php
-                                                $dashPoll = $slot['polling'];
-                                                $dashPos = $slot['position'];
-                                            @endphp
-                                            <li class="list-none space-y-1.5">
-                                                <p class="text-[10px] font-bold uppercase tracking-wide text-white/55">{{ $dashPoll->title }}</p>
-                                                @include('member.partials.dashboard-polling-position-block', [
-                                                    'poll' => $dashPoll,
-                                                    'ppos' => $dashPos,
-                                                    'pollingDashboardVotedIds' => $slot['pollingDashboardVotedIds'],
-                                                    'pollingDashboardVotes' => $slot['pollingDashboardVotes'],
-                                                ])
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
+                                @endif
                             </article>
                         </div>
-                    @endif
+                    @endforeach
                 </section>
-
-                @if($nominationThanksOpen)
-                    <div
-                        id="dashboard-nomination-thanks-overlay"
-                        class="fixed inset-0 z-[131] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="dashboard-nomination-summary-thanks-title"
-                    >
-                        <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
-                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </div>
-                            <h3 id="dashboard-nomination-summary-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thanks for showing interest</h3>
-                            <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
-                                Your interest has been recorded successfully. The office team can now review your submission in the nomination list.
-                            </p>
-                            <button type="button" class="dashboard-nomination-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
-                                Continue
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if($pollingThanksOpen)
-                    <div
-                        id="dashboard-polling-thanks-overlay"
-                        class="fixed inset-0 z-[130] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="dashboard-polling-summary-thanks-title"
-                    >
-                        <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
-                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </div>
-                            <h3 id="dashboard-polling-summary-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you for voting</h3>
-                            <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
-                                Your ballot has been recorded. The association may publish aggregated results according to its own schedule; individual votes stay private.
-                            </p>
-                            <button type="button" class="dashboard-polling-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
-                                Continue
-                            </button>
-                        </div>
-                    </div>
-                @endif
             @endif
 
             @if($showFullMemberMenu)
@@ -570,10 +652,6 @@
                     </div>
                 </article>
             </section>
-            @endif
-
-            @if($showFullMemberMenu && isset($upcomingMeetings) && $upcomingMeetings->isNotEmpty())
-                @include('member.partials.dashboard-meetings', ['upcomingMeetings' => $upcomingMeetings])
             @endif
 
             @if($showFullMemberMenu)
@@ -770,7 +848,6 @@
         @foreach($dashboardNominations as $nomRow)
             @php
                 $nominationPrompt = $nomRow['nomination'];
-                $detailInterestedPositionIds = collect($nomRow['interestedPositionIds'] ?? []);
                 $nomDetailCover = $nominationPrompt->cover_image_path ? asset('storage/' . ltrim($nominationPrompt->cover_image_path, '/')) : null;
                 $nomDetailBanner = $nominationPrompt->banner_image_path ? asset('storage/' . ltrim($nominationPrompt->banner_image_path, '/')) : null;
                 $nomStatusLabel = match ($nominationPrompt->status) {
@@ -796,6 +873,9 @@
                                 <h2 id="nom-detail-title-{{ $nominationPrompt->id }}" class="mt-2 text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">{{ $nominationPrompt->title }}</h2>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-[#fddc6a] backdrop-blur-sm">{{ $nomStatusLabel }}</span>
+                                    <span class="inline-flex rounded-full border border-white/20 bg-black/20 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
+                                        {{ $nominationPrompt->is_active ? 'Shown on portal' : 'Hidden on portal' }}
+                                    </span>
                                 </div>
                             </div>
                             <button type="button" data-popup-close class="shrink-0 rounded-full border border-white/20 bg-white/10 p-2 text-white/90 transition hover:bg-white/20" aria-label="Close">✕</button>
@@ -833,19 +913,9 @@
                                 @if($nominationPrompt->positions->isEmpty())
                                     <p class="mt-3 text-sm text-[#351c42]/55">No positions listed yet.</p>
                                 @else
-                                    <ul class="mt-3 space-y-2">
+                                    <ul class="mt-3 flex flex-wrap gap-2">
                                         @foreach($nominationPrompt->positions as $p)
-                                            <li class="flex items-center justify-between gap-2 rounded-xl border border-[#351c42]/10 bg-[#faf9fc] px-3 py-2">
-                                                <span class="min-w-0 truncate text-xs font-semibold text-[#351c42]">{{ $p->position }}</span>
-                                                @if($detailInterestedPositionIds->contains((int) $p->id))
-                                                    <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-extrabold text-emerald-800">Interested</span>
-                                                @else
-                                                    <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $p]) }}">
-                                                        @csrf
-                                                        <button type="submit" class="rounded-full bg-[#351c42] px-3 py-1 text-[10px] font-extrabold text-[#fddc6a] transition hover:brightness-110">Interested</button>
-                                                    </form>
-                                                @endif
-                                            </li>
+                                            <li class="inline-flex max-w-full items-center rounded-full border border-[#351c42]/12 bg-[#faf9fc] px-3 py-1.5 text-xs font-semibold text-[#351c42]">{{ $p->position }}</li>
                                         @endforeach
                                     </ul>
                                 @endif
@@ -892,6 +962,141 @@
             const sidebar = document.getElementById("md-sidebar");
             const toggle = document.querySelector("[data-md-sidebar-toggle]");
             const backdrop = document.getElementById("md-sidebar-backdrop");
+            const countdownNodes = Array.from(document.querySelectorAll("[data-dashboard-countdown]"));
+
+            function formatCountdown(ms) {
+                const totalSeconds = Math.floor(ms / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+                if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+                return `${minutes}m ${seconds}s`;
+            }
+
+            function refreshCountdowns() {
+                const now = Date.now();
+                countdownNodes.forEach((node) => {
+                    const end = node.getAttribute("data-countdown-end");
+                    const prefix = node.getAttribute("data-countdown-prefix") || "Ends in";
+                    if (!end) {
+                        node.textContent = `${prefix} --`;
+                        return;
+                    }
+                    const endMs = new Date(end).getTime();
+                    if (Number.isNaN(endMs)) {
+                        node.textContent = `${prefix} --`;
+                        return;
+                    }
+                    const diff = endMs - now;
+                    if (diff <= 0) {
+                        node.textContent = "Closed";
+                        return;
+                    }
+                    node.textContent = `${prefix} ${formatCountdown(diff)}`;
+                });
+            }
+
+            if (countdownNodes.length > 0) {
+                refreshCountdowns();
+                window.setInterval(refreshCountdowns, 1000);
+            }
+
+            function queueItems(kind) {
+                return Array.from(document.querySelectorAll(`[data-queue-item][data-queue-kind="${kind}"]`));
+            }
+
+            function availableQueueItems(kind) {
+                return queueItems(kind).filter((el) => el.getAttribute("data-queue-dismissed") !== "1");
+            }
+
+            function queueRoot(kind) {
+                return document.querySelector(`[data-queue-root-kind="${kind}"]`);
+            }
+
+            function queueExpanded(kind) {
+                return queueRoot(kind)?.getAttribute("data-queue-expanded") === "1";
+            }
+
+            function updateQueueButton(kind) {
+                const items = availableQueueItems(kind);
+                items.forEach((el) => {
+                    const btn = el.querySelector(`[data-queue-next][data-queue-kind="${kind}"]`);
+                    if (!btn) return;
+                    if (items.length <= 1 || queueExpanded(kind)) {
+                        btn.classList.add("hidden");
+                        return;
+                    }
+                    btn.classList.remove("hidden");
+                    btn.textContent = `View more (${items.length - 1})`;
+                });
+            }
+
+            function showQueueItem(kind, targetEl) {
+                const items = availableQueueItems(kind);
+                items.forEach((el) => {
+                    el.classList.toggle("hidden", el !== targetEl);
+                });
+                updateQueueButton(kind);
+            }
+
+            function expandQueue(kind) {
+                const items = availableQueueItems(kind);
+                if (items.length === 0) return;
+                queueRoot(kind)?.setAttribute("data-queue-expanded", "1");
+                items.forEach((el) => el.classList.remove("hidden"));
+                updateQueueButton(kind);
+            }
+
+            function initQueue(kind) {
+                const items = availableQueueItems(kind);
+                if (items.length === 0) return;
+                queueRoot(kind)?.setAttribute("data-queue-expanded", "0");
+                const firstIncomplete = items.find((el) => el.getAttribute("data-queue-completed") !== "1");
+                showQueueItem(kind, firstIncomplete || items[0]);
+            }
+
+            initQueue("nomination");
+            initQueue("polling");
+
+            function visibleCards(selector) {
+                return Array.from(document.querySelectorAll(selector)).filter((el) => !el.classList.contains("hidden"));
+            }
+
+            function updatePopupStack() {
+                const nominationRoot = document.querySelector('[data-popup-stack="nomination"]');
+                const pollingRoot = document.querySelector('[data-popup-stack="polling"]');
+                if (!nominationRoot || !pollingRoot) return;
+
+                const anyNomVisible = visibleCards(".dashboard-nomination-card").length > 0;
+                const anyPolVisible = visibleCards(".dashboard-polling-card").length > 0;
+
+                // Nomination always wants to sit at bottom-right when visible.
+                if (anyNomVisible) {
+                    nominationRoot.style.bottom = "";
+                }
+
+                // Polling sits above nomination when nomination visible; otherwise bottom-right.
+                if (!anyPolVisible) return;
+                if (!anyNomVisible) {
+                    pollingRoot.style.bottom = "";
+                    pollingRoot.classList.remove("bottom-[26rem]", "sm:bottom-[28rem]");
+                    pollingRoot.classList.add("bottom-4", "sm:bottom-6");
+                    return;
+                }
+
+                // If nominations visible, compute and stack above it.
+                const nomHeight = nominationRoot.getBoundingClientRect().height;
+                const gap = 12;
+                const baseBottom = window.matchMedia("(min-width: 640px)").matches ? 24 : 16; // sm:bottom-6 vs bottom-4
+                pollingRoot.classList.remove("bottom-4", "sm:bottom-6");
+                pollingRoot.style.bottom = `${baseBottom + nomHeight + gap}px`;
+            }
+
+            updatePopupStack();
+            window.addEventListener("resize", updatePopupStack);
 
             function closeSidebar() {
                 sidebar?.classList.add("-translate-x-full");
@@ -942,6 +1147,41 @@
             document.addEventListener(
                 "click",
                 (e) => {
+                    const thanksBtn = e.target.closest("[data-thanks-close]");
+                    if (thanksBtn) {
+                        e.preventDefault();
+                        const type = thanksBtn.getAttribute("data-thanks-close");
+                        if (type === "nomination") {
+                            document.getElementById("nomination-thanks-modal")?.remove();
+                            const nid = thanksBtn.getAttribute("data-nomination-id");
+                            if (nid) {
+                                const card = document.getElementById(`dashboard-nomination-card-${nid}`);
+                                if (card) {
+                                    card.setAttribute("data-queue-dismissed", "1");
+                                    card.classList.add("hidden");
+                                }
+                                if (queueExpanded("nomination")) expandQueue("nomination");
+                                else initQueue("nomination");
+                                updatePopupStack();
+                            }
+                            return;
+                        }
+                        if (type === "polling") {
+                            document.getElementById("polling-thanks-modal")?.remove();
+                            const pid = thanksBtn.getAttribute("data-polling-id");
+                            if (pid) {
+                                const card = document.getElementById(`dashboard-polling-card-${pid}`);
+                                if (card) {
+                                    card.setAttribute("data-queue-dismissed", "1");
+                                    card.classList.add("hidden");
+                                }
+                                if (queueExpanded("polling")) expandQueue("polling");
+                                else initQueue("polling");
+                                updatePopupStack();
+                            }
+                            return;
+                        }
+                    }
                     const closeBtn = e.target.closest("[data-popup-close]");
                     if (closeBtn) {
                         e.preventDefault();
@@ -954,6 +1194,31 @@
                         const id = openBtn.getAttribute("data-popup-open");
                         const modal = id ? document.getElementById(id) : null;
                         modal?.classList.add("is-open");
+                        return;
+                    }
+                    const nextBtn = e.target.closest("[data-queue-next]");
+                    if (nextBtn) {
+                        const kind = nextBtn.getAttribute("data-queue-kind");
+                        if (!kind) return;
+                        e.preventDefault();
+                        expandQueue(kind);
+                        return;
+                    }
+                    const nomToggle = e.target.closest("[data-nom-toggle]");
+                    if (nomToggle) {
+                        e.preventDefault();
+                        const card = nomToggle.closest(".dashboard-nomination-card");
+                        if (!card) return;
+                        const rows = Array.from(card.querySelectorAll("[data-nom-position-row]"));
+                        if (rows.length <= 1) return;
+                        const expanded = rows.some((r, idx) => idx > 0 && !r.classList.contains("hidden"));
+                        rows.forEach((r, idx) => {
+                            if (idx === 0) return;
+                            r.classList.toggle("hidden", expanded);
+                        });
+                        nomToggle.textContent = expanded ? `View positions (${rows.length - 1})` : "View less";
+                        updatePopupStack();
+                        return;
                     }
                 },
                 true
@@ -971,42 +1236,48 @@
             document.addEventListener(
                 "click",
                 (e) => {
-                    if (e.target.closest("[data-dashboard-dismiss-nomination-summary]")) {
+                    const nomBtn = e.target.closest("[data-dashboard-dismiss-nomination]");
+                    if (nomBtn) {
                         e.preventDefault();
-                        document.getElementById("dashboard-floating-nominations-wrap")?.classList.add("hidden");
-                        document.querySelectorAll('[id^="nomination-detail-modal-"]').forEach((m) => m.classList.remove("is-open"));
+                        const id = nomBtn.getAttribute("data-nomination-id");
+                        if (!id) return;
+                        const card = document.getElementById(`dashboard-nomination-card-${id}`);
+                        if (card) {
+                            // Temporary hide only (current page). On next dashboard visit it appears again.
+                            card.setAttribute("data-queue-dismissed", "1");
+                            card.classList.add("hidden");
+                        }
+                        document.getElementById(`nomination-detail-modal-${id}`)?.classList.remove("is-open");
+                        if (queueExpanded("nomination")) {
+                            expandQueue("nomination");
+                        } else {
+                            initQueue("nomination");
+                        }
+                        updatePopupStack();
                         return;
                     }
-                    if (e.target.closest("[data-dashboard-dismiss-polling-summary]")) {
+                    const polBtn = e.target.closest("[data-dashboard-dismiss-polling]");
+                    if (polBtn) {
                         e.preventDefault();
-                        document.getElementById("dashboard-floating-polling-wrap")?.classList.add("hidden");
-                        return;
-                    }
-                    if (e.target.closest(".dashboard-nomination-thanks-dismiss")) {
-                        e.preventDefault();
-                        document.getElementById("dashboard-nomination-thanks-overlay")?.classList.add("hidden");
-                        return;
-                    }
-                    if (e.target.closest(".dashboard-polling-thanks-dismiss")) {
-                        e.preventDefault();
-                        document.getElementById("dashboard-polling-thanks-overlay")?.classList.add("hidden");
-                        return;
+                        const pid = polBtn.getAttribute("data-polling-id");
+                        if (!pid) return;
+                        const card = document.getElementById(`dashboard-polling-card-${pid}`);
+                        if (card) {
+                            // Temporary hide only (current page). On next dashboard visit it appears again.
+                            card.setAttribute("data-queue-dismissed", "1");
+                            card.classList.add("hidden");
+                        }
+                        if (queueExpanded("polling")) {
+                            expandQueue("polling");
+                        } else {
+                            initQueue("polling");
+                        }
+                        updatePopupStack();
                     }
                 },
                 true
             );
-            document.getElementById("dashboard-nomination-thanks-overlay")?.addEventListener("click", (e) => {
-                if (e.target === e.currentTarget) {
-                    e.currentTarget.classList.add("hidden");
-                }
-            });
-            document.getElementById("dashboard-polling-thanks-overlay")?.addEventListener("click", (e) => {
-                if (e.target === e.currentTarget) {
-                    e.currentTarget.classList.add("hidden");
-                }
-            });
         })();
     </script>
-    @include('member.partials.event-interest-success-modal')
 </body>
 </html>

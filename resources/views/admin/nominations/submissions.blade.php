@@ -18,15 +18,24 @@
             @foreach($positions as $pos)
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-extrabold text-slate-800">{{ $pos->position }}</p>
-                    <span class="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-black">{{ $pos->entries_count }}</span>
+                    <div class="flex items-center gap-1">
+                        <span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-black">{{ $pos->interested_entries_count }}</span>
+                        <span class="px-2 py-1 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black">{{ $pos->not_interested_entries_count }}</span>
+                    </div>
                 </div>
             @endforeach
         </div>
         <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-4">
-            <div class="flex items-center justify-end mb-3">
-                <form method="GET">
+            <div class="mb-3 flex flex-wrap items-center justify-end gap-2">
+                <form method="GET" class="flex items-center gap-2">
+                    <select name="response" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">
+                        <option value="all" {{ ($response ?? 'all') === 'all' ? 'selected' : '' }}>All responses</option>
+                        <option value="interested" {{ ($response ?? 'all') === 'interested' ? 'selected' : '' }}>Interested only</option>
+                        <option value="not_interested" {{ ($response ?? 'all') === 'not_interested' ? 'selected' : '' }}>Not interested only</option>
+                    </select>
                     <input type="text" name="q" value="{{ $q }}" placeholder="Search"
                         class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold w-56 outline-none focus:ring-2 focus:ring-indigo-200">
+                    <button type="submit" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">Apply</button>
                 </form>
             </div>
             <div class="space-y-2">
@@ -38,7 +47,13 @@
                             <p class="text-[11px] text-slate-500">{{ $entry->position->position ?? '-' }}</p>
                         </div>
                         <div class="w-44 text-[11px] text-slate-600">{{ $entry->user->email ?? '-' }}<br>{{ $entry->user->mobile ?? '-' }}</div>
-                        <div class="w-28 text-[11px] text-slate-700">Member</div>
+                        <div class="w-28 text-[11px]">
+                            @if(($entry->response_status ?? 'interested') === 'not_interested')
+                                <span class="inline-flex rounded-full bg-slate-200 px-2 py-1 font-black text-slate-700">Not interested</span>
+                            @else
+                                <span class="inline-flex rounded-full bg-emerald-100 px-2 py-1 font-black text-emerald-700">Interested</span>
+                            @endif
+                        </div>
                         <div class="w-40 text-[11px] text-slate-700">{{ optional($entry->submitted_at)->format('d M Y h:i A') ?: '-' }}</div>
                     </div>
                 @empty

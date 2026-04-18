@@ -1,10 +1,8 @@
 {{--
     Dashboard only — live polling card (not used on the Polling page).
     Expects: $poll (Polling model with positions + candidates), $pollingDashboardVotedIds, $pollingDashboardVotes
-    Optional: $floatingCompact — when true, only pending (not yet voted) positions are shown, max two, with a View more link (header + dismiss live in dashboard.blade.php).
 --}}
 @php
-    $floatingCompact = (bool) ($floatingCompact ?? false);
     $votedSet = collect($pollingDashboardVotedIds ?? []);
     $votesByPosition = collect($pollingDashboardVotes ?? []);
     $pollStartDate = $poll->polling_date?->format('Y-m-d');
@@ -12,11 +10,7 @@
     $start = $pollStartDate ? \Carbon\Carbon::parse($pollStartDate.' '.$poll->polling_from) : null;
     $end = $pollEndDate ? \Carbon\Carbon::parse($pollEndDate.' '.$poll->polling_to) : null;
     $open = $start && $end && now()->between($start, $end);
-    $pendingPositionsPoll = $poll->positions->filter(
-        fn ($ppos) => ! $votedSet->contains((int) $ppos->id)
-    )->values();
-    $positionsLoop = $floatingCompact ? $pendingPositionsPoll->take(2) : $poll->positions;
-    $showPollingViewMore = $floatingCompact && $pendingPositionsPoll->count() > 2;
+    $pollEndDateTimeIso = $end ? $end->toIso8601String() : null;
 @endphp
 
 @php
@@ -26,7 +20,7 @@
         && ! session('polling_thanks_modal');
 @endphp
 <div
-    class="{{ $floatingCompact ? 'space-y-2' : 'scroll-mt-28 space-y-4' }}"
+    class="scroll-mt-28 space-y-4"
     x-data="{ thanksOpen: {{ $thanksForThisPoll ? 'true' : 'false' }} }"
     aria-label="Live polling"
 >
@@ -37,7 +31,6 @@
         <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{{ session('polling_error') }}</div>
     @endif
 
-    @if(!$floatingCompact)
     <article class="relative rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4 sm:p-5">
         <button
             type="button"
@@ -48,6 +41,16 @@
         >✕</button>
 
         <h2 class="pr-10 text-xl font-extrabold uppercase tracking-wide text-[#351c42] sm:text-2xl">{{ $poll->title }}</h2>
+        <p class="mt-2">
+            <span
+                class="inline-flex items-center rounded-full border border-sky-300 bg-sky-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-800"
+                data-dashboard-countdown
+                data-countdown-prefix="Ends in"
+                data-countdown-end="{{ $pollEndDateTimeIso }}"
+            >
+                Ends in --
+            </span>
+        </p>
         <p class="mt-1 text-xs font-semibold text-[#351c42]/55">
             @if($poll->polling_date_to && $poll->polling_date_to->toDateString() !== $poll->polling_date->toDateString())
                 {{ $poll->polling_date?->format('d M Y') }} – {{ $poll->polling_date_to->format('d M Y') }}
@@ -61,13 +64,12 @@
                 <span class="ml-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-extrabold uppercase text-slate-700">Outside voting hours</span>
             @endif
         </p>
-    @endif
 
-        <ul class="{{ $floatingCompact ? 'mt-0 max-h-[min(50vh,22rem)] space-y-3 overflow-y-auto pr-0.5' : 'mt-4 space-y-5' }}">
-            @foreach($positionsLoop as $ppos)
+        <ul class="mt-4 space-y-5">
+            @foreach($poll->positions as $ppos)
                 @php
                     $hasCandidates = $ppos->candidates->isNotEmpty();
-                    $votedThis = $votedSet->contains((int) $ppos->id);
+                    $votedThis = $votedSet->contains($ppos->id);
                     $myVote = $votesByPosition->get($ppos->id);
                 @endphp
                 <li class="rounded-xl border border-[#351c42]/10 bg-white p-4">
@@ -131,16 +133,7 @@
                 </li>
             @endforeach
         </ul>
-
-    @if($floatingCompact && $showPollingViewMore)
-        <div class="mt-3">
-            <a href="{{ route('member.pollings.index') }}" class="md-btn-interest-card flex w-full justify-center text-center">View more</a>
-        </div>
-    @endif
-
-    @if(!$floatingCompact)
     </article>
-    @endif
 
     <div
         x-show="thanksOpen"

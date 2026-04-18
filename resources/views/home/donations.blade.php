@@ -45,6 +45,8 @@
                             : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#e8e3dc" width="100%" height="100%"/></svg>');
                         $excerpt = $donation->short_description
                             ?: \Illuminate\Support\Str::limit(strip_tags((string) $donation->description), 220);
+                        $readMoreText = trim(strip_tags((string) ($donation->short_description ?: $donation->description)));
+                        $showReadMore = \Illuminate\Support\Str::length($readMoreText) > \Illuminate\Support\Str::length($excerpt);
                         [$pillA, $pillB] = $donation->pillTagLabels();
                     @endphp
                     <article class="donation-slide min-w-0 h-full w-full rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
@@ -58,6 +60,18 @@
                             </div>
                             <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $donation->purpose }}</h4>
                             <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
+                            @if($showReadMore)
+                                <button
+                                    type="button"
+                                    data-read-more
+                                    data-read-more-title="{{ e($donation->purpose) }}"
+                                    data-read-more-content="{{ e($readMoreText) }}"
+                                    class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                >
+                                    Read more
+                                    <span aria-hidden="true">→</span>
+                                </button>
+                            @endif
                             <button type="button" data-open-donate-modal data-donation-id="{{ $donation->id }}" class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                 <span class="click-btn__icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
@@ -79,6 +93,7 @@
 
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
+    @include('shared.read-more-modal')
     @include('home.partials.scripts')
 </body>
 </html>

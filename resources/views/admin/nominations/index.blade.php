@@ -34,16 +34,32 @@
                class="rounded-full px-4 py-2 transition {{ $tab === 'nominations' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900' }}">
                 All nominations
             </a>
-            <a href="{{ route('admin.nominations.index', array_filter(['tab' => 'interests', 'q' => $q])) }}"
+            <a href="{{ route('admin.nominations.index', array_filter(['tab' => 'interests', 'q' => $q, 'response' => $response ?? 'all'])) }}"
                class="rounded-full px-4 py-2 transition {{ $tab === 'interests' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900' }}">
-                Interested members
-                <span class="ml-1 rounded-md bg-white/20 px-1.5 py-0.5 text-[10px] font-black tabular-nums">{{ $interestCount ?? 0 }}</span>
+                Responses
+                <span class="ml-1 rounded-md bg-white/20 px-1.5 py-0.5 text-[10px] font-black tabular-nums">{{ $responseCount ?? 0 }}</span>
             </a>
         </div>
     </div>
 
     @if($tab === 'interests')
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2 text-[11px] font-bold">
+                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700">Interested: {{ $interestCount ?? 0 }}</span>
+                    <span class="rounded-full bg-slate-200 px-2.5 py-1 text-slate-700">Not interested: {{ $notInterestCount ?? 0 }}</span>
+                </div>
+                <form method="GET" class="flex items-center gap-2">
+                    <input type="hidden" name="tab" value="interests">
+                    <input type="hidden" name="q" value="{{ $q }}">
+                    <select name="response" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                        <option value="all" {{ ($response ?? 'all') === 'all' ? 'selected' : '' }}>All responses</option>
+                        <option value="interested" {{ ($response ?? 'all') === 'interested' ? 'selected' : '' }}>Interested only</option>
+                        <option value="not_interested" {{ ($response ?? 'all') === 'not_interested' ? 'selected' : '' }}>Not interested only</option>
+                    </select>
+                    <button type="submit" class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-black text-white">Apply</button>
+                </form>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left text-xs">
                     <thead class="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-rose-50">
@@ -52,6 +68,7 @@
                             <th class="px-4 py-3">Contact</th>
                             <th class="px-4 py-3">Nomination</th>
                             <th class="px-4 py-3">Position</th>
+                            <th class="px-4 py-3">Response</th>
                             <th class="px-4 py-3">Submitted</th>
                         </tr>
                     </thead>
@@ -65,10 +82,17 @@
                                 </td>
                                 <td class="px-4 py-3 font-semibold text-slate-800">{{ $entry->nomination->title ?? '—' }}</td>
                                 <td class="px-4 py-3">{{ $entry->position->position ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if(($entry->response_status ?? 'interested') === 'not_interested')
+                                        <span class="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-700">Not interested</span>
+                                    @else
+                                        <span class="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700">Interested</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-[11px] text-slate-600">{{ optional($entry->submitted_at)->format('d M Y h:i A') ?? '—' }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 font-bold">No interest entries yet.</td></tr>
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 font-bold">No responses yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

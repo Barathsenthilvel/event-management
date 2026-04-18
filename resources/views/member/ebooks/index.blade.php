@@ -35,6 +35,8 @@
                         : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#e8e3dc" width="100%" height="100%"/></svg>');
                     $excerpt = $book->short_description
                         ?: \Illuminate\Support\Str::limit(strip_tags((string) $book->description), 220);
+                    $readMoreText = trim(strip_tags((string) ($book->short_description ?: $book->description)));
+                    $showReadMore = \Illuminate\Support\Str::length($readMoreText) > \Illuminate\Support\Str::length($excerpt);
                     $isPaid = ($book->pricing_type ?? 'free') === 'paid';
                     $materialUrl = $book->material_path ? asset('storage/' . $book->material_path) : null;
                 @endphp
@@ -59,6 +61,18 @@
                         @endif
                         @if($excerpt !== '')
                             <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
+                        @endif
+                        @if($showReadMore)
+                            <button
+                                type="button"
+                                data-read-more
+                                data-read-more-title="{{ e($book->title) }}"
+                                data-read-more-content="{{ e($readMoreText) }}"
+                                class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                            >
+                                Read more
+                                <span aria-hidden="true">→</span>
+                            </button>
                         @endif
                         <div class="mt-4 self-start">
                             @if($materialUrl)

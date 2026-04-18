@@ -189,6 +189,26 @@
                             </h3>
                             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 <div>
+                                    <label class="ml-label">Type of profile <span class="text-red-500">*</span></label>
+                                    @php($profileType = old('profile_type', $user->profile_type))
+                                    <select name="profile_type" required class="ml-inp" data-profile-type-select @disabled($profileLocked)>
+                                        <option value="">Select</option>
+                                        <option value="registered_nurse" @selected($profileType === 'registered_nurse')>Registered Nurse</option>
+                                        <option value="student_nurse" @selected($profileType === 'student_nurse')>Student Nurse</option>
+                                        <option value="volunteer" @selected($profileType === 'volunteer')>Volunteer</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="ml-label">Referred by</label>
+                                    @php($refBy = old('referred_by_user_id', $user->referred_by_user_id))
+                                    <select name="referred_by_user_id" class="ml-inp" @disabled($profileLocked)>
+                                        <option value="">Select</option>
+                                        @foreach(($referrers ?? []) as $r)
+                                            <option value="{{ $r->id }}" @selected((string)$refBy === (string)$r->id)>{{ $r->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
                                     <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
                                     @php($qualification = old('qualification', $user->qualification))
                                     <select name="qualification" required class="ml-inp" @disabled($profileLocked)>
@@ -213,8 +233,12 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="ml-label">RNRM number with date <span class="text-red-500">*</span></label>
-                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" required class="ml-inp" @disabled($profileLocked) />
+                                    <label class="ml-label">RNRM No <span class="text-red-500" data-profile-required="registered_nurse">*</span></label>
+                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" class="ml-inp" data-profile-show="registered_nurse" @disabled($profileLocked) />
+                                </div>
+                                <div>
+                                    <label class="ml-label">Student ID <span class="text-red-500" data-profile-required="student_nurse">*</span></label>
+                                    <input name="student_id" value="{{ old('student_id', $user->student_id) }}" class="ml-inp" data-profile-show="student_nurse" @disabled($profileLocked) />
                                 </div>
                                 <div>
                                     <label class="ml-label">College name <span class="text-red-500">*</span></label>
@@ -270,7 +294,10 @@
                             </h3>
                             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 <div class="ml-upload-zone p-4">
-                                    <label class="ml-label">Educational certificate <span class="text-red-500">*</span></label>
+                                    <label class="ml-label">
+                                        Educational certificate
+                                        <span class="text-red-500" data-profile-required="student_nurse,volunteer">*</span>
+                                    </label>
                                     @if($user->educational_certificate_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->educational_certificate_path) }}">View current</a>
                                     @endif
@@ -282,6 +309,34 @@
                                     @endif
                                     <input type="file" name="educational_certificate" class="w-full text-sm" @disabled($profileLocked) />
                                     @error('educational_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                </div>
+                                <div class="ml-upload-zone p-4" data-profile-show="registered_nurse">
+                                    <label class="ml-label">RNRM certificate copy <span class="text-red-500" data-profile-required="registered_nurse">*</span></label>
+                                    @if($user->rnrm_certificate_path)
+                                        <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->rnrm_certificate_path) }}">View current</a>
+                                    @endif
+                                    @if(!empty($pendingProfileDocs['rnrm_certificate']))
+                                        <p class="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                                            New file saved from your last attempt — it will be kept when you fix other fields.
+                                            <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['rnrm_certificate']) }}">Preview</a>
+                                        </p>
+                                    @endif
+                                    <input type="file" name="rnrm_certificate" class="w-full text-sm" @disabled($profileLocked) />
+                                    @error('rnrm_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                </div>
+                                <div class="ml-upload-zone p-4" data-profile-show="student_nurse">
+                                    <label class="ml-label">Student ID (card) <span class="text-red-500" data-profile-required="student_nurse">*</span></label>
+                                    @if($user->student_id_card_path)
+                                        <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->student_id_card_path) }}">View current</a>
+                                    @endif
+                                    @if(!empty($pendingProfileDocs['student_id_card']))
+                                        <p class="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                                            New file saved from your last attempt — it will be kept when you fix other fields.
+                                            <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['student_id_card']) }}">Preview</a>
+                                        </p>
+                                    @endif
+                                    <input type="file" name="student_id_card" class="w-full text-sm" @disabled($profileLocked) />
+                                    @error('student_id_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4">
                                     <label class="ml-label">Aadhar card <span class="text-red-500">*</span></label>
@@ -334,6 +389,28 @@
             const form = document.getElementById("member-profile-form");
             if (!form) return;
             if (form.hasAttribute("data-profile-locked")) return;
+
+            const typeSelect = form.querySelector("[data-profile-type-select]");
+            const showEls = Array.from(form.querySelectorAll("[data-profile-show]"));
+            const reqEls = Array.from(form.querySelectorAll("[data-profile-required]"));
+
+            function setVisibility(type) {
+                showEls.forEach((el) => {
+                    const allowed = (el.getAttribute("data-profile-show") || "").split(",").map(s => s.trim()).filter(Boolean);
+                    const shouldShow = allowed.length === 0 || allowed.includes(type);
+                    el.classList.toggle("hidden", !shouldShow);
+                });
+
+                // Mark only visible fields as required (client-side UX)
+                reqEls.forEach((mark) => {
+                    const allowed = (mark.getAttribute("data-profile-required") || "").split(",").map(s => s.trim()).filter(Boolean);
+                    const active = allowed.includes(type);
+                    mark.classList.toggle("hidden", !active);
+                });
+            }
+
+            setVisibility(typeSelect?.value || "");
+            typeSelect?.addEventListener("change", () => setVisibility(typeSelect.value));
 
             const fields = Array.from(form.querySelectorAll("[data-validate]"));
             const getErrorEl = (name) => form.querySelector(`[data-error-for="${name}"]`);
