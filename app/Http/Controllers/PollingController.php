@@ -161,13 +161,17 @@ class PollingController extends Controller
 
             $totalVotes = (int) $counts->sum();
 
-            $candidates = $position->candidates->map(function ($c) use ($counts, $totalVotes) {
+            $winnerUserId = (int) ($position->winner_user_id ?? 0);
+
+            $candidates = $position->candidates->map(function ($c) use ($counts, $totalVotes, $winnerUserId) {
                 $v = (int) ($counts[$c->id] ?? 0);
 
                 return [
+                    'id' => (int) $c->id,
                     'name' => $c->name,
                     'votes' => $v,
                     'bar_percent' => $totalVotes > 0 ? round(($v / $totalVotes) * 100) : 0,
+                    'is_winner' => $winnerUserId > 0 && $winnerUserId === (int) $c->id,
                 ];
             })->sortByDesc('votes')->values()->all();
 
@@ -175,6 +179,7 @@ class PollingController extends Controller
                 'position' => $position,
                 'total_votes' => $totalVotes,
                 'candidates' => $candidates,
+                'winner_name' => optional($position->winner)->name,
             ];
         }
 

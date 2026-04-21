@@ -53,6 +53,7 @@ class MemberDashboardController extends Controller
         $renewalPlans = collect();
         $dashboardNominations = collect();
         $dashboardPolls = collect();
+        $dashboardWinnerPolls = collect();
 
         if ($showFullMemberMenu && $user) {
             $renewalPlans = MembershipSubscriptionSetting::query()
@@ -63,6 +64,7 @@ class MemberDashboardController extends Controller
 
             $dismissedNominationIds = collect(session('member.dashboard.dismissed_nomination_ids', []))->map(fn ($id) => (int) $id)->filter();
             $dismissedPollingIds = collect(session('member.dashboard.dismissed_polling_ids', []))->map(fn ($id) => (int) $id)->filter();
+            $dismissedPollingWinnerIds = collect(session('member.dashboard.dismissed_polling_winner_ids', []))->map(fn ($id) => (int) $id)->filter();
             $rawNominations = Nomination::query()
                 ->with(['positions' => fn ($q) => $q->orderBy('id')])
                 ->where('is_active', true)
@@ -146,10 +148,47 @@ class MemberDashboardController extends Controller
                     'pollingDashboardVotes' => $votes->keyBy('position_id'),
                 ]);
             }
+
+            $resultPolls = Polling::query()
+                ->with(['positions' => fn ($q) => $q->with('winner:id,name')])
+                ->where('is_active', true)
+                ->where('publish_status', 'published')
+                ->where('results_visible_to_members', true)
+                ->whereIn('polling_status', ['live', 'ends'])
+                ->latest('id')
+                ->limit(30)
+                ->get();
+
+            foreach ($resultPolls as $poll) {
+                if ($dismissedPollingWinnerIds->contains($poll->id)) {
+                    continue;
+                }
+                if (! $this->pollingHasEnded($poll)) {
+                    continue;
+                }
+
+                $winners = $poll->positions
+                    ->filter(fn ($position) => !empty($position->winner_user_id) && $position->winner)
+                    ->map(fn ($position) => [
+                        'position' => $position->position,
+                        'winner_name' => $position->winner->name,
+                    ])
+                    ->values();
+
+                if ($winners->isEmpty()) {
+                    continue;
+                }
+
+                $dashboardWinnerPolls->push([
+                    'polling' => $poll,
+                    'winners' => $winners,
+                ]);
+            }
         }
 
         $showNominationDashboard = $dashboardNominations->isNotEmpty();
         $showPollingDashboard = $dashboardPolls->isNotEmpty();
+        $showPollingWinnerDashboard = $dashboardWinnerPolls->isNotEmpty();
 
         return view('member.dashboard', [
             'activeSubscription' => $user?->activeSubscription,
@@ -158,8 +197,10 @@ class MemberDashboardController extends Controller
             'renewalPlans' => $renewalPlans,
             'dashboardNominations' => $dashboardNominations,
             'dashboardPolls' => $dashboardPolls,
+            'dashboardWinnerPolls' => $dashboardWinnerPolls,
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,
+            'showPollingWinnerDashboard' => $showPollingWinnerDashboard,
             'transactions' => PaymentTransaction::query()
                 ->with('subscriptionPlan')
                 ->where('user_id', $user?->id)
@@ -172,7 +213,7 @@ class MemberDashboardController extends Controller
     public function dismissDashboardAnnouncement(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|in:nomination,polling',
+            'type' => 'required|in:nomination,polling,polling_winner',
             'entity_id' => 'required|integer|min:1',
             'next' => 'nullable|string',
         ]);
@@ -182,9 +223,11 @@ class MemberDashboardController extends Controller
             'entity_id' => Rule::exists($table, 'id'),
         ]);
 
-        $sessionKey = $data['type'] === 'nomination'
-            ? 'dismissed_nomination_ids'
-            : 'dismissed_polling_ids';
+        $sessionKey = match ($data['type']) {
+            'nomination' => 'dismissed_nomination_ids',
+            'polling' => 'dismissed_polling_ids',
+            default => 'dismissed_polling_winner_ids',
+        };
 
         $ids = collect(session('member.dashboard.'.$sessionKey, []))
             ->map(fn ($id) => (int) $id)
@@ -197,7 +240,7 @@ class MemberDashboardController extends Controller
 
         if ($data['type'] === 'nomination') {
             session()->forget('member.dashboard.dismissed_nomination');
-        } else {
+        } elseif ($data['type'] === 'polling') {
             session()->forget('member.dashboard.dismissed_polling');
         }
 
@@ -274,10 +317,16 @@ class MemberDashboardController extends Controller
         }
 
         $memberPollings = Polling::query()
-            ->with(['positions' => fn ($q) => $q->with('candidates:id,name')])
+            ->with(['positions' => fn ($q) => $q->with(['candidates:id,name', 'winner:id,name'])])
             ->where('is_active', true)
             ->where('publish_status', 'published')
-            ->where('polling_status', 'live')
+            ->where(function ($query) {
+                $query->where('polling_status', 'live')
+                    ->orWhere(function ($sub) {
+                        $sub->where('polling_status', 'ends')
+                            ->where('results_visible_to_members', true);
+                    });
+            })
             ->latest('id')
             ->limit(20)
             ->get();
@@ -292,12 +341,65 @@ class MemberDashboardController extends Controller
             ->get(['id', 'polling_id', 'position_id', 'candidate_user_id'])
             ->keyBy('position_id');
 
+        $pollingResultStats = [];
+        foreach ($memberPollings as $polling) {
+            $ended = $polling->polling_status === 'ends' || $this->pollingHasEnded($polling);
+            if (! $polling->results_visible_to_members || ! $ended) {
+                continue;
+            }
+
+            $positionStats = [];
+            foreach ($polling->positions as $position) {
+                $counts = PollingVote::query()
+                    ->where('polling_id', $polling->id)
+                    ->where('position_id', $position->id)
+                    ->selectRaw('candidate_user_id, COUNT(*) as c')
+                    ->groupBy('candidate_user_id')
+                    ->pluck('c', 'candidate_user_id');
+
+                $totalVotes = (int) $counts->sum();
+                $winnerUserId = (int) ($position->winner_user_id ?? 0);
+
+                $candidates = $position->candidates->map(function ($candidate) use ($counts, $totalVotes, $winnerUserId) {
+                    $votes = (int) ($counts[$candidate->id] ?? 0);
+
+                    return [
+                        'id' => (int) $candidate->id,
+                        'name' => $candidate->name,
+                        'votes' => $votes,
+                        'bar_percent' => $totalVotes > 0 ? round(($votes / $totalVotes) * 100) : 0,
+                        'is_winner' => $winnerUserId > 0 && $winnerUserId === (int) $candidate->id,
+                    ];
+                })->sortByDesc('votes')->values()->all();
+
+                $positionStats[$position->id] = [
+                    'winner_name' => optional($position->winner)->name,
+                    'candidates' => $candidates,
+                ];
+            }
+
+            $pollingResultStats[$polling->id] = $positionStats;
+        }
+
         return view('member.pollings', [
             'activeSubscription' => $user->activeSubscription,
             'memberPollings' => $memberPollings,
             'pollingVotedPositionIds' => $pollingVotedPositionIds,
             'memberPollingVotes' => $memberPollingVotes,
+            'pollingResultStats' => $pollingResultStats,
         ]);
+    }
+
+    private function pollingHasEnded(Polling $polling): bool
+    {
+        if (! $polling->polling_date || ! $polling->polling_to) {
+            return false;
+        }
+
+        $endDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+        $end = Carbon::parse($endDate.' '.$polling->polling_to);
+
+        return now()->greaterThan($end);
     }
 
     public function submitNominationInterest(Request $request, Nomination $nomination, NominationPosition $nominationPosition)

@@ -45,8 +45,8 @@
                             : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#e8e3dc" width="100%" height="100%"/></svg>');
                         $excerpt = $donation->short_description
                             ?: \Illuminate\Support\Str::limit(strip_tags((string) $donation->description), 220);
-                        $readMoreText = trim(strip_tags((string) ($donation->short_description ?: $donation->description)));
-                        $showReadMore = \Illuminate\Support\Str::length($readMoreText) > \Illuminate\Support\Str::length($excerpt);
+                        $readMoreText = trim(strip_tags((string) ($donation->description ?: $donation->short_description)));
+                        $showReadMore = $readMoreText !== '';
                         [$pillA, $pillB] = $donation->pillTagLabels();
                     @endphp
                     <article class="donation-slide min-w-0 h-full w-full rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">

@@ -310,7 +310,6 @@
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Membership</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
                     <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
-                    <a href="{{ route('member.pollings.index') }}" class="md-sidebar-link {{ request()->routeIs('member.pollings.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.pollings.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Polling</a>
                     <a href="{{ route('home') }}#jobs" class="md-sidebar-link"><span class="h-1.5 w-1.5 rounded-full bg-[#351c42]/25"></span> Search jobs</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Change password</a>
@@ -388,6 +387,42 @@
                         </button>
                     </div>
                 </div>
+            @endif
+
+            @if($showFullMemberMenu && $showPollingWinnerDashboard)
+                @php
+                    $winnerPopup = $dashboardWinnerPolls->first();
+                    $winnerPoll = $winnerPopup['polling'] ?? null;
+                    $winnerRows = $winnerPopup['winners'] ?? collect();
+                @endphp
+                @if($winnerPoll && $winnerRows->isNotEmpty())
+                    <div id="polling-winner-modal" class="fixed inset-0 z-[121] flex items-center justify-center bg-[#351c42]/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="polling-winner-title">
+                        <div class="w-full max-w-lg rounded-3xl border border-[#351c42]/10 bg-white p-7 shadow-2xl">
+                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <h3 id="polling-winner-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Polling winner announced</h3>
+                            <p class="mt-1 text-center text-sm font-semibold text-[#351c42]/75">{{ $winnerPoll->title }}</p>
+                            <div class="mt-4 space-y-2 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4">
+                                @foreach($winnerRows as $row)
+                                    <div class="flex items-center justify-between gap-3 border-b border-[#351c42]/10 pb-2 text-sm last:border-b-0 last:pb-0">
+                                        <span class="font-semibold text-[#351c42]/70">{{ $row['position'] }}</span>
+                                        <span class="font-extrabold text-emerald-800">{{ $row['winner_name'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <button
+                                type="button"
+                                id="polling-winner-close"
+                                data-winner-close
+                                data-polling-id="{{ $winnerPoll->id }}"
+                                class="mt-7 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                @endif
             @endif
 
             @if(session('member_gate_error'))
@@ -999,6 +1034,26 @@
                 });
             }
 
+            async function persistDismiss(type, entityId) {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+                try {
+                    await fetch(@json(route('member.dashboard.announcements.dismiss')), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": csrf,
+                            "Accept": "application/json",
+                        },
+                        body: JSON.stringify({
+                            type,
+                            entity_id: Number(entityId),
+                        }),
+                    });
+                } catch (_) {
+                    // Ignore network errors; UI still closes immediately.
+                }
+            }
+
             if (countdownNodes.length > 0) {
                 refreshCountdowns();
                 window.setInterval(refreshCountdowns, 1000);
@@ -1273,6 +1328,16 @@
                             initQueue("polling");
                         }
                         updatePopupStack();
+                        return;
+                    }
+                    const winnerBtn = e.target.closest("[data-winner-close]");
+                    if (winnerBtn) {
+                        e.preventDefault();
+                        const pid = winnerBtn.getAttribute("data-polling-id");
+                        document.getElementById("polling-winner-modal")?.remove();
+                        if (pid) {
+                            persistDismiss("polling_winner", pid);
+                        }
                     }
                 },
                 true

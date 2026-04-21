@@ -36,7 +36,14 @@
                                     : asset('images/events/event-1-2.jpg');
                                 $excerpt = $donation->short_description
                                     ?: \Illuminate\Support\Str::limit(strip_tags((string) $donation->description), 220);
+                                $readMoreText = trim(strip_tags((string) ($donation->description ?: $donation->short_description)));
+                                $showReadMore = $readMoreText !== '';
                                 [$pillA, $pillB] = $donation->pillTagLabels();
+                                $readMoreMeta = array_values(array_filter([
+                                    ['label' => 'Type', 'value' => 'Donation'],
+                                    ['label' => 'Category 1', 'value' => $pillA],
+                                    ['label' => 'Category 2', 'value' => $pillB],
+                                ], fn ($item) => !empty($item['value'])));
                             @endphp
                             <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
                                 <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
@@ -49,6 +56,19 @@
                                     </div>
                                     <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $donation->purpose }}</h4>
                                     <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
+                                    @if($showReadMore)
+                                        <button
+                                            type="button"
+                                            data-read-more
+                                            data-read-more-title="{{ e($donation->purpose) }}"
+                                            data-read-more-content="{{ e($readMoreText) }}"
+                                            data-read-more-meta='@json($readMoreMeta)'
+                                            class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                        >
+                                            Read more
+                                            <span aria-hidden="true">→</span>
+                                        </button>
+                                    @endif
                                     <button type="button" data-open-donate-modal data-donation-id="{{ $donation->id }}" class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                         <span class="click-btn__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
@@ -64,6 +84,13 @@
                         @foreach ($donate['campaigns'] as $c)
                             @php
                                 $fallbackPills = $c['pill_tags'] ?? ['Donation', 'Charity'];
+                                $fallbackReadMoreText = trim((string) ($c['description'] ?? $c['excerpt'] ?? ''));
+                                $fallbackShowReadMore = $fallbackReadMoreText !== '';
+                                $fallbackReadMoreMeta = array_values(array_filter([
+                                    ['label' => 'Type', 'value' => 'Donation'],
+                                    ['label' => 'Category 1', 'value' => $fallbackPills[0] ?? null],
+                                    ['label' => 'Category 2', 'value' => $fallbackPills[1] ?? null],
+                                ], fn ($item) => !empty($item['value'])));
                             @endphp
                             <article class="donation-slide shrink-0 rounded-3xl overflow-hidden border border-[#351c42]/10 bg-white shadow-md flex flex-col sm:flex-row min-h-[280px] sm:min-h-[240px]">
                                 <div class="relative sm:w-[42%] min-h-[200px] sm:min-h-full overflow-hidden">
@@ -77,6 +104,19 @@
                                     </div>
                                     <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $c['title'] }}</h4>
                                     <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $c['excerpt'] }}</p>
+                                    @if($fallbackShowReadMore)
+                                        <button
+                                            type="button"
+                                            data-read-more
+                                            data-read-more-title="{{ e($c['title']) }}"
+                                            data-read-more-content="{{ e($fallbackReadMoreText) }}"
+                                            data-read-more-meta='@json($fallbackReadMoreMeta)'
+                                            class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                        >
+                                            Read more
+                                            <span aria-hidden="true">→</span>
+                                        </button>
+                                    @endif
                                     <button type="button" data-open-donate-modal class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                         <span class="click-btn__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">

@@ -34,6 +34,7 @@
     @include('home.partials.event-interest-success-modal')
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
+    @include('shared.read-more-modal')
     @include('home.partials.scripts')
 </body>
 </html>

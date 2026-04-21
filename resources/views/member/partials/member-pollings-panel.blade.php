@@ -40,22 +40,33 @@
             $start = $pollStartDate ? \Carbon\Carbon::parse($pollStartDate.' '.$poll->polling_from) : null;
             $end = $pollEndDate ? \Carbon\Carbon::parse($pollEndDate.' '.$poll->polling_to) : null;
             $open = $start && $end && now()->between($start, $end);
+            $pollEndDateTimeIso = $end ? $end->toIso8601String() : null;
         @endphp
         <article class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4 sm:p-5">
             <h3 class="text-lg font-bold text-[#351c42]">{{ $poll->title }}</h3>
-            <p class="mt-1 text-xs font-semibold text-[#351c42]/55">
-                @if($poll->polling_date_to && $poll->polling_date_to->toDateString() !== $poll->polling_date->toDateString())
-                    {{ $poll->polling_date?->format('d M Y') }} – {{ $poll->polling_date_to->format('d M Y') }}
-                @else
-                    {{ $poll->polling_date?->format('d M Y') }}
-                @endif
-                · {{ \Illuminate\Support\Carbon::parse($poll->polling_from)->format('g:i A') }} – {{ \Illuminate\Support\Carbon::parse($poll->polling_to)->format('g:i A') }}
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+                <p class="text-xs font-semibold text-[#351c42]/55">
+                    @if($poll->polling_date_to && $poll->polling_date_to->toDateString() !== $poll->polling_date->toDateString())
+                        {{ $poll->polling_date?->format('d M Y') }} – {{ $poll->polling_date_to->format('d M Y') }}
+                    @else
+                        {{ $poll->polling_date?->format('d M Y') }}
+                    @endif
+                    · {{ \Illuminate\Support\Carbon::parse($poll->polling_from)->format('g:i A') }} – {{ \Illuminate\Support\Carbon::parse($poll->polling_to)->format('g:i A') }}
+                </p>
                 @if($open)
-                    <span class="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Open</span>
+                    <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Open</span>
                 @else
-                    <span class="ml-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-extrabold uppercase text-slate-700">Outside voting hours</span>
+                    <span class="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-extrabold uppercase text-slate-700">Outside voting hours</span>
                 @endif
-            </p>
+                <span
+                    class="inline-flex items-center rounded-full border border-sky-300/60 bg-sky-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-800"
+                    data-polling-countdown
+                    data-countdown-prefix="Ends in"
+                    data-countdown-end="{{ $pollEndDateTimeIso }}"
+                >
+                    Ends in --
+                </span>
+            </div>
 
             <ul class="mt-4 space-y-5">
                 @foreach($poll->positions as $ppos)
@@ -194,3 +205,47 @@
         </script>
     @endif
 </section>
+<script>
+    (() => {
+        const countdownNodes = Array.from(document.querySelectorAll("[data-polling-countdown]"));
+        if (countdownNodes.length === 0) return;
+
+        function formatCountdown(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+            return `${minutes}m ${seconds}s`;
+        }
+
+        function refreshCountdowns() {
+            const now = Date.now();
+            countdownNodes.forEach((node) => {
+                const end = node.getAttribute("data-countdown-end");
+                const prefix = node.getAttribute("data-countdown-prefix") || "Ends in";
+                if (!end) {
+                    node.textContent = `${prefix} --`;
+                    return;
+                }
+                const endMs = new Date(end).getTime();
+                if (Number.isNaN(endMs)) {
+                    node.textContent = `${prefix} --`;
+                    return;
+                }
+                const diff = endMs - now;
+                if (diff <= 0) {
+                    node.textContent = "Closed";
+                    return;
+                }
+                node.textContent = `${prefix} ${formatCountdown(diff)}`;
+            });
+        }
+
+        refreshCountdowns();
+        window.setInterval(refreshCountdowns, 1000);
+    })();
+</script>

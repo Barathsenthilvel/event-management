@@ -35,8 +35,8 @@
                         : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#e8e3dc" width="100%" height="100%"/></svg>');
                     $excerpt = $book->short_description
                         ?: \Illuminate\Support\Str::limit(strip_tags((string) $book->description), 220);
-                    $readMoreText = trim(strip_tags((string) ($book->short_description ?: $book->description)));
-                    $showReadMore = \Illuminate\Support\Str::length($readMoreText) > \Illuminate\Support\Str::length($excerpt);
+                    $readMoreText = trim(strip_tags((string) ($book->description ?: $book->short_description)));
+                    $showReadMore = $readMoreText !== '';
                     $isPaid = ($book->pricing_type ?? 'free') === 'paid';
                     $materialUrl = $book->material_path ? asset('storage/' . $book->material_path) : null;
                 @endphp
@@ -67,7 +67,7 @@
                                 $readMoreMeta = array_values(array_filter([
                                     ['label' => 'Type', 'value' => 'E-Book'],
                                     ['label' => 'Code', 'value' => $book->code],
-                                    ['label' => 'Pricing', 'value' => $isPaid ? ('Paid' . ($book->price ? ' (₹' . number_format((float) $book->price, 2) . ')' : '')) : 'Free'],
+                                    ['label' => 'Pricing', 'value' => $isPaid ? ('Paid' . ($book->price ? ' (₹' . number_format((float) $book->price, 2) . ')' : '')) : null],
                                 ], fn ($item) => !empty($item['value'])));
                             @endphp
                             <button
