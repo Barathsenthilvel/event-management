@@ -63,11 +63,19 @@
                             <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
                         @endif
                         @if($showReadMore)
+                            @php
+                                $readMoreMeta = array_values(array_filter([
+                                    ['label' => 'Type', 'value' => 'E-Book'],
+                                    ['label' => 'Code', 'value' => $book->code],
+                                    ['label' => 'Pricing', 'value' => $isPaid ? ('Paid' . ($book->price ? ' (₹' . number_format((float) $book->price, 2) . ')' : '')) : 'Free'],
+                                ], fn ($item) => !empty($item['value'])));
+                            @endphp
                             <button
                                 type="button"
                                 data-read-more
                                 data-read-more-title="{{ e($book->title) }}"
                                 data-read-more-content="{{ e($readMoreText) }}"
+                                data-read-more-meta='@json($readMoreMeta)'
                                 class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                             >
                                 Read more

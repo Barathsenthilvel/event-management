@@ -40,9 +40,9 @@
                     </div>
                     @if($showApprovalActions)
                     <div class="flex flex-wrap gap-2">
-                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}" onsubmit="return confirm('Approve this member? They will be able to sign in and purchase membership plans.');">
+                        <form id="approve-member-form" method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}">
                             @csrf
-                            <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400">
+                            <button type="button" data-open-approve-modal class="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400">
                                 Approve member
                             </button>
                         </form>
@@ -92,6 +92,9 @@
                     <dl class="mt-4 space-y-3 text-xs">
                         @foreach([
                             'Profile type' => $m->profile_type ? ucwords(str_replace('_', ' ', (string) $m->profile_type)) : null,
+                            'Referred by' => $m->referrer?->name
+                                ? $m->referrer->name . ($m->referrer->mobile ? ' (' . $m->referrer->mobile . ')' : '')
+                                : null,
                             'Qualification' => $m->qualification,
                             'RNRM number & date' => $m->rnrm_number_with_date,
                             'Student ID' => $m->student_id,
@@ -99,6 +102,7 @@
                             'Door no.' => $m->door_no,
                             'Locality / area' => $m->locality_area,
                             'State' => $m->state,
+                            'Country' => 'India',
                             'PIN code' => $m->pin_code,
                             'Council state' => $m->council_state,
                             'Currently working' => $m->currently_working,
@@ -142,4 +146,71 @@
         </div>
     </div>
 </div>
+
+@if($showApprovalActions)
+<div id="approve-member-modal" class="fixed inset-0 z-[160] hidden items-center justify-center bg-[#111827]/60 p-4 backdrop-blur-[2px]" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="approve-member-modal-title">
+    <div data-approve-member-backdrop class="absolute inset-0" aria-hidden="true"></div>
+    <div class="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-100 bg-[#faf9fc] px-5 py-4">
+            <h3 id="approve-member-modal-title" class="text-base font-extrabold text-[#351c42]">Approve this member?</h3>
+            <button type="button" data-close-approve-modal class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6l-12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="px-5 py-5 text-sm text-slate-700">
+            They will be able to sign in and purchase membership plans.
+        </div>
+        <div class="flex flex-col gap-2 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" data-close-approve-modal class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
+            <button type="button" data-confirm-approve-member class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-400">Approve member</button>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
+
+@push('scripts')
+@if($showApprovalActions)
+<script>
+    (() => {
+        const modal = document.getElementById("approve-member-modal");
+        const openBtn = document.querySelector("[data-open-approve-modal]");
+        const form = document.getElementById("approve-member-form");
+        if (!modal || !openBtn || !form) return;
+
+        const backdrop = modal.querySelector("[data-approve-member-backdrop]");
+        const closeEls = modal.querySelectorAll("[data-close-approve-modal]");
+        const confirmBtn = modal.querySelector("[data-confirm-approve-member]");
+        let lastActive = null;
+
+        function setOpen(open) {
+            modal.classList.toggle("hidden", !open);
+            modal.classList.toggle("flex", open);
+            modal.setAttribute("aria-hidden", open ? "false" : "true");
+            document.body.style.overflow = open ? "hidden" : "";
+            if (!open && lastActive && typeof lastActive.focus === "function") {
+                lastActive.focus();
+            }
+        }
+
+        openBtn.addEventListener("click", () => {
+            lastActive = openBtn;
+            setOpen(true);
+            confirmBtn?.focus({ preventScroll: true });
+        });
+
+        closeEls.forEach((el) => el.addEventListener("click", () => setOpen(false)));
+        backdrop?.addEventListener("click", () => setOpen(false));
+        confirmBtn?.addEventListener("click", () => form.submit());
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+                setOpen(false);
+            }
+        });
+    })();
+</script>
+@endif
+@endpush

@@ -109,9 +109,9 @@
   array (
     'paths' => 
     array (
-      0 => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\resources\\views',
+      0 => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\resources\\views',
     ),
-    'compiled' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\framework\\views',
+    'compiled' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\framework\\views',
   ),
   'app' => 
   array (
@@ -126,7 +126,7 @@
     'fallback_locale' => 'en',
     'faker_locale' => 'en_US',
     'cipher' => 'AES-256-CBC',
-    'key' => 'base64:VPF+wIDVdyFMwBWZkIvO6HhGCuMJ7R+Yp1DmqhQGyHY=',
+    'key' => 'base64:J3xLTM8mkNV3NKl466XcTnKE6jOcdDUL1zcOYcGah1k=',
     'previous_keys' => 
     array (
     ),
@@ -283,8 +283,8 @@
       'file' => 
       array (
         'driver' => 'file',
-        'path' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\framework/cache/data',
-        'lock_path' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\framework/cache/data',
+        'path' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\framework/cache/data',
+        'lock_path' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\framework/cache/data',
       ),
       'memcached' => 
       array (
@@ -633,7 +633,7 @@
       array (
         'driver' => 'sqlite',
         'url' => NULL,
-        'database' => 'gnat',
+        'database' => 'event_management',
         'prefix' => '',
         'foreign_key_constraints' => true,
         'busy_timeout' => NULL,
@@ -647,7 +647,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'gnat',
+        'database' => 'event_management',
         'username' => 'root',
         'password' => '',
         'unix_socket' => '',
@@ -667,7 +667,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'gnat',
+        'database' => 'event_management',
         'username' => 'root',
         'password' => '',
         'unix_socket' => '',
@@ -687,7 +687,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'gnat',
+        'database' => 'event_management',
         'username' => 'root',
         'password' => '',
         'charset' => 'utf8',
@@ -702,7 +702,7 @@
         'url' => NULL,
         'host' => '127.0.0.1',
         'port' => '3306',
-        'database' => 'gnat',
+        'database' => 'event_management',
         'username' => 'root',
         'password' => '',
         'charset' => 'utf8',
@@ -760,7 +760,7 @@
       'local' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\app/private',
+        'root' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\app/private',
         'serve' => true,
         'throw' => false,
         'report' => false,
@@ -768,7 +768,7 @@
       'public' => 
       array (
         'driver' => 'local',
-        'root' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\app/public',
+        'root' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\app/public',
         'url' => 'http://localhost/storage',
         'visibility' => 'public',
         'throw' => false,
@@ -790,7 +790,7 @@
     ),
     'links' => 
     array (
-      'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\public\\storage' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\app/public',
+      'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\public\\storage' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\app/public',
     ),
   ),
   'homepage' => 
@@ -1367,14 +1367,14 @@
       'single' => 
       array (
         'driver' => 'single',
-        'path' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\logs/laravel.log',
         'level' => 'debug',
         'replace_placeholders' => true,
       ),
       'daily' => 
       array (
         'driver' => 'daily',
-        'path' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\logs/laravel.log',
         'level' => 'debug',
         'days' => 14,
         'replace_placeholders' => true,
@@ -1439,13 +1439,13 @@
       ),
       'emergency' => 
       array (
-        'path' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\logs/laravel.log',
+        'path' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\logs/laravel.log',
       ),
     ),
   ),
   'mail' => 
   array (
-    'default' => 'log',
+    'default' => 'smtp',
     'mailers' => 
     array (
       'smtp' => 
@@ -1453,10 +1453,10 @@
         'transport' => 'smtp',
         'scheme' => NULL,
         'url' => NULL,
-        'host' => '127.0.0.1',
-        'port' => '2525',
-        'username' => NULL,
-        'password' => NULL,
+        'host' => 'smtp.gmail.com',
+        'port' => '587',
+        'username' => 'barathsenthilvel777@gmail.com',
+        'password' => 'qeqqjwcklcvqthop',
         'timeout' => NULL,
         'local_domain' => 'localhost',
       ),
@@ -1509,15 +1509,15 @@
     ),
     'from' => 
     array (
-      'address' => 'hello@example.com',
-      'name' => 'Laravel',
+      'address' => 'barathsenthilvel777@gmail.com',
+      'name' => 'Test',
     ),
     'markdown' => 
     array (
       'theme' => 'default',
       'paths' => 
       array (
-        0 => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\resources\\views/vendor/mail',
+        0 => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\resources\\views/vendor/mail',
       ),
     ),
   ),
@@ -1634,7 +1634,7 @@
     'lifetime' => 120,
     'expire_on_close' => false,
     'encrypt' => false,
-    'files' => 'C:\\Users\\acer\\OneDrive\\Desktop\\projects\\event-management\\storage\\framework/sessions',
+    'files' => 'C:\\Users\\TISED-118\\Documents\\laravel-projects\\event-management\\storage\\framework/sessions',
     'connection' => NULL,
     'table' => 'sessions',
     'store' => NULL,

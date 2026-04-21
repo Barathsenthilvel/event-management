@@ -23,7 +23,7 @@
 
             <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-2">Link URL</label>
-                <input type="text" name="link_url" value="{{ old('link_url', $banner->link_url ?? '#events') }}"
+                <input type="text" name="link_url" value="{{ old('link_url', $banner->link_url ?? '') }}"
                        placeholder="#events, /events, or https://..."
                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
                 @error('link_url')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror

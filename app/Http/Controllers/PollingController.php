@@ -17,6 +17,8 @@ class PollingController extends Controller
 {
     public function index(Request $request)
     {
+        $this->syncElapsedPollings();
+
         $q = trim((string) $request->query('q', ''));
 
         $pollings = Polling::query()
@@ -350,5 +352,24 @@ class PollingController extends Controller
         }
 
         return $value;
+    }
+
+    private function syncElapsedPollings(): void
+    {
+        $livePollings = Polling::query()
+            ->where('polling_status', 'live')
+            ->where('is_active', true)
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+
+        foreach ($livePollings as $polling) {
+            if (! $polling->polling_date || ! $polling->polling_to) {
+                continue;
+            }
+            $endDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+            $end = Carbon::parse($endDate.' '.$polling->polling_to);
+            if (now()->greaterThan($end)) {
+                $polling->update(['polling_status' => 'ends']);
+            }
+        }
     }
 }

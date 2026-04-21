@@ -244,6 +244,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/meetings/{meeting}/cancel', [MeetingController::class, 'cancel'])->name('admin.meetings.cancel');
         Route::post('/meetings/{meeting}/send-reminder', [MeetingController::class, 'sendReminder'])->name('admin.meetings.send-reminder');
         Route::post('/meetings/{meeting}/toggle-display', [MeetingController::class, 'toggleDisplay'])->name('admin.meetings.toggle-display');
+        Route::get('/meetings/{meeting}/duplicate', [MeetingController::class, 'duplicate'])->name('admin.meetings.duplicate');
         Route::get('/meetings/{meeting}/invite', [MeetingController::class, 'inviteForm'])->name('admin.meetings.invite');
         Route::post('/meetings/{meeting}/invite', [MeetingController::class, 'inviteStore'])->name('admin.meetings.invite.store');
         Route::delete('/meetings/{meeting}/invite/{invite}', [MeetingController::class, 'removeInvite'])->name('admin.meetings.invite.remove');

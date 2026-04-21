@@ -18,6 +18,8 @@ class NominationController extends Controller
 {
     public function index(Request $request)
     {
+        $this->syncElapsedNominations();
+
         $q = trim((string) $request->query('q', ''));
         $tab = $request->query('tab', 'nominations');
         $response = $request->query('response', 'all');
@@ -393,6 +395,25 @@ class NominationController extends Controller
         }
 
         return $value;
+    }
+
+    private function syncElapsedNominations(): void
+    {
+        $activeNominations = Nomination::query()
+            ->where('status', 'active')
+            ->where('is_active', true)
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+
+        foreach ($activeNominations as $nomination) {
+            if (! $nomination->polling_date || ! $nomination->polling_to) {
+                continue;
+            }
+            $endDate = ($nomination->polling_date_to ?? $nomination->polling_date)->format('Y-m-d');
+            $end = Carbon::parse($endDate.' '.$nomination->polling_to);
+            if (now()->greaterThan($end)) {
+                $nomination->update(['status' => 'closed']);
+            }
+        }
     }
 }
 

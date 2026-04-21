@@ -82,8 +82,7 @@ class MemberDashboardController extends Controller
                 if ($dismissedNominationIds->contains($nom->id)) {
                     continue;
                 }
-                $endDay = ($nom->polling_date_to ?? $nom->polling_date)->toDateString();
-                if (Carbon::today()->toDateString() > $endDay) {
+                if (! $this->nominationIsWithinSchedule($nom)) {
                     continue;
                 }
                 $responses = $entriesByNomination->get($nom->id, collect());
@@ -243,7 +242,9 @@ class MemberDashboardController extends Controller
             ->where('status', 'active')
             ->latest('id')
             ->limit(20)
-            ->get();
+            ->get()
+            ->filter(fn (Nomination $nomination) => $this->nominationIsWithinSchedule($nomination))
+            ->values();
 
         $nominationInterestPositionIds = NominationEntry::query()
             ->where('user_id', $user->id)
@@ -315,6 +316,9 @@ class MemberDashboardController extends Controller
         if (! $nomination->is_active || $nomination->status !== 'active') {
             return back()->with('nomination_error', 'This nomination is not open for interest.');
         }
+        if (! $this->nominationIsWithinSchedule($nomination)) {
+            return back()->with('nomination_error', 'This nomination is closed now.');
+        }
 
         try {
             NominationEntry::updateOrCreate(
@@ -351,6 +355,9 @@ class MemberDashboardController extends Controller
 
         if ($nominationPosition->nomination_id !== $nomination->id) {
             abort(404);
+        }
+        if (! $nomination->is_active || $nomination->status !== 'active' || ! $this->nominationIsWithinSchedule($nomination)) {
+            return back()->with('nomination_error', 'This nomination is closed now.');
         }
 
         try {
@@ -442,6 +449,19 @@ class MemberDashboardController extends Controller
         return now()->between($start, $end);
     }
 
+    private function nominationIsWithinSchedule(Nomination $nomination): bool
+    {
+        $fromDate = $nomination->polling_date?->format('Y-m-d');
+        $toDate = ($nomination->polling_date_to ?? $nomination->polling_date)?->format('Y-m-d');
+        if (! $fromDate || ! $toDate || ! $nomination->polling_from || ! $nomination->polling_to) {
+            return false;
+        }
+        $start = Carbon::parse($fromDate.' '.$nomination->polling_from);
+        $end = Carbon::parse($toDate.' '.$nomination->polling_to);
+
+        return now()->between($start, $end);
+    }
+
     public function eventsPage()
     {
         $user = Auth::user();
@@ -528,10 +548,10 @@ class MemberDashboardController extends Controller
             );
         }
 
-        if ($event->status !== 'completed') {
+        if (!in_array($event->status, ['live', 'completed'], true)) {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
-                'Certificate download opens after the event is marked completed and the office has uploaded the certificate file.'
+                'Certificate download opens after the event is Live/Completed and the office has uploaded the certificate file.'
             );
         }
 
@@ -605,7 +625,9 @@ class MemberDashboardController extends Controller
             return back()->with('event_interest_error', 'You have already submitted interest for this event.');
         }
 
-        return back()->with('event_interest_success', 'Interest submitted successfully.');
+        return back()
+            ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
+            ->with('event_interest_success_modal', true);
     }
 }
 

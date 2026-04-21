@@ -61,11 +61,19 @@
                             <h4 class="mt-4 text-lg sm:text-xl font-extrabold text-[#351c42] leading-snug">{{ $donation->purpose }}</h4>
                             <p class="mt-2 text-sm text-[#351c42]/65 line-clamp-2">{{ $excerpt }}</p>
                             @if($showReadMore)
+                                @php
+                                    $readMoreMeta = array_values(array_filter([
+                                        ['label' => 'Type', 'value' => 'Donation'],
+                                        ['label' => 'Category 1', 'value' => $pillA],
+                                        ['label' => 'Category 2', 'value' => $pillB],
+                                    ], fn ($item) => !empty($item['value'])));
+                                @endphp
                                 <button
                                     type="button"
                                     data-read-more
                                     data-read-more-title="{{ e($donation->purpose) }}"
                                     data-read-more-content="{{ e($readMoreText) }}"
+                                    data-read-more-meta='@json($readMoreMeta)'
                                     class="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                                 >
                                     Read more

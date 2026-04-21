@@ -22,6 +22,7 @@
             </button>
         </div>
         <div class="max-h-[70vh] overflow-y-auto px-5 py-5 sm:px-6">
+            <dl id="read-more-modal-meta" class="mb-4 hidden space-y-2 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-xs"></dl>
             <div id="read-more-modal-body" class="whitespace-pre-wrap text-sm leading-relaxed text-[#351c42]/75"></div>
         </div>
         <div class="border-t border-[#351c42]/10 bg-white px-5 py-4 sm:px-6">

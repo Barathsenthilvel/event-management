@@ -7,16 +7,20 @@
 --}}
 @php
     $cover = $event->cover_image_path ? asset('storage/' . $event->cover_image_path) : asset('images/event1.jpg');
-    $firstDate = $event->dates->first();
+    $sortedDates = $event->dates->sortBy('event_date')->values();
+    $firstDate = $sortedDates->first();
     $day = $firstDate?->event_date?->format('d') ?? '—';
     $month = strtoupper((string) ($firstDate?->event_date?->format('M') ?? 'TBA'));
-    $startT = ($firstDate && $firstDate->start_time)
-        ? \Illuminate\Support\Carbon::parse($firstDate->start_time)->format('h:i A')
-        : null;
-    $endT = ($firstDate && $firstDate->end_time)
-        ? \Illuminate\Support\Carbon::parse($firstDate->end_time)->format('h:i A')
-        : null;
-    $timeRange = $startT && $endT ? ($startT . ' - ' . $endT) : ($startT ?: ($endT ?: 'Time TBA'));
+    $timeSlots = $sortedDates
+        ->map(function ($d) {
+            $start = $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('h:i A') : null;
+            $end = $d->end_time ? \Illuminate\Support\Carbon::parse($d->end_time)->format('h:i A') : null;
+            return $start && $end ? ($start . ' - ' . $end) : ($start ?: ($end ?: 'Time TBA'));
+        })
+        ->filter()
+        ->unique()
+        ->values();
+    $timeRange = $timeSlots->count() > 1 ? 'Multiple time slots' : ($timeSlots->first() ?? 'Time TBA');
     $organizer = $event->creator?->name ?? 'GNAT Team';
     $desc = $event->description ?: 'Join us for this GNAT event. More details will be shared with registered members.';
     $seatLimited = ($event->seat_mode ?? '') === 'limited';
@@ -64,6 +68,24 @@
             <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
             <h3 class="mt-1 text-base font-bold text-[#351c42] sm:text-lg">{{ $event->title }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-[#351c42]/80">{{ Str::limit($desc, 220) }}</p>
+            @if($sortedDates->isNotEmpty())
+                <div class="mt-3 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-3">
+                    <p class="text-[10px] font-black uppercase tracking-[0.16em] text-[#965995]">Event schedule</p>
+                    <ul class="mt-2 space-y-1.5">
+                        @foreach($sortedDates as $dateRow)
+                            @php
+                                $slotStart = $dateRow->start_time ? \Illuminate\Support\Carbon::parse($dateRow->start_time)->format('h:i A') : null;
+                                $slotEnd = $dateRow->end_time ? \Illuminate\Support\Carbon::parse($dateRow->end_time)->format('h:i A') : null;
+                                $slotTime = $slotStart && $slotEnd ? ($slotStart . ' - ' . $slotEnd) : ($slotStart ?: ($slotEnd ?: 'Time TBA'));
+                            @endphp
+                            <li class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[#351c42]/80">
+                                <span>{{ $dateRow->event_date?->format('d M Y') ?? 'TBA' }}</span>
+                                <span>{{ $slotTime }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <div class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4">
@@ -170,7 +192,7 @@
                     @csrf
                     <button
                         type="submit"
-                        class="inline-flex min-h-[2.5rem] min-w-[7.5rem] items-center justify-center rounded-full border border-[#fddc6a]/50 bg-[#fddc6a] px-5 py-2 text-sm font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
+                        class="inline-flex min-h-[2.1rem] min-w-[6.75rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Interested
                     </button>

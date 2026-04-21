@@ -4,8 +4,16 @@
 <div class="flex-1 overflow-y-auto custom-scroll p-6">
     <div class="max-w-6xl mx-auto space-y-5">
         <div>
-            <h1 class="text-xl font-extrabold text-slate-900">Create Meeting</h1>
-            <p class="text-xs font-bold text-slate-500 mt-1">Meeting / Create</p>
+            <h1 class="text-xl font-extrabold text-slate-900">
+                {{ isset($duplicateSourceMeeting) ? 'Duplicate Meeting' : 'Create Meeting' }}
+            </h1>
+            <p class="text-xs font-bold text-slate-500 mt-1">
+                @if(isset($duplicateSourceMeeting))
+                    Meeting / Duplicate from #{{ $duplicateSourceMeeting->id }}
+                @else
+                    Meeting / Create
+                @endif
+            </p>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             @include('admin.meetings._form')

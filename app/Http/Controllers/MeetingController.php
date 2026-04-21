@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\User;
@@ -37,13 +38,41 @@ class MeetingController extends Controller
         return view('admin.meetings.create');
     }
 
+    public function duplicate(Meeting $meeting)
+    {
+        $meeting->load('schedules');
+        $schedule = $meeting->schedules->first();
+
+        return view('admin.meetings.create', [
+            'duplicateSource' => [
+                'title' => $meeting->title,
+                'meeting_link' => $meeting->meeting_link,
+                'description' => $meeting->description,
+                'meeting_mode' => $meeting->meeting_mode,
+                'status' => 'upcoming',
+                'is_active' => true,
+                'schedule_date' => $schedule?->meeting_date?->format('Y-m-d'),
+                'schedule_from' => $schedule?->from_time,
+                'schedule_to' => $schedule?->to_time,
+            ],
+            'duplicateSourceMeeting' => $meeting,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($request, $validated) {
             $meeting = Meeting::create($this->buildPayload($request, $validated, true));
-            $meeting->schedules()->create($this->extractSchedule($request));
+            $schedule = $this->extractSchedule($request);
+            $meeting->schedules()->create($schedule);
+
+            if ($request->boolean('repeat_enabled')) {
+                $repeatCount = (int) ($validated['repeat_count'] ?? 0);
+                $repeatFrequency = (string) ($validated['repeat_frequency'] ?? 'weekly');
+                $this->createRepeatedMeetings($meeting, $schedule, $repeatCount, $repeatFrequency);
+            }
         });
 
         return redirect()->route('admin.meetings.index')->with('success', 'Meeting created successfully.');
@@ -201,6 +230,9 @@ class MeetingController extends Controller
             'schedule_date' => 'required|date',
             'schedule_from' => 'required|date_format:H:i',
             'schedule_to' => 'required|date_format:H:i|after:schedule_from',
+            'repeat_enabled' => 'nullable|boolean',
+            'repeat_frequency' => 'nullable|required_if:repeat_enabled,1|in:weekly,monthly',
+            'repeat_count' => 'nullable|required_if:repeat_enabled,1|integer|min:1|max:24',
         ];
     }
 
@@ -238,5 +270,40 @@ class MeetingController extends Controller
             'from_time' => $request->input('schedule_from'),
             'to_time' => $request->input('schedule_to'),
         ];
+    }
+
+    private function createRepeatedMeetings(Meeting $meeting, array $baseSchedule, int $repeatCount, string $frequency): void
+    {
+        if ($repeatCount < 1) {
+            return;
+        }
+
+        $scheduleDate = Carbon::parse((string) $baseSchedule['meeting_date']);
+        for ($i = 1; $i <= $repeatCount; $i++) {
+            $nextDate = (clone $scheduleDate);
+            if ($frequency === 'monthly') {
+                $nextDate->addMonthsNoOverflow($i);
+            } else {
+                $nextDate->addWeeks($i);
+            }
+
+            $copy = Meeting::create([
+                'created_by_admin_id' => $meeting->created_by_admin_id,
+                'title' => $meeting->title,
+                'meeting_link' => $meeting->meeting_link,
+                'description' => $meeting->description,
+                'meeting_mode' => $meeting->meeting_mode,
+                'status' => $meeting->status,
+                'cover_image_path' => $meeting->cover_image_path,
+                'banner_image_path' => $meeting->banner_image_path,
+                'is_active' => $meeting->is_active,
+            ]);
+
+            $copy->schedules()->create([
+                'meeting_date' => $nextDate->format('Y-m-d'),
+                'from_time' => $baseSchedule['from_time'],
+                'to_time' => $baseSchedule['to_time'],
+            ]);
+        }
     }
 }

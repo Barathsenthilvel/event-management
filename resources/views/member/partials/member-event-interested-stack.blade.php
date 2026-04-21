@@ -87,4 +87,7 @@
             >+</span>
         @endif
     </div>
+    <span class="ml-2 shrink-0 text-[10px] font-black uppercase tracking-wide text-white/85">
+        {{ $totalInterested }} profiles
+    </span>
 </div>

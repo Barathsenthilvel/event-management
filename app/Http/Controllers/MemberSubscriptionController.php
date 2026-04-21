@@ -161,7 +161,7 @@ class MemberSubscriptionController extends Controller
             return response()->json([
                 'message' => 'Renewal not available while your membership is active. Please wait until your plan expires, then renew.',
                 'renewal_blocked' => true,
-                'valid_till' => optional($activeSubscription->end_date)->toDateString(),
+                'valid_till' => optional($activeSubscription->end_date)->format('d M Y'),
             ], 422);
         }
 
@@ -309,8 +309,8 @@ class MemberSubscriptionController extends Controller
                 'grace_period' => (int) ($plan->grace_period ?? 0),
             ],
             'subscription' => [
-                'start_date' => $subscription->start_date?->toDateString(),
-                'end_date' => $subscription->end_date?->toDateString(),
+                'start_date' => $subscription->start_date?->format('d M Y'),
+                'end_date' => $subscription->end_date?->format('d M Y'),
                 'amount' => (float) $subscription->amount,
                 'currency' => $subscription->currency,
             ],

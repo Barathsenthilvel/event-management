@@ -56,6 +56,8 @@ class EventInterestController extends Controller
             $request->session()->push('guest_event_interests', $event->id);
         }
 
-        return back()->with('success', 'Thank you — your interest has been recorded.');
+        return back()
+            ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
+            ->with('event_interest_success_modal', true);
     }
 }

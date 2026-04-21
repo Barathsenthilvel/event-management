@@ -1413,6 +1413,7 @@
         if (!modal) return;
 
         const titleEl = document.getElementById("read-more-modal-title");
+        const metaEl = document.getElementById("read-more-modal-meta");
         const bodyEl = document.getElementById("read-more-modal-body");
         const backdrop = modal.querySelector("[data-read-more-backdrop]");
         const closeEls = modal.querySelectorAll("[data-close-read-more]");
@@ -1434,7 +1435,44 @@
             lastActive = btn;
             const title = btn.getAttribute("data-read-more-title") || "Details";
             const content = btn.getAttribute("data-read-more-content") || "";
+            const metaRaw = btn.getAttribute("data-read-more-meta") || "";
+            let meta = [];
+            if (metaRaw) {
+                try {
+                    const parsed = JSON.parse(metaRaw);
+                    if (Array.isArray(parsed)) meta = parsed;
+                } catch (_) {
+                    meta = [];
+                }
+            }
             if (titleEl) titleEl.textContent = title;
+            if (metaEl) {
+                const rows = meta
+                    .filter((item) => item && item.label && item.value)
+                    .map((item) => {
+                        const row = document.createElement("div");
+                        row.className = "flex items-start justify-between gap-3 border-b border-[#351c42]/10 pb-2 last:border-0 last:pb-0";
+
+                        const dt = document.createElement("dt");
+                        dt.className = "shrink-0 font-bold uppercase tracking-wide text-[#965995]";
+                        dt.textContent = String(item.label);
+
+                        const dd = document.createElement("dd");
+                        dd.className = "text-right font-semibold text-[#351c42]";
+                        dd.textContent = String(item.value);
+
+                        row.appendChild(dt);
+                        row.appendChild(dd);
+                        return row;
+                    });
+                metaEl.innerHTML = "";
+                if (rows.length > 0) {
+                    rows.forEach((row) => metaEl.appendChild(row));
+                    metaEl.classList.remove("hidden");
+                } else {
+                    metaEl.classList.add("hidden");
+                }
+            }
             if (bodyEl) bodyEl.textContent = content;
             setOpen(true);
             (closeEls[0] || modal).focus?.({ preventScroll: true });

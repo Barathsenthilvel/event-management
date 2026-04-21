@@ -49,7 +49,7 @@
                 </div>
 
                 <h1 class="text-4xl md:text-5xl font-bold text-[#351c42] tracking-tight leading-[1.1]">
-                    Manage your <br> <span class="text-[#fbbf24]">GNAT platform.</span>
+                    Manage your <br> <span class="text-[#fbbf24]">GNAT Family.</span>
                 </h1>
                 <p class="mt-6 text-slate-600 text-lg leading-relaxed max-w-xs">
                     Secure console for GNAT Association to manage members, events, donations, and more.

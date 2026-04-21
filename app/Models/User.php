@@ -85,6 +85,11 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->belongsTo(Designation::class);
     }
 
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
     public function subscriptions(): HasMany
     {
         return $this->hasMany(MemberSubscription::class);

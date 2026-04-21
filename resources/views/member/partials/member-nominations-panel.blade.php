@@ -63,8 +63,14 @@
 
                     {{-- Summary --}}
                     <div class="flex min-w-0 flex-1 flex-col justify-center gap-3 p-5 sm:p-6">
+                        @php
+                            $nomEndDate = ($nom->polling_date_to ?? $nom->polling_date)?->format('Y-m-d');
+                            $nomEndDateTimeIso = $nomEndDate && $nom->polling_to
+                                ? \Illuminate\Support\Carbon::parse($nomEndDate.' '.$nom->polling_to)->toIso8601String()
+                                : null;
+                        @endphp
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full bg-[#965995]/12 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#965995]">Nomination</span>
+                            <span class="rounded-full bg-[#965995]/12 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#965995]">Nomination Alert</span>
                             <span class="text-[11px] font-semibold text-[#351c42]/45">#{{ $nom->id }}</span>
                         </div>
                         <h3 class="text-xl font-extrabold leading-tight tracking-tight text-[#351c42] sm:text-2xl">{{ $nom->title }}</h3>
@@ -100,6 +106,14 @@
                                 <svg class="h-3.5 w-3.5 text-[#965995]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 {{ \Illuminate\Support\Carbon::parse($nom->polling_from)->format('g:i A') }} – {{ \Illuminate\Support\Carbon::parse($nom->polling_to)->format('g:i A') }}
                             </span>
+                            <span
+                                class="inline-flex items-center rounded-full border border-sky-300/60 bg-sky-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-800"
+                                data-nomination-countdown
+                                data-countdown-prefix="Ends in"
+                                data-countdown-end="{{ $nomEndDateTimeIso }}"
+                            >
+                                Ends in --
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -121,10 +135,16 @@
                                     @if($interestSet->contains($pos->id))
                                         <span class="inline-flex w-full items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-extrabold text-emerald-800 sm:w-auto">You’re registered</span>
                                     @else
-                                        <form method="POST" action="{{ route('member.nominations.interest', [$nom, $pos]) }}" class="block w-full sm:inline sm:w-auto">
-                                            @csrf
-                                            <button type="submit" class="md-btn-interest w-full min-w-[10rem] sm:w-auto">I’m interested</button>
-                                        </form>
+                                        <div class="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                                            <form method="POST" action="{{ route('member.nominations.interest', [$nom, $pos]) }}" class="block w-full sm:inline sm:w-auto">
+                                                @csrf
+                                                <button type="submit" class="md-btn-interest w-full min-w-[10rem] sm:w-auto">I’m interested</button>
+                                            </form>
+                                            <form method="POST" action="{{ route('member.nominations.not-interested', [$nom, $pos]) }}" class="block w-full sm:inline sm:w-auto">
+                                                @csrf
+                                                <button type="submit" class="inline-flex w-full min-w-[10rem] items-center justify-center rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-slate-200 sm:w-auto">Not interested</button>
+                                            </form>
+                                        </div>
                                     @endif
                                 </div>
                             </li>
@@ -153,9 +173,9 @@
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <h3 id="nomination-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you</h3>
+                <h3 id="nomination-thanks-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Thank you for your response</h3>
                 <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
-                    Your interest has been recorded. The team will review submissions and reach out if needed.
+                    Your nomination response has been recorded. The team will review submissions and reach out if needed.
                 </p>
                 <button type="button" class="nomination-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
                     Continue
@@ -177,3 +197,48 @@
         </script>
     @endif
 </section>
+
+<script>
+    (() => {
+        const countdownNodes = Array.from(document.querySelectorAll("[data-nomination-countdown]"));
+        if (countdownNodes.length === 0) return;
+
+        function formatCountdown(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+            return `${minutes}m ${seconds}s`;
+        }
+
+        function refreshCountdowns() {
+            const now = Date.now();
+            countdownNodes.forEach((node) => {
+                const end = node.getAttribute("data-countdown-end");
+                const prefix = node.getAttribute("data-countdown-prefix") || "Ends in";
+                if (!end) {
+                    node.textContent = `${prefix} --`;
+                    return;
+                }
+                const endMs = new Date(end).getTime();
+                if (Number.isNaN(endMs)) {
+                    node.textContent = `${prefix} --`;
+                    return;
+                }
+                const diff = endMs - now;
+                if (diff <= 0) {
+                    node.textContent = "Closed";
+                    return;
+                }
+                node.textContent = `${prefix} ${formatCountdown(diff)}`;
+            });
+        }
+
+        refreshCountdowns();
+        window.setInterval(refreshCountdowns, 1000);
+    })();
+</script>

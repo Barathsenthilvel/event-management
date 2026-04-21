@@ -478,8 +478,8 @@
                             <article class="md-announce-card md-popup-compact p-4">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="min-w-0 pr-2">
-                                        <p class="md-popup-subtitle text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">Nominations</p>
-                                        <h3 class="md-popup-title mt-1 break-all text-2xl font-extrabold leading-[1.15] tracking-tight text-white">{{ $nominationPrompt->title }}</h3>
+                                        <h3 class="md-popup-title mt-1 break-all text-2xl font-extrabold leading-[1.15] tracking-tight text-white">Nomination Alert</h3>
+                                        <p class="mt-1 text-sm font-semibold text-white/85 break-all">{{ $nominationPrompt->title }}</p>
                                         <p class="md-popup-meta mt-2 text-[12px] font-semibold text-white/70">
                                             {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }}
                                             @if(($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->toDateString() !== $nominationPrompt->polling_date?->toDateString())
@@ -874,7 +874,7 @@
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-[#fddc6a] backdrop-blur-sm">{{ $nomStatusLabel }}</span>
                                     <span class="inline-flex rounded-full border border-white/20 bg-black/20 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
-                                        {{ $nominationPrompt->is_active ? 'Shown on portal' : 'Hidden on portal' }}
+                                        {{ $nominationPrompt->is_active ? 'Visible' : 'Hidden' }}
                                     </span>
                                 </div>
                             </div>
