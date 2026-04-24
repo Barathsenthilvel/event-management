@@ -19,7 +19,7 @@
             @if ($errors->any())
                 <div class="mx-auto mb-6 max-w-xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                     <ul class="list-inside list-disc space-y-1">
-                        @foreach ($errors->all() as $e)
+                        @foreach (collect($errors->all())->unique()->values() as $e)
                             <li>{{ $e }}</li>
                         @endforeach
                     </ul>

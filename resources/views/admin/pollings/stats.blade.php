@@ -119,5 +119,40 @@
             @endforelse
         </div>
     </div>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div class="mb-3 flex items-center justify-between gap-2">
+            <h2 class="text-sm font-extrabold uppercase tracking-wide text-slate-800">Voted members list</h2>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black text-slate-700">{{ $voteEntries->count() }} total votes</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-500">
+                        <th class="px-2 py-2 font-black uppercase">Position</th>
+                        <th class="px-2 py-2 font-black uppercase">Candidate</th>
+                        <th class="px-2 py-2 font-black uppercase">Voted by</th>
+                        <th class="px-2 py-2 font-black uppercase">Voter contact</th>
+                        <th class="px-2 py-2 font-black uppercase">Voted at</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($voteEntries as $entry)
+                        <tr class="border-b border-slate-100">
+                            <td class="px-2 py-2 font-semibold text-slate-800">{{ $entry->position->position ?? '-' }}</td>
+                            <td class="px-2 py-2 text-slate-700">{{ $entry->candidate->name ?? '-' }}</td>
+                            <td class="px-2 py-2 text-slate-700">{{ $entry->voter->name ?? '-' }}</td>
+                            <td class="px-2 py-2 text-slate-600">{{ $entry->voter->email ?? '-' }} / {{ $entry->voter->mobile ?? '-' }}</td>
+                            <td class="px-2 py-2 text-slate-600">{{ optional($entry->voted_at)->format('d M Y h:i A') ?: '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-2 py-6 text-center font-semibold text-slate-500">No votes recorded yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection

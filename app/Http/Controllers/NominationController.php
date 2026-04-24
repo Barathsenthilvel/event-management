@@ -279,20 +279,20 @@ class NominationController extends Controller
             ->where('nomination_id', $nomination->id)
             ->get();
 
-        $csv = "Position,Member Name,Email,Mobile,Response,Submitted On\n";
+        $csv = "\xEF\xBB\xBF";
+        $csv .= "Position\tMember Name\tEmail\tMobile\tResponse\tSubmitted On\n";
         foreach ($rows as $row) {
-            $csv .= sprintf(
-                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                str_replace('"', '""', (string) ($row->position->position ?? '')),
-                str_replace('"', '""', (string) ($row->user->name ?? '')),
-                str_replace('"', '""', (string) ($row->user->email ?? '')),
-                str_replace('"', '""', (string) ($row->user->mobile ?? '')),
-                str_replace('"', '""', (string) str_replace('_', ' ', (string) $row->response_status)),
-                optional($row->submitted_at)->format('d M Y h:i A') ?? ''
-            );
+            $csv .= implode("\t", [
+                str_replace("\t", ' ', (string) ($row->position->position ?? '')),
+                str_replace("\t", ' ', (string) ($row->user->name ?? '')),
+                str_replace("\t", ' ', (string) ($row->user->email ?? '')),
+                str_replace("\t", ' ', (string) ($row->user->mobile ?? '')),
+                str_replace("\t", ' ', (string) str_replace('_', ' ', (string) $row->response_status)),
+                optional($row->submitted_at)->format('d M Y h:i A') ?? '',
+            ])."\n";
         }
 
-        $fileName = 'nomination-' . $nomination->id . '-report.csv';
+        $fileName = 'nomination-' . $nomination->id . '-report.xls';
         $tmpPath = 'reports/' . $fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 

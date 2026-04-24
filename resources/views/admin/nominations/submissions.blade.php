@@ -15,15 +15,18 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-            @foreach($positions as $pos)
-                <div class="flex items-center justify-between">
-                    <p class="text-sm font-extrabold text-slate-800">{{ $pos->position }}</p>
-                    <div class="flex items-center gap-1">
-                        <span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-black">{{ $pos->interested_entries_count }}</span>
-                        <span class="px-2 py-1 rounded-md bg-slate-200 text-slate-700 text-[10px] font-black">{{ $pos->not_interested_entries_count }}</span>
+            <h2 class="text-xs font-black uppercase tracking-wide text-slate-700">Position-wise summary</h2>
+            <div class="space-y-2">
+                @foreach($positions as $pos)
+                    <div class="rounded-xl border border-slate-200 p-2.5">
+                        <p class="text-sm font-extrabold text-slate-800">{{ $pos->position }}</p>
+                        <div class="mt-2 flex items-center justify-between text-[11px]">
+                            <span class="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-1 font-black text-emerald-700">Interested: {{ $pos->interested_entries_count }}</span>
+                            <span class="inline-flex items-center gap-1 rounded-md bg-slate-200 px-2 py-1 font-black text-slate-700">Not interested: {{ $pos->not_interested_entries_count }}</span>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
         <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-4">
             <div class="mb-3 flex flex-wrap items-center justify-end gap-2">

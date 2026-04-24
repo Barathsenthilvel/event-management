@@ -958,7 +958,7 @@
                         </div>
                         <div class="mt-6">
                             <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#965995]">Terms &amp; conditions</p>
-                            <div class="mt-2 max-h-52 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-sm leading-relaxed text-[#351c42]/90">
+                            <div class="mt-2 max-h-52 overflow-y-auto whitespace-pre-wrap break-words rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-left text-sm leading-relaxed text-[#351c42]/90">
                                 {{ $nominationPrompt->terms ? $nominationPrompt->terms : 'No additional terms were provided for this nomination.' }}
                             </div>
                         </div>
@@ -1210,11 +1210,6 @@
                             document.getElementById("nomination-thanks-modal")?.remove();
                             const nid = thanksBtn.getAttribute("data-nomination-id");
                             if (nid) {
-                                const card = document.getElementById(`dashboard-nomination-card-${nid}`);
-                                if (card) {
-                                    card.setAttribute("data-queue-dismissed", "1");
-                                    card.classList.add("hidden");
-                                }
                                 if (queueExpanded("nomination")) expandQueue("nomination");
                                 else initQueue("nomination");
                                 updatePopupStack();
@@ -1225,11 +1220,6 @@
                             document.getElementById("polling-thanks-modal")?.remove();
                             const pid = thanksBtn.getAttribute("data-polling-id");
                             if (pid) {
-                                const card = document.getElementById(`dashboard-polling-card-${pid}`);
-                                if (card) {
-                                    card.setAttribute("data-queue-dismissed", "1");
-                                    card.classList.add("hidden");
-                                }
                                 if (queueExpanded("polling")) expandQueue("polling");
                                 else initQueue("polling");
                                 updatePopupStack();

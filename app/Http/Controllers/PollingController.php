@@ -183,7 +183,17 @@ class PollingController extends Controller
             ];
         }
 
-        return view('admin.pollings.stats', compact('polling', 'positionStats'));
+        $voteEntries = PollingVote::query()
+            ->with([
+                'position:id,position',
+                'candidate:id,name,email,mobile',
+                'voter:id,name,email,mobile',
+            ])
+            ->where('polling_id', $polling->id)
+            ->latest('id')
+            ->get();
+
+        return view('admin.pollings.stats', compact('polling', 'positionStats', 'voteEntries'));
     }
 
     public function saveResults(Request $request, Polling $polling)
@@ -233,18 +243,22 @@ class PollingController extends Controller
             ->where('polling_id', $polling->id)
             ->get();
 
-        $csv = "Position,Candidate,Votes By,Voted At\n";
+        $csv = "\xEF\xBB\xBF";
+        $csv .= "Position\tCandidate\tCandidate Email\tCandidate Mobile\tVoted By\tVoter Email\tVoter Mobile\tVoted At\n";
         foreach ($rows as $row) {
-            $csv .= sprintf(
-                "\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                str_replace('"', '""', (string) ($row->position->position ?? '')),
-                str_replace('"', '""', (string) ($row->candidate->name ?? '')),
-                str_replace('"', '""', (string) ($row->voter->name ?? '')),
-                optional($row->voted_at)->format('d M Y h:i A') ?? ''
-            );
+            $csv .= implode("\t", [
+                str_replace("\t", ' ', (string) ($row->position->position ?? '')),
+                str_replace("\t", ' ', (string) ($row->candidate->name ?? '')),
+                str_replace("\t", ' ', (string) ($row->candidate->email ?? '')),
+                str_replace("\t", ' ', (string) ($row->candidate->mobile ?? '')),
+                str_replace("\t", ' ', (string) ($row->voter->name ?? '')),
+                str_replace("\t", ' ', (string) ($row->voter->email ?? '')),
+                str_replace("\t", ' ', (string) ($row->voter->mobile ?? '')),
+                optional($row->voted_at)->format('d M Y h:i A') ?? '',
+            ])."\n";
         }
 
-        $fileName = 'polling-'.$polling->id.'-report.csv';
+        $fileName = 'polling-'.$polling->id.'-report.xls';
         $tmpPath = 'reports/'.$fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 

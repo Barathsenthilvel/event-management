@@ -111,7 +111,7 @@ class MemberDashboardController extends Controller
             }
 
             $rawPolls = Polling::query()
-                ->with(['positions' => fn ($q) => $q->with('candidates:id,name')])
+                ->with(['positions' => fn ($q) => $q->with('candidates')])
                 ->where('is_active', true)
                 ->where('publish_status', 'published')
                 ->where('polling_status', 'live')
@@ -150,7 +150,7 @@ class MemberDashboardController extends Controller
             }
 
             $resultPolls = Polling::query()
-                ->with(['positions' => fn ($q) => $q->with('winner:id,name')])
+                ->with(['positions' => fn ($q) => $q->with('winner')])
                 ->where('is_active', true)
                 ->where('publish_status', 'published')
                 ->where('results_visible_to_members', true)
@@ -317,7 +317,7 @@ class MemberDashboardController extends Controller
         }
 
         $memberPollings = Polling::query()
-            ->with(['positions' => fn ($q) => $q->with(['candidates:id,name', 'winner:id,name'])])
+            ->with(['positions' => fn ($q) => $q->with(['candidates', 'winner'])])
             ->where('is_active', true)
             ->where('publish_status', 'published')
             ->where(function ($query) {
@@ -343,8 +343,7 @@ class MemberDashboardController extends Controller
 
         $pollingResultStats = [];
         foreach ($memberPollings as $polling) {
-            $ended = $polling->polling_status === 'ends' || $this->pollingHasEnded($polling);
-            if (! $polling->results_visible_to_members || ! $ended) {
+            if (! $polling->results_visible_to_members) {
                 continue;
             }
 
