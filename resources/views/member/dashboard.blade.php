@@ -543,8 +543,18 @@
                                 <div class="mt-3 border-t border-white/10 pt-3">
                                     <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Open positions</p>
                                     <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5" data-nom-positions-wrap>
+                                        @php
+                                            $firstPendingPositionId = $nominationPrompt->positions
+                                                ->first(function ($position) use ($interestedNominationPositionIds, $dismissedNominationPositionIds) {
+                                                    return ! $interestedNominationPositionIds->contains($position->id)
+                                                        && ! $dismissedNominationPositionIds->contains($position->id);
+                                                })?->id;
+                                        @endphp
                                         @forelse($nominationPrompt->positions as $position)
-                                            <div class="md-nom-announce-row @if(!$loop->first) hidden @endif" data-nom-position-row>
+                                            <div
+                                                class="md-nom-announce-row @if($firstPendingPositionId ? ((int) $position->id !== (int) $firstPendingPositionId) : !$loop->first) hidden @endif"
+                                                data-nom-position-row
+                                            >
                                                 <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
                                                 <div class="flex w-full flex-wrap items-center justify-between gap-2">
                                                     @if($interestedNominationPositionIds->contains($position->id))
@@ -958,7 +968,7 @@
                         </div>
                         <div class="mt-6">
                             <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#965995]">Terms &amp; conditions</p>
-                            <div class="mt-2 max-h-52 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-sm leading-relaxed text-[#351c42]/90">
+                            <div class="mt-2 max-h-52 overflow-y-auto whitespace-pre-line text-left rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-sm leading-relaxed text-[#351c42]/90">
                                 {{ $nominationPrompt->terms ? $nominationPrompt->terms : 'No additional terms were provided for this nomination.' }}
                             </div>
                         </div>
@@ -1208,32 +1218,16 @@
                         const type = thanksBtn.getAttribute("data-thanks-close");
                         if (type === "nomination") {
                             document.getElementById("nomination-thanks-modal")?.remove();
-                            const nid = thanksBtn.getAttribute("data-nomination-id");
-                            if (nid) {
-                                const card = document.getElementById(`dashboard-nomination-card-${nid}`);
-                                if (card) {
-                                    card.setAttribute("data-queue-dismissed", "1");
-                                    card.classList.add("hidden");
-                                }
-                                if (queueExpanded("nomination")) expandQueue("nomination");
-                                else initQueue("nomination");
-                                updatePopupStack();
-                            }
+                            if (queueExpanded("nomination")) expandQueue("nomination");
+                            else initQueue("nomination");
+                            updatePopupStack();
                             return;
                         }
                         if (type === "polling") {
                             document.getElementById("polling-thanks-modal")?.remove();
-                            const pid = thanksBtn.getAttribute("data-polling-id");
-                            if (pid) {
-                                const card = document.getElementById(`dashboard-polling-card-${pid}`);
-                                if (card) {
-                                    card.setAttribute("data-queue-dismissed", "1");
-                                    card.classList.add("hidden");
-                                }
-                                if (queueExpanded("polling")) expandQueue("polling");
-                                else initQueue("polling");
-                                updatePopupStack();
-                            }
+                            if (queueExpanded("polling")) expandQueue("polling");
+                            else initQueue("polling");
+                            updatePopupStack();
                             return;
                         }
                     }

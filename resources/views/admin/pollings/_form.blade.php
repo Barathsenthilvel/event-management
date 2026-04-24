@@ -177,7 +177,11 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <label class="text-xs"><input type="checkbox" name="promote_front" value="1" {{ old('promote_front', $p?->promote_front ?? false) ? 'checked' : '' }}> Promote Front</label>
+                @if($isEdit)
+                    <label class="text-xs"><input type="checkbox" name="promote_front" value="1" {{ old('promote_front', $p?->promote_front ?? false) ? 'checked' : '' }}> Promote Front</label>
+                @else
+                    <input type="hidden" name="promote_front" value="0">
+                @endif
                 <label class="text-xs"><input type="checkbox" name="show_stats" value="1" {{ old('show_stats', $p?->show_stats ?? true) ? 'checked' : '' }}> Show Stats</label>
                 <div>
                     @php $publish = old('publish_status', $p?->publish_status ?? 'published'); @endphp

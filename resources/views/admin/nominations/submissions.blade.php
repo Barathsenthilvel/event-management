@@ -15,6 +15,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
+            <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-600">Position-wise summary</p>
             @foreach($positions as $pos)
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-extrabold text-slate-800">{{ $pos->position }}</p>

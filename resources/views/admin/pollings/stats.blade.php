@@ -113,6 +113,36 @@
                     @empty
                         <p class="text-sm text-slate-500">No candidates listed for this position.</p>
                     @endforelse
+
+                    <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Voted Members</p>
+                        @if(!empty($block['voters']))
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="min-w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                                            <th class="px-2 py-1.5">Member</th>
+                                            <th class="px-2 py-1.5">Email</th>
+                                            <th class="px-2 py-1.5">Mobile</th>
+                                            <th class="px-2 py-1.5">Voted At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($block['voters'] as $voter)
+                                            <tr class="border-t border-slate-200 text-slate-700">
+                                                <td class="px-2 py-1.5 font-semibold">{{ $voter['name'] }}</td>
+                                                <td class="px-2 py-1.5">{{ $voter['email'] }}</td>
+                                                <td class="px-2 py-1.5">{{ $voter['mobile'] }}</td>
+                                                <td class="px-2 py-1.5">{{ $voter['voted_at'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="mt-2 text-xs text-slate-500">No members have voted for this position yet.</p>
+                        @endif
+                    </div>
                 </div>
             @empty
                 <p class="text-sm text-slate-500">No positions found.</p>
