@@ -34,11 +34,13 @@
 
                 <div class="px-5 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8">
                     <div id="panel-signin" role="tabpanel" aria-labelledby="tab-signin" data-auth-panel="signin">
-                        <form class="space-y-5" method="POST" action="{{ route('member.login.store') }}">
+                        <form class="space-y-5" method="POST" action="{{ route('member.login.store') }}" id="member-signin-form" novalidate>
                             @csrf
+                            <p class="hidden rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert" data-form-error></p>
                             <div>
                                 <label class="ml-label" for="signin-identifier">Email or mobile</label>
                                 <input id="signin-identifier" name="identifier" type="text" autocomplete="username" required class="ml-inp" placeholder="name@email.com or mobile" value="{{ old('identifier') }}" />
+                                <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="identifier"></p>
                             </div>
                             <div>
                                 <label class="ml-label" for="signin-password">Password</label>
@@ -49,6 +51,7 @@
                                         <svg class="hidden h-5 w-5" data-icon-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                                     </button>
                                 </div>
+                                <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="password"></p>
                             </div>
                             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                                 <label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-[#351c42]/75">
@@ -67,23 +70,27 @@
                         <form class="mt-8 space-y-6" method="POST" action="{{ route('member.register.store') }}" id="member-signup-form" novalidate>
                             @csrf
                             <input type="hidden" name="country_code" value="+91" />
+                            <p class="hidden rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert" data-form-error></p>
                             <div class="grid gap-6 sm:grid-cols-2 sm:gap-x-8">
                                 {{-- Row 1: First name, Last name --}}
                                 <div>
                                     <label class="ml-label" for="su-first">First name <span class="text-red-500">*</span></label>
                                     <input id="su-first" name="first_name" type="text" autocomplete="given-name" required class="ml-inp" placeholder="Given name" value="{{ old('first_name') }}" />
                                     @error('first_name')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="first_name"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-last">Last name <span class="text-red-500">*</span></label>
                                     <input id="su-last" name="last_name" type="text" autocomplete="family-name" required class="ml-inp" placeholder="Family name" value="{{ old('last_name') }}" />
                                     @error('last_name')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="last_name"></p>
                                 </div>
                                 {{-- Row 2: Email, Mobile --}}
                                 <div>
                                     <label class="ml-label" for="su-email">Email <span class="text-red-500">*</span></label>
                                     <input id="su-email" name="email" type="email" autocomplete="email" required class="ml-inp" placeholder="name@email.com" value="{{ old('email') }}" />
                                     @error('email')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="email"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-mobile">Mobile <span class="text-red-500">*</span></label>
@@ -95,6 +102,7 @@
                                     </div>
                                     <p id="su-mobile-hint" class="sr-only">Enter 10 digits; country code +91 is already included.</p>
                                     @error('mobile')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="mobile"></p>
                                 </div>
                                 {{-- Row 3: Password, Confirm password --}}
                                 <div>
@@ -107,6 +115,7 @@
                                         </button>
                                     </div>
                                     @error('password')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="password"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label" for="su-pass2">Confirm password <span class="text-red-500">*</span></label>
@@ -117,6 +126,7 @@
                                             <svg class="hidden h-5 w-5" data-icon-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                                         </button>
                                     </div>
+                                    <p class="mt-1.5 text-xs font-semibold text-red-600" data-error-for="password_confirmation"></p>
                                 </div>
                                 <div class="sm:col-span-2 flex justify-end pt-1">
                                     <button type="button" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]" data-back-to-login>Back to sign in</button>
@@ -200,6 +210,7 @@
                 });
             }
 
+            const signinForm = document.getElementById("member-signin-form");
             const signupForm = document.getElementById("member-signup-form");
             const passwordInput = document.getElementById("su-pass");
             const confirmPasswordInput = document.getElementById("su-pass2");
@@ -222,12 +233,120 @@
             passwordInput?.addEventListener("input", setPasswordMismatchError);
             confirmPasswordInput?.addEventListener("input", setPasswordMismatchError);
 
+            function clearFormErrors(form) {
+                form.querySelectorAll("[data-error-for]").forEach((el) => {
+                    el.textContent = "";
+                });
+                form.querySelectorAll("input, select, textarea").forEach((field) => {
+                    field.classList.remove("is-invalid");
+                    field.removeAttribute("aria-invalid");
+                    const phoneWrap = field.closest(".ml-inp-phone-wrap");
+                    if (phoneWrap) phoneWrap.classList.remove("is-invalid");
+                });
+                const formError = form.querySelector("[data-form-error]");
+                if (formError) {
+                    formError.textContent = "";
+                    formError.classList.add("hidden");
+                }
+            }
+
+            function paintFieldError(form, fieldName, message) {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                const errorEl = form.querySelector(`[data-error-for="${fieldName}"]`);
+                if (field) {
+                    field.classList.add("is-invalid");
+                    field.setAttribute("aria-invalid", "true");
+                    const phoneWrap = field.closest(".ml-inp-phone-wrap");
+                    if (phoneWrap) phoneWrap.classList.add("is-invalid");
+                }
+                if (errorEl) {
+                    errorEl.textContent = message;
+                }
+            }
+
+            function paintFormError(form, message) {
+                const formError = form.querySelector("[data-form-error]");
+                if (!formError || !message) return;
+                formError.textContent = message;
+                formError.classList.remove("hidden");
+            }
+
+            async function submitAuthFormAjax(form) {
+                clearFormErrors(form);
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn ? submitBtn.textContent : "";
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Please wait...";
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        body: new FormData(form),
+                        credentials: "same-origin",
+                    });
+
+                    let payload = {};
+                    try {
+                        payload = await response.json();
+                    } catch (_) {
+                        payload = {};
+                    }
+
+                    if (response.ok && payload.redirect) {
+                        window.location.href = payload.redirect;
+                        return;
+                    }
+
+                    if (response.status === 422) {
+                        const errors = payload.errors || {};
+                        let hasFieldErrors = false;
+                        Object.entries(errors).forEach(([fieldName, messages]) => {
+                            if (!messages || !messages.length) return;
+                            hasFieldErrors = true;
+                            paintFieldError(form, fieldName, messages[0]);
+                        });
+
+                        // Avoid duplicate messages: show top error only for non-field/general errors.
+                        if (!hasFieldErrors && payload.message) {
+                            paintFormError(form, payload.message);
+                        }
+
+                        form.querySelector(".is-invalid")?.focus();
+                        return;
+                    }
+
+                    paintFormError(form, payload.message || "Something went wrong. Please try again.");
+                } catch (_) {
+                    paintFormError(form, "Network error. Please check your connection and try again.");
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                }
+            }
+
+            signinForm?.addEventListener("submit", (event) => {
+                event.preventDefault();
+                submitAuthFormAjax(signinForm);
+            });
+
             signupForm?.addEventListener("submit", (event) => {
                 setPasswordMismatchError();
                 if (!signupForm.checkValidity()) {
                     event.preventDefault();
                     signupForm.reportValidity();
+                    return;
                 }
+                event.preventDefault();
+                submitAuthFormAjax(signupForm);
             });
 
             @if($errors->any() && (old('first_name') || old('password_confirmation')))

@@ -1,0 +1,204 @@
+<?php $__env->startSection('content'); ?>
+<div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-900">Events</h1>
+                <p class="text-xs font-bold text-slate-500 mt-1">Manage events and quick actions including Invite Members.</p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full md:w-auto md:flex-1 md:min-w-0 md:max-w-3xl">
+                <form method="GET" class="flex items-center gap-2 w-full sm:max-w-md min-w-0">
+                    <div class="relative flex-1 min-w-0">
+                        <input type="search" name="q" value="<?php echo e($q); ?>" placeholder="Search events..."
+                            class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+                </form>
+                <div class="flex shrink-0 justify-end sm:justify-start">
+                    <a href="<?php echo e(route('admin.events.create')); ?>" class="inline-flex px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Create Event</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <?php if($events->count() === 0): ?>
+            <div class="p-10 text-center">
+                <p class="text-sm font-extrabold text-slate-900">No events found</p>
+                <p class="text-xs font-bold text-slate-500 mt-1">Start by creating your first event.</p>
+            </div>
+        <?php else: ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-xs">
+                    <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">
+                        <tr>
+                            <th class="px-5 py-4">Event</th>
+                            <th class="px-5 py-4">Seat Counts</th>
+                            <th class="px-5 py-4">Promote Front</th>
+                            <th class="px-5 py-4">Created</th>
+                            <th class="px-5 py-4">Status</th>
+                            <th class="px-5 py-4">Display</th>
+                            <th class="px-5 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <?php $__currentLoopData = $events; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $event): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <tr>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-black flex items-center justify-center">
+                                            <?php echo e(strtoupper(substr($event->title, 0, 1))); ?>
+
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-extrabold text-slate-900 truncate"><?php echo e($event->title); ?></p>
+                                            <p class="text-[11px] font-bold text-slate-500">
+                                                <?php echo e(optional($event->dates->first())->event_date?->format('d M Y') ?? 'No date'); ?>
+
+                                                <?php if($event->venue): ?>
+                                                    • <?php echo e($event->venue); ?>
+
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <p class="text-[11px] font-bold text-slate-700">
+                                        <?php echo e(ucfirst($event->seat_mode)); ?>
+
+                                        <?php if($event->seat_mode === 'limited'): ?>
+                                            (<?php echo e($event->interested_count); ?> / <?php echo e($event->seat_limit); ?>)
+                                        <?php else: ?>
+                                            (<?php echo e($event->interested_count); ?> interested)
+                                        <?php endif; ?>
+                                    </p>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <form method="POST" action="<?php echo e(route('admin.events.toggle-promote', $event->id)); ?>">
+                                        <?php echo csrf_field(); ?>
+                                        <button class="px-3 py-1 rounded-full text-[10px] font-black <?php echo e($event->promote_front ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'); ?>">
+                                            <?php echo e($event->promote_front ? 'ON' : 'OFF'); ?>
+
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <p class="text-[11px] font-bold text-slate-700"><?php echo e($event->created_at->format('d M Y')); ?></p>
+                                    <p class="text-[10px] font-bold text-slate-500">By <?php echo e($event->creator->name ?? 'Admin'); ?></p>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase
+                                        <?php echo e($event->status === 'live' ? 'bg-emerald-100 text-emerald-700' : ''); ?>
+
+                                        <?php echo e($event->status === 'upcoming' ? 'bg-blue-100 text-blue-700' : ''); ?>
+
+                                        <?php echo e($event->status === 'completed' ? 'bg-amber-100 text-amber-700' : ''); ?>
+
+                                        <?php echo e($event->status === 'cancelled' ? 'bg-rose-100 text-rose-700' : ''); ?>">
+                                        <?php echo e($event->status); ?>
+
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <form method="POST" action="<?php echo e(route('admin.events.toggle-display', $event->id)); ?>">
+                                        <?php echo csrf_field(); ?>
+                                        <button class="px-3 py-1 rounded-full text-[10px] font-black <?php echo e($event->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'); ?>">
+                                            <?php echo e($event->is_active ? 'Active' : 'Inactive'); ?>
+
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2 flex-wrap">
+                                        <a href="<?php echo e(route('admin.events.show', $event->id)); ?>"
+                                            title="Event details (info, public interest list)"
+                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </a>
+                                        <?php if(in_array($event->status, ['live', 'completed'], true)): ?>
+                                            <a href="<?php echo e(route('admin.events.show', $event->id)); ?>#event-member-attendance"
+                                                title="Member attendance — set Attended / Did not attend (Live or Completed)"
+                                                class="h-8 min-w-8 px-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 inline-flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wide">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="hidden sm:inline">Attendance</span>
+                                            </a>
+                                        <?php endif; ?>
+                                        <a href="<?php echo e(route('admin.events.edit', $event->id)); ?>"
+                                            title="Modify Event"
+                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
+                                            </svg>
+                                        </a>
+                                        <a href="<?php echo e(route('admin.events.invite', $event->id)); ?>"
+                                            title="Invite Members"
+                                            class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" />
+                                            </svg>
+                                        </a>
+                                        <?php if($event->status === 'completed'): ?>
+                                            <a href="<?php echo e(route('admin.events.album', $event->id)); ?>"
+                                                title="Add Event Album"
+                                                class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </a>
+                                        <?php endif; ?>
+                                        <form method="POST" action="<?php echo e(route('admin.events.send-reminder', $event->id)); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <button title="Send Reminder" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="<?php echo e(route('admin.events.cancel', $event->id)); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <button title="Cancel Event" class="w-8 h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        <form id="admin-delete-event-<?php echo e($event->id); ?>" method="POST" action="<?php echo e(route('admin.events.destroy', $event->id)); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <?php echo method_field('DELETE'); ?>
+                                            <button type="button" title="Delete Event"
+                                                data-delete-form="admin-delete-event-<?php echo e($event->id); ?>"
+                                                data-delete-title="Delete this event?"
+                                                data-delete-message="All event dates, invites, and album photos linked to this event will be removed."
+                                                onclick="adminOpenDeleteModalFromEl(this)"
+                                                class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-5 border-t border-slate-100">
+                <?php echo e($events->links()); ?>
+
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\acer\OneDrive\Desktop\projects\event-management\resources\views\admin\events\index.blade.php ENDPATH**/ ?>

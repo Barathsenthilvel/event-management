@@ -61,13 +61,19 @@ class MemberAuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'identifier' => ['The provided credentials are incorrect.'],
-                'password' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         $request->session()->put('member_otp_remember', $request->boolean('remember'));
 
         $this->issueOtp($request, (int) $user->id);
+
+        if ($this->wantsJsonResponse($request)) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('member.otp'),
+            ]);
+        }
 
         return redirect()->route('member.otp');
     }
@@ -98,6 +104,13 @@ class MemberAuthController extends Controller
         ]);
 
         $this->issueOtp($request, $user->id);
+
+        if ($this->wantsJsonResponse($request)) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('member.otp'),
+            ]);
+        }
 
         return redirect()->route('member.otp');
     }
@@ -255,6 +268,11 @@ class MemberAuthController extends Controller
         }
 
         return str_repeat('*', strlen($digits) - 4) . substr($digits, -4);
+    }
+
+    private function wantsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson() || $request->ajax();
     }
 }
 

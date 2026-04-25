@@ -97,17 +97,35 @@
                                 </span>
                                 <span class="text-xs font-semibold text-[#351c42]/70">{{ $timeRange }}</span>
                             </div>
-                            <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm min-w-[5.5rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
+                            <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm min-w-[6.75rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
                                 @if ($seatLimited)
                                     @if($seatsFull)
-                                        <div class="text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">Registration</div>
+                                        <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                                            </svg>
+                                            Registration
+                                        </div>
                                         <div class="mt-0.5 text-[10px] font-extrabold uppercase text-rose-700">Closed</div>
                                     @else
-                                        <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
+                                        <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
+                                                <path d="M8 8h8v8H8z" stroke="currentColor" stroke-width="2"/>
+                                            </svg>
+                                            Limited
+                                        </div>
                                         <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
                                     @endif
                                 @else
-                                    <div class="text-[10px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">Unlimited</div>
+                                    <div class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M7 15c2 0 3.5-1.5 5-3s3-3 5-3 4 2 4 4-2 4-4 4-3.5-1.5-5-3-3-3-5-3-4 2-4 4 2 4 4 4 3.5-1.5 5-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Unlimited
+                                    </div>
                                 @endif
                             </div>
                         </div>

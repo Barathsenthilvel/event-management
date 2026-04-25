@@ -35,6 +35,26 @@
                                 data-banner-photo
                             />
                             <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a0f24]/80 via-transparent to-[#351c42]/15 opacity-90" aria-hidden="true"></span>
+
+                            @if(!empty($banner['eyebrow']) || !empty($banner['title']) || !empty($banner['text']))
+                                <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-4 pb-16 pt-8 sm:px-6 sm:pb-20">
+                                    <div class="max-w-2xl">
+                                        @if(!empty($banner['eyebrow']))
+                                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#fddc6a] sm:text-xs">{{ $banner['eyebrow'] }}</p>
+                                        @endif
+                                        @if(!empty($banner['title']))
+                                            <h3 class="mt-1 text-base font-extrabold tracking-tight text-white drop-shadow-md sm:text-xl md:text-2xl">
+                                                {{ $banner['title'] }}
+                                            </h3>
+                                        @endif
+                                        @if(!empty($banner['text']))
+                                            <p class="mt-1 max-w-xl text-xs font-medium leading-relaxed text-white/90 drop-shadow sm:text-sm">
+                                                {{ $banner['text'] }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
                         </a>
                     @endforeach
                 </div>

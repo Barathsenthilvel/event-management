@@ -1,0 +1,90 @@
+<?php $__env->startSection('content'); ?>
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Edit Role</h1>
+        <p class="text-sm text-slate-500">Update role details and permissions</p>
+    </div>
+
+    <form method="POST" action="<?php echo e(route('admin.roles.update', $role)); ?>" class="space-y-6">
+        <?php echo csrf_field(); ?>
+        <?php echo method_field('PUT'); ?>
+        
+        <div class="bg-white rounded-2xl border border-slate-100 p-6 space-y-6">
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Role Name <?php echo $__env->make('admin.partials.required-mark', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?></label>
+                <input type="text" name="name" required
+                    class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-indigo-500/5"
+                    placeholder="e.g. Content Auditor" value="<?php echo e(old('name', $role->name)); ?>">
+                <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="mt-1 text-xs text-red-600"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Description</label>
+                <textarea name="description" rows="3"
+                    class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-indigo-500/5"
+                    placeholder="Role description..."><?php echo e(old('description', $role->description)); ?></textarea>
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div>
+                    <span class="text-sm font-bold text-slate-700 block">Status</span>
+                    <p class="text-xs text-slate-400 font-bold uppercase">Role Activation</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="is_active" value="1" <?php echo e(old('is_active', $role->is_active) ? 'checked' : ''); ?> class="sr-only peer">
+                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-4">Permissions</label>
+                <div class="space-y-4">
+                    <?php
+                        $permissions = \App\Models\Permission::all()->groupBy('module');
+                        $rolePermissionIds = $role->permissions->pluck('id')->toArray();
+                    ?>
+                    <?php $__currentLoopData = $permissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $module => $modulePermissions): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="border border-slate-100 rounded-xl p-4">
+                        <h4 class="font-bold text-sm text-slate-800 mb-3"><?php echo e($module); ?></h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <?php $__currentLoopData = $modulePermissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $permission): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="permissions[]" value="<?php echo e($permission->id); ?>"
+                                    <?php echo e(in_array($permission->id, old('permissions', $rolePermissionIds)) ? 'checked' : ''); ?>
+
+                                    class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20">
+                                <span class="text-xs text-slate-600"><?php echo e($permission->name); ?></span>
+                            </label>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <a href="<?php echo e(route('admin.roles.index')); ?>"
+                    class="flex-1 px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm rounded-xl transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-[#0f172a] hover:bg-indigo-600 text-white font-bold text-sm rounded-xl shadow-lg transition-all">
+                    Update Role
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<?php $__env->stopSection(); ?>
+
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\acer\OneDrive\Desktop\projects\event-management\resources\views\admin\roles\edit.blade.php ENDPATH**/ ?>

@@ -1,0 +1,2 @@
+<span class="text-red-500 font-bold" aria-hidden="true">*</span>
+<?php /**PATH C:\Users\acer\OneDrive\Desktop\projects\event-management\resources\views/admin/partials/required-mark.blade.php ENDPATH**/ ?>
