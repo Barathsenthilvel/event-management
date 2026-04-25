@@ -10,12 +10,6 @@
 <body>
     @include('home.partials.header')
 
-    @if(session('event_interest_error'))
-        <div class="mx-auto max-w-7xl px-4 pt-4">
-            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{{ session('event_interest_error') }}</div>
-        </div>
-    @endif
-
     @include('home.sections.hero')
     @include('home.sections.service')
     @include('home.sections.banner-carousel')
@@ -31,6 +25,7 @@
     @include('home.partials.floating')
 
     @include('home.partials.event-interest-modal')
+    @include('home.partials.event-interest-error-modal')
     @include('home.partials.event-interest-success-modal')
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')

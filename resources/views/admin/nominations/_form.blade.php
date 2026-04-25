@@ -68,11 +68,15 @@
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                         <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Start time</label>
-                        <input type="text" name="polling_from" value="{{ old('polling_from', $defaultPollingFrom) }}" placeholder="09:40 PM" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                        <input type="time" name="polling_from" step="60"
+                            value="{{ old('polling_from', $defaultPollingFrom ? \Illuminate\Support\Carbon::parse($defaultPollingFrom)->format('H:i') : '') }}"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
                     </div>
                     <div>
                         <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">End time</label>
-                        <input type="text" name="polling_to" value="{{ old('polling_to', $defaultPollingTo) }}" placeholder="10:40 PM" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
+                        <input type="time" name="polling_to" step="60"
+                            value="{{ old('polling_to', $defaultPollingTo ? \Illuminate\Support\Carbon::parse($defaultPollingTo)->format('H:i') : '') }}"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs">
                     </div>
                 </div>
                 @error('polling_date')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror

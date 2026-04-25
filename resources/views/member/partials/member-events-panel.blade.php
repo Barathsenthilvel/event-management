@@ -9,7 +9,7 @@
             <a href="{{ route('events.index') }}" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">Browse public events</a>
         </div>
 
-        @if(session('event_interest_error'))
+        @if(session('event_interest_error') && !session('event_interest_error_modal'))
             <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                 {{ session('event_interest_error') }}
             </div>

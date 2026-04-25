@@ -46,8 +46,25 @@
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
             <h2 class="text-sm font-extrabold text-slate-900 mb-1">Interested (public)</h2>
-            <p class="text-xs font-bold text-slate-500 mb-3">People who registered interest from the events page ({{ $event->interests->count() }}).</p>
-            @if($event->interests->count() === 0)
+            <p class="text-xs font-bold text-slate-500 mb-3">People who registered interest from the events page ({{ $allInterests->count() }}).</p>
+            <div class="mb-4 inline-flex items-center gap-1 rounded-full bg-slate-100 p-1">
+                <a href="{{ route('admin.events.show', ['event' => $event->id, 'interest_type' => 'all']) }}"
+                   class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-wider transition {{ $interestType === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    <span>All</span>
+                    <span class="text-[10px]">{{ $allInterests->count() }}</span>
+                </a>
+                <a href="{{ route('admin.events.show', ['event' => $event->id, 'interest_type' => 'members']) }}"
+                   class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-wider transition {{ $interestType === 'members' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    <span>Members</span>
+                    <span class="text-[10px]">{{ $memberInterests->count() }}</span>
+                </a>
+                <a href="{{ route('admin.events.show', ['event' => $event->id, 'interest_type' => 'non_members']) }}"
+                   class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-wider transition {{ $interestType === 'non_members' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    <span>Guest</span>
+                    <span class="text-[10px]">{{ $nonMemberInterests->count() }}</span>
+                </a>
+            </div>
+            @if($filteredInterests->count() === 0)
                 <p class="text-sm text-slate-500">No interest registrations yet.</p>
             @else
                 <div class="overflow-x-auto">
@@ -63,7 +80,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @foreach($event->interests as $row)
+                            @foreach($filteredInterests as $row)
                                 <tr>
                                     <td class="px-4 py-3">
                                         @if($row->user_id)

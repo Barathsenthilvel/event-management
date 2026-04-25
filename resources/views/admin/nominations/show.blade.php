@@ -53,7 +53,11 @@
                                 {{ optional($n->polling_date)->format('d M Y') }}
                             @endif
                         </p>
-                        <p class="mt-1 text-sm text-slate-600">{{ $n->polling_from }} – {{ $n->polling_to }}</p>
+                        <p class="mt-1 text-sm text-slate-600">
+                            {{ $n->polling_from ? \Illuminate\Support\Carbon::parse($n->polling_from)->format('h:i A') : '-' }}
+                            –
+                            {{ $n->polling_to ? \Illuminate\Support\Carbon::parse($n->polling_to)->format('h:i A') : '-' }}
+                        </p>
                     </div>
                     <div class="rounded-xl border border-slate-100 p-4">
                         <p class="text-xs font-black text-slate-600 mb-3">Images</p>

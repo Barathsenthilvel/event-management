@@ -23,9 +23,6 @@
         @if(session('error'))
             <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900" role="alert">{{ session('error') }}</div>
         @endif
-        @if(session('event_interest_error'))
-            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{{ session('event_interest_error') }}</div>
-        @endif
         @if($errors->any())
             <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-900" role="alert">
                 <ul class="list-disc list-inside space-y-0.5">
@@ -76,8 +73,6 @@
                             'all' => 'All',
                             'upcoming' => 'Upcoming',
                             'live' => 'Live',
-                            'completed' => 'Completed',
-                            'cancelled' => 'Cancelled',
                         ];
                     @endphp
                     @foreach($tabs as $key => $label)
@@ -115,6 +110,7 @@
     </main>
 
     @include('home.partials.event-interest-modal')
+    @include('home.partials.event-interest-error-modal')
     @include('home.partials.event-interest-success-modal')
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')

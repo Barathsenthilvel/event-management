@@ -91,6 +91,7 @@ class NominationController extends Controller
 
     public function show(Nomination $nomination)
     {
+        $this->syncElapsedNominations();
         $nomination->load(['positions', 'creator:id,name']);
 
         return view('admin.nominations.show', compact('nomination'));
@@ -119,6 +120,7 @@ class NominationController extends Controller
 
     public function edit(Nomination $nomination)
     {
+        $this->syncElapsedNominations();
         $nomination->load('positions');
 
         return view('admin.nominations.edit', compact('nomination'));
@@ -233,6 +235,7 @@ class NominationController extends Controller
 
     public function submissions(Nomination $nomination, Request $request)
     {
+        $this->syncElapsedNominations();
         $q = trim((string) $request->query('q', ''));
         $response = $request->query('response', 'all');
         $positionId = (int) $request->query('position_id', 0);
@@ -440,19 +443,35 @@ class NominationController extends Controller
 
     private function syncElapsedNominations(): void
     {
-        $activeNominations = Nomination::query()
-            ->where('status', 'active')
-            ->where('is_active', true)
-            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+        $nominations = Nomination::query()
+            ->whereIn('status', ['draft', 'active'])
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_from', 'polling_to', 'status', 'is_active']);
 
-        foreach ($activeNominations as $nomination) {
-            if (! $nomination->polling_date || ! $nomination->polling_to) {
+        $now = now();
+        foreach ($nominations as $nomination) {
+            if (! $nomination->polling_date || ! $nomination->polling_from || ! $nomination->polling_to) {
                 continue;
             }
+            $startDate = $nomination->polling_date->format('Y-m-d');
             $endDate = ($nomination->polling_date_to ?? $nomination->polling_date)->format('Y-m-d');
+            $start = Carbon::parse($startDate.' '.$nomination->polling_from);
             $end = Carbon::parse($endDate.' '.$nomination->polling_to);
-            if (now()->greaterThan($end)) {
-                $nomination->update(['status' => 'closed']);
+
+            if ($now->greaterThan($end)) {
+                $nomination->update([
+                    'status' => 'closed',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $nomination->status !== 'active') {
+                $nomination->update(['status' => 'active']);
+                continue;
+            }
+
+            if ($now->lt($start) && $nomination->status !== 'draft') {
+                $nomination->update(['status' => 'draft']);
             }
         }
     }

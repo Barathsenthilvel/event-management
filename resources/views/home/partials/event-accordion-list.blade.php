@@ -76,9 +76,9 @@
             </button>
 
             <div class="px-6 pb-6 pt-0 {{ $expandAll ? '' : 'hidden' }}" data-events-accordion-panel>
-                <div class="mt-6 grid gap-8 md:grid-cols-[340px_1fr] items-stretch">
+                <div class="mt-4 grid gap-5 md:grid-cols-[300px_1fr] items-stretch">
                     <div class="relative rounded-2xl overflow-hidden border border-[#351c42]/10 bg-[#f6f3e9]">
-                        <img src="{{ $cover }}" alt="{{ $event->title }}" class="h-56 md:h-72 w-full object-cover" />
+                        <img src="{{ $cover }}" alt="{{ $event->title }}" class="h-52 md:h-64 w-full object-cover" />
 
                         <div class="absolute left-4 top-4 rounded-full bg-[#fddc6a] px-3 py-2 text-center shadow-sm">
                             <div class="text-lg font-extrabold leading-none text-[#351c42]">{{ $day }}</div>
@@ -87,41 +87,41 @@
                     </div>
 
                     <div class="flex flex-col h-full">
-                        <div class="flex items-center justify-between gap-6 w-full">
-                            <div class="inline-flex items-center gap-3 rounded-full border border-[#351c42]/10 bg-white/70 px-4 py-2">
-                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
+                        <div class="flex items-center justify-between gap-3 w-full">
+                            <div class="inline-flex items-center gap-2 rounded-full border border-[#351c42]/10 bg-white/70 px-3 py-1.5">
+                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         <path d="M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </span>
-                                <span class="text-xs font-semibold text-[#351c42]/70">{{ $timeRange }}</span>
+                                <span class="text-[11px] font-semibold text-[#351c42]/70">{{ $timeRange }}</span>
                             </div>
-                            <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm min-w-[6.75rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
+                            <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-2.5 py-1 text-right shadow-sm min-w-[5.9rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
                                 @if ($seatLimited)
                                     @if($seatsFull)
-                                        <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">
-                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <div class="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-rose-600 leading-none">
+                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                                 <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                                 <circle cx="12" cy="16" r="1" fill="currentColor"/>
                                                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                                             </svg>
                                             Registration
                                         </div>
-                                        <div class="mt-0.5 text-[10px] font-extrabold uppercase text-rose-700">Closed</div>
+                                        <div class="mt-0.5 text-[9px] font-extrabold uppercase text-rose-700">Closed</div>
                                     @else
-                                        <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">
-                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <div class="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">
+                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                                 <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
                                                 <path d="M8 8h8v8H8z" stroke="currentColor" stroke-width="2"/>
                                             </svg>
                                             Limited
                                         </div>
-                                        <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
+                                        <div class="mt-0.5 text-[11px] font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
                                     @endif
                                 @else
-                                    <div class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">
-                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">
+                                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                             <path d="M7 15c2 0 3.5-1.5 5-3s3-3 5-3 4 2 4 4-2 4-4 4-3.5-1.5-5-3-3-3-5-3-4 2-4 4 2 4 4 4 3.5-1.5 5-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                         Unlimited
@@ -133,7 +133,7 @@
                         <div class="mt-3 text-sm md:text-base font-bold text-[#351c42]">
                             {{ $event->title }}
                         </div>
-                        @if($sortedDates->isNotEmpty())
+                        <!-- @if($sortedDates->isNotEmpty())
                             <div class="mt-3 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-3">
                                 <p class="text-[10px] font-black uppercase tracking-[0.16em] text-[#965995]">Event schedule</p>
                                 <ul class="mt-2 space-y-1.5">
@@ -150,15 +150,15 @@
                                     @endforeach
                                 </ul>
                             </div>
-                        @endif
+                        @endif -->
 
                         <p class="mt-3 text-sm text-[#351c42]/80 leading-6">
                             {{ $desc }}
                         </p>
-                        <div class="mt-auto grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl bg-[#f6f3e9] p-4 border border-[#351c42]/10">
-                                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#351c42]/70">
-                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
+                        <div class="mt-auto grid gap-2.5 sm:grid-cols-2">
+                            <div class="rounded-xl bg-[#f6f3e9] p-2.5 border border-[#351c42]/10">
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#351c42]/70">
+                                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                             <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -166,11 +166,11 @@
                                     </span>
                                     Organizer
                                 </div>
-                                <div class="mt-2 font-bold text-[#351c42] text-sm">{{ $organizer }}</div>
+                                <div class="mt-1 font-bold text-[#351c42] text-xs leading-5">{{ $organizer }}</div>
                             </div>
-                            <div class="rounded-2xl bg-[#f6f3e9] p-4 border border-[#351c42]/10">
-                                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#351c42]/70">
-                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
+                            <div class="rounded-xl bg-[#f6f3e9] p-2.5 border border-[#351c42]/10">
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#351c42]/70">
+                                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                             <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -178,7 +178,7 @@
                                     </span>
                                     Venue
                                 </div>
-                                <div class="mt-2 font-bold text-[#351c42] text-sm">{{ $event->venue ?: 'Venue not specified' }}</div>
+                                <div class="mt-1 font-bold text-[#351c42] text-xs leading-5">{{ $event->venue ?: 'Venue not specified' }}</div>
                             </div>
                         </div>
 

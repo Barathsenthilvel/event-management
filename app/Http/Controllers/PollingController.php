@@ -73,6 +73,7 @@ class PollingController extends Controller
 
     public function edit(Polling $polling)
     {
+        $this->syncElapsedPollings();
         $polling->load(['positions.candidates:id,name,email,mobile']);
         $selectedCandidateIds = $polling->positions
             ->flatMap(fn ($position) => $position->candidates->pluck('id'))
@@ -145,6 +146,7 @@ class PollingController extends Controller
 
     public function stats(Polling $polling)
     {
+        $this->syncElapsedPollings();
         $polling->load([
             'positions.candidates:id,name,email,mobile',
             'positions.winner:id,name',
@@ -382,24 +384,48 @@ class PollingController extends Controller
         if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
             return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
         }
+        if (preg_match('/^\d{1,2}:\d{2}\s?(AM|PM)$/i', $value)) {
+            try {
+                return Carbon::createFromFormat('g:i A', strtoupper(str_replace('.', '', $value)))->format('H:i');
+            } catch (\Throwable $e) {
+                return $value;
+            }
+        }
 
         return $value;
     }
 
     private function syncElapsedPollings(): void
     {
-        $livePollings = Polling::query()
-            ->where('polling_status', 'live')
-            ->where('is_active', true)
-            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+        $pollings = Polling::query()
+            ->where('publish_status', 'published')
+            ->whereIn('polling_status', ['live', 'ends'])
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_from', 'polling_to', 'polling_status', 'is_active']);
 
-        foreach ($livePollings as $polling) {
-            if (! $polling->polling_date || ! $polling->polling_to) {
+        $now = now();
+        foreach ($pollings as $polling) {
+            if (! $polling->polling_date || ! $polling->polling_from || ! $polling->polling_to) {
                 continue;
             }
+            $startDate = $polling->polling_date->format('Y-m-d');
             $endDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+            $start = Carbon::parse($startDate.' '.$polling->polling_from);
             $end = Carbon::parse($endDate.' '.$polling->polling_to);
-            if (now()->greaterThan($end)) {
+
+            if ($now->greaterThan($end)) {
+                $polling->update([
+                    'polling_status' => 'ends',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $polling->polling_status !== 'live') {
+                $polling->update(['polling_status' => 'live']);
+                continue;
+            }
+
+            if ($now->lt($start) && $polling->polling_status !== 'ends') {
                 $polling->update(['polling_status' => 'ends']);
             }
         }

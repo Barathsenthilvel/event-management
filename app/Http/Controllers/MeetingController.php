@@ -14,6 +14,8 @@ class MeetingController extends Controller
 {
     public function index(Request $request)
     {
+        $this->syncElapsedMeetings();
+
         $q = trim((string) $request->query('q', ''));
 
         $meetings = Meeting::query()
@@ -35,6 +37,7 @@ class MeetingController extends Controller
 
     public function create()
     {
+        $this->syncElapsedMeetings();
         return view('admin.meetings.create');
     }
 
@@ -61,18 +64,13 @@ class MeetingController extends Controller
 
     public function store(Request $request)
     {
+        $this->mergeNormalizedScheduleTimes($request);
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($request, $validated) {
             $meeting = Meeting::create($this->buildPayload($request, $validated, true));
             $schedule = $this->extractSchedule($request);
             $meeting->schedules()->create($schedule);
-
-            if ($request->boolean('repeat_enabled')) {
-                $repeatCount = (int) ($validated['repeat_count'] ?? 0);
-                $repeatFrequency = (string) ($validated['repeat_frequency'] ?? 'weekly');
-                $this->createRepeatedMeetings($meeting, $schedule, $repeatCount, $repeatFrequency);
-            }
         });
 
         return redirect()->route('admin.meetings.index')->with('success', 'Meeting created successfully.');
@@ -80,6 +78,7 @@ class MeetingController extends Controller
 
     public function edit(Meeting $meeting)
     {
+        $this->syncElapsedMeetings();
         $meeting->load('schedules');
 
         return view('admin.meetings.edit', compact('meeting'));
@@ -87,6 +86,7 @@ class MeetingController extends Controller
 
     public function update(Request $request, Meeting $meeting)
     {
+        $this->mergeNormalizedScheduleTimes($request);
         $validated = $request->validate($this->rules($meeting->id));
 
         DB::transaction(function () use ($request, $validated, $meeting) {
@@ -130,6 +130,7 @@ class MeetingController extends Controller
 
     public function inviteForm(Meeting $meeting, Request $request)
     {
+        $this->syncElapsedMeetings();
         $q = trim((string) $request->query('q', ''));
         $members = User::query()
             ->where('is_approved', true)
@@ -230,9 +231,6 @@ class MeetingController extends Controller
             'schedule_date' => 'required|date',
             'schedule_from' => 'required|date_format:H:i',
             'schedule_to' => 'required|date_format:H:i|after:schedule_from',
-            'repeat_enabled' => 'nullable|boolean',
-            'repeat_frequency' => 'nullable|required_if:repeat_enabled,1|in:weekly,monthly',
-            'repeat_count' => 'nullable|required_if:repeat_enabled,1|integer|min:1|max:24',
         ];
     }
 
@@ -272,38 +270,68 @@ class MeetingController extends Controller
         ];
     }
 
-    private function createRepeatedMeetings(Meeting $meeting, array $baseSchedule, int $repeatCount, string $frequency): void
+    private function mergeNormalizedScheduleTimes(Request $request): void
     {
-        if ($repeatCount < 1) {
-            return;
+        $request->merge([
+            'schedule_from' => $this->normalizeHiTime($request->input('schedule_from')),
+            'schedule_to' => $this->normalizeHiTime($request->input('schedule_to')),
+        ]);
+    }
+
+    private function normalizeHiTime(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return is_string($value) ? '' : null;
+        }
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+        if (preg_match('/^\d{1,2}:\d{2}\s?(AM|PM)$/i', $value)) {
+            try {
+                return Carbon::createFromFormat('g:i A', strtoupper(str_replace('.', '', $value)))->format('H:i');
+            } catch (\Throwable $e) {
+                return $value;
+            }
         }
 
-        $scheduleDate = Carbon::parse((string) $baseSchedule['meeting_date']);
-        for ($i = 1; $i <= $repeatCount; $i++) {
-            $nextDate = (clone $scheduleDate);
-            if ($frequency === 'monthly') {
-                $nextDate->addMonthsNoOverflow($i);
-            } else {
-                $nextDate->addWeeks($i);
+        return $value;
+    }
+
+    private function syncElapsedMeetings(): void
+    {
+        $activeMeetings = Meeting::query()
+            ->whereIn('status', ['upcoming', 'live'])
+            ->with(['schedules:id,meeting_id,meeting_date,from_time,to_time'])
+            ->get(['id', 'status', 'is_active']);
+
+        $now = now();
+        foreach ($activeMeetings as $meeting) {
+            $schedule = $meeting->schedules->sortBy('meeting_date')->first();
+            $lastSchedule = $meeting->schedules->sortBy('meeting_date')->last();
+            if (! $schedule?->meeting_date || ! $schedule?->from_time || ! $lastSchedule?->meeting_date || ! $lastSchedule?->to_time) {
+                continue;
             }
 
-            $copy = Meeting::create([
-                'created_by_admin_id' => $meeting->created_by_admin_id,
-                'title' => $meeting->title,
-                'meeting_link' => $meeting->meeting_link,
-                'description' => $meeting->description,
-                'meeting_mode' => $meeting->meeting_mode,
-                'status' => $meeting->status,
-                'cover_image_path' => $meeting->cover_image_path,
-                'banner_image_path' => $meeting->banner_image_path,
-                'is_active' => $meeting->is_active,
-            ]);
+            $start = Carbon::parse($schedule->meeting_date->format('Y-m-d').' '.$schedule->from_time);
+            $end = Carbon::parse($lastSchedule->meeting_date->format('Y-m-d').' '.$lastSchedule->to_time);
 
-            $copy->schedules()->create([
-                'meeting_date' => $nextDate->format('Y-m-d'),
-                'from_time' => $baseSchedule['from_time'],
-                'to_time' => $baseSchedule['to_time'],
-            ]);
+            if ($now->greaterThan($end)) {
+                $meeting->update([
+                    'status' => 'completed',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $meeting->status !== 'live') {
+                $meeting->update(['status' => 'live']);
+                continue;
+            }
+
+            if ($now->lt($start) && $meeting->status !== 'upcoming') {
+                $meeting->update(['status' => 'upcoming']);
+            }
         }
     }
 }

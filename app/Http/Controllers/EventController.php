@@ -7,6 +7,7 @@ use App\Models\EventInterest;
 use App\Models\EventInvite;
 use App\Models\EventPhoto;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ class EventController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $interestTab = trim((string) $request->query('interest_tab', 'members'));
+        if (! in_array($interestTab, ['members', 'guests'], true)) {
+            $interestTab = 'members';
+        }
 
         $events = Event::query()
             ->with(['creator:id,name', 'dates:id,event_id,event_date,start_time,end_time'])
@@ -32,7 +37,51 @@ class EventController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('admin.events.index', compact('events', 'q'));
+        if ($interestTab === 'members') {
+            $interestRows = EventInvite::query()
+                ->with(['event:id,title', 'user:id,name,email,mobile'])
+                ->whereNotNull('participation_status')
+                ->when($q !== '', function ($query) use ($q) {
+                    $query->where(function ($sub) use ($q) {
+                        $sub->whereHas('event', fn ($eventQuery) => $eventQuery->where('title', 'like', '%'.$q.'%'))
+                            ->orWhereHas('user', function ($userQuery) use ($q) {
+                                $userQuery->where('name', 'like', '%'.$q.'%')
+                                    ->orWhere('email', 'like', '%'.$q.'%')
+                                    ->orWhere('mobile', 'like', '%'.$q.'%');
+                            });
+                    });
+                })
+                ->latest('id')
+                ->paginate(12, ['*'], 'interest_page')
+                ->withQueryString();
+        } else {
+            $interestRows = EventInterest::query()
+                ->with(['event:id,title'])
+                ->whereNull('user_id')
+                ->when($q !== '', function ($query) use ($q) {
+                    $query->where(function ($sub) use ($q) {
+                        $sub->where('name', 'like', '%'.$q.'%')
+                            ->orWhere('email', 'like', '%'.$q.'%')
+                            ->orWhere('phone', 'like', '%'.$q.'%')
+                            ->orWhereHas('event', fn ($eventQuery) => $eventQuery->where('title', 'like', '%'.$q.'%'));
+                    });
+                })
+                ->latest('id')
+                ->paginate(12, ['*'], 'interest_page')
+                ->withQueryString();
+        }
+
+        $memberInterestCount = EventInvite::query()->whereNotNull('participation_status')->count();
+        $guestInterestCount = EventInterest::query()->whereNull('user_id')->count();
+
+        return view('admin.events.index', compact(
+            'events',
+            'q',
+            'interestTab',
+            'interestRows',
+            'memberInterestCount',
+            'guestInterestCount'
+        ));
     }
 
     public function create()
@@ -42,6 +91,7 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
+        $this->mergeNormalizedEventTimes($request);
         $validated = $request->validate($this->rules());
 
         DB::transaction(function () use ($request, $validated) {
@@ -56,7 +106,7 @@ class EventController extends Controller
         return redirect()->route('admin.events.index')->with('success', 'Event created successfully.');
     }
 
-    public function show(Event $event)
+    public function show(Request $request, Event $event)
     {
         $event->load([
             'dates',
@@ -65,7 +115,28 @@ class EventController extends Controller
             'interests' => fn ($q) => $q->orderBy('created_at'),
         ]);
 
-        return view('admin.events.show', compact('event'));
+        $interestType = trim((string) $request->query('interest_type', 'all'));
+        if (! in_array($interestType, ['all', 'members', 'non_members'], true)) {
+            $interestType = 'all';
+        }
+
+        $allInterests = $event->interests->values();
+        $memberInterests = $allInterests->filter(fn ($row) => ! empty($row->user_id))->values();
+        $nonMemberInterests = $allInterests->filter(fn ($row) => empty($row->user_id))->values();
+        $filteredInterests = match ($interestType) {
+            'members' => $memberInterests,
+            'non_members' => $nonMemberInterests,
+            default => $allInterests,
+        };
+
+        return view('admin.events.show', compact(
+            'event',
+            'interestType',
+            'filteredInterests',
+            'memberInterests',
+            'nonMemberInterests',
+            'allInterests'
+        ));
     }
 
     public function edit(Event $event)
@@ -77,6 +148,7 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
+        $this->mergeNormalizedEventTimes($request);
         $validated = $request->validate($this->rules($event->id));
 
         DB::transaction(function () use ($event, $request, $validated) {
@@ -406,11 +478,104 @@ class EventController extends Controller
 
             $result[] = [
                 'event_date' => $item['date'],
-                'start_time' => $item['start_time'] ?: null,
-                'end_time' => $item['end_time'] ?: null,
+                'start_time' => !empty($item['start_time']) ? $this->normalizeHiTime($item['start_time']) : null,
+                'end_time' => !empty($item['end_time']) ? $this->normalizeHiTime($item['end_time']) : null,
             ];
         }
 
         return $result;
+    }
+
+    private function mergeNormalizedEventTimes(Request $request): void
+    {
+        $rows = (array) $request->input('event_dates', []);
+        foreach ($rows as $idx => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (array_key_exists('start_time', $row)) {
+                $rows[$idx]['start_time'] = $this->normalizeHiTime($row['start_time']);
+            }
+            if (array_key_exists('end_time', $row)) {
+                $rows[$idx]['end_time'] = $this->normalizeHiTime($row['end_time']);
+            }
+        }
+        $request->merge(['event_dates' => $rows]);
+    }
+
+    private function normalizeHiTime(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return is_string($value) ? '' : null;
+        }
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+        if (preg_match('/^\d{1,2}:\d{2}\s?(AM|PM)$/i', $value)) {
+            try {
+                return Carbon::createFromFormat('g:i A', strtoupper(str_replace('.', '', $value)))->format('H:i');
+            } catch (\Throwable $e) {
+                return $value;
+            }
+        }
+        return $value;
+    }
+
+    private function syncElapsedEvents(): void
+    {
+        $activeEvents = Event::query()
+            ->whereIn('status', ['upcoming', 'live'])
+            ->with(['dates:id,event_id,event_date,start_time,end_time'])
+            ->get(['id', 'status', 'is_active']);
+
+        $now = now();
+        foreach ($activeEvents as $event) {
+            $scheduleWindows = $event->dates
+                ->filter(fn ($row) => ! empty($row->event_date))
+                ->map(function ($row) {
+                    $eventDay = Carbon::parse($row->event_date)->startOfDay();
+                    $startTime = $row->start_time ?: '00:00';
+                    $endTime = $row->end_time ?: '23:59';
+
+                    $startAt = Carbon::parse($eventDay->format('Y-m-d').' '.$startTime);
+                    $endAt = Carbon::parse($eventDay->format('Y-m-d').' '.$endTime);
+
+                    // Handle overnight slot (e.g. 11:30 PM to 01:00 AM next day).
+                    if (! empty($row->start_time) && ! empty($row->end_time) && $endAt->lessThanOrEqualTo($startAt)) {
+                        $endAt->addDay();
+                    }
+
+                    return [
+                        'start' => $startAt,
+                        'end' => $endAt,
+                    ];
+                })
+                ->values();
+
+            if ($scheduleWindows->isEmpty()) {
+                continue;
+            }
+
+            $start = $scheduleWindows->min('start');
+            $end = $scheduleWindows->max('end');
+
+            if ($now->greaterThan($end)) {
+                $event->update([
+                    'status' => 'completed',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $event->status !== 'live') {
+                $event->update(['status' => 'live']);
+                continue;
+            }
+
+            if ($now->lt($start) && $event->status !== 'upcoming') {
+                $event->update(['status' => 'upcoming']);
+            }
+        }
     }
 }

@@ -86,7 +86,11 @@
                     {{ optional($polling->polling_date)->format('d M Y') }}
                 @endif
             </p>
-            <p class="text-xs text-slate-500">{{ $polling->polling_from }} - {{ $polling->polling_to }}</p>
+            <p class="text-xs text-slate-500">
+                {{ $polling->polling_from ? \Illuminate\Support\Carbon::parse($polling->polling_from)->format('h:i A') : '-' }}
+                -
+                {{ $polling->polling_to ? \Illuminate\Support\Carbon::parse($polling->polling_to)->format('h:i A') : '-' }}
+            </p>
             <div class="mt-3">
                 <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $polling->polling_status === 'live' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
                     {{ $polling->polling_status === 'live' ? 'In Live' : 'Ends' }}

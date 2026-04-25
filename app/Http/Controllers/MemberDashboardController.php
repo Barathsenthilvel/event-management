@@ -6,6 +6,7 @@ use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\Meeting;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
 use App\Models\NominationEntry;
@@ -54,6 +55,7 @@ class MemberDashboardController extends Controller
         $dashboardNominations = collect();
         $dashboardPolls = collect();
         $dashboardWinnerPolls = collect();
+        $upcomingMeetings = collect();
 
         if ($showFullMemberMenu && $user) {
             $renewalPlans = MembershipSubscriptionSetting::query()
@@ -184,6 +186,8 @@ class MemberDashboardController extends Controller
                     'winners' => $winners,
                 ]);
             }
+
+            $upcomingMeetings = $this->fetchUpcomingMeetingsForMember($user);
         }
 
         $showNominationDashboard = $dashboardNominations->isNotEmpty();
@@ -198,6 +202,7 @@ class MemberDashboardController extends Controller
             'dashboardNominations' => $dashboardNominations,
             'dashboardPolls' => $dashboardPolls,
             'dashboardWinnerPolls' => $dashboardWinnerPolls,
+            'upcomingMeetings' => $upcomingMeetings,
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,
             'showPollingWinnerDashboard' => $showPollingWinnerDashboard,
@@ -631,6 +636,54 @@ class MemberDashboardController extends Controller
         ]);
     }
 
+    public function meetingsPage()
+    {
+        $user = Auth::user();
+        $user?->refresh();
+        $user?->loadMissing('designation');
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with(
+                    'member_gate_error',
+                    'Meetings are available after you have an active membership plan.'
+                );
+        }
+
+        return view('member.meetings', [
+            'activeSubscription' => $user->activeSubscription,
+            'upcomingMeetings' => $this->fetchUpcomingMeetingsForMember($user),
+        ]);
+    }
+
+    private function fetchUpcomingMeetingsForMember($user)
+    {
+        $today = Carbon::today()->toDateString();
+
+        return Meeting::query()
+            ->with([
+                'schedules' => fn ($q) => $q->orderBy('meeting_date')->orderBy('from_time'),
+                'invites' => fn ($q) => $q->where('user_id', $user->id)->select(['id', 'meeting_id', 'user_id']),
+            ])
+            ->where('is_active', true)
+            ->whereIn('status', ['upcoming', 'live'])
+            ->whereHas('schedules', fn ($q) => $q->whereDate('meeting_date', '>=', $today))
+            ->where(function ($q) use ($user) {
+                $q->whereDoesntHave('invites')
+                    ->orWhereHas('invites', fn ($inviteQ) => $inviteQ->where('user_id', $user->id));
+            })
+            ->get()
+            ->sortBy(function ($meeting) {
+                $schedule = $meeting->schedules->first();
+                if (!$schedule?->meeting_date) {
+                    return '9999-12-31 23:59:59';
+                }
+                return $schedule->meeting_date->format('Y-m-d').' '.($schedule->from_time ?? '23:59:59');
+            })
+            ->values();
+    }
+
     public function downloadEventCertificate(Event $event)
     {
         $user = Auth::user();
@@ -684,7 +737,17 @@ class MemberDashboardController extends Controller
         }
 
         if (!$event->is_active || $event->status === 'cancelled') {
-            return back()->with('event_interest_error', 'This event is not available for interest now.');
+            return back()
+                ->with('event_interest_error', 'This event is not available for interest now.')
+                ->with('event_interest_error_modal', true);
+        }
+
+        $event->loadMissing('dates');
+        $endedReason = $this->eventInterestClosedReason($event);
+        if ($endedReason !== null) {
+            return back()
+                ->with('event_interest_error', $endedReason)
+                ->with('event_interest_error_modal', true);
         }
 
         $alreadyInterested = EventInvite::query()
@@ -699,6 +762,10 @@ class MemberDashboardController extends Controller
         try {
             DB::transaction(function () use ($event, $user) {
                 $event->refresh();
+                $closedReason = $this->eventInterestClosedReason($event);
+                if ($closedReason !== null) {
+                    throw new \RuntimeException($closedReason);
+                }
                 if ($event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit) {
                     throw new \RuntimeException('Seat limit reached for this event.');
                 }
@@ -722,7 +789,9 @@ class MemberDashboardController extends Controller
                 }
             });
         } catch (\RuntimeException $e) {
-            return back()->with('event_interest_error', $e->getMessage());
+            return back()
+                ->with('event_interest_error', $e->getMessage())
+                ->with('event_interest_error_modal', true);
         } catch (QueryException $e) {
             return back()->with('event_interest_error', 'You have already submitted interest for this event.');
         }
@@ -730,6 +799,26 @@ class MemberDashboardController extends Controller
         return back()
             ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
             ->with('event_interest_success_modal', true);
+    }
+
+    private function eventInterestClosedReason(Event $event): ?string
+    {
+        if ($event->status === 'completed') {
+            return 'This event has ended.';
+        }
+
+        $lastDate = $event->dates->sortBy('event_date')->last();
+        if (! $lastDate?->event_date) {
+            return null;
+        }
+
+        $endTime = $lastDate->end_time ?: '23:59';
+        $endAt = Carbon::parse($lastDate->event_date->format('Y-m-d').' '.$endTime);
+        if (now()->greaterThan($endAt)) {
+            return 'This event has ended.';
+        }
+
+        return null;
     }
 }
 

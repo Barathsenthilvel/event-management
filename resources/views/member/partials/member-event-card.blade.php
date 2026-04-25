@@ -68,25 +68,6 @@
             <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
             <h3 class="mt-1 text-base font-bold text-[#351c42] sm:text-lg">{{ $event->title }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-[#351c42]/80">{{ Str::limit($desc, 220) }}</p>
-            @if($sortedDates->isNotEmpty())
-                <div class="mt-3 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-3">
-                    <p class="text-[10px] font-black uppercase tracking-[0.16em] text-[#965995]">Event schedule</p>
-                    <ul class="mt-2 space-y-1.5">
-                        @foreach($sortedDates as $dateRow)
-                            @php
-                                $slotStart = $dateRow->start_time ? \Illuminate\Support\Carbon::parse($dateRow->start_time)->format('h:i A') : null;
-                                $slotEnd = $dateRow->end_time ? \Illuminate\Support\Carbon::parse($dateRow->end_time)->format('h:i A') : null;
-                                $slotTime = $slotStart && $slotEnd ? ($slotStart . ' - ' . $slotEnd) : ($slotStart ?: ($slotEnd ?: 'Time TBA'));
-                            @endphp
-                            <li class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[#351c42]/80">
-                                <span>{{ $dateRow->event_date?->format('d M Y') ?? 'TBA' }}</span>
-                                <span>{{ $slotTime }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <div class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4">
                     <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#351c42]/70">

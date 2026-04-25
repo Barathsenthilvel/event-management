@@ -147,7 +147,7 @@ class HomeController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', 'all'));
-        $allowedStatuses = ['all', 'upcoming', 'live', 'completed', 'cancelled'];
+        $allowedStatuses = ['all', 'upcoming', 'live'];
         if (! in_array($status, $allowedStatuses, true)) {
             $status = 'all';
         }
@@ -156,6 +156,7 @@ class HomeController extends Controller
             ->with(['dates:id,event_id,event_date,start_time,end_time', 'creator:id,name'])
             ->withCount('invites')
             ->where('is_active', true)
+            ->whereIn('status', ['upcoming', 'live'])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', '%'.$q.'%')

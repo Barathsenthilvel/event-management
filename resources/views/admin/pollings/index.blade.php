@@ -62,7 +62,11 @@
                                         {{ optional($polling->polling_date)->format('d M Y') }}
                                     @endif
                                 </p>
-                                <p class="text-[10px] text-slate-500">{{ $polling->polling_from }} - {{ $polling->polling_to }}</p>
+                                <p class="text-[10px] text-slate-500">
+                                    {{ $polling->polling_from ? \Illuminate\Support\Carbon::parse($polling->polling_from)->format('h:i A') : '-' }}
+                                    -
+                                    {{ $polling->polling_to ? \Illuminate\Support\Carbon::parse($polling->polling_to)->format('h:i A') : '-' }}
+                                </p>
                             </td>
                             <td class="px-4 py-3">
                                 <p>{{ $polling->updated_at->format('d M Y') }}</p>

@@ -333,6 +333,7 @@ Route::prefix('member')->name('member.')->group(function () {
             ->name('dashboard.announcements.dismiss');
         Route::get('/jobs', [MemberDashboardController::class, 'jobsPage'])->name('jobs.index');
         Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
+        Route::get('/meetings', [MemberDashboardController::class, 'meetingsPage'])->name('meetings.index');
         Route::get('/nominations', [MemberDashboardController::class, 'nominationsPage'])->name('nominations.index');
         Route::get('/pollings', [MemberDashboardController::class, 'pollingsPage'])->name('pollings.index');
         Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');

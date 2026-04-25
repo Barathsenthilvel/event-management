@@ -431,14 +431,36 @@
                 </div>
             @endif
 
-            <header id="member-dashboard-top" class="scroll-mt-28">
-                @if($canSeeMembership && !$showFullMemberMenu)
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
-                    <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Choose your subscription plan</h1>
-                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#351c42]/70">Your account is approved. Select a plan below and complete payment. After your membership is active, the full menu (dashboard, e-books, events, and more) will unlock.</p>
-                @else
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
-                    <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
+            @php
+                $meetingCount = isset($upcomingMeetings) ? $upcomingMeetings->count() : 0;
+            @endphp
+            <header id="member-dashboard-top" class="scroll-mt-28 flex items-start justify-between gap-3">
+                <div>
+                    @if($canSeeMembership && !$showFullMemberMenu)
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Membership</p>
+                        <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Choose your subscription plan</h1>
+                        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#351c42]/70">Your account is approved. Select a plan below and complete payment. After your membership is active, the full menu (dashboard, e-books, events, and more) will unlock.</p>
+                    @else
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
+                        <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Member dashboard</h1>
+                    @endif
+                </div>
+                @if($showFullMemberMenu)
+                    <a
+                        href="{{ route('member.meetings.index') }}"
+                        class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#351c42]/15 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/45 hover:bg-[#faf9fc]"
+                        aria-label="Meetings"
+                        title="Meetings"
+                    >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            @if($meetingCount > 0)
+                                <span class="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black leading-none text-white">
+                                    {{ $meetingCount > 9 ? '9+' : $meetingCount }}
+                                </span>
+                            @endif
+                    </a>
                 @endif
             </header>
 
@@ -1023,8 +1045,6 @@
         @foreach($dashboardNominations as $nomRow)
             @php
                 $nominationPrompt = $nomRow['nomination'];
-                $nomDetailCover = $nominationPrompt->cover_image_path ? asset('storage/' . ltrim($nominationPrompt->cover_image_path, '/')) : null;
-                $nomDetailBanner = $nominationPrompt->banner_image_path ? asset('storage/' . ltrim($nominationPrompt->banner_image_path, '/')) : null;
                 $nomStatusLabel = match ($nominationPrompt->status) {
                     'draft' => 'Draft',
                     'active' => 'Active',
@@ -1036,21 +1056,12 @@
             <div id="nomination-detail-modal-{{ $nominationPrompt->id }}" class="md-modal-overlay" data-popup-modal role="dialog" aria-modal="true" aria-labelledby="nom-detail-title-{{ $nominationPrompt->id }}">
                 <div class="max-h-[min(92vh,44rem)] w-full max-w-2xl overflow-hidden rounded-2xl border border-[#351c42]/12 bg-white shadow-2xl ring-1 ring-black/5">
                     <div class="relative overflow-hidden bg-gradient-to-br from-[#4c2b5d] via-[#351c42] to-[#2a1536] px-6 pb-10 pt-6 text-white sm:px-8">
-                        @if($nomDetailBanner)
-                            <div class="pointer-events-none absolute inset-0 opacity-25">
-                                <img src="{{ $nomDetailBanner }}" alt="" class="h-full w-full object-cover" loading="lazy">
-                            </div>
-                            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#351c42] via-[#351c42]/80 to-transparent"></div>
-                        @endif
                         <div class="relative flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#fddc6a]/90">Nomination</p>
                                 <h2 id="nom-detail-title-{{ $nominationPrompt->id }}" class="mt-2 text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">{{ $nominationPrompt->title }}</h2>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-[#fddc6a] backdrop-blur-sm">{{ $nomStatusLabel }}</span>
-                                    <span class="inline-flex rounded-full border border-white/20 bg-black/20 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-sm">
-                                        {{ $nominationPrompt->is_active ? 'Visible' : 'Hidden' }}
-                                    </span>
                                 </div>
                             </div>
                             <button type="button" data-popup-close class="shrink-0 rounded-full border border-white/20 bg-white/10 p-2 text-white/90 transition hover:bg-white/20" aria-label="Close">✕</button>
@@ -1100,27 +1111,6 @@
                             <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#965995]">Terms &amp; conditions</p>
                             <div class="mt-2 max-h-52 overflow-y-auto whitespace-pre-line text-left rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-sm leading-relaxed text-[#351c42]/90">
                                 {{ $nominationPrompt->terms ? $nominationPrompt->terms : 'No additional terms were provided for this nomination.' }}
-                            </div>
-                        </div>
-                        <div class="mt-6">
-                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#965995]">Media</p>
-                            <div class="mt-3 grid gap-4 sm:grid-cols-2">
-                                <figure class="overflow-hidden rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] shadow-sm">
-                                    <figcaption class="border-b border-[#351c42]/08 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#351c42]/50">Cover</figcaption>
-                                    @if($nomDetailCover)
-                                        <img src="{{ $nomDetailCover }}" alt="Nomination cover" class="aspect-[4/3] w-full object-cover" loading="lazy">
-                                    @else
-                                        <div class="flex aspect-[4/3] items-center justify-center px-3 text-center text-xs text-[#351c42]/45">No cover image</div>
-                                    @endif
-                                </figure>
-                                <figure class="overflow-hidden rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] shadow-sm">
-                                    <figcaption class="border-b border-[#351c42]/08 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#351c42]/50">Banner</figcaption>
-                                    @if($nomDetailBanner)
-                                        <img src="{{ $nomDetailBanner }}" alt="Nomination banner" class="aspect-[4/3] w-full object-cover" loading="lazy">
-                                    @else
-                                        <div class="flex aspect-[4/3] items-center justify-center px-3 text-center text-xs text-[#351c42]/45">No banner image</div>
-                                    @endif
-                                </figure>
                             </div>
                         </div>
                     </div>
