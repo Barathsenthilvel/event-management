@@ -12,7 +12,12 @@
     $open = $start && $end && now()->between($start, $end);
     $pollEndDateTimeIso = $end ? $end->toIso8601String() : null;
 
-    $nextPosition = $poll->positions->first(fn ($p) => ! $votedSet->contains($p->id));
+    $positionRows = $poll->positions->values();
+    $morePositions = max(0, $positionRows->count() - 1);
+    $primaryRowIndex = $positionRows->search(fn ($p) => ! $votedSet->contains($p->id));
+    if ($primaryRowIndex === false) {
+        $primaryRowIndex = 0;
+    }
 @endphp
 
 <article class="md-announce-card md-popup-compact p-3">
@@ -52,53 +57,80 @@
         >✕</button>
     </div>
 
-    <div class="mt-2.5 border-t border-white/10 pt-2.5">
+    <div class="mt-3 border-t border-white/10 pt-3">
         <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Vote now</p>
+        <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5" data-poll-positions-wrap>
+            @if($positionRows->isEmpty())
+                <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">You have voted for all positions in this poll.</p>
+            @else
+                @foreach($positionRows as $position)
+                    @php
+                        $hasCandidates = $position->candidates->isNotEmpty();
+                        $myVote = $votesByPosition->get($position->id);
+                        $selectedCandidate = $myVote
+                            ? $position->candidates->firstWhere('id', (int) $myVote->candidate_user_id)
+                            : null;
+                    @endphp
+                    <div
+                        class="md-nom-announce-row @if($loop->index !== $primaryRowIndex) hidden @endif"
+                        data-poll-position-row
+                        @if($loop->index === $primaryRowIndex) data-poll-primary-row="1" @endif
+                    >
+                        <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
 
-        @if(!$nextPosition)
-            <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">You have voted for all positions in this poll.</p>
-        @else
-            @php
-                $hasCandidates = $nextPosition->candidates->isNotEmpty();
-                $myVote = $votesByPosition->get($nextPosition->id);
-            @endphp
-            <div class="md-nom-announce-row">
-                <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $nextPosition->position }}</p>
-
-                @if(!$hasCandidates)
-                    <p class="w-full text-[12px] font-semibold text-amber-800">Candidates are not listed for this position yet.</p>
-                @else
-                    <div class="flex w-full flex-col gap-2 max-h-28 overflow-y-auto pr-0.5">
-                        @foreach($nextPosition->candidates as $cand)
-                            @php
-                                $isChosen = $myVote && (int) $myVote->candidate_user_id === (int) $cand->id;
-                            @endphp
-                            @if(!$open)
-                                <div class="flex items-center justify-between rounded-xl border border-[#351c42]/12 bg-white/80 px-3 py-2 text-xs font-semibold text-[#351c42]/70">
-                                    <span class="truncate">{{ $cand->name }}</span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-[#351c42]/45">Closed</span>
-                                </div>
-                            @elseif($isChosen)
-                                <div class="flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
-                                    <span class="truncate">{{ $cand->name }}</span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider">Selected</span>
-                                </div>
-                            @else
-                                <form method="POST" action="{{ route('member.pollings.vote', $poll) }}" class="block">
-                                    @csrf
-                                    <input type="hidden" name="position_id" value="{{ $nextPosition->id }}">
-                                    <input type="hidden" name="candidate_user_id" value="{{ $cand->id }}">
-                                    <button type="submit" class="flex w-full items-center justify-between rounded-xl border border-[#351c42]/12 bg-white px-3 py-2 text-left text-xs font-semibold text-[#351c42] transition hover:bg-[#f5f1f9]">
-                                        <span class="truncate">{{ $cand->name }}</span>
-                                        <span class="rounded-full bg-[#24122e] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#fddc6a]">Vote</span>
-                                    </button>
-                                </form>
-                            @endif
-                        @endforeach
+                        @if(!$hasCandidates)
+                            <p class="w-full text-[12px] font-semibold text-amber-800">Candidates are not listed for this position yet.</p>
+                        @elseif($myVote)
+                            <div class="w-full rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                                <p class="text-[10px] font-black uppercase tracking-wider text-emerald-700/90">Voted</p>
+                                <p class="mt-0.5">{{ $selectedCandidate?->name ?? 'Candidate selected' }}</p>
+                            </div>
+                        @else
+                            <div class="flex w-full flex-col gap-2 max-h-28 overflow-y-auto pr-0.5">
+                                @foreach($position->candidates as $cand)
+                                    @php
+                                        $isChosen = $myVote && (int) $myVote->candidate_user_id === (int) $cand->id;
+                                    @endphp
+                                    @if(!$open)
+                                        <div class="flex items-center justify-between rounded-xl border border-[#351c42]/12 bg-white/80 px-3 py-2 text-xs font-semibold text-[#351c42]/70">
+                                            <span class="truncate">{{ $cand->name }}</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-[#351c42]/45">Closed</span>
+                                        </div>
+                                    @elseif($isChosen)
+                                        <div class="flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                                            <span class="truncate">{{ $cand->name }}</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider">Selected</span>
+                                        </div>
+                                    @else
+                                        <form method="POST" action="{{ route('member.pollings.vote', $poll) }}" class="block">
+                                            @csrf
+                                            <input type="hidden" name="position_id" value="{{ $position->id }}">
+                                            <input type="hidden" name="candidate_user_id" value="{{ $cand->id }}">
+                                            <button type="submit" class="flex w-full items-center justify-between rounded-xl border border-[#351c42]/12 bg-white px-3 py-2 text-left text-xs font-semibold text-[#351c42] transition hover:bg-[#f5f1f9]">
+                                                <span class="truncate">{{ $cand->name }}</span>
+                                                <span class="rounded-full bg-[#24122e] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#fddc6a]">Vote</span>
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                @endif
-            </div>
-        @endif
+                @endforeach
+            @endif
+        </div>
     </div>
+    @if($morePositions > 0)
+        <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+            <button
+                type="button"
+                class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                data-poll-toggle
+                data-expanded="0"
+            >
+                View more ({{ $morePositions }})
+            </button>
+        </div>
+    @endif
 </article>
 

@@ -107,7 +107,7 @@ class PollingController extends Controller
         $this->assertPollingWindowCoherent($validated);
 
         DB::transaction(function () use ($request, $validated, $polling) {
-            $polling->update($this->buildPayload($request, $validated, false));
+            $polling->update($this->buildPayload($request, $validated, false, $polling));
             $polling->positions()->delete();
             foreach ($this->extractPositions($request) as $position) {
                 $candidateIds = $position['candidate_ids'];
@@ -189,8 +189,11 @@ class PollingController extends Controller
                 'winner_name' => optional($position->winner)->name,
                 'voters' => $votesForPosition
                     ->sortByDesc('voted_at')
-                    ->map(function ($vote) {
+                    ->map(function ($vote) use ($position) {
+                        $candidateName = optional($position->candidates->firstWhere('id', (int) ($vote->candidate_user_id ?? 0)))->name;
                         return [
+                            'candidate_user_id' => (int) ($vote->candidate_user_id ?? 0),
+                            'candidate_name' => $candidateName ?: '-',
                             'name' => $vote->voter->name ?? '-',
                             'email' => $vote->voter->email ?? '-',
                             'mobile' => $vote->voter->mobile ?? '-',
@@ -283,10 +286,8 @@ class PollingController extends Controller
             'polling_date_to' => 'nullable|date|after_or_equal:polling_date',
             'polling_from' => 'required|date_format:H:i',
             'polling_to' => 'required|date_format:H:i',
-            'cover_image' => 'nullable|image|max:5120',
-            'banner_image' => 'nullable|image|max:5120',
             'promote_front' => 'nullable|boolean',
-            'publish_status' => 'required|in:na,pending,published',
+            'publish_status' => 'required|in:pending,published',
             'polling_status' => 'required|in:live,ends',
             'show_stats' => 'nullable|boolean',
             'results_visible_to_members' => 'nullable|boolean',
@@ -298,7 +299,7 @@ class PollingController extends Controller
         ];
     }
 
-    private function buildPayload(Request $request, array $validated, bool $creating): array
+    private function buildPayload(Request $request, array $validated, bool $creating, ?Polling $polling = null): array
     {
         $payload = [
             'title' => $validated['title'],
@@ -306,23 +307,25 @@ class PollingController extends Controller
             'polling_date_to' => $validated['polling_date_to'] ?? null,
             'polling_from' => $validated['polling_from'],
             'polling_to' => $validated['polling_to'],
-            'promote_front' => $request->boolean('promote_front'),
+            // Promote/Show Stats checkboxes removed from form; preserve values on edit.
+            'promote_front' => $creating
+                ? false
+                : (bool) ($polling?->promote_front ?? false),
             'publish_status' => $validated['publish_status'],
             'polling_status' => $validated['polling_status'],
-            'show_stats' => $request->boolean('show_stats', true),
-            'results_visible_to_members' => $request->boolean('results_visible_to_members', false),
-            'is_active' => $request->boolean('is_active', true),
+            'show_stats' => $creating
+                ? true
+                : (bool) ($polling?->show_stats ?? true),
+            'results_visible_to_members' => $creating
+                ? false
+                : (bool) ($polling?->results_visible_to_members ?? false),
+            'is_active' => $creating
+                ? true
+                : (bool) ($polling?->is_active ?? true),
         ];
 
         if ($creating) {
             $payload['created_by_admin_id'] = Auth::guard('admin')->id();
-        }
-
-        if ($request->hasFile('cover_image')) {
-            $payload['cover_image_path'] = $request->file('cover_image')->store('pollings/covers', 'public');
-        }
-        if ($request->hasFile('banner_image')) {
-            $payload['banner_image_path'] = $request->file('banner_image')->store('pollings/banners', 'public');
         }
 
         return $payload;

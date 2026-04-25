@@ -54,13 +54,20 @@ class MemberAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $identifier = $request->identifier;
-        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
+        $identifier = trim((string) $request->identifier);
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false;
+        $field = $isEmail ? 'email' : 'mobile';
 
         $user = User::where($field, $identifier)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             throw ValidationException::withMessages([
-                'identifier' => ['The provided credentials are incorrect.'],
+                'identifier' => [$isEmail ? 'Email address not found.' : 'Mobile number not found.'],
+            ]);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Password is incorrect.'],
             ]);
         }
 

@@ -443,78 +443,229 @@
             </header>
 
             @if($showFullMemberMenu && $showPollingDashboard)
+                @php
+                    $dashboardPollingGroups = $dashboardPolls
+                        ->groupBy(function ($row) {
+                            $poll = $row['polling'];
+                            $from = $poll->polling_date?->format('Y-m-d') ?? 'na';
+                            $to = ($poll->polling_date_to ?? $poll->polling_date)?->format('Y-m-d') ?? $from;
+                            return $from.'|'.$to;
+                        })
+                        ->values();
+                @endphp
                 <section
                     id="dashboard-polling-slot"
                     data-queue-root-kind="polling"
                     data-popup-stack="polling"
                     class="pointer-events-none fixed right-4 z-[94] flex w-[min(92vw,24rem)] flex-col gap-3 sm:right-6 @if($showNominationDashboard) bottom-[26rem] sm:bottom-[28rem] @else bottom-4 sm:bottom-6 @endif"
                 >
-                    @foreach($dashboardPolls as $pollRow)
+                    @foreach($dashboardPollingGroups as $pollGroup)
                         @php
-                            $dashPoll = $pollRow['polling'];
-                            $dashTotalPositions = $dashPoll->positions->count();
-                            $dashVotedCount = collect($pollRow['pollingDashboardVotedIds'] ?? [])
-                                ->intersect($dashPoll->positions->pluck('id'))
-                                ->count();
-                            $dashPollCompleted = $dashTotalPositions > 0 && $dashVotedCount >= $dashTotalPositions;
+                            $primaryPollRow = $pollGroup->first();
+                            $pollingPrompt = $primaryPollRow['polling'];
+                            $pollingEndDate = ($pollingPrompt->polling_date_to ?? $pollingPrompt->polling_date)?->format('Y-m-d');
+                            $pollingEndDateTimeIso = $pollingEndDate && $pollingPrompt->polling_to
+                                ? \Illuminate\Support\Carbon::parse($pollingEndDate.' '.$pollingPrompt->polling_to)->toIso8601String()
+                                : null;
+                            $groupPositionRows = collect();
+                            foreach ($pollGroup as $groupRow) {
+                                $rowPoll = $groupRow['polling'];
+                                $votesByPosition = collect($groupRow['pollingDashboardVotes'] ?? []);
+                                $rowStartDate = $rowPoll->polling_date?->format('Y-m-d');
+                                $rowEndDate = ($rowPoll->polling_date_to ?? $rowPoll->polling_date)?->format('Y-m-d');
+                                $rowStart = $rowStartDate ? \Carbon\Carbon::parse($rowStartDate.' '.$rowPoll->polling_from) : null;
+                                $rowEnd = $rowEndDate ? \Carbon\Carbon::parse($rowEndDate.' '.$rowPoll->polling_to) : null;
+                                $isOpen = $rowStart && $rowEnd && now()->between($rowStart, $rowEnd);
+                                foreach ($rowPoll->positions as $position) {
+                                    $groupPositionRows->push([
+                                        'poll' => $rowPoll,
+                                        'position' => $position,
+                                        'vote' => $votesByPosition->get($position->id),
+                                        'open' => $isOpen,
+                                    ]);
+                                }
+                            }
+                            $primaryRowIndex = $groupPositionRows->search(fn ($row) => ! $row['vote']);
+                            if ($primaryRowIndex === false) {
+                                $primaryRowIndex = 0;
+                            }
+                            $morePositions = max(0, $groupPositionRows->count() - 1);
+                            $groupPollingIds = $pollGroup->pluck('polling.id')->values();
                         @endphp
                         <div
-                            id="dashboard-polling-card-{{ $dashPoll->id }}"
+                            id="dashboard-polling-card-{{ $pollingPrompt->id }}"
                             class="dashboard-polling-card pointer-events-auto @if(!$loop->first) hidden @endif"
                             data-queue-item
                             data-queue-kind="polling"
-                            data-queue-completed="{{ $dashPollCompleted ? '1' : '0' }}"
+                            data-queue-completed="0"
                         >
-                            @include('member.partials.dashboard-polling-popup', [
-                                'poll' => $dashPoll,
-                                'pollingDashboardVotedIds' => $pollRow['pollingDashboardVotedIds'],
-                                'pollingDashboardVotes' => $pollRow['pollingDashboardVotes'],
-                            ])
-                            @if($dashboardPolls->count() > 1)
-                                <div class="mt-2 flex justify-end">
+                            <article class="md-announce-card md-popup-compact p-4">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="min-w-0 pr-2">
+                                        <h3 class="md-popup-title mt-1 break-all text-2xl font-extrabold leading-[1.15] tracking-tight text-white">Polling Alert</h3>
+                                        <p class="mt-1 text-sm font-semibold text-white/85 break-all">
+                                            @if($pollGroup->count() > 1)
+                                                {{ $pollGroup->count() }} pollings in this date range
+                                            @else
+                                                {{ $pollingPrompt->title }}
+                                            @endif
+                                        </p>
+                                        <p class="md-popup-meta mt-2 text-[12px] font-semibold text-white/70">
+                                            {{ $pollingPrompt->polling_date?->format('d M Y') ?? '—' }}
+                                            @if(($pollingPrompt->polling_date_to ?? $pollingPrompt->polling_date)?->toDateString() !== $pollingPrompt->polling_date?->toDateString())
+                                                – {{ ($pollingPrompt->polling_date_to ?? $pollingPrompt->polling_date)?->format('d M Y') ?? '—' }}
+                                            @endif
+                                        </p>
+                                        <p class="mt-2">
+                                            <span
+                                                class="inline-flex items-center rounded-full border border-sky-300/60 bg-sky-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-sky-100"
+                                                data-dashboard-countdown
+                                                data-countdown-prefix="Ends in"
+                                                data-countdown-end="{{ $pollingEndDateTimeIso }}"
+                                            >
+                                                Ends in --
+                                            </span>
+                                        </p>
+                                    </div>
                                     <button
                                         type="button"
-                                        class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
-                                        data-queue-next
-                                        data-queue-kind="polling"
-                                    >
-                                        View more
-                                    </button>
+                                        class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                                        aria-label="Dismiss polling prompt"
+                                        data-dashboard-dismiss-polling
+                                        data-polling-id="{{ $pollingPrompt->id }}"
+                                        data-polling-ids="{{ $groupPollingIds->implode(',') }}"
+                                    >✕</button>
                                 </div>
-                            @endif
+                                <div class="mt-3 border-t border-white/10 pt-3">
+                                    <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Vote now</p>
+                                    <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5" data-poll-positions-wrap>
+                                        @forelse($groupPositionRows as $row)
+                                            @php
+                                                $position = $row['position'];
+                                                $pollRef = $row['poll'];
+                                                $myVote = $row['vote'];
+                                                $isOpen = (bool) $row['open'];
+                                                $selectedCandidate = $myVote
+                                                    ? $position->candidates->firstWhere('id', (int) $myVote->candidate_user_id)
+                                                    : null;
+                                            @endphp
+                                            <div
+                                                class="md-nom-announce-row @if($loop->index !== $primaryRowIndex) hidden @endif"
+                                                data-poll-position-row
+                                                @if($loop->index === $primaryRowIndex) data-poll-primary-row="1" @endif
+                                            >
+                                                <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
+                                                @if($position->candidates->isEmpty())
+                                                    <p class="w-full text-[12px] font-semibold text-amber-800">Candidates are not listed for this position yet.</p>
+                                                @elseif($myVote)
+                                                    <div class="w-full rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                                                        <p class="text-[10px] font-black uppercase tracking-wider text-emerald-700/90">Voted</p>
+                                                        <p class="mt-0.5">{{ $selectedCandidate?->name ?? 'Candidate selected' }}</p>
+                                                    </div>
+                                                @else
+                                                    <div class="flex w-full flex-col gap-2 max-h-28 overflow-y-auto pr-0.5">
+                                                        @foreach($position->candidates as $cand)
+                                                            @if(!$isOpen)
+                                                                <div class="flex items-center justify-between rounded-xl border border-[#351c42]/12 bg-white/80 px-3 py-2 text-xs font-semibold text-[#351c42]/70">
+                                                                    <span class="truncate">{{ $cand->name }}</span>
+                                                                    <span class="text-[10px] font-black uppercase tracking-wider text-[#351c42]/45">Closed</span>
+                                                                </div>
+                                                            @else
+                                                                <form method="POST" action="{{ route('member.pollings.vote', $pollRef) }}" class="block">
+                                                                    @csrf
+                                                                    <input type="hidden" name="position_id" value="{{ $position->id }}">
+                                                                    <input type="hidden" name="candidate_user_id" value="{{ $cand->id }}">
+                                                                    <button type="submit" class="flex w-full items-center justify-between rounded-xl border border-[#351c42]/12 bg-white px-3 py-2 text-left text-xs font-semibold text-[#351c42] transition hover:bg-[#f5f1f9]">
+                                                                        <span class="truncate">{{ $cand->name }}</span>
+                                                                        <span class="rounded-full bg-[#24122e] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#fddc6a]">Vote</span>
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @empty
+                                            <p class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">No positions listed yet.</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                                @if($morePositions > 0)
+                                    <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                                            data-poll-toggle
+                                            data-expanded="0"
+                                        >
+                                            View more ({{ $morePositions }})
+                                        </button>
+                                    </div>
+                                @endif
+                            </article>
                         </div>
                     @endforeach
                 </section>
             @endif
 
             @if($showFullMemberMenu && $showNominationDashboard)
+                @php
+                    $dashboardNominationGroups = $dashboardNominations
+                        ->groupBy(function ($row) {
+                            $nom = $row['nomination'];
+                            $from = $nom->polling_date?->format('Y-m-d') ?? 'na';
+                            $to = ($nom->polling_date_to ?? $nom->polling_date)?->format('Y-m-d') ?? $from;
+                            return $from.'|'.$to;
+                        })
+                        ->values();
+                @endphp
                 <section id="dashboard-nomination-stack" data-queue-root-kind="nomination" data-popup-stack="nomination" class="pointer-events-none fixed bottom-4 right-4 z-[95] flex w-[min(92vw,24rem)] flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Member announcements">
-                    @foreach($dashboardNominations as $nomRow)
+                    @foreach($dashboardNominationGroups as $nomGroup)
                         @php
-                            $nominationPrompt = $nomRow['nomination'];
-                            $interestedNominationPositionIds = collect($nomRow['interestedPositionIds'] ?? []);
-                            $dismissedNominationPositionIds = collect($nomRow['dismissedPositionIds'] ?? []);
-                            $nominationTotalPositions = $nominationPrompt->positions->count();
-                            $nominationHandledCount = $nominationPrompt->positions
-                                ->filter(fn ($position) => $interestedNominationPositionIds->contains($position->id) || $dismissedNominationPositionIds->contains($position->id))
-                                ->count();
+                            $primaryNomRow = $nomGroup->first();
+                            $nominationPrompt = $primaryNomRow['nomination'];
                             $nominationEndDate = ($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->format('Y-m-d');
                             $nominationEndDateTimeIso = $nominationEndDate && $nominationPrompt->polling_to
                                 ? \Illuminate\Support\Carbon::parse($nominationEndDate.' '.$nominationPrompt->polling_to)->toIso8601String()
                                 : null;
+                            $groupPositionRows = collect();
+                            foreach ($nomGroup as $groupRow) {
+                                $rowNomination = $groupRow['nomination'];
+                                $interestedIds = collect($groupRow['interestedPositionIds'] ?? []);
+                                $dismissedIds = collect($groupRow['dismissedPositionIds'] ?? []);
+                                foreach ($rowNomination->positions as $position) {
+                                    $groupPositionRows->push([
+                                        'nomination' => $rowNomination,
+                                        'position' => $position,
+                                        'interested' => $interestedIds->contains($position->id),
+                                        'dismissed' => $dismissedIds->contains($position->id),
+                                    ]);
+                                }
+                            }
+                            $primaryRowIndex = $groupPositionRows->search(fn ($row) => ! $row['interested'] && ! $row['dismissed']);
+                            if ($primaryRowIndex === false) {
+                                $primaryRowIndex = 0;
+                            }
+                            $morePositions = max(0, $groupPositionRows->count() - 1);
                         @endphp
                         <div
                             id="dashboard-nomination-card-{{ $nominationPrompt->id }}"
                             class="dashboard-nomination-card pointer-events-auto @if(!$loop->first) hidden @endif"
                             data-queue-item
                             data-queue-kind="nomination"
-                            data-queue-completed="{{ $nominationTotalPositions > 0 && $nominationHandledCount >= $nominationTotalPositions ? '1' : '0' }}"
+                            data-queue-completed="0"
                         >
                             <article class="md-announce-card md-popup-compact p-4">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="min-w-0 pr-2">
                                         <h3 class="md-popup-title mt-1 break-all text-2xl font-extrabold leading-[1.15] tracking-tight text-white">Nomination Alert</h3>
-                                        <p class="mt-1 text-sm font-semibold text-white/85 break-all">{{ $nominationPrompt->title }}</p>
+                                        <p class="mt-1 text-sm font-semibold text-white/85 break-all">
+                                            @if($nomGroup->count() > 1)
+                                                {{ $nomGroup->count() }} nominations in this date range
+                                            @else
+                                                {{ $nominationPrompt->title }}
+                                            @endif
+                                        </p>
                                         <p class="md-popup-meta mt-2 text-[12px] font-semibold text-white/70">
                                             {{ $nominationPrompt->polling_date?->format('d M Y') ?? '—' }}
                                             @if(($nominationPrompt->polling_date_to ?? $nominationPrompt->polling_date)?->toDateString() !== $nominationPrompt->polling_date?->toDateString())
@@ -543,35 +694,29 @@
                                 <div class="mt-3 border-t border-white/10 pt-3">
                                     <p class="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#fddc6a]/90">Open positions</p>
                                     <div class="max-h-60 space-y-2 overflow-y-auto pr-0.5" data-nom-positions-wrap>
-                                        @php
-                                            $firstPendingPositionId = $nominationPrompt->positions
-                                                ->first(function ($position) use ($interestedNominationPositionIds, $dismissedNominationPositionIds) {
-                                                    return ! $interestedNominationPositionIds->contains($position->id)
-                                                        && ! $dismissedNominationPositionIds->contains($position->id);
-                                                })?->id;
-                                        @endphp
-                                        @forelse($nominationPrompt->positions as $position)
+                                        @forelse($groupPositionRows as $row)
                                             <div
-                                                class="md-nom-announce-row @if($firstPendingPositionId ? ((int) $position->id !== (int) $firstPendingPositionId) : !$loop->first) hidden @endif"
+                                                class="md-nom-announce-row @if($loop->index !== $primaryRowIndex) hidden @endif"
                                                 data-nom-position-row
+                                                @if($loop->index === $primaryRowIndex) data-nom-primary-row="1" @endif
                                             >
-                                                <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $position->position }}</p>
+                                                <p class="w-full break-all text-sm font-bold leading-snug text-[#351c42]">{{ $row['position']->position }}</p>
                                                 <div class="flex w-full flex-wrap items-center justify-between gap-2">
-                                                    @if($interestedNominationPositionIds->contains($position->id))
+                                                    @if($row['interested'])
                                                         <span class="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
                                                             Interested sent
                                                         </span>
-                                                    @elseif($dismissedNominationPositionIds->contains($position->id))
+                                                    @elseif($row['dismissed'])
                                                         <span class="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700">
                                                             Not interested
                                                         </span>
                                                     @else
                                                         <div class="inline-flex flex-wrap items-center gap-1.5">
-                                                            <form method="POST" action="{{ route('member.nominations.interest', [$nominationPrompt, $position]) }}" class="inline">
+                                                            <form method="POST" action="{{ route('member.nominations.interest', [$row['nomination'], $row['position']]) }}" class="inline">
                                                                 @csrf
                                                                 <button type="submit" class="md-nom-interest-pill">Interested</button>
                                                             </form>
-                                                            <form method="POST" action="{{ route('member.nominations.not-interested', [$nominationPrompt, $position]) }}" class="inline">
+                                                            <form method="POST" action="{{ route('member.nominations.not-interested', [$row['nomination'], $row['position']]) }}" class="inline">
                                                                 @csrf
                                                                 <button
                                                                     type="submit"
@@ -584,7 +729,7 @@
                                                     @endif
                                                     <button
                                                         type="button"
-                                                        data-popup-open="nomination-detail-modal-{{ $nominationPrompt->id }}"
+                                                        data-popup-open="nomination-detail-modal-{{ $row['nomination']->id }}"
                                                         class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#351c42]/14 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/40 hover:bg-[#965995]/8"
                                                         aria-label="View nomination details"
                                                     >
@@ -597,31 +742,16 @@
                                         @endforelse
                                     </div>
                                 </div>
-                                @php
-                                    $morePositions = max(0, (int) $nominationPrompt->positions->count() - 1);
-                                    $moreNominations = max(0, (int) $dashboardNominations->count() - 1);
-                                @endphp
-                                @if($morePositions > 0 || $moreNominations > 0)
+                                @if($morePositions > 0)
                                     <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
-                                        @if($morePositions > 0)
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
-                                                data-nom-toggle
-                                            >
-                                                View positions ({{ $morePositions }})
-                                            </button>
-                                        @endif
-                                        @if($moreNominations > 0)
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
-                                                data-queue-next
-                                                data-queue-kind="nomination"
-                                            >
-                                                View more nominations ({{ $moreNominations }})
-                                            </button>
-                                        @endif
+                                        <button
+                                            type="button"
+                                            class="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/90 transition hover:bg-white/20"
+                                            data-nom-toggle
+                                            data-expanded="0"
+                                        >
+                                            View more ({{ $morePositions }})
+                                        </button>
                                     </div>
                                 @endif
                             </article>
@@ -1260,12 +1390,42 @@
                         if (!card) return;
                         const rows = Array.from(card.querySelectorAll("[data-nom-position-row]"));
                         if (rows.length <= 1) return;
-                        const expanded = rows.some((r, idx) => idx > 0 && !r.classList.contains("hidden"));
-                        rows.forEach((r, idx) => {
-                            if (idx === 0) return;
-                            r.classList.toggle("hidden", expanded);
-                        });
-                        nomToggle.textContent = expanded ? `View positions (${rows.length - 1})` : "View less";
+                        const isExpanded = nomToggle.getAttribute("data-expanded") === "1";
+                        if (isExpanded) {
+                            rows.forEach((r) => {
+                                const isPrimary = r.getAttribute("data-nom-primary-row") === "1";
+                                r.classList.toggle("hidden", !isPrimary);
+                            });
+                            nomToggle.setAttribute("data-expanded", "0");
+                            nomToggle.textContent = `View more (${rows.length - 1})`;
+                        } else {
+                            rows.forEach((r) => r.classList.remove("hidden"));
+                            nomToggle.setAttribute("data-expanded", "1");
+                            nomToggle.textContent = "View less";
+                        }
+                        updatePopupStack();
+                        return;
+                    }
+                    const pollToggle = e.target.closest("[data-poll-toggle]");
+                    if (pollToggle) {
+                        e.preventDefault();
+                        const card = pollToggle.closest(".dashboard-polling-card");
+                        if (!card) return;
+                        const rows = Array.from(card.querySelectorAll("[data-poll-position-row]"));
+                        if (rows.length <= 1) return;
+                        const isExpanded = pollToggle.getAttribute("data-expanded") === "1";
+                        if (isExpanded) {
+                            rows.forEach((r) => {
+                                const isPrimary = r.getAttribute("data-poll-primary-row") === "1";
+                                r.classList.toggle("hidden", !isPrimary);
+                            });
+                            pollToggle.setAttribute("data-expanded", "0");
+                            pollToggle.textContent = `View more (${rows.length - 1})`;
+                        } else {
+                            rows.forEach((r) => r.classList.remove("hidden"));
+                            pollToggle.setAttribute("data-expanded", "1");
+                            pollToggle.textContent = "View less";
+                        }
                         updatePopupStack();
                         return;
                     }

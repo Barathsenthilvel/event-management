@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Laravel generated cache files (machine-specific)
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+
+# Compiled Blade views
+/storage/framework/views/*.php
+!/storage/framework/views/.gitignore

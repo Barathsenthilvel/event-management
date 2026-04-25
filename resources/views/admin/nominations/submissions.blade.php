@@ -34,8 +34,14 @@
                         <option value="interested" {{ ($response ?? 'all') === 'interested' ? 'selected' : '' }}>Interested only</option>
                         <option value="not_interested" {{ ($response ?? 'all') === 'not_interested' ? 'selected' : '' }}>Not interested only</option>
                     </select>
-                    <input type="text" name="q" value="{{ $q }}" placeholder="Search"
-                        class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold w-56 outline-none focus:ring-2 focus:ring-indigo-200">
+                    <select name="position_id" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 min-w-[16rem]">
+                        <option value="0">All positions</option>
+                        @foreach($positions as $pos)
+                            <option value="{{ $pos->id }}" {{ (int)($positionId ?? 0) === (int)$pos->id ? 'selected' : '' }}>
+                                {{ $pos->position }}
+                            </option>
+                        @endforeach
+                    </select>
                     <button type="submit" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">Apply</button>
                 </form>
             </div>

@@ -68,7 +68,7 @@
                                 <p>{{ $polling->updated_at->format('d M Y') }}</p>
                                 <p class="text-[10px] text-slate-500">{{ $polling->creator->name ?? 'Admin' }}</p>
                             </td>
-                            <td class="px-4 py-3">{{ strtoupper($polling->publish_status === 'na' ? 'N/A' : $polling->publish_status) }}</td>
+                            <td class="px-4 py-3">{{ strtoupper($polling->publish_status === 'na' ? 'pending' : $polling->publish_status) }}</td>
                             <td class="px-4 py-3">
                                 <form method="POST" action="{{ route('admin.pollings.toggle-status', $polling->id) }}">
                                     @csrf
