@@ -63,15 +63,16 @@
                                 </td>
                                 <td class="px-5 py-4">
                                     <p class="text-[11px] font-bold text-slate-700">{{ optional($s?->meeting_date)->format('d M Y') ?: '-' }}</p>
-                                    <p class="text-[10px] font-bold text-slate-500">{{ $s?->from_time ?: '-' }} - {{ $s?->to_time ?: '-' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-500">
+                                        {{ $s?->from_time ? \Illuminate\Support\Carbon::parse($s->from_time)->format('h:i A') : '-' }}
+                                        -
+                                        {{ $s?->to_time ? \Illuminate\Support\Carbon::parse($s->to_time)->format('h:i A') : '-' }}
+                                    </p>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <form method="POST" action="{{ route('admin.meetings.toggle-display', $meeting->id) }}">
-                                        @csrf
-                                        <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $meeting->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
-                                            {{ $meeting->is_active ? 'Active' : 'Inactive' }}
-                                        </button>
-                                    </form>
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $meeting->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                        {{ $meeting->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
                                 <td class="px-5 py-4">
                                     <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase

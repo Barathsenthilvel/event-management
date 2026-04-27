@@ -14,7 +14,9 @@ class EventInterestController extends Controller
     public function store(Request $request, Event $event)
     {
         if (!$event->is_active || $event->status === 'cancelled') {
-            return back()->with('error', 'This event is not accepting interest right now.');
+            return back()
+                ->with('event_interest_error', 'This event is not accepting interest right now.')
+                ->with('event_interest_error_modal', true);
         }
 
         if (Auth::check()) {

@@ -388,7 +388,7 @@
         (() => {
             const form = document.getElementById("member-profile-form");
             if (!form) return;
-            if (form.hasAttribute("data-profile-locked")) return;
+            const isProfileLocked = form.hasAttribute("data-profile-locked");
 
             const typeSelect = form.querySelector("[data-profile-type-select]");
             const showEls = Array.from(form.querySelectorAll("[data-profile-show]"));
@@ -411,6 +411,9 @@
 
             setVisibility(typeSelect?.value || "");
             typeSelect?.addEventListener("change", () => setVisibility(typeSelect.value));
+
+            // Keep type-based visibility active even in read-only mode.
+            if (isProfileLocked) return;
 
             const fields = Array.from(form.querySelectorAll("[data-validate]"));
             const getErrorEl = (name) => form.querySelector(`[data-error-for="${name}"]`);

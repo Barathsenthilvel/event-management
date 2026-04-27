@@ -97,12 +97,9 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <form method="POST" action="{{ route('admin.events.toggle-display', $event->id) }}">
-                                        @csrf
-                                        <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $event->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
-                                            {{ $event->is_active ? 'Active' : 'Inactive' }}
-                                        </button>
-                                    </form>
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $event->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                        {{ $event->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
                                 <td class="px-5 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2 flex-wrap">
@@ -186,6 +183,82 @@
 
             <div class="p-5 border-t border-slate-100">
                 {{ $events->links() }}
+            </div>
+        @endif
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4 space-y-4">
+        <div>
+            <h2 class="text-sm font-extrabold text-slate-900">Event Interested Lists</h2>
+            <p class="text-xs font-bold text-slate-500 mt-1">Filter interested records by member type.</p>
+        </div>
+
+        <div class="inline-flex items-center gap-1 rounded-full bg-slate-100 p-1">
+            <a href="{{ route('admin.events.index', array_filter(['interest_tab' => 'members', 'q' => $q ?: null])) }}"
+               class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-wider transition {{ $interestTab === 'members' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                <span>Members</span>
+                <span class="text-[10px]">{{ $memberInterestCount ?? 0 }}</span>
+            </a>
+            <a href="{{ route('admin.events.index', array_filter(['interest_tab' => 'guests', 'q' => $q ?: null])) }}"
+               class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-wider transition {{ $interestTab === 'guests' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                <span>Guest</span>
+                <span class="text-[10px]">{{ $guestInterestCount ?? 0 }}</span>
+            </a>
+        </div>
+
+        @if(($interestRows ?? collect())->count() === 0)
+            <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <p class="text-sm font-bold text-slate-700">No interested records found.</p>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-xs">
+                    <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-3">Event</th>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Email</th>
+                            <th class="px-4 py-3">Phone</th>
+                            <th class="px-4 py-3">Member ID</th>
+                            <th class="px-4 py-3">Submitted</th>
+                            <th class="px-4 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($interestRows as $row)
+                            <tr>
+                                <td class="px-4 py-3 font-bold text-slate-800">{{ $row->event->title ?? 'Event removed' }}</td>
+                                @if($interestTab === 'members')
+                                    <td class="px-4 py-3 font-bold text-slate-800">{{ $row->user->name ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->user->email ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->user->mobile ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->user_id ? '#' . $row->user_id : '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->invited_at?->format('d M Y h:i A') ?? $row->created_at?->format('d M Y h:i A') }}</td>
+                                @else
+                                    <td class="px-4 py-3 font-bold text-slate-800">{{ $row->name ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->email ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->phone ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-slate-600">—</td>
+                                    <td class="px-4 py-3 text-slate-600">{{ $row->created_at?->format('d M Y h:i A') }}</td>
+                                @endif
+                                <td class="px-4 py-3 text-right">
+                                    @if($row->event_id)
+                                        <a href="{{ route('admin.events.show', $row->event_id) }}"
+                                           class="inline-flex items-center rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-extrabold text-slate-700 hover:bg-slate-50">
+                                            View Event
+                                        </a>
+                                    @else
+                                        <span class="text-slate-400">—</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pt-1">
+                {{ $interestRows->links() }}
             </div>
         @endif
     </div>

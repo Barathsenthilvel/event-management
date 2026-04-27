@@ -73,6 +73,7 @@ class PollingController extends Controller
 
     public function edit(Polling $polling)
     {
+        $this->syncElapsedPollings();
         $polling->load(['positions.candidates:id,name,email,mobile']);
         $selectedCandidateIds = $polling->positions
             ->flatMap(fn ($position) => $position->candidates->pluck('id'))
@@ -107,7 +108,7 @@ class PollingController extends Controller
         $this->assertPollingWindowCoherent($validated);
 
         DB::transaction(function () use ($request, $validated, $polling) {
-            $polling->update($this->buildPayload($request, $validated, false));
+            $polling->update($this->buildPayload($request, $validated, false, $polling));
             $polling->positions()->delete();
             foreach ($this->extractPositions($request) as $position) {
                 $candidateIds = $position['candidate_ids'];
@@ -145,13 +146,21 @@ class PollingController extends Controller
 
     public function stats(Polling $polling)
     {
+        $this->syncElapsedPollings();
         $polling->load([
             'positions.candidates:id,name,email,mobile',
             'positions.winner:id,name',
         ]);
 
         $positionStats = [];
+        $votes = PollingVote::query()
+            ->with(['voter:id,name,email,mobile'])
+            ->where('polling_id', $polling->id)
+            ->get(['polling_id', 'position_id', 'candidate_user_id', 'voter_user_id', 'voted_at'])
+            ->groupBy('position_id');
+
         foreach ($polling->positions as $position) {
+            $votesForPosition = $votes->get($position->id, collect());
             $counts = PollingVote::query()
                 ->where('polling_id', $polling->id)
                 ->where('position_id', $position->id)
@@ -180,20 +189,25 @@ class PollingController extends Controller
                 'total_votes' => $totalVotes,
                 'candidates' => $candidates,
                 'winner_name' => optional($position->winner)->name,
+                'voters' => $votesForPosition
+                    ->sortByDesc('voted_at')
+                    ->map(function ($vote) use ($position) {
+                        $candidateName = optional($position->candidates->firstWhere('id', (int) ($vote->candidate_user_id ?? 0)))->name;
+                        return [
+                            'candidate_user_id' => (int) ($vote->candidate_user_id ?? 0),
+                            'candidate_name' => $candidateName ?: '-',
+                            'name' => $vote->voter->name ?? '-',
+                            'email' => $vote->voter->email ?? '-',
+                            'mobile' => $vote->voter->mobile ?? '-',
+                            'voted_at' => optional($vote->voted_at)->format('d M Y h:i A') ?? '-',
+                        ];
+                    })
+                    ->values()
+                    ->all(),
             ];
         }
 
-        $voteEntries = PollingVote::query()
-            ->with([
-                'position:id,position',
-                'candidate:id,name,email,mobile',
-                'voter:id,name,email,mobile',
-            ])
-            ->where('polling_id', $polling->id)
-            ->latest('id')
-            ->get();
-
-        return view('admin.pollings.stats', compact('polling', 'positionStats', 'voteEntries'));
+        return view('admin.pollings.stats', compact('polling', 'positionStats'));
     }
 
     public function saveResults(Request $request, Polling $polling)
@@ -243,18 +257,15 @@ class PollingController extends Controller
             ->where('polling_id', $polling->id)
             ->get();
 
-        $csv = "\xEF\xBB\xBF";
-        $csv .= "Position\tCandidate\tCandidate Email\tCandidate Mobile\tVoted By\tVoter Email\tVoter Mobile\tVoted At\n";
+        $csv = "Position\tCandidate\tVotes By\tVoter Email\tVoter Mobile\tVoted At\n";
         foreach ($rows as $row) {
             $csv .= implode("\t", [
                 str_replace("\t", ' ', (string) ($row->position->position ?? '')),
                 str_replace("\t", ' ', (string) ($row->candidate->name ?? '')),
-                str_replace("\t", ' ', (string) ($row->candidate->email ?? '')),
-                str_replace("\t", ' ', (string) ($row->candidate->mobile ?? '')),
                 str_replace("\t", ' ', (string) ($row->voter->name ?? '')),
                 str_replace("\t", ' ', (string) ($row->voter->email ?? '')),
                 str_replace("\t", ' ', (string) ($row->voter->mobile ?? '')),
-                optional($row->voted_at)->format('d M Y h:i A') ?? '',
+                str_replace("\t", ' ', optional($row->voted_at)->format('d M Y h:i A') ?? ''),
             ])."\n";
         }
 
@@ -262,7 +273,11 @@ class PollingController extends Controller
         $tmpPath = 'reports/'.$fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 
-        return response()->download(storage_path('app/'.$tmpPath), $fileName)->deleteFileAfterSend(true);
+        return response()
+            ->download(storage_path('app/'.$tmpPath), $fileName, [
+                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     private function rules(?int $id = null): array
@@ -273,10 +288,8 @@ class PollingController extends Controller
             'polling_date_to' => 'nullable|date|after_or_equal:polling_date',
             'polling_from' => 'required|date_format:H:i',
             'polling_to' => 'required|date_format:H:i',
-            'cover_image' => 'nullable|image|max:5120',
-            'banner_image' => 'nullable|image|max:5120',
             'promote_front' => 'nullable|boolean',
-            'publish_status' => 'required|in:na,pending,published',
+            'publish_status' => 'required|in:pending,published',
             'polling_status' => 'required|in:live,ends',
             'show_stats' => 'nullable|boolean',
             'results_visible_to_members' => 'nullable|boolean',
@@ -288,7 +301,7 @@ class PollingController extends Controller
         ];
     }
 
-    private function buildPayload(Request $request, array $validated, bool $creating): array
+    private function buildPayload(Request $request, array $validated, bool $creating, ?Polling $polling = null): array
     {
         $payload = [
             'title' => $validated['title'],
@@ -296,23 +309,25 @@ class PollingController extends Controller
             'polling_date_to' => $validated['polling_date_to'] ?? null,
             'polling_from' => $validated['polling_from'],
             'polling_to' => $validated['polling_to'],
-            'promote_front' => $request->boolean('promote_front'),
+            // Promote/Show Stats checkboxes removed from form; preserve values on edit.
+            'promote_front' => $creating
+                ? false
+                : (bool) ($polling?->promote_front ?? false),
             'publish_status' => $validated['publish_status'],
             'polling_status' => $validated['polling_status'],
-            'show_stats' => $request->boolean('show_stats', true),
-            'results_visible_to_members' => $request->boolean('results_visible_to_members', false),
-            'is_active' => $request->boolean('is_active', true),
+            'show_stats' => $creating
+                ? true
+                : (bool) ($polling?->show_stats ?? true),
+            'results_visible_to_members' => $creating
+                ? false
+                : (bool) ($polling?->results_visible_to_members ?? false),
+            'is_active' => $creating
+                ? true
+                : (bool) ($polling?->is_active ?? true),
         ];
 
         if ($creating) {
             $payload['created_by_admin_id'] = Auth::guard('admin')->id();
-        }
-
-        if ($request->hasFile('cover_image')) {
-            $payload['cover_image_path'] = $request->file('cover_image')->store('pollings/covers', 'public');
-        }
-        if ($request->hasFile('banner_image')) {
-            $payload['banner_image_path'] = $request->file('banner_image')->store('pollings/banners', 'public');
         }
 
         return $payload;
@@ -369,24 +384,48 @@ class PollingController extends Controller
         if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
             return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
         }
+        if (preg_match('/^\d{1,2}:\d{2}\s?(AM|PM)$/i', $value)) {
+            try {
+                return Carbon::createFromFormat('g:i A', strtoupper(str_replace('.', '', $value)))->format('H:i');
+            } catch (\Throwable $e) {
+                return $value;
+            }
+        }
 
         return $value;
     }
 
     private function syncElapsedPollings(): void
     {
-        $livePollings = Polling::query()
-            ->where('polling_status', 'live')
-            ->where('is_active', true)
-            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+        $pollings = Polling::query()
+            ->where('publish_status', 'published')
+            ->whereIn('polling_status', ['live', 'ends'])
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_from', 'polling_to', 'polling_status', 'is_active']);
 
-        foreach ($livePollings as $polling) {
-            if (! $polling->polling_date || ! $polling->polling_to) {
+        $now = now();
+        foreach ($pollings as $polling) {
+            if (! $polling->polling_date || ! $polling->polling_from || ! $polling->polling_to) {
                 continue;
             }
+            $startDate = $polling->polling_date->format('Y-m-d');
             $endDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+            $start = Carbon::parse($startDate.' '.$polling->polling_from);
             $end = Carbon::parse($endDate.' '.$polling->polling_to);
-            if (now()->greaterThan($end)) {
+
+            if ($now->greaterThan($end)) {
+                $polling->update([
+                    'polling_status' => 'ends',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $polling->polling_status !== 'live') {
+                $polling->update(['polling_status' => 'live']);
+                continue;
+            }
+
+            if ($now->lt($start) && $polling->polling_status !== 'ends') {
                 $polling->update(['polling_status' => 'ends']);
             }
         }

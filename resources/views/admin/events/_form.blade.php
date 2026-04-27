@@ -3,8 +3,8 @@
     $action = $isEdit ? route('admin.events.update', $event->id) : route('admin.events.store');
     $dates = old('event_dates', $isEdit ? $event->dates->map(fn($d) => [
         'date' => optional($d->event_date)->format('Y-m-d'),
-        'start_time' => $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('H:i') : '',
-        'end_time' => $d->end_time ? \Illuminate\Support\Carbon::parse($d->end_time)->format('H:i') : '',
+        'start_time' => $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('h:i A') : '',
+        'end_time' => $d->end_time ? \Illuminate\Support\Carbon::parse($d->end_time)->format('h:i A') : '',
     ])->values()->all() : [['date' => '', 'start_time' => '', 'end_time' => '']]);
 @endphp
 
@@ -92,8 +92,12 @@
             @foreach($dates as $i => $d)
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 date-row">
                     <input type="date" name="event_dates[{{ $i }}][date]" value="{{ $d['date'] ?? '' }}" class="px-3 py-2 rounded-lg border border-slate-200" required>
-                    <input type="time" name="event_dates[{{ $i }}][start_time]" value="{{ $d['start_time'] ?? '' }}" class="px-3 py-2 rounded-lg border border-slate-200">
-                    <input type="time" name="event_dates[{{ $i }}][end_time]" value="{{ $d['end_time'] ?? '' }}" class="px-3 py-2 rounded-lg border border-slate-200">
+                    <input type="time" name="event_dates[{{ $i }}][start_time]" step="60"
+                        value="{{ !empty($d['start_time']) ? \Illuminate\Support\Carbon::parse($d['start_time'])->format('H:i') : '' }}"
+                        class="px-3 py-2 rounded-lg border border-slate-200">
+                    <input type="time" name="event_dates[{{ $i }}][end_time]" step="60"
+                        value="{{ !empty($d['end_time']) ? \Illuminate\Support\Carbon::parse($d['end_time'])->format('H:i') : '' }}"
+                        class="px-3 py-2 rounded-lg border border-slate-200">
                     <button type="button" class="remove-date-row px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold">Remove</button>
                 </div>
             @endforeach
@@ -178,8 +182,8 @@
             const rows = wrapper.querySelectorAll('.date-row');
             rows.forEach((row, i) => {
                 const date = row.querySelector('input[type="date"]');
-                const start = row.querySelector('input[type="time"][name*="[start_time]"]');
-                const end = row.querySelector('input[type="time"][name*="[end_time]"]');
+                const start = row.querySelector('input[name*="[start_time]"]');
+                const end = row.querySelector('input[name*="[end_time]"]');
                 date.name = `event_dates[${i}][date]`;
                 start.name = `event_dates[${i}][start_time]`;
                 end.name = `event_dates[${i}][end_time]`;
@@ -192,8 +196,8 @@
             row.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 date-row';
             row.innerHTML = `
                 <input type="date" name="event_dates[${idx}][date]" class="px-3 py-2 rounded-lg border border-slate-200" required>
-                <input type="time" name="event_dates[${idx}][start_time]" class="px-3 py-2 rounded-lg border border-slate-200">
-                <input type="time" name="event_dates[${idx}][end_time]" class="px-3 py-2 rounded-lg border border-slate-200">
+                <input type="time" name="event_dates[${idx}][start_time]" step="60" class="px-3 py-2 rounded-lg border border-slate-200">
+                <input type="time" name="event_dates[${idx}][end_time]" step="60" class="px-3 py-2 rounded-lg border border-slate-200">
                 <button type="button" class="remove-date-row px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold">Remove</button>
             `;
             wrapper.appendChild(row);

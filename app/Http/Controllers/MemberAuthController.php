@@ -54,20 +54,33 @@ class MemberAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $identifier = $request->identifier;
-        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
+        $identifier = trim((string) $request->identifier);
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false;
+        $field = $isEmail ? 'email' : 'mobile';
 
         $user = User::where($field, $identifier)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             throw ValidationException::withMessages([
-                'identifier' => ['The provided credentials are incorrect.'],
-                'password' => ['The provided credentials are incorrect.'],
+                'identifier' => [$isEmail ? 'Email address not found.' : 'Mobile number not found.'],
+            ]);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Password is incorrect.'],
             ]);
         }
 
         $request->session()->put('member_otp_remember', $request->boolean('remember'));
 
         $this->issueOtp($request, (int) $user->id);
+
+        if ($this->wantsJsonResponse($request)) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('member.otp'),
+            ]);
+        }
 
         return redirect()->route('member.otp');
     }
@@ -98,6 +111,13 @@ class MemberAuthController extends Controller
         ]);
 
         $this->issueOtp($request, $user->id);
+
+        if ($this->wantsJsonResponse($request)) {
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('member.otp'),
+            ]);
+        }
 
         return redirect()->route('member.otp');
     }
@@ -255,6 +275,11 @@ class MemberAuthController extends Controller
         }
 
         return str_repeat('*', strlen($digits) - 4) . substr($digits, -4);
+    }
+
+    private function wantsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson() || $request->ajax();
     }
 }
 

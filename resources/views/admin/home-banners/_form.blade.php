@@ -39,10 +39,11 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-2">Eyebrow</label>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-2">Small top text (optional)</label>
                     <input type="text" name="eyebrow" value="{{ old('eyebrow', $banner->eyebrow ?? '') }}"
-                           placeholder="EVENTS"
+                           placeholder="Example: EVENTS"
                            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+                    <p class="mt-1 text-[11px] font-medium text-slate-500">This appears above the caption title on the banner.</p>
                     @error('eyebrow')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
@@ -65,7 +66,7 @@
                 <label class="block text-[11px] font-bold text-slate-700 mb-2">Caption text</label>
                 <textarea name="caption_text" rows="4"
                           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-                          placeholder="Optional supporting text">{{ old('caption_text', $banner->caption_text ?? '') }}</textarea>
+                          placeholder="Description shown under caption title">{{ old('caption_text', $banner->caption_text ?? '') }}</textarea>
                 @error('caption_text')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
         </div>

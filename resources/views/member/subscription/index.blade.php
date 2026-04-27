@@ -275,9 +275,17 @@
                     </div>
 
                     <div class="flex justify-center">
-                        <button type="button" onclick="startRazorpayCheckout()"
-                            class="inline-flex items-center justify-center px-10 py-4 bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] rounded-2xl font-extrabold shadow-lg shadow-[#351c42]/25 transition-all">
-                            Pay Now
+                        <button
+                            type="button"
+                            id="pay-now-btn"
+                            onclick="startRazorpayCheckout()"
+                            class="inline-flex items-center justify-center gap-2 px-10 py-4 bg-[#351c42] hover:bg-[#4d2a5c] text-[#fddc6a] rounded-2xl font-extrabold shadow-lg shadow-[#351c42]/25 transition-all disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                            <svg id="pay-now-spinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-90" fill="currentColor" d="M22 12a10 10 0 00-10-10v3a7 7 0 017 7h3z"></path>
+                            </svg>
+                            <span id="pay-now-label">Pay Now</span>
                         </button>
                     </div>
                 </form>
@@ -512,12 +520,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function startRazorpayCheckout() {
+    const payNowBtn = document.getElementById('pay-now-btn');
+    const payNowLabel = document.getElementById('pay-now-label');
+    const payNowSpinner = document.getElementById('pay-now-spinner');
+    if (payNowBtn?.dataset.loading === 'true') {
+        return;
+    }
+    const setPayNowLoading = (loading) => {
+        if (!payNowBtn) return;
+        payNowBtn.disabled = loading;
+        payNowBtn.dataset.loading = loading ? 'true' : 'false';
+        if (payNowLabel) payNowLabel.textContent = loading ? 'Loading...' : 'Pay Now';
+        if (payNowSpinner) payNowSpinner.classList.toggle('hidden', !loading);
+    };
+
     const selected = document.querySelector('input[name="membership_setting_id"]:checked');
     if (!selected) {
         openFailureModal('No plan selected', 'Please choose a subscription plan before paying.', '', 'Action needed');
         return;
     }
 
+    setPayNowLoading(true);
     const membershipSettingId = selected.value;
     let razorpayOutcome = 'idle';
 
@@ -537,10 +560,12 @@ async function startRazorpayCheckout() {
             if (data?.renewal_blocked) {
                 setRenewalBlockedMessage(data?.message || 'Renewal is not available right now.');
                 openRenewalBlockedModal();
+                setPayNowLoading(false);
                 return;
             }
             const msg = data?.message || 'Could not start payment. Please try again.';
             openFailureModal('Payment could not start', msg, '', 'Error');
+            setPayNowLoading(false);
             return;
         }
 
@@ -626,9 +651,11 @@ async function startRazorpayCheckout() {
             openFailureModal('Payment failed', desc, [code, step].filter(Boolean).join('\n'), 'Failed');
         });
         rzp.open();
+        setPayNowLoading(false);
     } catch (e) {
         console.error(e);
         openFailureModal('Unable to open payment', 'Please check your connection and try again.', String(e?.message || e), 'Error');
+        setPayNowLoading(false);
     }
 }
 </script>

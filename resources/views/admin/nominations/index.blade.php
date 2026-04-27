@@ -129,7 +129,11 @@
                                             {{ optional($nomination->polling_date)->format('d M Y') }}
                                         @endif
                                     </p>
-                                    <p class="text-[10px] text-slate-500">{{ $nomination->polling_from }} - {{ $nomination->polling_to }}</p>
+                                    <p class="text-[10px] text-slate-500">
+                                        {{ $nomination->polling_from ? \Illuminate\Support\Carbon::parse($nomination->polling_from)->format('h:i A') : '-' }}
+                                        -
+                                        {{ $nomination->polling_to ? \Illuminate\Support\Carbon::parse($nomination->polling_to)->format('h:i A') : '-' }}
+                                    </p>
                                 </td>
                                 <td class="px-4 py-3">{{ $nomination->positions->count() }}</td>
                                 <td class="px-4 py-3">{{ $nomination->entries_count }}</td>
@@ -138,12 +142,9 @@
                                     <p class="text-[10px] text-slate-500">{{ $nomination->creator->name ?? 'Admin' }}</p>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <form method="POST" action="{{ route('admin.nominations.toggle-status', $nomination->id) }}">
-                                        @csrf
-                                        <button class="px-3 py-1 rounded-full text-[10px] font-black {{ $nomination->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                            {{ $nomination->is_active ? 'Active' : 'Inactive' }}
-                                        </button>
-                                    </form>
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $nomination->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                        {{ $nomination->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase

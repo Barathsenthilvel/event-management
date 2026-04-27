@@ -79,12 +79,15 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <form method="POST" action="{{ route('admin.members.pending-approvals.approve', $m->id) }}" onsubmit="return confirm('Approve this member? They will be able to sign in and purchase membership plans.');">
-                                            @csrf
-                                            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-lg transition-all">
-                                                Approve
-                                            </button>
-                                        </form>
+                                        <button
+                                            type="button"
+                                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-lg transition-all"
+                                            data-open-approve-modal
+                                            data-approve-url="{{ route('admin.members.pending-approvals.approve', $m->id) }}"
+                                            data-member-name="{{ $m->name }}"
+                                        >
+                                            Approve
+                                        </button>
                                         <form method="POST" action="{{ route('admin.members.pending-approvals.reject', $m->id) }}">
                                             @csrf
                                             <button class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-extrabold shadow-sm transition-all">
@@ -105,5 +108,86 @@
         @endif
     </div>
 </div>
+
+<div id="approve-member-modal" class="fixed inset-0 z-[160] hidden items-center justify-center bg-[#111827]/60 p-4 backdrop-blur-[2px]" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="approve-member-modal-title">
+    <div data-approve-member-backdrop class="absolute inset-0" aria-hidden="true"></div>
+    <div class="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-100 bg-[#faf9fc] px-5 py-4">
+            <h3 id="approve-member-modal-title" class="text-base font-extrabold text-[#351c42]">Approve this member?</h3>
+            <button type="button" data-close-approve-modal class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6l-12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="px-5 py-5 text-sm text-slate-700">
+            <p class="font-semibold text-slate-900" data-approve-member-name></p>
+            <p class="mt-1">They will be able to sign in and purchase membership plans.</p>
+        </div>
+        <div class="flex flex-col gap-2 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" data-close-approve-modal class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
+            <button type="button" data-confirm-approve-member class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-400">Approve member</button>
+        </div>
+    </div>
+</div>
+
+<form id="approve-member-form" method="POST" class="hidden">
+    @csrf
+</form>
 @endsection
+
+@push('scripts')
+<script>
+    (() => {
+        const modal = document.getElementById("approve-member-modal");
+        const openBtns = Array.from(document.querySelectorAll("[data-open-approve-modal]"));
+        const form = document.getElementById("approve-member-form");
+        if (!modal || !openBtns.length || !form) return;
+
+        const backdrop = modal.querySelector("[data-approve-member-backdrop]");
+        const closeEls = modal.querySelectorAll("[data-close-approve-modal]");
+        const confirmBtn = modal.querySelector("[data-confirm-approve-member]");
+        const memberNameEl = modal.querySelector("[data-approve-member-name]");
+        let lastActive = null;
+        let actionUrl = "";
+
+        function setOpen(open) {
+            modal.classList.toggle("hidden", !open);
+            modal.classList.toggle("flex", open);
+            modal.setAttribute("aria-hidden", open ? "false" : "true");
+            document.body.style.overflow = open ? "hidden" : "";
+            if (!open && lastActive && typeof lastActive.focus === "function") {
+                lastActive.focus();
+            }
+        }
+
+        openBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                lastActive = btn;
+                actionUrl = btn.getAttribute("data-approve-url") || "";
+                const memberName = btn.getAttribute("data-member-name") || "";
+                if (memberNameEl) {
+                    memberNameEl.textContent = memberName ? `Member: ${memberName}` : "";
+                }
+                setOpen(true);
+                confirmBtn?.focus({ preventScroll: true });
+            });
+        });
+
+        closeEls.forEach((el) => el.addEventListener("click", () => setOpen(false)));
+        backdrop?.addEventListener("click", () => setOpen(false));
+        confirmBtn?.addEventListener("click", () => {
+            if (!actionUrl) return;
+            form.setAttribute("action", actionUrl);
+            form.submit();
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+                setOpen(false);
+            }
+        });
+    })();
+</script>
+@endpush
 

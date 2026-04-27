@@ -91,6 +91,7 @@ class NominationController extends Controller
 
     public function show(Nomination $nomination)
     {
+        $this->syncElapsedNominations();
         $nomination->load(['positions', 'creator:id,name']);
 
         return view('admin.nominations.show', compact('nomination'));
@@ -119,6 +120,7 @@ class NominationController extends Controller
 
     public function edit(Nomination $nomination)
     {
+        $this->syncElapsedNominations();
         $nomination->load('positions');
 
         return view('admin.nominations.edit', compact('nomination'));
@@ -132,10 +134,7 @@ class NominationController extends Controller
 
         DB::transaction(function () use ($request, $validated, $nomination) {
             $nomination->update($this->buildPayload($request, $validated, false));
-            $nomination->positions()->delete();
-            foreach ($this->extractPositions($request) as $position) {
-                $nomination->positions()->create($position);
-            }
+            $this->syncPositionsOnUpdate($nomination, $request);
         });
 
         return redirect()->route('admin.nominations.index')->with('success', 'Nomination updated successfully.');
@@ -236,8 +235,10 @@ class NominationController extends Controller
 
     public function submissions(Nomination $nomination, Request $request)
     {
+        $this->syncElapsedNominations();
         $q = trim((string) $request->query('q', ''));
         $response = $request->query('response', 'all');
+        $positionId = (int) $request->query('position_id', 0);
 
         $entries = NominationEntry::query()
             ->with([
@@ -248,13 +249,18 @@ class NominationController extends Controller
             ->when(in_array($response, ['interested', 'not_interested'], true), function ($query) use ($response) {
                 $query->where('response_status', $response);
             })
+            ->when($positionId > 0, function ($query) use ($positionId) {
+                $query->where('position_id', $positionId);
+            })
             ->when($q !== '', function ($query) use ($q) {
-                $query->whereHas('user', function ($userQ) use ($q) {
-                    $userQ->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('mobile', 'like', '%' . $q . '%');
-                })->orWhereHas('position', function ($posQ) use ($q) {
-                    $posQ->where('position', 'like', '%' . $q . '%');
+                $query->where(function ($sub) use ($q) {
+                    $sub->whereHas('user', function ($userQ) use ($q) {
+                        $userQ->where('name', 'like', '%' . $q . '%')
+                            ->orWhere('email', 'like', '%' . $q . '%')
+                            ->orWhere('mobile', 'like', '%' . $q . '%');
+                    })->orWhereHas('position', function ($posQ) use ($q) {
+                        $posQ->where('position', 'like', '%' . $q . '%');
+                    });
                 });
             })
             ->latest('id')
@@ -269,7 +275,7 @@ class NominationController extends Controller
             ])
             ->get();
 
-        return view('admin.nominations.submissions', compact('nomination', 'entries', 'positions', 'q', 'response'));
+        return view('admin.nominations.submissions', compact('nomination', 'entries', 'positions', 'q', 'response', 'positionId'));
     }
 
     public function downloadReport(Nomination $nomination)
@@ -279,8 +285,7 @@ class NominationController extends Controller
             ->where('nomination_id', $nomination->id)
             ->get();
 
-        $csv = "\xEF\xBB\xBF";
-        $csv .= "Position\tMember Name\tEmail\tMobile\tResponse\tSubmitted On\n";
+        $csv = "Position\tMember Name\tEmail\tMobile\tResponse\tSubmitted On\n";
         foreach ($rows as $row) {
             $csv .= implode("\t", [
                 str_replace("\t", ' ', (string) ($row->position->position ?? '')),
@@ -288,7 +293,7 @@ class NominationController extends Controller
                 str_replace("\t", ' ', (string) ($row->user->email ?? '')),
                 str_replace("\t", ' ', (string) ($row->user->mobile ?? '')),
                 str_replace("\t", ' ', (string) str_replace('_', ' ', (string) $row->response_status)),
-                optional($row->submitted_at)->format('d M Y h:i A') ?? '',
+                str_replace("\t", ' ', optional($row->submitted_at)->format('d M Y h:i A') ?? ''),
             ])."\n";
         }
 
@@ -296,7 +301,11 @@ class NominationController extends Controller
         $tmpPath = 'reports/' . $fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 
-        return response()->download(storage_path('app/' . $tmpPath), $fileName)->deleteFileAfterSend(true);
+        return response()
+            ->download(storage_path('app/' . $tmpPath), $fileName, [
+                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     private function rules(?int $id = null): array
@@ -308,11 +317,10 @@ class NominationController extends Controller
             'polling_date_to' => 'nullable|date|after_or_equal:polling_date',
             'polling_from' => 'required|date_format:H:i',
             'polling_to' => 'required|date_format:H:i',
-            'cover_image' => 'nullable|image|max:5120',
-            'banner_image' => 'nullable|image|max:5120',
             'status' => 'required|in:draft,active,closed,cancelled',
             'is_active' => 'nullable|boolean',
             'positions' => 'required|array|min:1',
+            'positions.*.id' => 'nullable|integer|exists:nomination_positions,id',
             'positions.*.position' => 'required|string|max:255',
         ];
     }
@@ -334,13 +342,6 @@ class NominationController extends Controller
             $payload['created_by_admin_id'] = Auth::guard('admin')->id();
         }
 
-        if ($request->hasFile('cover_image')) {
-            $payload['cover_image_path'] = $request->file('cover_image')->store('nominations/covers', 'public');
-        }
-        if ($request->hasFile('banner_image')) {
-            $payload['banner_image_path'] = $request->file('banner_image')->store('nominations/banners', 'public');
-        }
-
         return $payload;
     }
 
@@ -352,11 +353,47 @@ class NominationController extends Controller
                 continue;
             }
             $positions[] = [
+                'id' => isset($row['id']) && $row['id'] !== '' ? (int) $row['id'] : null,
                 'position' => (string) $row['position'],
                 'member_user_id' => null,
             ];
         }
         return $positions;
+    }
+
+    private function syncPositionsOnUpdate(Nomination $nomination, Request $request): void
+    {
+        $submittedRows = $this->extractPositions($request);
+        $existing = $nomination->positions()->get()->keyBy('id');
+        $keptIds = [];
+
+        foreach ($submittedRows as $row) {
+            $positionId = (int) ($row['id'] ?? 0);
+            if ($positionId > 0 && $existing->has($positionId)) {
+                $position = $existing->get($positionId);
+                $position->update([
+                    'position' => $row['position'],
+                ]);
+                $keptIds[] = $positionId;
+                continue;
+            }
+
+            $created = $nomination->positions()->create([
+                'position' => $row['position'],
+                'member_user_id' => null,
+            ]);
+            $keptIds[] = (int) $created->id;
+        }
+
+        // Delete only positions removed from form that have no member responses.
+        $existing->each(function (NominationPosition $position) use ($keptIds) {
+            if (in_array((int) $position->id, $keptIds, true)) {
+                return;
+            }
+            if (!$position->entries()->exists()) {
+                $position->delete();
+            }
+        });
     }
 
     private function assertNominationPollingWindowCoherent(array $validated): void
@@ -393,25 +430,48 @@ class NominationController extends Controller
         if (preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $value, $m)) {
             return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
         }
+        if (preg_match('/^\d{1,2}:\d{2}\s?(AM|PM)$/i', $value)) {
+            try {
+                return Carbon::createFromFormat('g:i A', strtoupper(str_replace('.', '', $value)))->format('H:i');
+            } catch (\Throwable $e) {
+                return $value;
+            }
+        }
 
         return $value;
     }
 
     private function syncElapsedNominations(): void
     {
-        $activeNominations = Nomination::query()
-            ->where('status', 'active')
-            ->where('is_active', true)
-            ->get(['id', 'polling_date', 'polling_date_to', 'polling_to']);
+        $nominations = Nomination::query()
+            ->whereIn('status', ['draft', 'active'])
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_from', 'polling_to', 'status', 'is_active']);
 
-        foreach ($activeNominations as $nomination) {
-            if (! $nomination->polling_date || ! $nomination->polling_to) {
+        $now = now();
+        foreach ($nominations as $nomination) {
+            if (! $nomination->polling_date || ! $nomination->polling_from || ! $nomination->polling_to) {
                 continue;
             }
+            $startDate = $nomination->polling_date->format('Y-m-d');
             $endDate = ($nomination->polling_date_to ?? $nomination->polling_date)->format('Y-m-d');
+            $start = Carbon::parse($startDate.' '.$nomination->polling_from);
             $end = Carbon::parse($endDate.' '.$nomination->polling_to);
-            if (now()->greaterThan($end)) {
-                $nomination->update(['status' => 'closed']);
+
+            if ($now->greaterThan($end)) {
+                $nomination->update([
+                    'status' => 'closed',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $nomination->status !== 'active') {
+                $nomination->update(['status' => 'active']);
+                continue;
+            }
+
+            if ($now->lt($start) && $nomination->status !== 'draft') {
+                $nomination->update(['status' => 'draft']);
             }
         }
     }

@@ -7,6 +7,7 @@
     <title>@yield('title', 'Member sign in — GNAT Association')</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    @include('home.partials.styles')
     <style>
         html { scroll-behavior: smooth; }
         body { font-family: "DM Sans", system-ui, sans-serif; }
@@ -78,6 +79,11 @@
             background: #fff;
             box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
         }
+        .ml-inp.is-invalid {
+            border-color: rgba(220, 38, 38, 0.55);
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+            background: #fff;
+        }
         /* Single combined field: +91 prefix + 10-digit input (one border, full width for digits) */
         .ml-inp-phone-wrap {
             display: flex;
@@ -97,6 +103,11 @@
             border-color: rgba(150, 89, 149, 0.55);
             background: #fff;
             box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
+        }
+        .ml-inp-phone-wrap.is-invalid {
+            border-color: rgba(220, 38, 38, 0.55);
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+            background: #fff;
         }
         .ml-inp-phone-prefix {
             display: flex;
@@ -181,51 +192,48 @@
     @stack('styles')
 </head>
 <body class="ml-page-bg text-[#351c42] antialiased" data-auth-default="{{ $defaultTab ?? 'signin' }}">
-    <header class="sticky top-0 z-40 ml-glass-header">
-        <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5 lg:gap-6">
-            <button type="button" class="flex shrink-0 rounded-xl p-2.5 transition-colors hover:bg-[#351c42]/5 lg:hidden -ml-2" data-ml-menu aria-expanded="false" aria-controls="ml-mobile-nav" aria-label="Open menu">
-                <span class="flex w-[22px] flex-col gap-1.5" aria-hidden="true">
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                    <span class="h-0.5 w-full rounded-full bg-[#351c42]"></span>
-                </span>
-            </button>
-            <a href="{{ route('home') }}" class="flex min-w-0 max-w-[min(48vw,200px)] shrink-0 items-center sm:max-w-[220px]" aria-label="GNAT Association home">
-                <img src="{{ asset('images/logo.png') }}" alt="GNAT Association" class="h-8 w-auto max-h-11 max-w-full object-contain object-left sm:h-11" width="200" height="48" />
-            </a>
-            <nav class="hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-10" aria-label="Primary">
-                <a href="{{ route('home') }}#home" class="ml-nav-link">Home</a>
-                <a href="{{ route('home') }}#about2" class="ml-nav-link">About us</a>
-                <a href="{{ route('home') }}#events" class="ml-nav-link">Events</a>
-                <a href="{{ route('home') }}#gallery" class="ml-nav-link">Gallery</a>
-                <a href="{{ route('home') }}#contact" class="ml-nav-link">Contact us</a>
-            </nav>
-            <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-                <a href="{{ route('member.login') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#351c42] shadow-md shadow-[#351c42]/8 ring-1 ring-[#351c42]/10 transition hover:bg-[#351c42] hover:text-white hover:ring-[#351c42] sm:h-11 sm:w-11" aria-label="Member login">
-                    <svg class="h-[21px] w-[21px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path fill="currentColor" d="M12 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"/>
-                        <path fill="currentColor" d="M6 20.25v-.75c0-2.9 2.35-5.25 5.25-5.25h1.5c2.9 0 5.25 2.35 5.25 5.25v.75H6Z" opacity="0.92"/>
-                    </svg>
-                </a>
-                <a href="{{ route('donations.index') }}" class="hidden rounded-full bg-gradient-to-r from-[#fddc6a] to-[#f5d56a] px-5 py-2.5 text-xs font-bold text-[#311742] shadow-lg shadow-amber-200/50 ring-1 ring-amber-200/60 transition hover:brightness-105 min-[400px]:inline-flex sm:text-sm">Donate</a>
-            </div>
-        </div>
-        <div id="ml-mobile-nav" class="ml-mobile-panel border-t border-[#351c42]/10 bg-white/95 backdrop-blur-md lg:hidden" hidden>
-            <nav class="flex flex-col px-4 py-4 pb-6" aria-label="Mobile">
-                <a href="{{ route('home') }}#home" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Home</a>
-                <a href="{{ route('home') }}#about2" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">About us</a>
-                <a href="{{ route('home') }}#events" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Events</a>
-                <a href="{{ route('home') }}#gallery" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Gallery</a>
-                <a href="{{ route('home') }}#contact" class="rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-wide text-[#351c42] hover:bg-[#351c42]/5">Contact us</a>
-                <a href="{{ route('donations.index') }}" class="mt-4 rounded-full bg-[#351c42] py-3.5 text-center text-sm font-bold text-[#fddc6a] shadow-lg">Donate</a>
-            </nav>
-        </div>
-    </header>
+    @include('member.partials.public-site-header')
 
     <main class="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
         @yield('content')
     </main>
 
+    <script>
+        (() => {
+            const toggle = document.querySelector("[data-hamburger]");
+            const overlay = document.querySelector("[data-drawer-overlay]");
+            const drawer = document.getElementById("site-drawer");
+            const closeBtn = document.querySelector("[data-drawer-close]");
+            if (!toggle || !overlay || !drawer) return;
+
+            function setOpen(open) {
+                overlay.classList.toggle("is-open", open);
+                drawer.classList.toggle("is-open", open);
+                document.body.classList.toggle("site-drawer-open", open);
+                toggle.setAttribute("aria-expanded", open ? "true" : "false");
+                toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+                overlay.setAttribute("aria-hidden", open ? "false" : "true");
+                drawer.setAttribute("aria-hidden", open ? "false" : "true");
+            }
+
+            function closeDrawer() { setOpen(false); }
+            function openDrawer() { setOpen(true); }
+
+            toggle.addEventListener("click", () => {
+                if (drawer.classList.contains("is-open")) closeDrawer();
+                else openDrawer();
+            });
+            overlay.addEventListener("click", closeDrawer);
+            closeBtn?.addEventListener("click", closeDrawer);
+            drawer.querySelectorAll("a[href*='#']").forEach((a) => {
+                const href = a.getAttribute("href") || "";
+                if (href.length > 1) a.addEventListener("click", () => closeDrawer());
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeDrawer();
+            });
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>
