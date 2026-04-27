@@ -221,6 +221,21 @@
                 </div>
             </div>
 
+            <div class="border border-slate-200 rounded-2xl px-6 py-5">
+                <p class="text-sm font-semibold text-slate-800 mb-3">Optional PDF</p>
+                @if($isEdit && !empty($donation->document_pdf_path))
+                    <a href="{{ asset('storage/' . $donation->document_pdf_path) }}" target="_blank"
+                       class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                        View current PDF
+                    </a>
+                @endif
+                <label class="mt-3 flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
+                    <span class="text-xs font-semibold text-slate-700">Upload PDF (single file)</span>
+                    <input type="file" name="document_pdf" class="hidden" accept="application/pdf">
+                </label>
+                @error('document_pdf')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
+            </div>
+
             <div class="border border-slate-200 rounded-2xl px-6 py-5 space-y-5">
                 <p class="text-sm font-semibold text-slate-800">Visibility</p>
                 <div>
@@ -244,26 +259,9 @@
                     </label>
                 </div>
 
-                <div>
-                    @php
-                        $activeChecked = (bool) old('is_active', $donation->is_active ?? true);
-                    @endphp
-                    <label class="flex items-center justify-between gap-4 text-sm text-slate-700 cursor-pointer select-none">
-                        <span class="font-bold text-slate-700">Display Active</span>
-                        <span class="relative inline-flex items-center shrink-0">
-                            <input type="hidden" name="is_active" value="0">
-                            <input
-                                type="checkbox"
-                                name="is_active"
-                                value="1"
-                                {{ $activeChecked ? 'checked' : '' }}
-                                class="peer sr-only"
-                            >
-                            <span class="w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 transition-colors shadow-inner"></span>
-                            <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
-                        </span>
-                    </label>
-                </div>
+                <p class="text-xs font-bold text-slate-500">
+                    Display status is controlled from the donations listing page.
+                </p>
             </div>
         </div>
     </div>

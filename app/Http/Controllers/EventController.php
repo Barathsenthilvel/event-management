@@ -26,6 +26,14 @@ class EventController extends Controller
         $events = Event::query()
             ->with(['creator:id,name', 'dates:id,event_id,event_date,start_time,end_time'])
             ->withCount('invites')
+            ->withCount([
+                'invites as member_interested_count' => fn ($query) => $query->whereNotNull('participation_status'),
+                'invites as member_participated_count' => fn ($query) => $query->where('participation_status', 'participated'),
+                'interests as public_interested_count' => fn ($query) => $query->whereNull('user_id'),
+                'interests as public_participated_count' => fn ($query) => $query
+                    ->whereNull('user_id')
+                    ->where('participation_status', 'participated'),
+            ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', '%'.$q.'%')
@@ -198,6 +206,78 @@ class EventController extends Controller
             ->update(['reminder_sent_at' => now()]);
 
         return redirect()->route('admin.events.index')->with('success', 'Reminder marked as sent.');
+    }
+
+    public function attendanceScanner(Event $event)
+    {
+        return view('admin.events.attendance-scanner', compact('event'));
+    }
+
+    public function consumeAttendanceQr(Request $request, Event $event, string $source, int $entryId)
+    {
+        if ($event->status === 'cancelled') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Event is cancelled. Attendance cannot be updated.',
+            ], 422);
+        }
+
+        if (! in_array($event->status, ['live', 'completed'], true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Set event status to Live or Completed before scanning attendance.',
+            ], 422);
+        }
+
+        if (! in_array($source, ['invite', 'interest'], true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Invalid QR source.',
+            ], 422);
+        }
+
+        if ($source === 'invite') {
+            $invite = EventInvite::query()
+                ->with('user:id,name')
+                ->where('event_id', $event->id)
+                ->where('id', $entryId)
+                ->first();
+            if (! $invite) {
+                return response()->json(['ok' => false, 'message' => 'Invite record not found.'], 404);
+            }
+
+            $alreadyAttended = $invite->participation_status === 'participated';
+            if (! $alreadyAttended) {
+                $invite->update(['participation_status' => 'participated']);
+            }
+
+            return response()->json([
+                'ok' => true,
+                'message' => $alreadyAttended ? 'Already marked as attended.' : 'Member attendance marked as attended.',
+                'who' => $invite->user->name ?? ('Member #' . $invite->user_id),
+                'source' => 'member',
+            ]);
+        }
+
+        $interest = EventInterest::query()
+            ->where('event_id', $event->id)
+            ->where('id', $entryId)
+            ->first();
+        if (! $interest) {
+            return response()->json(['ok' => false, 'message' => 'Public registration record not found.'], 404);
+        }
+
+        $alreadyAttended = $interest->participation_status === 'participated';
+        if (! $alreadyAttended) {
+            $interest->update(['participation_status' => 'participated']);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $alreadyAttended ? 'Already marked as attended.' : 'Public attendee marked as attended.',
+            'who' => $interest->name ?: ('Public #' . $interest->id),
+            'source' => 'public',
+        ]);
     }
 
     public function updateInviteStatus(Request $request, Event $event, EventInvite $invite)

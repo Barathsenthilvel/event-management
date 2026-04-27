@@ -87,7 +87,34 @@
             font-size: 0.75rem;
             cursor: pointer;
         }
+
+        .choices__inner {
+            border-radius: 1rem !important;
+            border: 1px solid rgba(53, 28, 66, 0.1) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            min-height: 48px !important;
+            font-size: 0.9375rem !important;
+            color: #351c42 !important;
+            padding: 0.38rem 0.8rem !important;
+        }
+        .choices.is-focused .choices__inner {
+            border-color: rgba(150, 89, 149, 0.55) !important;
+            box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14) !important;
+            background: #fff !important;
+        }
+        .choices[data-type*="select-one"] .choices__input {
+            background-color: transparent !important;
+            margin-bottom: 0 !important;
+            padding: 0.15rem 0 !important;
+        }
+        .choices__list--dropdown .choices__item--selectable {
+            font-size: 0.85rem !important;
+        }
+        .choices__list--dropdown .choices__item--selectable.is-highlighted {
+            background-color: rgba(150, 89, 149, 0.12) !important;
+        }
     </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 @endpush
 
 @section('content')
@@ -384,11 +411,27 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
         (() => {
             const form = document.getElementById("member-profile-form");
             if (!form) return;
             const isProfileLocked = form.hasAttribute("data-profile-locked");
+
+            // Make all editable profile dropdowns searchable.
+            form.querySelectorAll("select.ml-inp:not([disabled])").forEach((selectEl) => {
+                if (selectEl.dataset.searchableInit === "1") return;
+                if ((selectEl.options?.length || 0) <= 1) return;
+                selectEl.dataset.searchableInit = "1";
+                new Choices(selectEl, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: "Search...",
+                    shouldSort: false,
+                    itemSelectText: "",
+                    noResultsText: "No matching options",
+                    noChoicesText: "No options",
+                });
+            });
 
             const typeSelect = form.querySelector("[data-profile-type-select]");
             const showEls = Array.from(form.querySelectorAll("[data-profile-show]"));

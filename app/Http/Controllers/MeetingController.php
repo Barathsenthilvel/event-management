@@ -55,8 +55,12 @@ class MeetingController extends Controller
                 'status' => 'upcoming',
                 'is_active' => true,
                 'schedule_date' => $schedule?->meeting_date?->format('Y-m-d'),
-                'schedule_from' => $schedule?->from_time,
-                'schedule_to' => $schedule?->to_time,
+                'schedule_from' => $schedule?->from_time
+                    ? Carbon::parse((string) $schedule->from_time)->format('H:i')
+                    : null,
+                'schedule_to' => $schedule?->to_time
+                    ? Carbon::parse((string) $schedule->to_time)->format('H:i')
+                    : null,
             ],
             'duplicateSourceMeeting' => $meeting,
         ]);
@@ -215,6 +219,32 @@ class MeetingController extends Controller
         $invite->delete();
 
         return back()->with('success', 'Member removed from invite list.');
+    }
+
+    public function updateInviteAttendance(Request $request, Meeting $meeting, MeetingInvite $invite)
+    {
+        if ($invite->meeting_id !== $meeting->id) {
+            abort(404);
+        }
+
+        if ($meeting->status === 'cancelled') {
+            return back()->with('error', 'Attendance cannot be updated for a cancelled meeting.');
+        }
+
+        if (! in_array($meeting->status, ['live', 'completed'], true)) {
+            return back()->with('error', 'Attendance can be updated only when the meeting is Live or Completed.');
+        }
+
+        $validated = $request->validate([
+            'participation_status' => 'required|in:interested,participated,not_participated',
+        ]);
+
+        $invite->update([
+            'participation_status' => $validated['participation_status'],
+            'attended_at' => $validated['participation_status'] === 'participated' ? now() : null,
+        ]);
+
+        return back()->with('success', 'Meeting attendance updated.');
     }
 
     private function rules(?int $id = null): array

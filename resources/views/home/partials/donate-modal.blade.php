@@ -19,9 +19,9 @@
             </svg>
         </button>
         <div class="pr-10">
-            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Association</p>
-            <h2 id="donate-modal-title" class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Give &amp; change a life</h2>
-            <p class="mt-2 text-sm text-white/65 leading-relaxed">Your support funds real programs in education, health, and community.</p>
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Growth &amp; Welfare</p>
+            <h2 id="donate-modal-title" class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Support GNAT Growth &amp; Welfare</h2>
+            <p class="mt-2 text-sm text-white/65 leading-relaxed">Your contribution supports welfare initiatives, member development, and community outreach programs.</p>
         </div>
 
         <input type="hidden" id="donate-context-donation-id" value="" autocomplete="off" />

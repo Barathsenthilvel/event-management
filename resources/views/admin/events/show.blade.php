@@ -11,6 +11,7 @@
             <div class="flex items-center gap-2">
                 <a href="{{ route('admin.events.edit', $event->id) }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-700">Edit</a>
                 <a href="{{ route('admin.events.invite', $event->id) }}" class="px-4 py-2 rounded-xl bg-indigo-600 text-xs font-extrabold text-white">Invite Members</a>
+                <a href="{{ route('admin.events.attendance.scanner', $event->id) }}" class="px-4 py-2 rounded-xl border border-indigo-300 bg-indigo-50 text-xs font-extrabold text-indigo-700">QR Scanner</a>
                 @if($event->status === 'completed')
                     <a href="{{ route('admin.events.album', $event->id) }}" class="px-4 py-2 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-extrabold text-emerald-700">Album</a>
                 @endif
@@ -24,7 +25,22 @@
                 <p class="text-sm text-slate-700">{{ $event->description ?: 'No description provided.' }}</p>
                 <p class="text-xs font-bold text-slate-500">Venue: <span class="text-slate-700">{{ $event->venue ?: 'N/A' }}</span></p>
                 <p class="text-xs font-bold text-slate-500">Seats: <span class="text-slate-700">{{ ucfirst($event->seat_mode) }} @if($event->seat_mode === 'limited') ({{ $event->seat_limit }}) @endif</span></p>
-                <p class="text-xs font-bold text-slate-500">Interested (public): <span class="text-slate-700">{{ $event->interests->count() }}</span></p>
+                @php
+                    $memberInterestedCount = (int) $event->invites->whereNotNull('participation_status')->count();
+                    $memberParticipatedCount = (int) $event->invites->where('participation_status', 'participated')->count();
+                    $publicInterestedCount = (int) $event->interests->whereNull('user_id')->count();
+                    $publicParticipatedCount = (int) $event->interests->whereNull('user_id')->where('participation_status', 'participated')->count();
+                @endphp
+                <p class="text-xs font-bold text-slate-500">
+                    Interested count:
+                    <span class="text-slate-700">Members {{ $memberInterestedCount }}</span>,
+                    <span class="text-slate-700">Public {{ $publicInterestedCount }}</span>
+                </p>
+                <p class="text-xs font-bold text-slate-500">
+                    Participated count:
+                    <span class="text-slate-700">Members {{ $memberParticipatedCount }}</span>,
+                    <span class="text-slate-700">Public {{ $publicParticipatedCount }}</span>
+                </p>
             </div>
 
             <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3">
@@ -42,6 +58,30 @@
                     <p class="text-sm text-slate-500">No dates added.</p>
                 @endforelse
             </div>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-extrabold text-slate-900">Event Gallery Upload</h2>
+                    <p class="text-xs font-bold text-slate-500 mt-1">Upload event photos directly here; uploaded files will appear in the event gallery.</p>
+                </div>
+                <a href="{{ route('admin.events.album', $event->id) }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-700">Open Gallery</a>
+            </div>
+            @if($event->status !== 'completed')
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
+                    Upload is enabled after event status is set to Completed.
+                </div>
+            @else
+                <form method="POST" action="{{ route('admin.events.album.store', $event->id) }}" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <input type="file" name="photos[]" multiple accept="image/*"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">
+                    @error('photos')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                    @error('photos.*')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-extrabold">Upload to Gallery</button>
+                </form>
+            @endif
         </div>
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">

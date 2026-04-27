@@ -100,6 +100,13 @@
     {{-- Footer: light strip for attendance / certificate; dark bar with member avatar stack + action for interest --}}
     @if($mode === 'tracking' && isset($invite))
         @php $ps = $invite->participation_status; @endphp
+        @php
+            $attendanceQrUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'admin.events.attendance.consume',
+                now()->addDays(30),
+                ['event' => $event->id, 'source' => 'invite', 'entryId' => $invite->id]
+            );
+        @endphp
         @if($ps === 'participated')
             <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                 @php $certReady = ! empty($event->template_pdf_path); @endphp
@@ -123,6 +130,15 @@
                     <p class="text-sm font-extrabold text-[#fddc6a]">Interest registered</p>
                     <p class="mt-0.5 text-xs text-white/70">We’ll update when your attendance is confirmed.</p>
                 </div>
+                <button
+                    type="button"
+                    class="inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-transparent px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#fddc6a] transition hover:bg-[#fddc6a]/10 sm:ml-2"
+                    data-open-attendance-qr
+                    data-qr-title="{{ $event->title }}"
+                    data-qr-value="{{ $attendanceQrUrl }}"
+                >
+                    Show Entry QR
+                </button>
             </div>
         @endif
     @else

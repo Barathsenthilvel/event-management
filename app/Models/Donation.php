@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Donation extends Model
@@ -24,6 +25,7 @@ class Donation extends Model
         'pill_tag_2',
         'cover_image_path',
         'banner_image_path',
+        'document_pdf_path',
         'promote_front',
         'is_active',
     ];
@@ -39,6 +41,11 @@ class Donation extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by_admin_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(DonationPayment::class);
     }
 
     public static function pillLabelFromSource(string $source, ?string $custom): string

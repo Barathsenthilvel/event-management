@@ -8,6 +8,16 @@
     $modeValue = old('meeting_mode', $meeting->meeting_mode ?? ($defaults['meeting_mode'] ?? 'direct'));
     $statusValue = old('status', $meeting->status ?? ($defaults['status'] ?? 'upcoming'));
     $isActiveValue = old('is_active', $meeting->is_active ?? ($defaults['is_active'] ?? true));
+    $safeTimeValue = function ($value) {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        try {
+            return \Carbon\Carbon::parse((string) $value)->format('H:i');
+        } catch (\Throwable $e) {
+            return (string) $value;
+        }
+    };
     $schedule = old('schedule_date')
         ? [
             'meeting_date' => old('schedule_date'),
@@ -22,8 +32,8 @@
             ]
             : [
                 'meeting_date' => $defaults['schedule_date'] ?? '',
-                'from_time' => !empty($defaults['schedule_from']) ? \Carbon\Carbon::parse($defaults['schedule_from'])->format('h:i A') : '',
-                'to_time' => !empty($defaults['schedule_to']) ? \Carbon\Carbon::parse($defaults['schedule_to'])->format('h:i A') : '',
+                'from_time' => $defaults['schedule_from'] ?? '',
+                'to_time' => $defaults['schedule_to'] ?? '',
             ]);
 @endphp
 
@@ -83,13 +93,13 @@
                     <div>
                         <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">From time</label>
                         <input type="time" name="schedule_from" step="60"
-                            value="{{ $schedule['from_time'] ? \Carbon\Carbon::parse($schedule['from_time'])->format('H:i') : '' }}"
+                            value="{{ $safeTimeValue($schedule['from_time']) }}"
                             class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
                     </div>
                     <div>
                         <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">To time</label>
                         <input type="time" name="schedule_to" step="60"
-                            value="{{ $schedule['to_time'] ? \Carbon\Carbon::parse($schedule['to_time'])->format('H:i') : '' }}"
+                            value="{{ $safeTimeValue($schedule['to_time']) }}"
                             class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
                     </div>
                 </div>

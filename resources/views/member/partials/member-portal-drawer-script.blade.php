@@ -30,8 +30,6 @@
         document.querySelectorAll("[data-md-nav]").forEach((a) => {
             a.addEventListener("click", () => {
                 if (window.innerWidth < 1024) closeSidebar();
-                document.querySelectorAll("[data-md-nav]").forEach((l) => l.classList.remove("is-active"));
-                a.classList.add("is-active");
             });
         });
     })();

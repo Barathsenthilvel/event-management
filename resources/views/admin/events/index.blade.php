@@ -66,14 +66,24 @@
                                     </div>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <p class="text-[11px] font-bold text-slate-700">
-                                        {{ ucfirst($event->seat_mode) }}
-                                        @if($event->seat_mode === 'limited')
-                                            ({{ $event->interested_count }} / {{ $event->seat_limit }})
-                                        @else
-                                            ({{ $event->interested_count }} interested)
-                                        @endif
-                                    </p>
+                                    <div class="space-y-1">
+                                        <p class="text-[11px] font-bold text-slate-700">
+                                            {{ ucfirst($event->seat_mode) }}
+                                            @if($event->seat_mode === 'limited')
+                                                ({{ $event->interested_count }} / {{ $event->seat_limit }})
+                                            @else
+                                                ({{ $event->interested_count }} interested)
+                                            @endif
+                                        </p>
+                                        <p class="text-[10px] font-bold text-slate-500">
+                                            Interested - Members: {{ (int) ($event->member_interested_count ?? 0) }},
+                                            Public: {{ (int) ($event->public_interested_count ?? 0) }}
+                                        </p>
+                                        <p class="text-[10px] font-bold text-slate-500">
+                                            Participated - Members: {{ (int) ($event->member_participated_count ?? 0) }},
+                                            Public: {{ (int) ($event->public_participated_count ?? 0) }}
+                                        </p>
+                                    </div>
                                 </td>
                                 <td class="px-5 py-4">
                                     <form method="POST" action="{{ route('admin.events.toggle-promote', $event->id) }}">

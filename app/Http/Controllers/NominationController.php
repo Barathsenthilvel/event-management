@@ -285,25 +285,31 @@ class NominationController extends Controller
             ->where('nomination_id', $nomination->id)
             ->get();
 
-        $csv = "Position\tMember Name\tEmail\tMobile\tResponse\tSubmitted On\n";
+        $csv = "\xEF\xBB\xBF"."Position,Member Name,Email,Mobile,Response,Submitted On\n";
         foreach ($rows as $row) {
-            $csv .= implode("\t", [
-                str_replace("\t", ' ', (string) ($row->position->position ?? '')),
-                str_replace("\t", ' ', (string) ($row->user->name ?? '')),
-                str_replace("\t", ' ', (string) ($row->user->email ?? '')),
-                str_replace("\t", ' ', (string) ($row->user->mobile ?? '')),
-                str_replace("\t", ' ', (string) str_replace('_', ' ', (string) $row->response_status)),
-                str_replace("\t", ' ', optional($row->submitted_at)->format('d M Y h:i A') ?? ''),
-            ])."\n";
+            $line = [
+                (string) ($row->position->position ?? ''),
+                (string) ($row->user->name ?? ''),
+                (string) ($row->user->email ?? ''),
+                (string) ($row->user->mobile ?? ''),
+                (string) str_replace('_', ' ', (string) $row->response_status),
+                (string) (optional($row->submitted_at)->format('d M Y h:i A') ?? ''),
+            ];
+            $escaped = array_map(function (string $value): string {
+                $value = str_replace('"', '""', $value);
+                return '"'.$value.'"';
+            }, $line);
+            $csv .= implode(',', $escaped)."\n";
         }
 
-        $fileName = 'nomination-' . $nomination->id . '-report.xls';
+        $stamp = now()->format('Ymd-His');
+        $fileName = 'nomination-' . $nomination->id . '-report-' . $stamp . '.csv';
         $tmpPath = 'reports/' . $fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 
         return response()
             ->download(storage_path('app/' . $tmpPath), $fileName, [
-                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+                'Content-Type' => 'text/csv; charset=UTF-8',
             ])
             ->deleteFileAfterSend(true);
     }

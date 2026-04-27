@@ -42,6 +42,7 @@
                 <tr>
                     <th class="px-6 py-4">Purpose</th>
                     <th class="px-6 py-4">Job Info</th>
+                    <th class="px-6 py-4 text-right">Cumulative Amount</th>
                     <th class="px-6 py-4 text-center">Promote Front</th>
                     <th class="px-6 py-4">Created On / By</th>
                     <th class="px-6 py-4">Last Updated</th>
@@ -66,6 +67,12 @@
                     </td>
                     <td class="px-6 py-4 align-middle">
                         <p class="font-semibold">{{ $donation->short_description ?: '-' }}</p>
+                    </td>
+                    <td class="px-6 py-4 text-right align-middle">
+                        <p class="text-sm font-extrabold text-slate-900">
+                            INR {{ number_format((float) ($donation->cumulative_amount ?? 0), 2) }}
+                        </p>
+                        <p class="text-[10px] font-bold text-slate-500">Successful payments</p>
                     </td>
                     <td class="px-6 py-4 text-center align-middle">
                         <form method="POST" action="{{ route('admin.donations.toggle-promote', $donation->id) }}" class="inline-flex">
@@ -135,7 +142,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-10 text-center text-slate-500 font-semibold">
+                    <td colspan="8" class="px-6 py-10 text-center text-slate-500 font-semibold">
                         No donations found.
                     </td>
                 </tr>

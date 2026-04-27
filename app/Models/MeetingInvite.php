@@ -18,6 +18,8 @@ class MeetingInvite extends Model
         'notify_email',
         'invited_at',
         'reminder_sent_at',
+        'participation_status',
+        'attended_at',
     ];
 
     protected function casts(): array
@@ -28,6 +30,7 @@ class MeetingInvite extends Model
             'notify_email' => 'boolean',
             'invited_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
+            'attended_at' => 'datetime',
         ];
     }
 

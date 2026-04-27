@@ -80,6 +80,13 @@
                                     <span aria-hidden="true">→</span>
                                 </button>
                             @endif
+                            @if(!empty($donation->document_pdf_path))
+                                <a href="{{ asset('storage/' . $donation->document_pdf_path) }}" target="_blank"
+                                   class="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]">
+                                    Download PDF
+                                    <span aria-hidden="true">↓</span>
+                                </a>
+                            @endif
                             <button type="button" data-open-donate-modal data-donation-id="{{ $donation->id }}" class="click-btn click-btn--sm btn-style506 mt-4 self-start text-left" aria-label="Donate now">
                                 <span class="click-btn__icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">

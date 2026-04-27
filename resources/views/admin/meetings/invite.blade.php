@@ -87,6 +87,22 @@
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
             <h3 class="text-sm font-extrabold text-slate-900 mb-3">Invited Members</h3>
+            @php
+                $canMarkAttendance = in_array($meeting->status, ['live', 'completed'], true);
+                $attendedCount = $invites->where('participation_status', 'participated')->count();
+                $notAttendedCount = $invites->where('participation_status', 'not_participated')->count();
+                $interestedCount = $invites->where('participation_status', 'interested')->count();
+            @endphp
+            <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-wide">
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Interested: {{ $interestedCount }}</span>
+                <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Attended: {{ $attendedCount }}</span>
+                <span class="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Not attended: {{ $notAttendedCount }}</span>
+            </div>
+            @if(!$canMarkAttendance && $meeting->status !== 'cancelled')
+                <p class="mb-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+                    Attendance updates are enabled when meeting status is Live or Completed.
+                </p>
+            @endif
             @if($invites->count() === 0)
                 <p class="text-xs font-bold text-slate-500">No members invited yet.</p>
             @else
@@ -96,20 +112,37 @@
                             <div>
                                 <p class="text-sm font-bold text-slate-800">{{ $invite->user->name ?? 'Member' }}</p>
                                 <p class="text-[11px] text-slate-500">{{ $invite->user->email ?? '-' }}</p>
+                                <p class="text-[10px] text-slate-500 mt-1">
+                                    Last attendance update:
+                                    {{ $invite->attended_at?->format('d M Y h:i A') ?? '—' }}
+                                </p>
                             </div>
-                            <form id="admin-delete-meeting-invite-{{ $invite->id }}" method="POST" action="{{ route('admin.meetings.invite.remove', [$meeting->id, $invite->id]) }}" class="inline-flex">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center" title="Remove Member"
-                                    data-delete-form="admin-delete-meeting-invite-{{ $invite->id }}"
-                                    data-delete-title="Remove this invite?"
-                                    data-delete-message="This member will be removed from the meeting invite list."
-                                    onclick="adminOpenDeleteModalFromEl(this)">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </form>
+                            <div class="flex items-center gap-2">
+                                <form method="POST" action="{{ route('admin.meetings.invite.attendance', [$meeting->id, $invite->id]) }}" class="inline-flex items-center gap-2">
+                                    @csrf
+                                    <select name="participation_status"
+                                        class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                        @disabled(!$canMarkAttendance)>
+                                        <option value="interested" {{ ($invite->participation_status ?? 'interested') === 'interested' ? 'selected' : '' }}>Interested</option>
+                                        <option value="participated" {{ ($invite->participation_status ?? '') === 'participated' ? 'selected' : '' }}>Attended</option>
+                                        <option value="not_participated" {{ ($invite->participation_status ?? '') === 'not_participated' ? 'selected' : '' }}>Not attended</option>
+                                    </select>
+                                    <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold disabled:opacity-50" @disabled(!$canMarkAttendance)>Save</button>
+                                </form>
+                                <form id="admin-delete-meeting-invite-{{ $invite->id }}" method="POST" action="{{ route('admin.meetings.invite.remove', [$meeting->id, $invite->id]) }}" class="inline-flex">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center" title="Remove Member"
+                                        data-delete-form="admin-delete-meeting-invite-{{ $invite->id }}"
+                                        data-delete-title="Remove this invite?"
+                                        data-delete-message="This member will be removed from the meeting invite list."
+                                        onclick="adminOpenDeleteModalFromEl(this)">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     @endforeach
                 </div>

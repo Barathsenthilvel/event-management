@@ -210,6 +210,10 @@ Route::prefix('admin')->group(function () {
         Route::get('/events/{event}/invites/{invite}/certificate', [EventController::class, 'downloadInviteCertificate'])->name('admin.events.invites.certificate');
         Route::post('/events/{event}/interests/{interest}/attendance', [EventController::class, 'updateInterestAttendance'])->name('admin.events.interests.attendance');
         Route::get('/events/{event}/interests/{interest}/certificate', [EventController::class, 'downloadInterestCertificate'])->name('admin.events.interests.certificate');
+        Route::get('/events/{event}/attendance/scanner', [EventController::class, 'attendanceScanner'])->name('admin.events.attendance.scanner');
+        Route::get('/events/{event}/attendance/consume/{source}/{entryId}', [EventController::class, 'consumeAttendanceQr'])
+            ->middleware('signed')
+            ->name('admin.events.attendance.consume');
         Route::get('/events/{event}/album', [EventController::class, 'album'])->name('admin.events.album');
         Route::post('/events/{event}/album', [EventController::class, 'albumStore'])->name('admin.events.album.store');
         Route::delete('/events/{event}/album/{photo}', [EventController::class, 'albumDestroy'])->name('admin.events.album.destroy');
@@ -248,6 +252,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/meetings/{meeting}/invite', [MeetingController::class, 'inviteForm'])->name('admin.meetings.invite');
         Route::post('/meetings/{meeting}/invite', [MeetingController::class, 'inviteStore'])->name('admin.meetings.invite.store');
         Route::delete('/meetings/{meeting}/invite/{invite}', [MeetingController::class, 'removeInvite'])->name('admin.meetings.invite.remove');
+        Route::post('/meetings/{meeting}/invite/{invite}/attendance', [MeetingController::class, 'updateInviteAttendance'])->name('admin.meetings.invite.attendance');
 
         // Jobs Management
         Route::resource('jobs', AdminJobController::class)->except(['show'])->parameters([

@@ -152,6 +152,19 @@ class PollingController extends Controller
             'positions.winner:id,name',
         ]);
 
+        // Always show complete vote history in admin stats, even if polling
+        // window dates/times were edited or extended later.
+        $voteEntries = PollingVote::query()
+            ->with([
+                'position:id,position',
+                'candidate:id,name',
+                'voter:id,name,email,mobile',
+            ])
+            ->where('polling_id', $polling->id)
+            ->orderByDesc('voted_at')
+            ->orderByDesc('id')
+            ->get();
+
         $positionStats = [];
         $votes = PollingVote::query()
             ->with(['voter:id,name,email,mobile'])
@@ -207,7 +220,7 @@ class PollingController extends Controller
             ];
         }
 
-        return view('admin.pollings.stats', compact('polling', 'positionStats'));
+        return view('admin.pollings.stats', compact('polling', 'positionStats', 'voteEntries'));
     }
 
     public function saveResults(Request $request, Polling $polling)
@@ -257,25 +270,31 @@ class PollingController extends Controller
             ->where('polling_id', $polling->id)
             ->get();
 
-        $csv = "Position\tCandidate\tVotes By\tVoter Email\tVoter Mobile\tVoted At\n";
+        $csv = "\xEF\xBB\xBF"."Position,Candidate,Voted By,Voter Email,Voter Mobile,Voted At\n";
         foreach ($rows as $row) {
-            $csv .= implode("\t", [
-                str_replace("\t", ' ', (string) ($row->position->position ?? '')),
-                str_replace("\t", ' ', (string) ($row->candidate->name ?? '')),
-                str_replace("\t", ' ', (string) ($row->voter->name ?? '')),
-                str_replace("\t", ' ', (string) ($row->voter->email ?? '')),
-                str_replace("\t", ' ', (string) ($row->voter->mobile ?? '')),
-                str_replace("\t", ' ', optional($row->voted_at)->format('d M Y h:i A') ?? ''),
-            ])."\n";
+            $line = [
+                (string) ($row->position->position ?? ''),
+                (string) ($row->candidate->name ?? ''),
+                (string) ($row->voter->name ?? ''),
+                (string) ($row->voter->email ?? ''),
+                (string) ($row->voter->mobile ?? ''),
+                (string) (optional($row->voted_at)->format('d M Y h:i A') ?? ''),
+            ];
+            $escaped = array_map(function (string $value): string {
+                $value = str_replace('"', '""', $value);
+                return '"'.$value.'"';
+            }, $line);
+            $csv .= implode(',', $escaped)."\n";
         }
 
-        $fileName = 'polling-'.$polling->id.'-report.xls';
+        $stamp = now()->format('Ymd-His');
+        $fileName = 'polling-'.$polling->id.'-report-'.$stamp.'.csv';
         $tmpPath = 'reports/'.$fileName;
         Storage::disk('local')->put($tmpPath, $csv);
 
         return response()
             ->download(storage_path('app/'.$tmpPath), $fileName, [
-                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+                'Content-Type' => 'text/csv; charset=UTF-8',
             ])
             ->deleteFileAfterSend(true);
     }

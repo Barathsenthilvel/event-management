@@ -17,6 +17,10 @@ class DonationController extends Controller
 
         $donations = Donation::query()
             ->with('creator:id,name')
+            ->withSum(
+                ['payments as cumulative_amount' => fn ($query) => $query->where('status', 'successful')],
+                'amount'
+            )
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('purpose', 'like', '%'.$q.'%')
@@ -108,6 +112,7 @@ class DonationController extends Controller
             'description' => ['required', 'string', 'max:65535'],
             'cover_image' => $coverRules,
             'banner_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
+            'document_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'promote_front' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'pill_tag_1_source' => ['required', 'string', $pillIn],
@@ -145,7 +150,10 @@ class DonationController extends Controller
             'pill_tag_1' => $pill1,
             'pill_tag_2' => $pill2,
             'promote_front' => $request->boolean('promote_front'),
-            'is_active' => $request->boolean('is_active', true),
+            // "Display Active" is controlled from listing toggle.
+            'is_active' => $creating
+                ? true
+                : (bool) ($donation?->is_active ?? true),
         ];
 
         if ($creating) {
@@ -162,6 +170,12 @@ class DonationController extends Controller
             $payload['banner_image_path'] = $request->file('banner_image')->store('donations/banners', 'public');
         } elseif ($donation) {
             $payload['banner_image_path'] = $donation->banner_image_path;
+        }
+
+        if ($request->hasFile('document_pdf')) {
+            $payload['document_pdf_path'] = $request->file('document_pdf')->store('donations/documents', 'public');
+        } elseif ($donation) {
+            $payload['document_pdf_path'] = $donation->document_pdf_path;
         }
 
         return $payload;
