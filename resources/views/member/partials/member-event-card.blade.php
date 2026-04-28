@@ -9,20 +9,42 @@
     $cover = $event->cover_image_path ? asset('storage/' . $event->cover_image_path) : asset('images/event1.jpg');
     $sortedDates = $event->dates->sortBy('event_date')->values();
     $firstDate = $sortedDates->first();
+    $primaryDate = $firstDate?->event_date?->format('d M Y') ?? 'TBA';
+    $extraDatesCount = max(0, $sortedDates->count() - 1);
     $day = $firstDate?->event_date?->format('d') ?? '—';
     $month = strtoupper((string) ($firstDate?->event_date?->format('M') ?? 'TBA'));
-    $timeSlots = $sortedDates
+    $dateDetails = $sortedDates
         ->map(function ($d) {
             $start = $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('h:i A') : null;
             $end = $d->end_time ? \Illuminate\Support\Carbon::parse($d->end_time)->format('h:i A') : null;
-            return $start && $end ? ($start . ' - ' . $end) : ($start ?: ($end ?: 'Time TBA'));
+            $slot = $start && $end ? ($start . ' - ' . $end) : ($start ?: ($end ?: 'Time TBA'));
+            return [
+                'date' => $d->event_date?->format('d M Y') ?? 'TBA',
+                'slot' => $slot,
+            ];
         })
+        ->values();
+    $moreDatesTooltip = $dateDetails
+        ->map(fn ($row) => $row['date'] . ' (' . $row['slot'] . ')')
+        ->implode("\n");
+    $timeSlots = $dateDetails
+        ->pluck('slot')
         ->filter()
         ->unique()
         ->values();
     $timeRange = $timeSlots->count() > 1 ? 'Multiple time slots' : ($timeSlots->first() ?? 'Time TBA');
+    $dateLabels = $dateDetails
+        ->pluck('date')
+        ->filter()
+        ->unique()
+        ->values();
+    $scheduleChipText = $dateLabels->first() ?? 'Date TBA';
+    if ($dateLabels->count() > 1) {
+        $scheduleChipText .= ' +' . ($dateLabels->count() - 1) . ' more dates';
+    }
     $organizer = $event->creator?->name ?? 'GNAT Team';
-    $desc = $event->description ?: 'Join us for this GNAT event. More details will be shared with registered members.';
+    $desc = trim(strip_tags((string) ($event->description ?? '')));
+    $hasDesc = $desc !== '';
     $seatLimited = ($event->seat_mode ?? '') === 'limited';
     $seatCap = max(0, (int) ($event->seat_limit ?? 0));
     $filled = (int) ($event->interested_count ?? 0);
@@ -41,14 +63,15 @@
 
         <div class="flex min-w-0 flex-col">
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="inline-flex max-w-full items-center gap-3 rounded-full border border-[#351c42]/10 bg-white/80 px-3 py-2 sm:px-4">
+                <div class="inline-flex max-w-full items-center gap-3 rounded-full border border-[#351c42]/10 bg-white/80 px-3 py-2 sm:px-4"
+                     title="{{ $moreDatesTooltip }}">
                     <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    <span class="text-xs font-semibold text-[#351c42]/70">{{ $timeRange }}</span>
+                    <span class="text-xs font-semibold text-[#351c42]/70">{{ $scheduleChipText }}</span>
                 </div>
                 <div class="shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
                     @if ($seatLimited)
@@ -66,8 +89,35 @@
             </div>
 
             <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
-            <h3 class="mt-1 text-base font-bold text-[#351c42] sm:text-lg">{{ $event->title }}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-[#351c42]/80">{{ Str::limit($desc, 220) }}</p>
+            <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#351c42]/70">
+                <span>{{ $primaryDate }}</span>
+                @if($extraDatesCount > 0)
+                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help"
+                          title="{{ $moreDatesTooltip }}">
+                        +{{ $extraDatesCount }} more
+                    </span>
+                @endif
+            </div>
+            <h3 class="mt-1 text-base font-bold text-[#351c42] break-words sm:text-lg">{{ $event->title }}</h3>
+            @if($hasDesc)
+                <div class="mt-2" data-desc-wrap>
+                    <p
+                        class="min-h-[4.5rem] text-sm leading-relaxed text-[#351c42]/80 break-all"
+                        data-desc-text
+                        style="display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;"
+                    >
+                        {{ $desc }}
+                    </p>
+                    <button
+                        type="button"
+                        class="mt-2 hidden items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                        data-desc-toggle
+                        aria-expanded="false"
+                    >
+                        Read more
+                    </button>
+                </div>
+            @endif
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <div class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4">
                     <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#351c42]/70">
@@ -79,7 +129,7 @@
                         </span>
                         Organizer
                     </div>
-                    <p class="mt-2 text-sm font-bold text-[#351c42]">{{ $organizer }}</p>
+                    <p class="mt-2 text-sm font-bold text-[#351c42] break-words">{{ $organizer }}</p>
                 </div>
                 <div class="rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] p-4">
                     <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#351c42]/70">
@@ -91,7 +141,7 @@
                         </span>
                         Venue
                     </div>
-                    <p class="mt-2 text-sm font-bold text-[#351c42]">{{ $event->venue ?: 'Venue not specified' }}</p>
+                    <p class="mt-2 text-sm font-bold text-[#351c42] break-words">{{ $event->venue ?: 'Venue not specified' }}</p>
                 </div>
             </div>
         </div>
@@ -198,3 +248,59 @@
         @endif
     @endif
 </article>
+
+<script>
+    (function () {
+        if (window.__memberEventDescToggleInit) return;
+        window.__memberEventDescToggleInit = true;
+
+        var setupToggles = function () {
+            document.querySelectorAll('[data-desc-wrap]').forEach(function (wrap) {
+                var text = wrap.querySelector('[data-desc-text]');
+                var btn = wrap.querySelector('[data-desc-toggle]');
+                if (!text || !btn) return;
+                if (text.scrollHeight > text.clientHeight + 2) {
+                    btn.classList.remove('hidden');
+                    btn.classList.add('inline-flex');
+                } else {
+                    text.style.display = '';
+                    text.style.webkitBoxOrient = '';
+                    text.style.webkitLineClamp = '';
+                    text.style.overflow = '';
+                    btn.remove();
+                }
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupToggles);
+        } else {
+            setupToggles();
+        }
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-desc-toggle]');
+            if (!btn) return;
+            var wrap = btn.closest('[data-desc-wrap]');
+            var text = wrap ? wrap.querySelector('[data-desc-text]') : null;
+            if (!text) return;
+
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            if (expanded) {
+                text.style.display = '-webkit-box';
+                text.style.webkitBoxOrient = 'vertical';
+                text.style.webkitLineClamp = '3';
+                text.style.overflow = 'hidden';
+                btn.setAttribute('aria-expanded', 'false');
+                btn.textContent = 'Read more';
+            } else {
+                text.style.display = '';
+                text.style.webkitBoxOrient = '';
+                text.style.webkitLineClamp = '';
+                text.style.overflow = '';
+                btn.setAttribute('aria-expanded', 'true');
+                btn.textContent = 'Show less';
+            }
+        });
+    })();
+</script>

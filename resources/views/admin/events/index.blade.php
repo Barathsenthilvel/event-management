@@ -48,6 +48,19 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($events as $event)
+                            @php
+                                $sortedDates = $event->dates->sortBy('event_date')->values();
+                                $primaryDate = $sortedDates->first();
+                                $extraDatesCount = max(0, $sortedDates->count() - 1);
+                                $moreDatesTooltip = $sortedDates
+                                    ->map(function ($d) {
+                                        $start = $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('h:i A') : null;
+                                        $end = $d->end_time ? \Illuminate\Support\Carbon::parse($d->end_time)->format('h:i A') : null;
+                                        $slot = $start && $end ? ($start.' - '.$end) : ($start ?: ($end ?: 'Time TBA'));
+                                        return ($d->event_date?->format('d M Y') ?? 'TBA').' ('.$slot.')';
+                                    })
+                                    ->implode("\n");
+                            @endphp
                             <tr>
                                 <td class="px-5 py-4">
                                     <div class="flex items-start gap-3">
@@ -56,8 +69,14 @@
                                         </div>
                                         <div class="min-w-0">
                                             <p class="text-sm font-extrabold text-slate-900 truncate">{{ $event->title }}</p>
-                                            <p class="text-[11px] font-bold text-slate-500">
-                                                {{ optional($event->dates->first())->event_date?->format('d M Y') ?? 'No date' }}
+                                            <p class="text-[11px] font-bold text-slate-500 flex flex-wrap items-center gap-1.5">
+                                                <span>{{ $primaryDate?->event_date?->format('d M Y') ?? 'No date' }}</span>
+                                                @if($extraDatesCount > 0)
+                                                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help whitespace-nowrap"
+                                                          title="{{ $moreDatesTooltip }}">
+                                                        +{{ $extraDatesCount }} more
+                                                    </span>
+                                                @endif
                                                 @if($event->venue)
                                                     • {{ $event->venue }}
                                                 @endif

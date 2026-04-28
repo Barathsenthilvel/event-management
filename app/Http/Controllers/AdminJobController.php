@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AdminJob;
 use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
+use App\Models\MemberJobRequest;
 use App\Models\Designation;
 use App\Models\Hospital;
 use App\Models\User;
@@ -209,11 +210,6 @@ class AdminJobController extends Controller
                         'alert_sent_at' => now(),
                     ]
                 );
-
-                AdminJobApplication::firstOrCreate(
-                    ['job_id' => $job->id, 'user_id' => $userId],
-                    ['submitted_at' => now(), 'application_status' => 'pending']
-                );
             }
         });
 
@@ -292,6 +288,46 @@ class AdminJobController extends Controller
         ]);
 
         return back()->with('success', 'Application status updated and mail trigger marked.');
+    }
+
+    public function needJobRequests(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('status', ''));
+
+        $rows = MemberJobRequest::query()
+            ->with('user:id,name,email,mobile')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%')
+                        ->orWhere('position_looking_for', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('admin.jobs.need-job-requests', [
+            'rows' => $rows,
+            'q' => $q,
+            'status' => $status,
+        ]);
+    }
+
+    public function updateNeedJobRequestStatus(MemberJobRequest $requestRow, Request $request)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:new,reviewed,contacted,closed',
+        ]);
+
+        $requestRow->update([
+            'status' => $validated['status'],
+        ]);
+
+        return back()->with('success', 'Need Job request status updated.');
     }
 
     private function rules(?int $jobId = null): array

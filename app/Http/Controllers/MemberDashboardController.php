@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdminJob;
+use App\Models\AdminJobApplication;
+use App\Models\MemberJobRequest;
+use App\Models\MemberSavedJob;
 use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
@@ -267,6 +271,213 @@ class MemberDashboardController extends Controller
             && $user->profile_completed
             && $user->is_approved
             && $user->activeSubscription()->exists();
+    }
+
+    public function jobsPage(Request $request)
+    {
+        $user = Auth::user();
+        $user?->refresh();
+        $user?->loadMissing('designation');
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with(
+                    'member_gate_error',
+                    'Jobs are available after you have an active membership plan.'
+                );
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        $tab = (string) $request->query('tab', 'search');
+        if (! in_array($tab, ['search', 'applied', 'saved', 'need-job'], true)) {
+            $tab = 'search';
+        }
+        $sort = (string) $request->query('sort', 'recent');
+        if (! in_array($sort, ['recent', 'a-z', 'z-a'], true)) {
+            $sort = 'recent';
+        }
+
+        $savedJobIds = MemberSavedJob::query()
+            ->where('user_id', $user->id)
+            ->pluck('job_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $appliedJobIds = AdminJobApplication::query()
+            ->where('user_id', $user->id)
+            ->pluck('job_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $jobsQuery = AdminJob::query()
+            ->where('is_active', true)
+            ->where('listing_status', 'listed')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('hospital', 'like', '%'.$q.'%')
+                        ->orWhere('title', 'like', '%'.$q.'%')
+                        ->orWhere('code', 'like', '%'.$q.'%')
+                        ->orWhere('description', 'like', '%'.$q.'%')
+                        ->orWhere('key_skills', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($tab === 'applied', function ($query) use ($user) {
+                $query->whereHas('applications', fn ($appQ) => $appQ->where('user_id', $user->id));
+            })
+            ->when($tab === 'saved', function ($query) use ($user) {
+                $query->whereHas('savedByMembers', fn ($saveQ) => $saveQ->where('user_id', $user->id));
+            })
+            ->orderByDesc('promote_front');
+
+        if ($sort === 'a-z') {
+            $jobsQuery->orderBy('title');
+        } elseif ($sort === 'z-a') {
+            $jobsQuery->orderByDesc('title');
+        } else {
+            $jobsQuery->latest('id');
+        }
+
+        $jobs = $tab === 'need-job'
+            ? collect()
+            : $jobsQuery->paginate(10)->withQueryString();
+
+        $latestNeedJobRequest = MemberJobRequest::query()
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->first();
+
+        return view('member.jobs', [
+            'activeSubscription' => $user->activeSubscription,
+            'jobs' => $jobs,
+            'q' => $q,
+            'tab' => $tab,
+            'sort' => $sort,
+            'appliedJobIds' => $appliedJobIds,
+            'savedJobIds' => $savedJobIds,
+            'appliedCount' => count($appliedJobIds),
+            'savedCount' => count($savedJobIds),
+            'latestNeedJobRequest' => $latestNeedJobRequest,
+        ]);
+    }
+
+    public function applyJob(Request $request, AdminJob $job)
+    {
+        $user = Auth::user();
+        $user?->refresh();
+        $user?->loadMissing('designation');
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with(
+                    'member_gate_error',
+                    'Jobs are available after you have an active membership plan.'
+                );
+        }
+
+        if (! $job->is_active || $job->listing_status !== 'listed') {
+            return back()->with('job_apply_error', 'This job is not accepting applications right now.');
+        }
+
+        try {
+            AdminJobApplication::firstOrCreate(
+                [
+                    'job_id' => $job->id,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'submitted_at' => now(),
+                    'application_status' => 'pending',
+                    'resume_path' => $user->educational_certificate_path,
+                ]
+            );
+        } catch (QueryException $e) {
+            return back()->with('job_apply_error', 'Unable to submit your application right now. Please try again.');
+        }
+
+        return back()->with('job_apply_success', 'Application submitted successfully.');
+    }
+
+    public function toggleSavedJob(AdminJob $job)
+    {
+        $user = Auth::user();
+        $user?->refresh();
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with('member_gate_error', 'Jobs are available after you have an active membership plan.');
+        }
+
+        if (! $job->is_active || $job->listing_status !== 'listed') {
+            return back()->with('job_apply_error', 'This job is not available right now.');
+        }
+
+        $existing = MemberSavedJob::query()
+            ->where('job_id', $job->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            return back()->with('job_apply_success', 'Job removed from saved list.');
+        }
+
+        MemberSavedJob::query()->create([
+            'job_id' => $job->id,
+            'user_id' => $user->id,
+        ]);
+
+        return back()->with('job_apply_success', 'Job saved successfully.');
+    }
+
+    public function storeNeedJob(Request $request)
+    {
+        $user = Auth::user();
+        $user?->refresh();
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with('member_gate_error', 'Jobs are available after you have an active membership plan.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'mobile' => 'nullable|string|max:40',
+            'email' => 'required|email|max:255',
+            'qualification' => 'nullable|string|max:255',
+            'position_looking_for' => 'nullable|string|max:255',
+            'experience' => 'nullable|string|max:255',
+            'details' => 'nullable|string|max:3000',
+            'resume' => 'nullable|file|mimes:pdf|max:5120',
+            'use_profile_resume' => 'nullable|boolean',
+        ]);
+
+        $resumePath = null;
+        if ($request->boolean('use_profile_resume') && $user->educational_certificate_path) {
+            $resumePath = $user->educational_certificate_path;
+        } elseif ($request->hasFile('resume')) {
+            $resumePath = $request->file('resume')->store('member-job-requests/resumes', 'public');
+        }
+
+        MemberJobRequest::query()->create([
+            'user_id' => $user->id,
+            'name' => $validated['name'],
+            'mobile' => $validated['mobile'] ?? null,
+            'email' => $validated['email'],
+            'qualification' => $validated['qualification'] ?? null,
+            'position_looking_for' => $validated['position_looking_for'] ?? null,
+            'experience' => $validated['experience'] ?? null,
+            'details' => $validated['details'] ?? null,
+            'resume_path' => $resumePath,
+            'status' => 'new',
+        ]);
+
+        return redirect()
+            ->route('member.jobs.index', ['tab' => 'need-job'])
+            ->with('job_apply_success', 'Need Job form submitted successfully.');
     }
 
     public function nominationsPage()

@@ -32,7 +32,8 @@
                     <a href="{{ route('admin.jobs.index') }}" class="shrink-0 px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-extrabold text-slate-700">Reset</a>
                 @endif
             </form>
-            <div class="flex shrink-0 justify-end">
+            <div class="flex shrink-0 justify-end gap-2">
+                <a href="{{ route('admin.jobs.need-job.requests') }}" class="inline-flex px-4 py-2 rounded-xl border border-indigo-200 text-indigo-700 text-xs font-extrabold hover:bg-indigo-50">Need Job Requests</a>
                 <a href="{{ route('admin.jobs.create') }}" class="inline-flex px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>
             </div>
         </div>

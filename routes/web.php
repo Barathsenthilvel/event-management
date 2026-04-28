@@ -274,6 +274,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
         Route::get('/jobs/{job}/report', [AdminJobController::class, 'downloadReport'])->name('admin.jobs.report');
         Route::post('/jobs/{job}/applications/{application}/status', [AdminJobController::class, 'updateApplicationStatus'])->name('admin.jobs.applications.status');
+        Route::get('/jobs/need-job/requests', [AdminJobController::class, 'needJobRequests'])->name('admin.jobs.need-job.requests');
+        Route::post('/jobs/need-job/requests/{requestRow}/status', [AdminJobController::class, 'updateNeedJobRequestStatus'])->name('admin.jobs.need-job.requests.status');
 
         // Nominations Management
         Route::resource('nominations', NominationController::class)->except(['show'])->names([
@@ -337,6 +339,9 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('/dashboard/announcements/dismiss', [MemberDashboardController::class, 'dismissDashboardAnnouncement'])
             ->name('dashboard.announcements.dismiss');
         Route::get('/jobs', [MemberDashboardController::class, 'jobsPage'])->name('jobs.index');
+        Route::post('/jobs/{job}/apply', [MemberDashboardController::class, 'applyJob'])->name('jobs.apply');
+        Route::post('/jobs/{job}/save-toggle', [MemberDashboardController::class, 'toggleSavedJob'])->name('jobs.save-toggle');
+        Route::post('/jobs/need-job', [MemberDashboardController::class, 'storeNeedJob'])->name('jobs.need-job.store');
         Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
         Route::get('/meetings', [MemberDashboardController::class, 'meetingsPage'])->name('meetings.index');
         Route::get('/nominations', [MemberDashboardController::class, 'nominationsPage'])->name('nominations.index');

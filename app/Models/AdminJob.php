@@ -60,5 +60,10 @@ class AdminJob extends Model
     {
         return $this->hasMany(AdminJobApplication::class, 'job_id');
     }
+
+    public function savedByMembers(): HasMany
+    {
+        return $this->hasMany(MemberSavedJob::class, 'job_id');
+    }
 }
 
