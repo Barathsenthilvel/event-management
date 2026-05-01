@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
 use App\Models\Meeting;
+use App\Models\MeetingInvite;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
 use App\Models\NominationEntry;
@@ -31,6 +32,7 @@ class MemberDashboardController extends Controller
 {
     public function index()
     {
+        $this->syncElapsedPollings();
         $user = Auth::user();
         $user?->refresh();
         $user?->loadMissing('designation');
@@ -519,6 +521,7 @@ class MemberDashboardController extends Controller
 
     public function pollingsPage()
     {
+        $this->syncElapsedPollings();
         $user = Auth::user();
         $user?->refresh();
         $user?->loadMissing('designation');
@@ -615,6 +618,45 @@ class MemberDashboardController extends Controller
         $end = Carbon::parse($endDate.' '.$polling->polling_to);
 
         return now()->greaterThan($end);
+    }
+
+    private function syncElapsedPollings(): void
+    {
+        $pollings = Polling::query()
+            ->where('publish_status', 'published')
+            ->whereIn('polling_status', ['live', 'ends'])
+            ->get(['id', 'polling_date', 'polling_date_to', 'polling_from', 'polling_to', 'polling_status', 'is_active']);
+
+        $now = now();
+        foreach ($pollings as $polling) {
+            if (! $polling->polling_date || ! $polling->polling_from || ! $polling->polling_to) {
+                continue;
+            }
+            $startDate = $polling->polling_date->format('Y-m-d');
+            $endDate = ($polling->polling_date_to ?? $polling->polling_date)->format('Y-m-d');
+            $start = Carbon::parse($startDate.' '.$polling->polling_from);
+            $end = Carbon::parse($endDate.' '.$polling->polling_to);
+
+            if ($now->greaterThan($end)) {
+                $polling->update([
+                    'polling_status' => 'ends',
+                    'is_active' => false,
+                ]);
+                continue;
+            }
+
+            if ($now->greaterThanOrEqualTo($start) && $polling->polling_status !== 'live') {
+                $polling->update([
+                    'polling_status' => 'live',
+                    'is_active' => true,
+                ]);
+                continue;
+            }
+
+            if (! $polling->is_active) {
+                $polling->update(['is_active' => true]);
+            }
+        }
     }
 
     public function submitNominationInterest(Request $request, Nomination $nomination, NominationPosition $nominationPosition)
@@ -867,6 +909,55 @@ class MemberDashboardController extends Controller
         ]);
     }
 
+    public function respondToMeetingInvite(Request $request, Meeting $meeting)
+    {
+        $user = Auth::user();
+        $user?->refresh();
+
+        if (! $this->memberPortalUnlocked($user)) {
+            return redirect()
+                ->route('member.dashboard')
+                ->with('member_gate_error', 'Meetings are available after you have an active membership plan.');
+        }
+
+        $validated = $request->validate([
+            'response' => 'required|in:interested,not_interested',
+        ]);
+
+        $invite = MeetingInvite::query()
+            ->where('meeting_id', $meeting->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $invite) {
+            return back()->with('event_interest_error', 'You are not invited for this meeting.');
+        }
+
+        $nextStatus = $validated['response'] === 'interested' ? 'interested' : 'not_participated';
+        if (($invite->participation_status ?? null) === $nextStatus) {
+            return back();
+        }
+
+        $invite->update([
+            'participation_status' => $nextStatus,
+            'attended_at' => null,
+        ]);
+
+        if ($validated['response'] === 'interested') {
+            return back()
+                ->with('event_interest_success', 'Thank you for letting us know. We have recorded your interest in this meeting.')
+                ->with('event_interest_success_modal', true)
+                ->with('event_interest_success_title', 'Thank you!')
+                ->with('event_interest_success_variant', 'success');
+        }
+
+        return back()
+            ->with('event_interest_success', 'Thank you. We have noted that you are not interested in this meeting.')
+            ->with('event_interest_success_modal', true)
+            ->with('event_interest_success_title', 'Response recorded')
+            ->with('event_interest_success_variant', 'neutral');
+    }
+
     private function fetchUpcomingMeetingsForMember($user)
     {
         $today = Carbon::today()->toDateString();
@@ -874,15 +965,12 @@ class MemberDashboardController extends Controller
         return Meeting::query()
             ->with([
                 'schedules' => fn ($q) => $q->orderBy('meeting_date')->orderBy('from_time'),
-                'invites' => fn ($q) => $q->where('user_id', $user->id)->select(['id', 'meeting_id', 'user_id']),
+                'invites' => fn ($q) => $q->where('user_id', $user->id)->select(['id', 'meeting_id', 'user_id', 'participation_status']),
             ])
             ->where('is_active', true)
             ->whereIn('status', ['upcoming', 'live'])
             ->whereHas('schedules', fn ($q) => $q->whereDate('meeting_date', '>=', $today))
-            ->where(function ($q) use ($user) {
-                $q->whereDoesntHave('invites')
-                    ->orWhereHas('invites', fn ($inviteQ) => $inviteQ->where('user_id', $user->id));
-            })
+            ->whereHas('invites', fn ($inviteQ) => $inviteQ->where('user_id', $user->id))
             ->get()
             ->sortBy(function ($meeting) {
                 $schedule = $meeting->schedules->first();

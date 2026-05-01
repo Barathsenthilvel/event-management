@@ -1415,6 +1415,9 @@
         const titleEl = document.getElementById("read-more-modal-title");
         const metaEl = document.getElementById("read-more-modal-meta");
         const bodyEl = document.getElementById("read-more-modal-body");
+        const actionsEl = document.getElementById("read-more-modal-actions");
+        const documentLinkEl = document.getElementById("read-more-modal-document-link");
+        const donateBtnEl = document.getElementById("read-more-modal-donate-btn");
         const backdrop = modal.querySelector("[data-read-more-backdrop]");
         const closeEls = modal.querySelectorAll("[data-close-read-more]");
 
@@ -1436,6 +1439,8 @@
             const title = btn.getAttribute("data-read-more-title") || "Details";
             const content = btn.getAttribute("data-read-more-content") || "";
             const metaRaw = btn.getAttribute("data-read-more-meta") || "";
+            const documentUrl = btn.getAttribute("data-read-more-document-url") || "";
+            const donationId = btn.getAttribute("data-read-more-donation-id") || "";
             let meta = [];
             if (metaRaw) {
                 try {
@@ -1474,6 +1479,29 @@
                 }
             }
             if (bodyEl) bodyEl.textContent = content;
+            if (actionsEl && documentLinkEl && donateBtnEl) {
+                let hasAction = false;
+
+                if (documentUrl) {
+                    documentLinkEl.href = documentUrl;
+                    documentLinkEl.classList.remove("hidden");
+                    hasAction = true;
+                } else {
+                    documentLinkEl.href = "#";
+                    documentLinkEl.classList.add("hidden");
+                }
+
+                if (donationId) {
+                    donateBtnEl.setAttribute("data-donation-id", donationId);
+                    donateBtnEl.classList.remove("hidden");
+                    hasAction = true;
+                } else {
+                    donateBtnEl.removeAttribute("data-donation-id");
+                    donateBtnEl.classList.add("hidden");
+                }
+
+                actionsEl.classList.toggle("hidden", !hasAction);
+            }
             setOpen(true);
             (closeEls[0] || modal).focus?.({ preventScroll: true });
         }
@@ -1488,6 +1516,10 @@
                 return;
             }
             if (!modal.classList.contains("hidden")) {
+                if (e.target.closest("[data-read-more-donate]")) {
+                    close();
+                    return;
+                }
                 if (e.target.closest("[data-close-read-more]")) close();
                 else if (backdrop && e.target === backdrop) close();
             }

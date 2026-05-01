@@ -1,4 +1,8 @@
 @if (session('event_interest_success') && session('event_interest_success_modal', true))
+    @php
+        $successVariant = session('event_interest_success_variant', 'success');
+        $successTitle = session('event_interest_success_title', 'Event registration confirmed');
+    @endphp
     <div
         id="event-interest-success-modal"
         class="md-modal-overlay is-open"
@@ -8,12 +12,18 @@
         data-event-interest-success-modal
     >
         <div class="relative w-full max-w-md rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl shadow-[#351c42]/20">
-            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full {{ $successVariant === 'neutral' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700' }}">
+                @if($successVariant === 'neutral')
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 16v-4M12 8h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                @else
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                @endif
             </div>
-            <h2 id="event-interest-success-title" class="text-center text-lg font-extrabold text-[#351c42]">Event registration confirmed</h2>
+            <h2 id="event-interest-success-title" class="text-center text-lg font-extrabold text-[#351c42]">{{ $successTitle }}</h2>
             <p class="mt-2 text-center text-sm leading-relaxed text-[#351c42]/75">{{ session('event_interest_success') }}</p>
             <button
                 type="button"

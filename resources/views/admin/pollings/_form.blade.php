@@ -7,10 +7,11 @@
         ? $oldPositions
         : ($isEdit
             ? $p->positions->map(fn ($row) => [
+                'id' => $row->id,
                 'position' => $row->position,
                 'candidate_ids' => $row->candidates->pluck('id')->values()->all(),
             ])->values()->all()
-            : [['position' => '', 'candidate_ids' => []]]);
+            : [['id' => null, 'position' => '', 'candidate_ids' => []]]);
 
     $defaultPollingFrom = $isEdit && $p->polling_from
         ? \Illuminate\Support\Carbon::parse($p->polling_from)->format('h:i A')
@@ -47,6 +48,7 @@
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-start">
                             <div class="sm:col-span-5">
                                 <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Position</label>
+                                <input type="hidden" :name="`positions[${idx}][id]`" :value="row.id || ''">
                                 <input class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs" :name="`positions[${idx}][position]`" x-model="row.position" placeholder="Position title">
                             </div>
                             <div class="relative sm:col-span-6">
@@ -187,13 +189,14 @@ function pollingForm() {
         selectSearch: '',
         init() {
             this.rows = this.rows.map((r) => ({
+                id: r.id ?? null,
                 position: r.position ?? '',
                 candidate_ids: Array.isArray(r.candidate_ids) ? [...r.candidate_ids] : [],
                 _key: r._key || newRowKey(),
             }));
         },
         addRow() {
-            this.rows.push({ position: '', candidate_ids: [], _key: newRowKey() });
+            this.rows.push({ id: null, position: '', candidate_ids: [], _key: newRowKey() });
         },
         removeRow(idx) {
             if (this.rows.length <= 1) return;

@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class NominationController extends Controller
@@ -285,33 +284,33 @@ class NominationController extends Controller
             ->where('nomination_id', $nomination->id)
             ->get();
 
-        $csv = "\xEF\xBB\xBF"."Position,Member Name,Email,Mobile,Response,Submitted On\n";
-        foreach ($rows as $row) {
-            $line = [
-                (string) ($row->position->position ?? ''),
-                (string) ($row->user->name ?? ''),
-                (string) ($row->user->email ?? ''),
-                (string) ($row->user->mobile ?? ''),
-                (string) str_replace('_', ' ', (string) $row->response_status),
-                (string) (optional($row->submitted_at)->format('d M Y h:i A') ?? ''),
-            ];
-            $escaped = array_map(function (string $value): string {
-                $value = str_replace('"', '""', $value);
-                return '"'.$value.'"';
-            }, $line);
-            $csv .= implode(',', $escaped)."\n";
-        }
-
         $stamp = now()->format('Ymd-His');
         $fileName = 'nomination-' . $nomination->id . '-report-' . $stamp . '.csv';
-        $tmpPath = 'reports/' . $fileName;
-        Storage::disk('local')->put($tmpPath, $csv);
 
-        return response()
-            ->download(storage_path('app/' . $tmpPath), $fileName, [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-            ])
-            ->deleteFileAfterSend(true);
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Position', 'Member Name', 'Email', 'Mobile', 'Response', 'Submitted On']);
+
+            foreach ($rows as $row) {
+                fputcsv($out, [
+                    (string) ($row->position->position ?? ''),
+                    (string) ($row->user->name ?? ''),
+                    (string) ($row->user->email ?? ''),
+                    (string) ($row->user->mobile ?? ''),
+                    (string) str_replace('_', ' ', (string) $row->response_status),
+                    (string) (optional($row->submitted_at)->format('d M Y h:i A') ?? ''),
+                ]);
+            }
+
+            fclose($out);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     private function rules(?int $id = null): array

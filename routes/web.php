@@ -344,6 +344,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::post('/jobs/need-job', [MemberDashboardController::class, 'storeNeedJob'])->name('jobs.need-job.store');
         Route::get('/events', [MemberDashboardController::class, 'eventsPage'])->name('events.index');
         Route::get('/meetings', [MemberDashboardController::class, 'meetingsPage'])->name('meetings.index');
+        Route::post('/meetings/{meeting}/response', [MemberDashboardController::class, 'respondToMeetingInvite'])->name('meetings.response');
         Route::get('/nominations', [MemberDashboardController::class, 'nominationsPage'])->name('nominations.index');
         Route::get('/pollings', [MemberDashboardController::class, 'pollingsPage'])->name('pollings.index');
         Route::post('/events/{event}/interest', [MemberDashboardController::class, 'submitInterest'])->name('events.interest');

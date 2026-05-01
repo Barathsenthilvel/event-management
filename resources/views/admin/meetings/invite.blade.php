@@ -28,10 +28,10 @@
                     <div>
                         <p class="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Meeting Participant *</p>
                         <div class="flex items-center gap-4">
-                            @php $target = old('target', 'all'); @endphp
+                            @php $target = old('target', 'approved'); @endphp
                             <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700">
-                                <input type="radio" name="target" value="all" {{ $target === 'all' ? 'checked' : '' }}>
-                                All Members
+                                <input type="radio" name="target" value="approved" {{ $target === 'approved' ? 'checked' : '' }}>
+                                Approved Members
                             </label>
                             <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700">
                                 <input type="radio" name="target" value="specific" {{ $target === 'specific' ? 'checked' : '' }}>
@@ -62,7 +62,13 @@
                 </div>
 
                 <div>
-                    <p class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Approved Members</p>
+                    <div class="mb-3 flex items-center justify-between gap-2">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-500">Approved Members</p>
+                        <label class="inline-flex items-center gap-2 text-[11px] font-bold text-slate-700">
+                            <input type="checkbox" id="select-all-approved" name="select_all_approved" value="1" {{ old('select_all_approved') ? 'checked' : '' }}>
+                            Select all
+                        </label>
+                    </div>
                     <div class="max-h-80 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-100">
                         @foreach($members as $m)
                             @php $checked = in_array($m->id, old('member_ids', $invitedUserIds)); @endphp
@@ -89,14 +95,33 @@
             <h3 class="text-sm font-extrabold text-slate-900 mb-3">Invited Members</h3>
             @php
                 $canMarkAttendance = in_array($meeting->status, ['live', 'completed'], true);
-                $attendedCount = $invites->where('participation_status', 'participated')->count();
-                $notAttendedCount = $invites->where('participation_status', 'not_participated')->count();
-                $interestedCount = $invites->where('participation_status', 'interested')->count();
+                $invitedCount = (int) ($statusCounts->invited_count ?? 0);
+                $attendedCount = (int) ($statusCounts->attended_count ?? 0);
+                $notAttendedCount = (int) ($statusCounts->not_attended_count ?? 0);
+                $interestedCount = (int) ($statusCounts->interested_count ?? 0);
+                $allCount = (int) ($statusCounts->total ?? 0);
             @endphp
             <div class="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-wide">
-                <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-700">Interested: {{ $interestedCount }}</span>
-                <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Attended: {{ $attendedCount }}</span>
-                <span class="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Not attended: {{ $notAttendedCount }}</span>
+                <a href="{{ route('admin.meetings.invite', ['meeting' => $meeting->id, 'q' => $q, 'status_tab' => 'all']) }}"
+                   class="rounded-full px-3 py-1 {{ $statusTab === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700' }}">
+                    All: {{ $allCount }}
+                </a>
+                <a href="{{ route('admin.meetings.invite', ['meeting' => $meeting->id, 'q' => $q, 'status_tab' => 'invited']) }}"
+                   class="rounded-full px-3 py-1 {{ $statusTab === 'invited' ? 'bg-indigo-700 text-white' : 'bg-indigo-100 text-indigo-700' }}">
+                    Invited: {{ $invitedCount }}
+                </a>
+                <a href="{{ route('admin.meetings.invite', ['meeting' => $meeting->id, 'q' => $q, 'status_tab' => 'interested']) }}"
+                   class="rounded-full px-3 py-1 {{ $statusTab === 'interested' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700' }}">
+                    Interested: {{ $interestedCount }}
+                </a>
+                <a href="{{ route('admin.meetings.invite', ['meeting' => $meeting->id, 'q' => $q, 'status_tab' => 'participated']) }}"
+                   class="rounded-full px-3 py-1 {{ $statusTab === 'participated' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-700' }}">
+                    Attended: {{ $attendedCount }}
+                </a>
+                <a href="{{ route('admin.meetings.invite', ['meeting' => $meeting->id, 'q' => $q, 'status_tab' => 'not_participated']) }}"
+                   class="rounded-full px-3 py-1 {{ $statusTab === 'not_participated' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-700' }}">
+                    Not attended: {{ $notAttendedCount }}
+                </a>
             </div>
             @if(!$canMarkAttendance && $meeting->status !== 'cancelled')
                 <p class="mb-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
@@ -104,7 +129,13 @@
                 </p>
             @endif
             @if($invites->count() === 0)
-                <p class="text-xs font-bold text-slate-500">No members invited yet.</p>
+                <p class="text-xs font-bold text-slate-500">
+                    @if($statusTab === 'all')
+                        No members invited yet.
+                    @else
+                        No members found for this tab.
+                    @endif
+                </p>
             @else
                 <div class="space-y-2">
                     @foreach($invites as $invite)
@@ -123,7 +154,8 @@
                                     <select name="participation_status"
                                         class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                                         @disabled(!$canMarkAttendance)>
-                                        <option value="interested" {{ ($invite->participation_status ?? 'interested') === 'interested' ? 'selected' : '' }}>Interested</option>
+                                        <option value="invited" {{ ($invite->participation_status ?? 'invited') === 'invited' ? 'selected' : '' }}>Invited</option>
+                                        <option value="interested" {{ ($invite->participation_status ?? '') === 'interested' ? 'selected' : '' }}>Interested</option>
                                         <option value="participated" {{ ($invite->participation_status ?? '') === 'participated' ? 'selected' : '' }}>Attended</option>
                                         <option value="not_participated" {{ ($invite->participation_status ?? '') === 'not_participated' ? 'selected' : '' }}>Not attended</option>
                                     </select>
@@ -155,3 +187,47 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const selectAll = document.getElementById('select-all-approved');
+        if (!selectAll) return;
+
+        const memberCheckboxes = Array.from(document.querySelectorAll('input[name="member_ids[]"]'));
+        const targetApproved = document.querySelector('input[name="target"][value="approved"]');
+        const targetSpecific = document.querySelector('input[name="target"][value="specific"]');
+
+        const syncSelectAllFromMembers = () => {
+            if (!memberCheckboxes.length) return;
+            selectAll.checked = memberCheckboxes.every((cb) => cb.checked);
+        };
+
+        const applySelectAllState = (checked) => {
+            memberCheckboxes.forEach((cb) => {
+                cb.checked = checked;
+            });
+        };
+
+        selectAll.addEventListener('change', function () {
+            applySelectAllState(this.checked);
+            if (this.checked && targetApproved) {
+                targetApproved.checked = true;
+            } else if (!this.checked && targetSpecific) {
+                targetSpecific.checked = true;
+            }
+        });
+
+        memberCheckboxes.forEach((cb) => {
+            cb.addEventListener('change', () => {
+                syncSelectAllFromMembers();
+                if (targetSpecific) {
+                    targetSpecific.checked = true;
+                }
+            });
+        });
+
+        syncSelectAllFromMembers();
+    })();
+</script>
+@endpush

@@ -222,16 +222,16 @@
             </div>
 
             <div class="border border-slate-200 rounded-2xl px-6 py-5">
-                <p class="text-sm font-semibold text-slate-800 mb-3">Optional PDF</p>
+                <p class="text-sm font-semibold text-slate-800 mb-3">Optional Document (PDF or ZIP)</p>
                 @if($isEdit && !empty($donation->document_pdf_path))
                     <a href="{{ asset('storage/' . $donation->document_pdf_path) }}" target="_blank"
                        class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
-                        View current PDF
+                        View current file
                     </a>
                 @endif
                 <label class="mt-3 flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
-                    <span class="text-xs font-semibold text-slate-700">Upload PDF (single file)</span>
-                    <input type="file" name="document_pdf" class="hidden" accept="application/pdf">
+                    <span class="text-xs font-semibold text-slate-700">Upload PDF/ZIP (single file)</span>
+                    <input type="file" name="document_pdf" class="hidden" accept=".pdf,.zip,application/pdf,application/zip">
                 </label>
                 @error('document_pdf')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>

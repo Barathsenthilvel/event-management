@@ -21,6 +21,9 @@ class DonationController extends Controller
                 ['payments as cumulative_amount' => fn ($query) => $query->where('status', 'successful')],
                 'amount'
             )
+            ->withCount([
+                'payments as successful_payments_count' => fn ($query) => $query->where('status', 'successful'),
+            ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('purpose', 'like', '%'.$q.'%')
@@ -112,7 +115,7 @@ class DonationController extends Controller
             'description' => ['required', 'string', 'max:65535'],
             'cover_image' => $coverRules,
             'banner_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
-            'document_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'document_pdf' => ['nullable', 'file', 'mimes:pdf,zip', 'max:20480'],
             'promote_front' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'pill_tag_1_source' => ['required', 'string', $pillIn],

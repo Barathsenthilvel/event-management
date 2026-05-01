@@ -41,7 +41,7 @@
             <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
                 <tr>
                     <th class="px-6 py-4">Purpose</th>
-                    <th class="px-6 py-4">Job Info</th>
+                    <th class="px-6 py-4">Short Description</th>
                     <th class="px-6 py-4 text-right">Cumulative Amount</th>
                     <th class="px-6 py-4 text-center">Promote Front</th>
                     <th class="px-6 py-4">Created On / By</th>
@@ -54,15 +54,8 @@
             @forelse($donations as $donation)
                 <tr>
                     <td class="px-6 py-4 align-middle">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6L9 17l-5-5" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-[11px] font-semibold text-slate-900">{{ $donation->purpose }}</p>
-                            </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-900">{{ $donation->purpose }}</p>
                         </div>
                     </td>
                     <td class="px-6 py-4 align-middle">
@@ -72,7 +65,9 @@
                         <p class="text-sm font-extrabold text-slate-900">
                             INR {{ number_format((float) ($donation->cumulative_amount ?? 0), 2) }}
                         </p>
-                        <p class="text-[10px] font-bold text-slate-500">Successful payments</p>
+                        <p class="text-[10px] font-bold text-slate-500">
+                            {{ (int) ($donation->successful_payments_count ?? 0) }} successful donations
+                        </p>
                     </td>
                     <td class="px-6 py-4 text-center align-middle">
                         <form method="POST" action="{{ route('admin.donations.toggle-promote', $donation->id) }}" class="inline-flex">
@@ -111,6 +106,13 @@
                                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
+                                </svg>
+                            </a>
+                            <a href="{{ route('admin.donations.payments.index', ['donation_id' => $donation->id]) }}"
+                               title="View Payments"
+                               class="w-8 h-8 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 inline-flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7M8 15h3" />
                                 </svg>
                             </a>
                             <form method="POST" action="{{ route('admin.donations.toggle-status', $donation->id) }}" class="inline-flex">

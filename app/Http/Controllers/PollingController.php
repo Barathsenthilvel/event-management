@@ -10,7 +10,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PollingController extends Controller
@@ -67,6 +66,7 @@ class PollingController extends Controller
                 }
             }
         });
+        $this->syncElapsedPollings();
 
         return redirect()->route('admin.pollings.index')->with('success', 'Polling created successfully.');
     }
@@ -109,16 +109,9 @@ class PollingController extends Controller
 
         DB::transaction(function () use ($request, $validated, $polling) {
             $polling->update($this->buildPayload($request, $validated, false, $polling));
-            $polling->positions()->delete();
-            foreach ($this->extractPositions($request) as $position) {
-                $candidateIds = $position['candidate_ids'];
-                unset($position['candidate_ids']);
-                $model = $polling->positions()->create($position);
-                if ($candidateIds !== []) {
-                    $model->candidates()->sync($candidateIds);
-                }
-            }
+            $this->syncPositionsOnUpdate($polling, $request);
         });
+        $this->syncElapsedPollings();
 
         return redirect()->route('admin.pollings.index')->with('success', 'Polling updated successfully.');
     }
@@ -270,33 +263,33 @@ class PollingController extends Controller
             ->where('polling_id', $polling->id)
             ->get();
 
-        $csv = "\xEF\xBB\xBF"."Position,Candidate,Voted By,Voter Email,Voter Mobile,Voted At\n";
-        foreach ($rows as $row) {
-            $line = [
-                (string) ($row->position->position ?? ''),
-                (string) ($row->candidate->name ?? ''),
-                (string) ($row->voter->name ?? ''),
-                (string) ($row->voter->email ?? ''),
-                (string) ($row->voter->mobile ?? ''),
-                (string) (optional($row->voted_at)->format('d M Y h:i A') ?? ''),
-            ];
-            $escaped = array_map(function (string $value): string {
-                $value = str_replace('"', '""', $value);
-                return '"'.$value.'"';
-            }, $line);
-            $csv .= implode(',', $escaped)."\n";
-        }
-
         $stamp = now()->format('Ymd-His');
         $fileName = 'polling-'.$polling->id.'-report-'.$stamp.'.csv';
-        $tmpPath = 'reports/'.$fileName;
-        Storage::disk('local')->put($tmpPath, $csv);
 
-        return response()
-            ->download(storage_path('app/'.$tmpPath), $fileName, [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-            ])
-            ->deleteFileAfterSend(true);
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Position', 'Candidate', 'Voted By', 'Voter Email', 'Voter Mobile', 'Voted At']);
+
+            foreach ($rows as $row) {
+                fputcsv($out, [
+                    (string) ($row->position->position ?? ''),
+                    (string) ($row->candidate->name ?? ''),
+                    (string) ($row->voter->name ?? ''),
+                    (string) ($row->voter->email ?? ''),
+                    (string) ($row->voter->mobile ?? ''),
+                    (string) (optional($row->voted_at)->format('d M Y h:i A') ?? ''),
+                ]);
+            }
+
+            fclose($out);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     private function rules(?int $id = null): array
@@ -314,6 +307,7 @@ class PollingController extends Controller
             'results_visible_to_members' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
             'positions' => 'required|array|min:1',
+            'positions.*.id' => 'nullable|integer|exists:polling_positions,id',
             'positions.*.position' => 'required|string|max:255',
             'positions.*.candidate_ids' => 'nullable|array',
             'positions.*.candidate_ids.*' => 'integer|exists:users,id',
@@ -364,12 +358,64 @@ class PollingController extends Controller
                 $ids = array_values(array_unique(array_map('intval', $row['candidate_ids'])));
             }
             $positions[] = [
+                'id' => isset($row['id']) && $row['id'] !== '' ? (int) $row['id'] : null,
                 'position' => (string) $row['position'],
                 'candidate_ids' => $ids,
             ];
         }
 
         return $positions;
+    }
+
+    private function syncPositionsOnUpdate(Polling $polling, Request $request): void
+    {
+        $submittedRows = $this->extractPositions($request);
+        $existing = $polling->positions()->with('votes')->get()->keyBy('id');
+        $keptIds = [];
+
+        foreach ($submittedRows as $row) {
+            $candidateIds = $row['candidate_ids'] ?? [];
+            $positionId = (int) ($row['id'] ?? 0);
+
+            if ($positionId > 0 && $existing->has($positionId)) {
+                $position = $existing->get($positionId);
+                $hasVotes = $position->votes()->exists();
+                $position->update([
+                    'position' => $row['position'],
+                ]);
+
+                // Preserve all already-voted candidates on edit so historic votes
+                // are always visible in admin stats/report, even after extending
+                // time or modifying candidates.
+                if ($hasVotes) {
+                    $votedCandidateIds = $position->votes()
+                        ->pluck('candidate_user_id')
+                        ->map(fn ($id) => (int) $id)
+                        ->all();
+                    $candidateIds = array_values(array_unique(array_merge($candidateIds, $votedCandidateIds)));
+                }
+
+                $position->candidates()->sync($candidateIds);
+                $keptIds[] = $positionId;
+                continue;
+            }
+
+            $created = $polling->positions()->create([
+                'position' => $row['position'],
+            ]);
+            $created->candidates()->sync($candidateIds);
+            $keptIds[] = (int) $created->id;
+        }
+
+        // Remove only positions removed from form that still have no votes.
+        $existing->each(function (PollingPosition $position) use ($keptIds) {
+            if (in_array((int) $position->id, $keptIds, true)) {
+                return;
+            }
+            if (! $position->votes()->exists()) {
+                $position->delete();
+            }
+        });
     }
 
     private function assertPollingWindowCoherent(array $validated): void
@@ -440,12 +486,17 @@ class PollingController extends Controller
             }
 
             if ($now->greaterThanOrEqualTo($start) && $polling->polling_status !== 'live') {
-                $polling->update(['polling_status' => 'live']);
+                $polling->update([
+                    'polling_status' => 'live',
+                    'is_active' => true,
+                ]);
                 continue;
             }
 
-            if ($now->lt($start) && $polling->polling_status !== 'ends') {
-                $polling->update(['polling_status' => 'ends']);
+            // Keep the admin-selected status before start time.
+            // Do not force future pollings to "ends".
+            if (! $polling->is_active) {
+                $polling->update(['is_active' => true]);
             }
         }
     }

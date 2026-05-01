@@ -71,13 +71,17 @@ class MeetingController extends Controller
         $this->mergeNormalizedScheduleTimes($request);
         $validated = $request->validate($this->rules());
 
-        DB::transaction(function () use ($request, $validated) {
+        $meeting = DB::transaction(function () use ($request, $validated) {
             $meeting = Meeting::create($this->buildPayload($request, $validated, true));
             $schedule = $this->extractSchedule($request);
             $meeting->schedules()->create($schedule);
+
+            return $meeting;
         });
 
-        return redirect()->route('admin.meetings.index')->with('success', 'Meeting created successfully.');
+        return redirect()
+            ->route('admin.meetings.invite', $meeting->id)
+            ->with('success', 'Meeting created successfully. Invite approved members now.');
     }
 
     public function edit(Meeting $meeting)
@@ -136,6 +140,22 @@ class MeetingController extends Controller
     {
         $this->syncElapsedMeetings();
         $q = trim((string) $request->query('q', ''));
+        $statusTab = (string) $request->query('status_tab', 'all');
+        $allowedTabs = ['all', 'invited', 'interested', 'participated', 'not_participated'];
+        if (! in_array($statusTab, $allowedTabs, true)) {
+            $statusTab = 'all';
+        }
+
+        // Old rows may carry auto-default "interested" before member action.
+        // Normalize those rows back to "invited" so interested count is accurate.
+        MeetingInvite::query()
+            ->where('meeting_id', $meeting->id)
+            ->where('participation_status', 'interested')
+            ->whereNull('attended_at')
+            ->whereNotNull('invited_at')
+            ->whereColumn('updated_at', '<=', 'invited_at')
+            ->update(['participation_status' => 'invited']);
+
         $members = User::query()
             ->where('is_approved', true)
             ->when($q !== '', function ($query) use ($q) {
@@ -157,18 +177,29 @@ class MeetingController extends Controller
         $invites = MeetingInvite::query()
             ->with('user:id,name,email,mobile')
             ->where('meeting_id', $meeting->id)
+            ->when($statusTab !== 'all', fn ($query) => $query->where('participation_status', $statusTab))
             ->latest('id')
             ->get();
 
-        return view('admin.meetings.invite', compact('meeting', 'members', 'invitedUserIds', 'invites', 'q'));
+        $statusCounts = MeetingInvite::query()
+            ->where('meeting_id', $meeting->id)
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN participation_status = 'invited' THEN 1 ELSE 0 END) as invited_count")
+            ->selectRaw("SUM(CASE WHEN participation_status = 'interested' THEN 1 ELSE 0 END) as interested_count")
+            ->selectRaw("SUM(CASE WHEN participation_status = 'participated' THEN 1 ELSE 0 END) as attended_count")
+            ->selectRaw("SUM(CASE WHEN participation_status = 'not_participated' THEN 1 ELSE 0 END) as not_attended_count")
+            ->first();
+
+        return view('admin.meetings.invite', compact('meeting', 'members', 'invitedUserIds', 'invites', 'q', 'statusTab', 'statusCounts'));
     }
 
     public function inviteStore(Meeting $meeting, Request $request)
     {
         $validated = $request->validate([
-            'target' => 'required|in:all,specific',
+            'target' => 'required|in:approved,specific',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'integer|exists:users,id',
+            'select_all_approved' => 'nullable|boolean',
             'notify_whatsapp' => 'nullable|boolean',
             'notify_sms' => 'nullable|boolean',
             'notify_email' => 'nullable|boolean',
@@ -184,7 +215,10 @@ class MeetingController extends Controller
             ])->withInput();
         }
 
-        $userIds = $validated['target'] === 'all'
+        $selectAllApproved = $request->boolean('select_all_approved');
+        $sendToApproved = $validated['target'] === 'approved' || $selectAllApproved;
+
+        $userIds = $sendToApproved
             ? User::query()->where('is_approved', true)->pluck('id')->all()
             : array_values(array_unique($validated['member_ids'] ?? []));
 
@@ -196,15 +230,29 @@ class MeetingController extends Controller
 
         $now = now();
         foreach ($userIds as $userId) {
-            MeetingInvite::updateOrCreate(
-                ['meeting_id' => $meeting->id, 'user_id' => $userId],
-                [
-                    'notify_whatsapp' => $notifyWhatsApp,
-                    'notify_sms' => $notifySms,
-                    'notify_email' => $notifyEmail,
-                    'invited_at' => $now,
-                ]
-            );
+            $invite = MeetingInvite::query()->firstOrNew([
+                'meeting_id' => $meeting->id,
+                'user_id' => $userId,
+            ]);
+
+            // Keep finalized responses; invite/re-invite should stay in "invited" state
+            // until member explicitly chooses Interested.
+            if (
+                ! $invite->exists
+                || empty($invite->participation_status)
+                || (
+                    in_array($invite->participation_status, ['invited', 'interested'], true)
+                    && $invite->attended_at === null
+                )
+            ) {
+                $invite->participation_status = 'invited';
+            }
+
+            $invite->notify_whatsapp = $notifyWhatsApp;
+            $invite->notify_sms = $notifySms;
+            $invite->notify_email = $notifyEmail;
+            $invite->invited_at = $now;
+            $invite->save();
         }
 
         return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Members invited successfully.');
@@ -236,7 +284,7 @@ class MeetingController extends Controller
         }
 
         $validated = $request->validate([
-            'participation_status' => 'required|in:interested,participated,not_participated',
+            'participation_status' => 'required|in:invited,interested,participated,not_participated',
         ]);
 
         $invite->update([

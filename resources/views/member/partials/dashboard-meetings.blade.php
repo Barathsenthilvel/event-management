@@ -1,5 +1,5 @@
 {{--
-    Member dashboard — upcoming meetings (invite-aware: open OR invited).
+    Member dashboard — upcoming invited meetings only.
     Expects: $upcomingMeetings (Meeting collection with schedules + invites for current user)
 --}}
 @php
@@ -28,7 +28,7 @@
                 <div>
                     <h2 id="dash-meetings-title" class="text-lg font-extrabold tracking-tight text-[#351c42] sm:text-xl">Your meeting schedule</h2>
                     <p class="mt-1 max-w-2xl text-sm leading-relaxed text-[#351c42]/65">
-                        Sessions from the office: <span class="font-semibold text-[#351c42]/80">open meetings</span> for all members, plus any you were <span class="font-semibold text-[#351c42]/80">personally invited</span> to. Soonest dates appear first.
+                        Sessions from the office that you were <span class="font-semibold text-[#351c42]/80">personally invited</span> to. Soonest dates appear first.
                     </p>
                 </div>
             </div>
@@ -40,13 +40,15 @@
                     $sch = $mtg->schedules->first();
                     $modeLabel = $modeLabels[$mtg->meeting_mode] ?? ucfirst(str_replace('_', ' ', (string) $mtg->meeting_mode));
                     $isInvited = $mtg->invites->isNotEmpty();
+                    $memberInvite = $mtg->invites->first();
+                    $memberResponse = $memberInvite->participation_status ?? null;
                     $desc = trim(strip_tags((string) ($mtg->description ?? '')));
                     $coverUrl = $mtg->cover_image_path ? asset('storage/' . ltrim($mtg->cover_image_path, '/')) : null;
                 @endphp
                 <li class="group rounded-2xl border border-[#351c42]/10 bg-gradient-to-br from-[#faf9fc] to-white shadow-sm transition hover:border-[#965995]/35 hover:shadow-md">
-                    <div class="flex flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-5">
+                    <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-[5rem_minmax(0,1fr)_12rem] sm:gap-5 sm:p-5">
                         {{-- Date column --}}
-                        <div class="flex shrink-0 gap-3 sm:flex-col sm:items-center sm:text-center">
+                        <div class="flex gap-3 sm:flex-col sm:items-center sm:text-center">
                             @if($sch && $sch->meeting_date)
                                 <div class="flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-2xl border border-[#965995]/25 bg-white shadow-inner sm:h-[5rem] sm:w-[5rem]">
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-[#965995]">{{ $sch->meeting_date->format('M') }}</span>
@@ -59,7 +61,7 @@
                         </div>
 
                         {{-- Body --}}
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 @if($mtg->status === 'live')
                                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-800">
@@ -72,11 +74,9 @@
                                 @else
                                     <span class="inline-flex rounded-full bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#351c42]/70">Upcoming</span>
                                 @endif
-                                @if($isInvited)
-                                    <span class="inline-flex rounded-full bg-[#965995]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#965995]">Invited</span>
-                                @else
-                                    <span class="inline-flex rounded-full bg-[#351c42]/8 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#351c42]/55">Open</span>
-                                @endif
+                                <span class="inline-flex rounded-full bg-[#965995]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#965995]">
+                                    {{ $isInvited ? 'Invited' : 'Meeting' }}
+                                </span>
                                 <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#351c42]/70 ring-1 ring-[#351c42]/10">{{ $modeLabel }}</span>
                             </div>
 
@@ -94,13 +94,10 @@
                                 </p>
                             @endif
 
-                            @if($desc !== '')
-                                <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-[#351c42]/65">{{ \Illuminate\Support\Str::limit($desc, 200) }}</p>
-                            @endif
                         </div>
 
                         {{-- Media + CTA --}}
-                        <div class="flex shrink-0 flex-col items-stretch gap-3 sm:w-44 sm:items-end">
+                        <div class="flex flex-col items-stretch gap-3 sm:items-end sm:justify-start">
                             @if($coverUrl)
                                 <div class="hidden overflow-hidden rounded-xl border border-[#351c42]/10 sm:block sm:h-20 sm:w-full">
                                     <img src="{{ $coverUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" width="176" height="80" />
@@ -120,6 +117,39 @@
                                 <span class="inline-flex w-full items-center justify-center rounded-xl border border-dashed border-[#351c42]/25 bg-white/80 px-4 py-3 text-center text-xs font-bold text-[#351c42]/55 sm:w-auto">Link not published yet</span>
                             @endif
                         </div>
+
+                        @if($desc !== '')
+                            <div class="sm:col-span-3">
+                                <p class="text-sm leading-relaxed text-[#351c42]/65 break-all whitespace-pre-wrap">{{ $desc }}</p>
+                            </div>
+                        @endif
+
+                        @if($isInvited)
+                            <div class="sm:col-span-3">
+                                <div class="flex w-full justify-end pt-1">
+                                    <div class="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
+                                        <form method="POST" action="{{ route('member.meetings.response', $mtg->id) }}">
+                                            @csrf
+                                            <input type="hidden" name="response" value="interested">
+                                            <button type="submit"
+                                                class="inline-flex w-full items-center justify-center rounded-full px-4 py-1.5 text-xs font-extrabold text-white transition sm:min-w-[12rem] {{ $memberResponse === 'interested' ? 'bg-emerald-300 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700' }}"
+                                                @disabled($memberResponse === 'interested')>
+                                                {{ $memberResponse === 'interested' ? 'Already Interested' : 'Interested' }}
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ route('member.meetings.response', $mtg->id) }}">
+                                            @csrf
+                                            <input type="hidden" name="response" value="not_interested">
+                                            <button type="submit"
+                                                class="inline-flex w-full items-center justify-center rounded-full border px-4 py-1.5 text-xs font-extrabold transition sm:min-w-[12rem] {{ $memberResponse === 'not_participated' ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400' : 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' }}"
+                                                @disabled($memberResponse === 'not_participated')>
+                                                {{ $memberResponse === 'not_participated' ? 'Not interested (recorded)' : 'Not Interested' }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </li>
             @endforeach

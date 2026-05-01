@@ -34,11 +34,6 @@
                class="rounded-full px-4 py-2 transition {{ $tab === 'nominations' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900' }}">
                 All nominations
             </a>
-            <a href="{{ route('admin.nominations.index', array_filter(['tab' => 'interests', 'q' => $q, 'response' => $response ?? 'all'])) }}"
-               class="rounded-full px-4 py-2 transition {{ $tab === 'interests' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900' }}">
-                Responses
-                <span class="ml-1 rounded-md bg-white/20 px-1.5 py-0.5 text-[10px] font-black tabular-nums">{{ $responseCount ?? 0 }}</span>
-            </a>
         </div>
     </div>
 
