@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\AdminJob;
 use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
-use App\Models\MemberJobRequest;
 use App\Models\Designation;
 use App\Models\Hospital;
+use App\Models\MemberJobRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminJobController extends Controller
@@ -26,9 +27,9 @@ class AdminJobController extends Controller
             ->withCount('applications')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('hospital', 'like', '%' . $q . '%')
-                        ->orWhere('title', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%');
+                    $sub->where('hospital', 'like', '%'.$q.'%')
+                        ->orWhere('title', 'like', '%'.$q.'%')
+                        ->orWhere('code', 'like', '%'.$q.'%');
                 });
             })
             ->when($hospital !== '', fn ($query) => $query->where('hospital', $hospital))
@@ -53,7 +54,9 @@ class AdminJobController extends Controller
     {
         $validated = $request->validate($this->rules());
         $this->validateChoiceGroups($request);
-        AdminJob::create($this->buildPayload($request, $validated, true));
+        $payload = $this->buildPayload($request, $validated, true);
+        AdminJob::create($payload);
+
         return redirect()->route('admin.jobs.index')->with('success', 'Job created successfully.');
     }
 
@@ -71,15 +74,28 @@ class AdminJobController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
+            'logo' => 'nullable|image|max:2048',
         ]);
 
+        $name = trim((string) $validated['name']);
+        $existing = Hospital::query()->where('name', $name)->first();
+
+        $data = [
+            'address' => trim((string) $validated['address']),
+            'is_active' => true,
+            'created_by_admin_id' => Auth::guard('admin')->id(),
+        ];
+
+        if ($request->hasFile('logo')) {
+            if ($existing && ! empty($existing->logo_path)) {
+                Storage::disk('public')->delete($existing->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('hospitals/logos', 'public');
+        }
+
         $hospital = Hospital::query()->updateOrCreate(
-            ['name' => trim((string) $validated['name'])],
-            [
-                'address' => trim((string) $validated['address']),
-                'is_active' => true,
-                'created_by_admin_id' => Auth::guard('admin')->id(),
-            ]
+            ['name' => $name],
+            $data
         );
 
         if ($request->expectsJson() || $request->ajax()) {
@@ -90,6 +106,8 @@ class AdminJobController extends Controller
                     'id' => $hospital->id,
                     'name' => $hospital->name,
                     'address' => $hospital->address,
+                    'logo_path' => $hospital->logo_path,
+                    'logo_url' => $hospital->logo_path ? asset('storage/'.$hospital->logo_path) : null,
                 ],
             ]);
         }
@@ -101,31 +119,40 @@ class AdminJobController extends Controller
     {
         $validated = $request->validate($this->rules($job->id));
         $this->validateChoiceGroups($request);
-        $job->update($this->buildPayload($request, $validated, false));
+        $payload = $this->buildPayload($request, $validated, false);
+        $job->update($payload);
+
         return redirect()->route('admin.jobs.index')->with('success', 'Job updated successfully.');
     }
 
     public function destroy(AdminJob $job)
     {
+        if (! empty($job->hospital_logo_path)) {
+            Storage::disk('public')->delete($job->hospital_logo_path);
+        }
         $job->delete();
+
         return redirect()->route('admin.jobs.index')->with('success', 'Job deleted successfully.');
     }
 
     public function togglePromote(AdminJob $job)
     {
-        $job->update(['promote_front' => !$job->promote_front]);
+        $job->update(['promote_front' => ! $job->promote_front]);
+
         return back()->with('success', 'Promote front updated.');
     }
 
     public function toggleStatus(AdminJob $job)
     {
-        $job->update(['is_active' => !$job->is_active]);
+        $job->update(['is_active' => ! $job->is_active]);
+
         return back()->with('success', 'Display status updated.');
     }
 
     public function toggleListing(AdminJob $job)
     {
         $job->update(['listing_status' => $job->listing_status === 'listed' ? 'unlisted' : 'listed']);
+
         return back()->with('success', 'Listing status updated.');
     }
 
@@ -143,9 +170,9 @@ class AdminJobController extends Controller
             })
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('mobile', 'like', '%' . $q . '%');
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
                 });
             })
             ->with('designation:id,name')
@@ -181,7 +208,7 @@ class AdminJobController extends Controller
             $notifyEmail = true;
         }
 
-        if (!$notifyWhatsApp && !$notifySms && !$notifyEmail) {
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
             return back()->withErrors(['notify_channel' => 'Select at least one notification channel.'])->withInput();
         }
 
@@ -225,13 +252,13 @@ class AdminJobController extends Controller
             ->where('job_id', $job->id)
             ->when($q !== '', function ($query) use ($q) {
                 $query->whereHas('user', function ($userQ) use ($q) {
-                    $userQ->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('mobile', 'like', '%' . $q . '%');
+                    $userQ->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
                 });
             })
             ->latest('id')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.jobs.applications', compact('job', 'applications', 'q'));
@@ -245,7 +272,7 @@ class AdminJobController extends Controller
             ->orderBy('id')
             ->get();
 
-        $filename = 'job-report-' . $job->id . '-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'job-report-'.$job->id.'-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($applications, $job) {
             $stream = fopen('php://output', 'w');
@@ -317,6 +344,74 @@ class AdminJobController extends Controller
         ]);
     }
 
+    public function downloadNeedJobRequestsReport(Request $request): StreamedResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('status', ''));
+
+        $rows = MemberJobRequest::query()
+            ->with('user:id,name,email,mobile')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%')
+                        ->orWhere('position_looking_for', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->latest('id')
+            ->get();
+
+        $filename = 'need-job-requests-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            $stream = fopen('php://output', 'w');
+            if ($stream === false) {
+                return;
+            }
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, [
+                'ID',
+                'Name',
+                'Account member',
+                'Email',
+                'Mobile',
+                'Qualification',
+                'Position looking for',
+                'Experience',
+                'Details',
+                'Resume file',
+                'Status',
+                'Submitted at',
+            ]);
+
+            foreach ($rows as $row) {
+                $resumeCell = $row->resume_path
+                    ? (string) $row->resume_path
+                    : '';
+                fputcsv($stream, [
+                    $row->id,
+                    $row->name ?? '',
+                    $row->user->name ?? '',
+                    $row->email ?? '',
+                    $row->mobile ?? '',
+                    $row->qualification ?? '',
+                    $row->position_looking_for ?? '',
+                    $row->experience ?? '',
+                    $row->details ?? '',
+                    $resumeCell,
+                    $row->status ?? '',
+                    optional($row->created_at)->format('Y-m-d H:i:s') ?? '',
+                ]);
+            }
+
+            fclose($stream);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     public function updateNeedJobRequestStatus(MemberJobRequest $requestRow, Request $request)
     {
         $validated = $request->validate([
@@ -335,7 +430,7 @@ class AdminJobController extends Controller
         return [
             'hospital' => 'required|string|max:255',
             'title' => 'required|string|max:255',
-            'code' => 'required|string|max:100|unique:admin_jobs,code,' . ($jobId ?? 'NULL') . ',id',
+            'code' => 'required|string|max:100|unique:admin_jobs,code,'.($jobId ?? 'NULL').',id',
             'no_of_openings' => 'required|integer|min:0',
             'vacancy_permanent' => 'nullable|boolean',
             'vacancy_temporary' => 'nullable|boolean',
@@ -424,4 +519,3 @@ class AdminJobController extends Controller
         }
     }
 }
-

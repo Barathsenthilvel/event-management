@@ -3,7 +3,7 @@
     @param \App\Models\Event $event
     @param string $mode — 'tracking' | 'list'
     For tracking: pass $invite (\App\Models\EventInvite)
-    For list: pass $alreadyInterested (bool), $myInvite (?EventInvite), $seatsFull (bool)
+    For list: pass $alreadyInterested (bool), $myInvite (?EventInvite)
 --}}
 @php
     $cover = $event->cover_image_path ? asset('storage/' . $event->cover_image_path) : asset('images/event1.jpg');
@@ -48,8 +48,7 @@
     $seatLimited = ($event->seat_mode ?? '') === 'limited';
     $seatCap = max(0, (int) ($event->seat_limit ?? 0));
     $filled = (int) ($event->interested_count ?? 0);
-    $seatsFullComputed = $seatLimited && $seatCap > 0 && $filled >= $seatCap;
-    $seatsFull = isset($seatsFull) ? (bool) $seatsFull : $seatsFullComputed;
+    $seatPct = ($seatLimited && $seatCap > 0) ? min(100, (int) round((100 * $filled) / $seatCap)) : 0;
 @endphp
 <article class="overflow-hidden rounded-2xl border border-[#351c42]/10 bg-white shadow-sm">
     <div class="grid gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,280px)_1fr] md:items-stretch">
@@ -63,7 +62,7 @@
 
         <div class="flex min-w-0 flex-col">
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="inline-flex max-w-full items-center gap-3 rounded-full border border-[#351c42]/10 bg-white/80 px-3 py-2 sm:px-4"
+                <div class="inline-flex max-w-full cursor-help items-center gap-3 rounded-full border border-[#351c42]/10 bg-white/80 px-3 py-2 sm:px-4"
                      title="{{ $moreDatesTooltip }}">
                     <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -73,19 +72,46 @@
                     </span>
                     <span class="text-xs font-semibold text-[#351c42]/70">{{ $scheduleChipText }}</span>
                 </div>
-                <div class="shrink-0 rounded-full border border-[#351c42]/15 bg-white px-3 py-1.5 text-right shadow-sm" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
-                    @if ($seatLimited)
-                        @if($seatsFull)
-                            <div class="text-[9px] font-black uppercase tracking-wider text-rose-600 leading-none">Registration</div>
-                            <div class="mt-0.5 text-[10px] font-extrabold uppercase text-rose-800">Closed</div>
-                        @else
-                            <div class="text-[9px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">Limited</div>
-                            <div class="mt-0.5 text-xs font-extrabold tabular-nums text-[#351c42]">{{ $filled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
-                        @endif
-                    @else
-                        <div class="py-0.5 text-[10px] font-black uppercase tracking-wide leading-tight text-[#351c42]">Unlimited</div>
-                    @endif
-                </div>
+                @if ($seatLimited)
+                    <div
+                        class="w-[6.75rem] shrink-0 rounded-2xl border border-[#351c42]/10 bg-gradient-to-b from-white to-[#faf8fc] px-2.5 py-2 shadow-sm ring-1 ring-[#351c42]/5 sm:w-[7.25rem]"
+                        role="group"
+                        aria-label="Seats {{ $filled }} of {{ $seatCap > 0 ? $seatCap : '—' }} registered"
+                    >
+                        <div class="flex items-baseline justify-between gap-1">
+                            <span class="text-[9px] font-bold uppercase tracking-wide text-[#965995]">Seats</span>
+                            <span class="text-[11px] font-extrabold tabular-nums leading-none text-[#351c42]">
+                                {{ $filled }}<span class="mx-0.5 font-semibold text-[#351c42]/35">/</span>{{ $seatCap > 0 ? $seatCap : '—' }}
+                            </span>
+                        </div>
+                        <div
+                            class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[#351c42]/10"
+                            role="progressbar"
+                            aria-valuemin="0"
+                            aria-valuemax="{{ $seatCap > 0 ? $seatCap : 1 }}"
+                            aria-valuenow="{{ min($filled, $seatCap > 0 ? $seatCap : $filled) }}"
+                            aria-label="Registration fill"
+                        >
+                            <div
+                                class="h-full rounded-full bg-gradient-to-r from-[#965995] via-[#8a4d88] to-[#7a4678] transition-[width] duration-300"
+                                style="width: {{ $seatPct }}%"
+                            ></div>
+                        </div>
+                    </div>
+                @else
+                    <div
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#351c42]/10 bg-[#f6f3e9]/80 px-2.5 py-1.5 shadow-sm"
+                        aria-label="Unlimited seats"
+                    >
+                        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]" aria-hidden="true">
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6.636 12.568C5.803 11.751 5.25 10.688 5.25 9.5 5.25 7.153 7.153 5.25 9.5 5.25c1.854 0 3.426 1.126 4.1 2.735.352.82.538 1.717.538 2.765s-.186 1.945-.538 2.765c-.774 1.609-2.246 2.735-4.1 2.735-1.182 0-2.26-.45-3.064-1.19"/>
+                                <path d="M17.364 12.568c.833-.817 1.386-1.88 1.386-3.068 0-2.347-1.903-4.25-4.25-4.25-1.854 0-3.426 1.126-4.1 2.735-.352.82-.538 1.717-.538 2.765s.186 1.945.538 2.765c.774 1.609 2.246 2.735 4.1 2.735 1.182 0 2.26-.45 3.064-1.19"/>
+                            </svg>
+                        </span>
+                        <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited</span>
+                    </div>
+                @endif
             </div>
 
             <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
@@ -110,9 +136,10 @@
                     </p>
                     <button
                         type="button"
-                        class="mt-2 hidden items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                        class="mt-2 hidden cursor-pointer items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                         data-desc-toggle
                         aria-expanded="false"
+                        title="Read full description"
                     >
                         Read more
                     </button>
@@ -182,7 +209,7 @@
                 </div>
                 <button
                     type="button"
-                    class="inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-transparent px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#fddc6a] transition hover:bg-[#fddc6a]/10 sm:ml-2"
+                    class="inline-flex min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-transparent px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#fddc6a] transition hover:bg-[#fddc6a]/10 sm:ml-2"
                     data-open-attendance-qr
                     data-qr-title="{{ $event->title }}"
                     data-qr-value="{{ $attendanceQrUrl }}"
@@ -224,14 +251,6 @@
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
                 <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</p>
             </div>
-        @elseif($seatsFull)
-            <div class="rounded-b-2xl border-t border-rose-200 bg-rose-50 px-4 py-3 sm:px-6">
-                <p class="text-center text-sm font-extrabold text-rose-900">Registration closed</p>
-                <p class="mt-1 text-center text-xs font-semibold text-rose-800/90">Seat limit reached ({{ $filled }} / {{ $seatCap }}).</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6">
-                @include('member.partials.member-event-interested-stack', ['event' => $event])
-            </div>
         @else
             <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
@@ -239,7 +258,7 @@
                     @csrf
                     <button
                         type="submit"
-                        class="inline-flex min-h-[2.1rem] min-w-[6.75rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
+                        class="inline-flex min-h-[2.1rem] min-w-[6.75rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Interested
                     </button>
@@ -293,6 +312,7 @@
                 text.style.overflow = 'hidden';
                 btn.setAttribute('aria-expanded', 'false');
                 btn.textContent = 'Read more';
+                btn.setAttribute('title', 'Read full description');
             } else {
                 text.style.display = '';
                 text.style.webkitBoxOrient = '';
@@ -300,6 +320,7 @@
                 text.style.overflow = '';
                 btn.setAttribute('aria-expanded', 'true');
                 btn.textContent = 'Show less';
+                btn.setAttribute('title', 'Show less text');
             }
         });
     })();

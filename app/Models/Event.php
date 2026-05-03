@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,5 +59,52 @@ class Event extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by_admin_id');
+    }
+
+    public function isPastRegistrationDeadline(): bool
+    {
+        if ($this->status === 'completed') {
+            return true;
+        }
+
+        $this->loadMissing('dates');
+        $lastDate = $this->dates->sortBy('event_date')->last();
+        if (! $lastDate?->event_date) {
+            return false;
+        }
+
+        $endTime = $lastDate->end_time ?: '23:59';
+        $endAt = Carbon::parse($lastDate->event_date->format('Y-m-d').' '.$endTime);
+
+        return now()->greaterThan($endAt);
+    }
+
+    public function isAtSeatLimit(): bool
+    {
+        return $this->seat_mode === 'limited'
+            && $this->seat_limit !== null
+            && (int) $this->interested_count >= (int) $this->seat_limit;
+    }
+
+    /**
+     * Recompute interested_count: all invites plus guest interests and member interests
+     * that are not already represented by an invite (avoids double-counting the same user).
+     */
+    public function syncInterestedCountFromRegistrations(): void
+    {
+        $invitedUserIds = $this->invites()->pluck('user_id')->filter()->unique()->values()->all();
+
+        $extraInterests = $this->interests()
+            ->where(function ($q) use ($invitedUserIds) {
+                $q->whereNull('user_id');
+                if ($invitedUserIds !== []) {
+                    $q->orWhereNotIn('user_id', $invitedUserIds);
+                }
+            })
+            ->count();
+
+        $this->update([
+            'interested_count' => $this->invites()->count() + $extraInterests,
+        ]);
     }
 }

@@ -16,6 +16,7 @@ class AdminJob extends Model
     protected $fillable = [
         'created_by_admin_id',
         'hospital',
+        'hospital_logo_path',
         'title',
         'code',
         'no_of_openings',
@@ -66,4 +67,3 @@ class AdminJob extends Model
         return $this->hasMany(MemberSavedJob::class, 'job_id');
     }
 }
-

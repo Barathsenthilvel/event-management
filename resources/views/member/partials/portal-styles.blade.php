@@ -47,6 +47,7 @@
         box-shadow: inset 0 0 0 1px rgba(53, 28, 66, 0.08);
     }
     .md-btn-interest {
+        cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;

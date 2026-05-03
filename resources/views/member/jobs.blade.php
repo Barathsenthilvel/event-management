@@ -76,7 +76,11 @@
                     <p class="text-sm font-semibold text-[#351c42]/70">No jobs found in this tab.</p>
                 </div>
             @else
-                <div class="grid gap-5 md:grid-cols-2">
+                @php
+                    $profileResumeAvailable = $profileResumeAvailable ?? false;
+                    $hospitalLogos = $hospitalLogos ?? collect();
+                @endphp
+                <div class="grid max-w-4xl gap-5">
                     @foreach($jobs as $job)
                         @php
                             $alreadyApplied = in_array((int) $job->id, $appliedJobIds ?? [], true);
@@ -89,18 +93,49 @@
                                 $job->preference_wfh ? 'WFH' : null,
                                 $job->preference_onsite ? 'Onsite' : null,
                             ])->filter()->implode(' / '));
+                            $dirLogoPath = $job->hospital ? $hospitalLogos->get($job->hospital) : null;
+                            $hospitalLogoUrl = $job->hospital_logo_path
+                                ? asset('storage/' . ltrim($job->hospital_logo_path, '/'))
+                                : ($dirLogoPath ? asset('storage/' . ltrim($dirLogoPath, '/')) : null);
+                            $hospitalLabel = $job->hospital ?: 'Hospital';
+                            $hospitalCompact = preg_replace('/\s+/u', '', $hospitalLabel) ?: 'H';
+                            $hospitalInitials = mb_strtoupper(mb_substr($hospitalCompact, 0, 2));
+                            $jobReadMoreMeta = array_values(array_filter([
+                                ['label' => 'Hospital', 'value' => $hospitalLabel],
+                                ['label' => 'Job code', 'value' => $job->code ? (string) $job->code : null],
+                                ['label' => 'Vacancy type', 'value' => $jobType !== '' ? $jobType : 'Any'],
+                                ['label' => 'Preference', 'value' => $prefType !== '' ? $prefType : 'Any'],
+                                ['label' => 'No. of openings', 'value' => (string) (int) ($job->no_of_openings ?? 0)],
+                            ], fn ($row) => ! empty($row['value'])));
+                            $jobReadMoreParts = [];
+                            if (trim((string) ($job->description ?? '')) !== '') {
+                                $jobReadMoreParts[] = "Job description\n\n".trim((string) $job->description);
+                            }
+                            if (trim((string) ($job->key_skills ?? '')) !== '') {
+                                $jobReadMoreParts[] = "Key skills or roles & responsibility\n\n".trim((string) $job->key_skills);
+                            }
+                            $jobReadMoreBody = $jobReadMoreParts === []
+                                ? 'No job description or key skills have been added for this listing.'
+                                : implode("\n\n—\n\n", $jobReadMoreParts);
                         @endphp
-                        <article class="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <article class="group flex h-full w-full flex-col overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                             <div class="h-1 w-full bg-gradient-to-r from-[#351c42] via-[#6c3f79] to-[#965995]"></div>
                             <div class="flex h-full flex-col p-5">
                                 <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#965995]">{{ $job->hospital ?: 'Hospital' }}</p>
-                                        <h2 class="mt-1 line-clamp-2 text-xl font-extrabold tracking-tight text-[#351c42]">{{ $job->title }}</h2>
-                                        <p class="mt-1 text-[11px] font-bold text-[#351c42]/65">Job code: {{ $job->code ?: 'N/A' }}</p>
+                                    <div class="flex min-w-0 flex-1 items-start gap-3">
+                                        @if($hospitalLogoUrl)
+                                            <img src="{{ $hospitalLogoUrl }}" alt="" class="h-12 w-12 shrink-0 rounded-xl border border-[#351c42]/10 object-cover shadow-sm" width="48" height="48" loading="lazy">
+                                        @else
+                                            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#351c42]/10 bg-[#965995]/12 text-[11px] font-extrabold text-[#965995]" aria-hidden="true">{{ $hospitalInitials }}</span>
+                                        @endif
+                                        <div class="min-w-0">
+                                            <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#965995]">{{ $hospitalLabel }}</p>
+                                            <h2 class="mt-1 line-clamp-2 text-xl font-extrabold tracking-tight text-[#351c42]">{{ $job->title }}</h2>
+                                            <p class="mt-1 text-[11px] font-bold text-[#351c42]/65">Job code: {{ $job->code ?: 'N/A' }}</p>
+                                        </div>
                                     </div>
                                     @if($job->promote_front)
-                                        <span class="rounded-full border border-[#965995]/30 bg-[#965995]/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#965995]">Featured</span>
+                                        <span class="shrink-0 rounded-full border border-[#965995]/30 bg-[#965995]/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#965995]">Featured</span>
                                     @endif
                                 </div>
 
@@ -114,6 +149,20 @@
                                     <p class="mt-4 text-sm leading-6 text-[#351c42]/80 line-clamp-3">{{ $job->description }}</p>
                                 @endif
 
+                                <button
+                                    type="button"
+                                    class="mt-3 inline-flex items-center gap-1 text-sm font-extrabold text-[#965995] underline decoration-[#965995]/35 underline-offset-2 transition hover:text-[#351c42] hover:decoration-[#351c42]/40"
+                                    data-read-more
+                                    data-read-more-title="{{ e($job->title) }}"
+                                    data-read-more-meta='@json($jobReadMoreMeta)'
+                                    data-read-more-content='@json($jobReadMoreBody)'
+                                >
+                                    Read more
+                                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+
                                 <div class="mt-5 flex items-center gap-2 border-t border-[#351c42]/10 pt-4">
                                     <form method="POST" action="{{ route('member.jobs.save-toggle', $job->id) }}" class="shrink-0">
                                         @csrf
@@ -124,12 +173,15 @@
                                         </button>
                                     </form>
                                     @if($alreadyApplied)
-                                        <button type="button" disabled class="inline-flex flex-1 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-800">Applied</button>
+                                        <button type="button" disabled class="inline-flex flex-1 cursor-not-allowed items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-extrabold text-emerald-800">Applied</button>
                                     @else
-                                        <form method="POST" action="{{ route('member.jobs.apply', $job->id) }}" class="flex-1">
-                                            @csrf
-                                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#291331]">Apply now</button>
-                                        </form>
+                                        <button
+                                            type="button"
+                                            class="job-apply-open-btn inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#291331]"
+                                            data-apply-url="{{ route('member.jobs.apply', $job->id) }}"
+                                            data-job-title="{{ e($job->title) }}"
+                                            data-profile-resume="{{ $profileResumeAvailable ? '1' : '0' }}"
+                                        >Apply now</button>
                                     @endif
                                 </div>
                             </div>
@@ -140,6 +192,121 @@
                 <div class="pt-2">
                     {{ $jobs->links() }}
                 </div>
+
+                <div
+                    id="job-apply-choice-modal"
+                    class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/45 p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="job-apply-choice-title"
+                >
+                    <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+                        <h3 id="job-apply-choice-title" class="text-lg font-extrabold text-[#351c42]">Submit application</h3>
+                        <p id="job-apply-choice-subtitle" class="mt-1 text-sm font-semibold text-[#351c42]/70"></p>
+                        <p class="mt-2 text-sm text-[#351c42]/65">Choose whether to use the resume already on your profile (educational certificate) or upload a different PDF for this application.</p>
+                        <form id="job-apply-choice-form" method="POST" action="#" class="mt-5 space-y-4" enctype="multipart/form-data">
+                            @csrf
+                            <fieldset class="space-y-3">
+                                <legend class="sr-only">Resume source</legend>
+                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#351c42]/15 bg-[#faf8fc] p-3">
+                                    <input type="radio" name="resume_choice" value="profile" class="mt-1 text-[#351c42]" data-job-apply-profile-radio>
+                                    <span class="text-sm font-semibold text-[#351c42]">Use resume from my profile <span class="block text-xs font-normal text-[#351c42]/60">Same file as your educational certificate on file.</span></span>
+                                </label>
+                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#351c42]/15 bg-white p-3">
+                                    <input type="radio" name="resume_choice" value="upload" class="mt-1 text-[#351c42]" checked data-job-apply-upload-radio>
+                                    <span class="text-sm font-semibold text-[#351c42]">Upload a different resume <span class="block text-xs font-normal text-[#351c42]/60">PDF, max 5&nbsp;MB.</span></span>
+                                </label>
+                            </fieldset>
+                            <div id="job-apply-upload-field" class="rounded-xl border border-dashed border-[#351c42]/20 bg-[#faf8fc] p-4">
+                                <label class="block text-xs font-extrabold uppercase tracking-wide text-[#351c42]/70">Resume (PDF)</label>
+                                <input type="file" name="resume" accept=".pdf,application/pdf" class="mt-2 block w-full text-xs font-semibold text-[#351c42]/80 file:mr-2 file:rounded-lg file:border-0 file:bg-[#351c42] file:px-3 file:py-2 file:text-xs file:font-bold file:text-[#fddc6a]">
+                            </div>
+                            <p id="job-apply-profile-hint" class="hidden text-xs font-semibold text-amber-800"></p>
+                            <div class="flex flex-wrap gap-2 pt-2">
+                                <button type="button" id="job-apply-choice-cancel" class="flex-1 rounded-xl border border-[#351c42]/20 bg-white px-4 py-2.5 text-sm font-extrabold text-[#351c42] transition hover:bg-[#351c42]/5">Cancel</button>
+                                <button type="submit" class="flex-1 rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#291331]">Submit application</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <script>
+                    (function () {
+                        var modal = document.getElementById('job-apply-choice-modal');
+                        var form = document.getElementById('job-apply-choice-form');
+                        var subtitle = document.getElementById('job-apply-choice-subtitle');
+                        var cancel = document.getElementById('job-apply-choice-cancel');
+                        var uploadWrap = document.getElementById('job-apply-upload-field');
+                        var profileRadio = form && form.querySelector('[data-job-apply-profile-radio]');
+                        var uploadRadio = form && form.querySelector('[data-job-apply-upload-radio]');
+                        var profileHint = document.getElementById('job-apply-profile-hint');
+                        if (!modal || !form) return;
+
+                        function toggleUploadField() {
+                            var useUpload = uploadRadio && uploadRadio.checked;
+                            if (uploadWrap) uploadWrap.classList.toggle('hidden', !useUpload);
+                            var fileInput = form.querySelector('input[name="resume"]');
+                            if (fileInput) {
+                                fileInput.required = !!useUpload;
+                                if (!useUpload) fileInput.value = '';
+                            }
+                        }
+
+                        function openModal(url, jobTitle, profileOk) {
+                            form.action = url;
+                            if (subtitle) subtitle.textContent = jobTitle ? ('Role: ' + jobTitle) : '';
+                            var hasProfile = profileOk === '1' || profileOk === true;
+                            if (profileRadio) {
+                                profileRadio.disabled = !hasProfile;
+                                if (hasProfile) {
+                                    profileRadio.checked = true;
+                                    if (uploadRadio) uploadRadio.checked = false;
+                                } else {
+                                    if (uploadRadio) uploadRadio.checked = true;
+                                }
+                            }
+                            if (profileHint) {
+                                if (!hasProfile) {
+                                    profileHint.textContent = 'No profile resume on file — upload a PDF below or add your certificate in your profile.';
+                                    profileHint.classList.remove('hidden');
+                                } else {
+                                    profileHint.classList.add('hidden');
+                                    profileHint.textContent = '';
+                                }
+                            }
+                            toggleUploadField();
+                            modal.classList.remove('hidden');
+                            modal.classList.add('flex');
+                            document.body.classList.add('overflow-hidden');
+                        }
+
+                        function closeModal() {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                            document.body.classList.remove('overflow-hidden');
+                            form.action = '#';
+                            var fileInput = form.querySelector('input[name="resume"]');
+                            if (fileInput) fileInput.value = '';
+                        }
+
+                        document.querySelectorAll('.job-apply-open-btn').forEach(function (btn) {
+                            btn.addEventListener('click', function () {
+                                openModal(btn.getAttribute('data-apply-url'), btn.getAttribute('data-job-title'), btn.getAttribute('data-profile-resume'));
+                            });
+                        });
+
+                        if (profileRadio) profileRadio.addEventListener('change', toggleUploadField);
+                        if (uploadRadio) uploadRadio.addEventListener('change', toggleUploadField);
+
+                        if (cancel) cancel.addEventListener('click', closeModal);
+                        modal.addEventListener('click', function (e) {
+                            if (e.target === modal) closeModal();
+                        });
+                        document.addEventListener('keydown', function (e) {
+                            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+                        });
+                    })();
+                </script>
             @endif
         @else
             @php
@@ -221,10 +388,10 @@
                         </svg>
                     @endif
                 </div>
-                <h3 class="mt-4 text-center text-lg font-extrabold text-[#351c42]">
-                    {{ $jobApplyModalType === 'success' ? 'Application submitted' : 'Application failed' }}
-                </h3>
-                <p class="mt-2 text-center text-sm font-semibold text-[#351c42]/80">
+                @if($jobApplyModalType !== 'success')
+                    <h3 class="mt-4 text-center text-lg font-extrabold text-[#351c42]">Application failed</h3>
+                @endif
+                <p class="{{ $jobApplyModalType === 'success' ? 'mt-4' : 'mt-2' }} text-center text-sm font-semibold text-[#351c42]/80">
                     {{ $jobApplyModalMessage }}
                 </p>
                 <div class="mt-5 flex justify-center">

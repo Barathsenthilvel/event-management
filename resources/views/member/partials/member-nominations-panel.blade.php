@@ -86,7 +86,8 @@
                                     data-read-more
                                     data-read-more-title="{{ e($nom->title) }}"
                                     data-read-more-content="{{ e($termsText) }}"
-                                    class="inline-flex items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                    class="inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                                    title="View full terms"
                                 >
                                     Read more
                                     <span aria-hidden="true">→</span>
@@ -142,7 +143,7 @@
                                             </form>
                                             <form method="POST" action="{{ route('member.nominations.not-interested', [$nom, $pos]) }}" class="block w-full sm:inline sm:w-auto">
                                                 @csrf
-                                                <button type="submit" class="inline-flex w-full min-w-[10rem] items-center justify-center rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-slate-200 sm:w-auto">Not interested</button>
+                                                <button type="submit" class="inline-flex w-full min-w-[10rem] cursor-pointer items-center justify-center rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-extrabold text-slate-700 transition hover:bg-slate-200 sm:w-auto">Not interested</button>
                                             </form>
                                         </div>
                                     @endif
@@ -164,12 +165,12 @@
     @if($thanksRelevant)
         <div
             id="nomination-thanks-overlay"
-            class="fixed inset-0 z-[100] flex items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
+            class="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-[#351c42]/50 p-4 backdrop-blur-[2px]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="nomination-thanks-title"
         >
-            <div class="w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
+            <div class="w-full max-w-md cursor-default rounded-3xl border border-[#351c42]/10 bg-white p-8 shadow-2xl">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                     <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
@@ -177,7 +178,7 @@
                 <p class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/65">
                     Your nomination response has been recorded. The team will review submissions and reach out if needed.
                 </p>
-                <button type="button" class="nomination-thanks-dismiss mt-8 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
+                <button type="button" class="nomination-thanks-dismiss mt-8 w-full cursor-pointer rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]">
                     Continue
                 </button>
             </div>

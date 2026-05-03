@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Support\EventInterestErrorFlash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,22 @@ class EventInterestController extends Controller
 {
     public function store(Request $request, Event $event)
     {
-        if (!$event->is_active || $event->status === 'cancelled') {
+        if (! $event->is_active || $event->status === 'cancelled') {
             return back()
                 ->with('event_interest_error', 'This event is not accepting interest right now.')
+                ->with('event_interest_error_modal', true);
+        }
+
+        $event->loadMissing('dates');
+        if ($event->isPastRegistrationDeadline()) {
+            return back()
+                ->with(EventInterestErrorFlash::eventEnded())
+                ->with('event_interest_error_modal', true);
+        }
+
+        if ($event->isAtSeatLimit()) {
+            return back()
+                ->with(EventInterestErrorFlash::seatLimit())
                 ->with('event_interest_error_modal', true);
         }
 
@@ -43,18 +57,33 @@ class EventInterestController extends Controller
 
         $email = strtolower(trim($data['email']));
 
-        DB::transaction(function () use ($event, $data, $email, $request) {
-            EventInterest::create([
-                'event_id' => $event->id,
-                'user_id' => Auth::id(),
-                'name' => $data['name'],
-                'email' => $email,
-                'phone' => $data['phone'],
-            ]);
-            $event->increment('interested_count');
-        });
+        try {
+            DB::transaction(function () use ($event, $data, $email) {
+                $event->refresh();
+                if ($event->isPastRegistrationDeadline()) {
+                    throw new \RuntimeException(EventInterestErrorFlash::ERR_ENDED);
+                }
+                if ($event->isAtSeatLimit()) {
+                    throw new \RuntimeException(EventInterestErrorFlash::ERR_SEAT_LIMIT);
+                }
 
-        if (!Auth::check()) {
+                EventInterest::create([
+                    'event_id' => $event->id,
+                    'user_id' => Auth::id(),
+                    'name' => $data['name'],
+                    'email' => $email,
+                    'phone' => $data['phone'],
+                ]);
+                $event->increment('interested_count');
+            });
+        } catch (\RuntimeException $e) {
+            return back()
+                ->with(EventInterestErrorFlash::fromException($e))
+                ->with('event_interest_error_modal', true)
+                ->withInput();
+        }
+
+        if (! Auth::check()) {
             $request->session()->push('guest_event_interests', $event->id);
         }
 

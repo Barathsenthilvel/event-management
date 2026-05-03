@@ -13,6 +13,7 @@ class Hospital extends Model
     protected $fillable = [
         'name',
         'address',
+        'logo_path',
         'is_active',
         'created_by_admin_id',
     ];

@@ -1388,6 +1388,9 @@
             setIconsForState(itemToOpen, true);
             itemToOpen.setAttribute("data-events-open", "true");
             openItem = itemToOpen;
+            if (typeof window.__refreshHomeEventDescReadMore === "function") {
+                window.__refreshHomeEventDescReadMore();
+            }
         }
 
         items.forEach((item) => {
@@ -1433,11 +1436,22 @@
             }
         }
 
+        function readMoreParseBody(raw) {
+            if (!raw) return "";
+            try {
+                const parsed = JSON.parse(raw);
+                if (typeof parsed === "string") return parsed;
+            } catch (_) {
+                /* plain-text legacy triggers */
+            }
+            return raw;
+        }
+
         function openFromTrigger(btn) {
             if (!btn) return;
             lastActive = btn;
             const title = btn.getAttribute("data-read-more-title") || "Details";
-            const content = btn.getAttribute("data-read-more-content") || "";
+            const content = readMoreParseBody(btn.getAttribute("data-read-more-content"));
             const metaRaw = btn.getAttribute("data-read-more-meta") || "";
             const documentUrl = btn.getAttribute("data-read-more-document-url") || "";
             const donationId = btn.getAttribute("data-read-more-donation-id") || "";

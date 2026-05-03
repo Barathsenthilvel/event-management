@@ -52,30 +52,58 @@
             $desc = trim(strip_tags((string) ($event->description ?? '')));
             $hasDesc = $desc !== '';
             $seatLimited = ($event->seat_mode ?? '') === 'limited';
-            $seatFilled = (int) ($event->invites_count ?? 0);
+            $seatFilled = (int) ($event->interested_count ?? 0);
             $seatCap = max(0, (int) ($event->seat_limit ?? 0));
-            $seatsFull = $seatLimited && $seatCap > 0 && $seatFilled >= $seatCap;
+            $seatPct = ($seatLimited && $seatCap > 0) ? min(100, (int) round((100 * $seatFilled) / $seatCap)) : 0;
             $isAdminEvent = filled($event->created_by_admin_id);
             $memberInterestReturn = request()->fullUrl();
         @endphp
-        <div class="rounded-2xl bg-white border border-[#351c42]/10 overflow-hidden" data-events-accordion-item @if($expandAll) data-events-open="true" @endif>
+        <div class="rounded-2xl bg-white border border-[#351c42]/10 overflow-x-hidden overflow-y-visible" data-events-accordion-item @if($expandAll) data-events-open="true" @endif>
+            @if($hasDesc)
+                <div class="hidden" data-readmore-source="{{ $event->id }}" aria-hidden="true">
+                    <div data-readmore-title>{{ $event->title }}</div>
+                    <div data-readmore-dates-content>
+                        @forelse($dateDetails as $row)
+                            <div class="flex justify-between gap-3 border-b border-[#351c42]/10 py-1.5 text-xs font-semibold text-[#351c42] last:border-0">
+                                <span>{{ $row['date'] }}</span>
+                                <span class="shrink-0 text-[#351c42]/70">{{ $row['slot'] }}</span>
+                            </div>
+                        @empty
+                            <p class="text-xs font-semibold text-[#351c42]/70">Date TBA</p>
+                        @endforelse
+                    </div>
+                    <div data-readmore-desc>{{ $desc }}</div>
+                </div>
+            @endif
             <button
                 type="button"
-                class="w-full text-left px-6 py-4 flex items-start justify-between gap-6 {{ $expandAll ? 'cursor-default' : '' }}"
+                class="w-full text-left px-6 py-4 flex items-start justify-between gap-6 {{ $expandAll ? 'cursor-default' : 'cursor-pointer' }}"
                 data-events-accordion-trigger
                 aria-expanded="{{ $expandAll ? 'true' : 'false' }}"
             >
                 <div class="min-w-0" data-events-header-summary>
                     <div class="flex items-center gap-3 text-xs font-semibold text-[#351c42]/70" data-events-header-time>
-                        <span class="inline-flex items-center gap-2">
-                            <span class="h-2 w-2 rounded-full bg-[#351c42]"></span>
+                        <span class="group/date-tip relative inline-flex max-w-full cursor-help items-center gap-2 outline-none" tabindex="0">
+                            <span class="h-2 w-2 shrink-0 rounded-full bg-[#351c42]"></span>
                             <span>{{ $summaryDate }}</span>
                             @if($extraDatesCount > 0)
-                                <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help"
-                                      title="{{ $moreDatesTooltip }}">
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700">
                                     +{{ $extraDatesCount }} more
                                 </span>
                             @endif
+                            <span class="pointer-events-none absolute left-0 top-[calc(100%+6px)] z-30 hidden w-max min-w-[12rem] max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-[#351c42]/12 bg-white p-3 text-left shadow-xl ring-1 ring-black/5 group-hover/date-tip:block group-focus-within/date-tip:block">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-[#965995]">All dates</span>
+                                <div class="mt-2 space-y-0">
+                                    @forelse($dateDetails as $row)
+                                        <div class="flex justify-between gap-3 border-b border-[#351c42]/8 py-1.5 text-[11px] font-semibold text-[#351c42] last:border-0">
+                                            <span>{{ $row['date'] }}</span>
+                                            <span class="shrink-0 text-[#351c42]/65">{{ $row['slot'] }}</span>
+                                        </div>
+                                    @empty
+                                        <p class="text-[11px] text-[#351c42]/70">Date TBA</p>
+                                    @endforelse
+                                </div>
+                            </span>
                         </span>
                         <span class="h-1 w-1 rounded-full bg-[#351c42]/30"></span>
                         <span>{{ $timeRange }}</span>
@@ -111,47 +139,68 @@
 
                     <div class="flex min-w-0 flex-col h-full overflow-hidden">
                         <div class="flex items-center justify-between gap-3 w-full">
-                            <div class="inline-flex items-center gap-2 rounded-full border border-[#351c42]/10 bg-white/70 px-3 py-1.5"
-                                 title="{{ $moreDatesTooltip }}">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
+                            <div class="group/date-tip relative inline-flex max-w-[min(100%,14rem)] cursor-help items-center gap-2 rounded-full border border-[#351c42]/10 bg-white/70 px-3 py-1.5 outline-none sm:max-w-none" tabindex="0">
+                                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         <path d="M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </span>
-                                <span class="text-[11px] font-semibold text-[#351c42]/70">{{ $scheduleChipText }}</span>
-                            </div>
-                            <div class="ml-auto shrink-0 rounded-full border border-[#351c42]/15 bg-white px-2.5 py-1 text-right shadow-sm min-w-[5.9rem]" aria-label="{{ $seatLimited ? 'Limited seats' : 'Unlimited seats' }}">
-                                @if ($seatLimited)
-                                    @if($seatsFull)
-                                        <div class="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-rose-600 leading-none">
-                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                <path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                                <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                                            </svg>
-                                            Registration
-                                        </div>
-                                        <div class="mt-0.5 text-[9px] font-extrabold uppercase text-rose-700">Closed</div>
-                                    @else
-                                        <div class="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-[#351c42]/55 leading-none">
-                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
-                                                <path d="M8 8h8v8H8z" stroke="currentColor" stroke-width="2"/>
-                                            </svg>
-                                            Limited
-                                        </div>
-                                        <div class="mt-0.5 text-[11px] font-extrabold tabular-nums text-[#351c42]">{{ $seatFilled }} / {{ $seatCap > 0 ? $seatCap : '—' }}</div>
-                                    @endif
-                                @else
-                                    <div class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-[#351c42] leading-tight py-0.5">
-                                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M7 15c2 0 3.5-1.5 5-3s3-3 5-3 4 2 4 4-2 4-4 4-3.5-1.5-5-3-3-3-5-3-4 2-4 4 2 4 4 4 3.5-1.5 5-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        Unlimited
+                                <span class="min-w-0 truncate text-[11px] font-semibold text-[#351c42]/70">{{ $scheduleChipText }}</span>
+                                <span class="pointer-events-none absolute left-0 top-[calc(100%+8px)] z-30 hidden w-max min-w-[14rem] max-w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-[#351c42]/12 bg-white p-3 text-left shadow-xl ring-1 ring-black/5 group-hover/date-tip:block group-focus-within/date-tip:block">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-[#965995]">All dates</span>
+                                    <div class="mt-2 space-y-0">
+                                        @forelse($dateDetails as $row)
+                                            <div class="flex justify-between gap-3 border-b border-[#351c42]/8 py-1.5 text-[11px] font-semibold text-[#351c42] last:border-0">
+                                                <span>{{ $row['date'] }}</span>
+                                                <span class="shrink-0 text-[#351c42]/65">{{ $row['slot'] }}</span>
+                                            </div>
+                                        @empty
+                                            <p class="text-[11px] text-[#351c42]/70">Date TBA</p>
+                                        @endforelse
                                     </div>
-                                @endif
+                                </span>
                             </div>
+                            @if ($seatLimited)
+                                <div
+                                    class="ml-auto w-[6.75rem] shrink-0 rounded-2xl border border-[#351c42]/10 bg-gradient-to-b from-white to-[#faf8fc] px-2.5 py-2 shadow-sm ring-1 ring-[#351c42]/5 sm:w-[7.25rem]"
+                                    role="group"
+                                    aria-label="Seats {{ $seatFilled }} of {{ $seatCap > 0 ? $seatCap : '—' }} registered"
+                                >
+                                    <div class="flex items-baseline justify-between gap-1">
+                                        <span class="text-[9px] font-bold uppercase tracking-wide text-[#965995]">Seats</span>
+                                        <span class="text-[11px] font-extrabold tabular-nums leading-none text-[#351c42]">
+                                            {{ $seatFilled }}<span class="mx-0.5 font-semibold text-[#351c42]/35">/</span>{{ $seatCap > 0 ? $seatCap : '—' }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[#351c42]/10"
+                                        role="progressbar"
+                                        aria-valuemin="0"
+                                        aria-valuemax="{{ $seatCap > 0 ? $seatCap : 1 }}"
+                                        aria-valuenow="{{ min($seatFilled, $seatCap > 0 ? $seatCap : $seatFilled) }}"
+                                        aria-label="Registration fill"
+                                    >
+                                        <div
+                                            class="h-full rounded-full bg-gradient-to-r from-[#965995] via-[#8a4d88] to-[#7a4678] transition-[width] duration-300"
+                                            style="width: {{ $seatPct }}%"
+                                        ></div>
+                                    </div>
+                                </div>
+                            @else
+                                <div
+                                    class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#351c42]/10 bg-[#f6f3e9]/80 px-2.5 py-1.5 shadow-sm"
+                                    aria-label="Unlimited seats"
+                                >
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full bg-[#965995]/15 text-[#965995]" aria-hidden="true">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M6.636 12.568C5.803 11.751 5.25 10.688 5.25 9.5 5.25 7.153 7.153 5.25 9.5 5.25c1.854 0 3.426 1.126 4.1 2.735.352.82.538 1.717.538 2.765s-.186 1.945-.538 2.765c-.774 1.609-2.246 2.735-4.1 2.735-1.182 0-2.26-.45-3.064-1.19"/>
+                                            <path d="M17.364 12.568c.833-.817 1.386-1.88 1.386-3.068 0-2.347-1.903-4.25-4.25-4.25-1.854 0-3.426 1.126-4.1 2.735-.352.82-.538 1.717-.538 2.765s.186 1.945.538 2.765c.774 1.609 2.246 2.735 4.1 2.735 1.182 0 2.26-.45 3.064-1.19"/>
+                                        </svg>
+                                    </span>
+                                    <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited</span>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="mt-3 text-sm md:text-base font-bold text-[#351c42] break-words">
@@ -177,19 +226,20 @@
                         @endif -->
 
                         @if($hasDesc)
-                            <div class="mt-3" data-desc-wrap>
+                            <div class="mt-3 min-w-0 w-full max-w-full" data-desc-wrap data-readmore-event-id="{{ $event->id }}">
                                 <p
-                                    class="min-h-[4.5rem] text-sm text-[#351c42]/80 leading-6 break-all"
+                                    class="line-clamp-3 min-h-[4.5rem] w-full max-w-full min-w-0 overflow-hidden text-sm text-[#351c42]/80 leading-6 break-words break-all"
                                     data-desc-text
-                                    style="display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;"
                                 >
                                     {{ $desc }}
                                 </p>
                                 <button
                                     type="button"
-                                    class="mt-2 hidden items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
-                                    data-desc-toggle
-                                    aria-expanded="false"
+                                    class="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#965995]/40 rounded"
+                                    data-desc-readmore
+                                    aria-haspopup="dialog"
+                                    aria-controls="home-event-readmore-modal"
+                                    title="View full description"
                                 >
                                     Read more
                                 </button>
@@ -224,87 +274,63 @@
 
                         @if(in_array($event->id, $interestedEventIds ?? [], true) || in_array($event->id, $guestInterestedEventIds ?? [], true))
                             @if($isAdminEvent)
-                                <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
+                                <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5" data-readmore-footer>
                                     @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
                                     <span class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">
                                         Interest registered
                                     </span>
                                 </div>
                             @else
-                                <div class="mt-6">
+                                <div class="mt-6" data-readmore-footer>
                                     <span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/20 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/80 cursor-default">
                                         Interest registered
                                     </span>
                                 </div>
                             @endif
                         @elseif($isAdminEvent)
-                            @if($seatsFull)
-                                <div class="mt-6 space-y-3 rounded-2xl border border-rose-200/80 bg-rose-50/90 px-4 py-4 sm:px-5">
-                                    <p class="text-center text-sm font-extrabold text-rose-900">Registration closed</p>
-                                    <p class="text-center text-xs font-semibold text-rose-800/90">This event has reached its seat limit ({{ $seatFilled }} / {{ $seatCap }}).</p>
-                                </div>
-                                <div class="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
-                                    @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
-                                </div>
-                            @else
-                                <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5">
-                                    @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
-                                    <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto">
-                                        @auth
-                                            <form
-                                                method="POST"
-                                                action="{{ route('member.events.interest', $event) }}"
-                                                id="home-event-interest-form-{{ $event->id }}"
-                                                class="flex flex-wrap items-center justify-end"
-                                                onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')"
-                                            >
-                                                @csrf
-                                                <button
-                                                    type="submit"
-                                                    class="inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-                                                    Interested
-                                                </button>
-                                            </form>
-                                        @else
-                                            <button
-                                                type="button"
-                                                class="interest-open-btn inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
-                                                data-interest-url="{{ route('events.interest', $event) }}"
-                                            >
-                                                Interested
-                                            </button>
-                                        @endauth
-                                    </div>
-                                </div>
-                            @endif
-                        @else
-                            <div class="mt-6">
-                                @if($seatsFull)
-                                    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-center text-sm font-extrabold text-rose-900">
-                                        Registration closed — seat limit reached ({{ $seatFilled }} / {{ $seatCap }}).
-                                    </div>
-                                @else
+                            <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5" data-readmore-footer>
+                                @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
+                                <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ml-auto">
                                     @auth
-                                        <form method="POST" action="{{ route('member.events.interest', $event) }}" class="w-full" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
-                                            @csrf
-                                            <button
-                                                type="submit"
-                                                class="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                Interested
-                                            </button>
-                                        </form>
+                                        <button
+                                            type="button"
+                                            class="interest-open-btn cursor-pointer inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
+                                            data-interest-url="{{ route('events.interest', $event) }}"
+                                            data-member-interest-url="{{ route('member.events.interest', $event) }}"
+                                        >
+                                            Interested
+                                        </button>
                                     @else
                                         <button
                                             type="button"
-                                            class="interest-open-btn inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors"
+                                            class="interest-open-btn cursor-pointer inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                         >
                                             Interested
                                         </button>
                                     @endauth
-                                @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="mt-6" data-readmore-footer>
+                                @auth
+                                    <button
+                                        type="button"
+                                        class="interest-open-btn cursor-pointer inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors"
+                                        data-interest-url="{{ route('events.interest', $event) }}"
+                                        data-member-interest-url="{{ route('member.events.interest', $event) }}"
+                                    >
+                                        Interested
+                                    </button>
+                                @else
+                                    <button
+                                        type="button"
+                                        class="interest-open-btn cursor-pointer inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors"
+                                        data-interest-url="{{ route('events.interest', $event) }}"
+                                    >
+                                        Interested
+                                    </button>
+                                @endauth
                             </div>
                         @endif
                     </div>
@@ -314,58 +340,97 @@
     @endforeach
 </div>
 
+<div
+    id="home-event-readmore-modal"
+    class="fixed inset-0 z-[190] hidden items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="home-readmore-modal-title"
+    aria-hidden="true"
+>
+    <div class="absolute inset-0 cursor-pointer bg-[#351c42]/45" data-readmore-backdrop title="Close"></div>
+    <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl shadow-[#351c42]/15">
+        <div class="flex items-start justify-between gap-3">
+            <h2 id="home-readmore-modal-title" class="min-w-0 flex-1 pr-2 text-lg font-extrabold leading-snug text-[#351c42]"></h2>
+            <button type="button" class="shrink-0 cursor-pointer rounded-xl p-2 text-[#351c42]/50 hover:bg-[#351c42]/5 hover:text-[#351c42]" data-readmore-close aria-label="Close" title="Close">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <p class="mt-4 text-[11px] font-black uppercase tracking-[0.14em] text-[#965995]">Event dates</p>
+        <div id="home-readmore-modal-dates" class="mt-2 rounded-xl border border-[#351c42]/10 bg-[#faf9fc] p-3"></div>
+        <p class="mt-4 text-[11px] font-black uppercase tracking-[0.14em] text-[#965995]">About this event</p>
+        <div id="home-readmore-modal-desc" class="mt-2 max-w-full text-sm leading-relaxed text-[#351c42]/85 whitespace-pre-wrap break-words break-all"></div>
+        <div id="home-readmore-modal-footer" class="mt-6"></div>
+    </div>
+</div>
+
 <script>
     (function () {
         if (window.__eventDescToggleInit) return;
         window.__eventDescToggleInit = true;
 
-        var setupToggles = function () {
-            document.querySelectorAll('[data-desc-wrap]').forEach(function (wrap) {
-                var text = wrap.querySelector('[data-desc-text]');
-                var btn = wrap.querySelector('[data-desc-toggle]');
-                if (!text || !btn) return;
-                if (text.scrollHeight > text.clientHeight + 2) {
-                    btn.classList.remove('hidden');
-                    btn.classList.add('inline-flex');
-                } else {
-                    text.style.display = '';
-                    text.style.webkitBoxOrient = '';
-                    text.style.webkitLineClamp = '';
-                    text.style.overflow = '';
-                    btn.remove();
-                }
-            });
-        };
+        var readModal = document.getElementById('home-event-readmore-modal');
+        var readTitle = document.getElementById('home-readmore-modal-title');
+        var readDates = document.getElementById('home-readmore-modal-dates');
+        var readDesc = document.getElementById('home-readmore-modal-desc');
+        var readFooter = document.getElementById('home-readmore-modal-footer');
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupToggles);
-        } else {
-            setupToggles();
+        function openReadMoreModal(eventId) {
+            if (!readModal || !readTitle || !readDates || !readDesc || !readFooter) return;
+            var source = document.querySelector('[data-readmore-source="' + eventId + '"]');
+            if (!source) return;
+            var item = source.closest('[data-events-accordion-item]');
+            var footerSrc = item ? item.querySelector('[data-readmore-footer]') : null;
+            var tEl = source.querySelector('[data-readmore-title]');
+            var dCont = source.querySelector('[data-readmore-dates-content]');
+            var descEl = source.querySelector('[data-readmore-desc]');
+            readTitle.textContent = tEl ? tEl.textContent.trim() : '';
+            readDates.innerHTML = dCont ? dCont.innerHTML : '';
+            readDesc.textContent = descEl ? descEl.textContent : '';
+            readFooter.innerHTML = '';
+            if (footerSrc) {
+                readFooter.appendChild(footerSrc.cloneNode(true));
+            }
+            readModal.classList.remove('hidden');
+            readModal.classList.add('flex');
+            readModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
         }
 
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-desc-toggle]');
-            if (!btn) return;
-            var wrap = btn.closest('[data-desc-wrap]');
-            var text = wrap ? wrap.querySelector('[data-desc-text]') : null;
-            if (!text) return;
+        function closeReadMoreModal() {
+            if (!readModal) return;
+            readModal.classList.add('hidden');
+            readModal.classList.remove('flex');
+            readModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+            if (readFooter) readFooter.innerHTML = '';
+        }
 
-            var expanded = btn.getAttribute('aria-expanded') === 'true';
-            if (expanded) {
-                text.style.display = '-webkit-box';
-                text.style.webkitBoxOrient = 'vertical';
-                text.style.webkitLineClamp = '3';
-                text.style.overflow = 'hidden';
-                btn.setAttribute('aria-expanded', 'false');
-                btn.textContent = 'Read more';
-            } else {
-                text.style.display = '';
-                text.style.webkitBoxOrient = '';
-                text.style.webkitLineClamp = '';
-                text.style.overflow = '';
-                btn.setAttribute('aria-expanded', 'true');
-                btn.textContent = 'Show less';
+        /** Kept for accordion open hook; description preview uses CSS line-clamp + always-visible Read more. */
+        var setupToggles = function () {};
+
+        window.__refreshHomeEventDescReadMore = setupToggles;
+
+        document.addEventListener('click', function (e) {
+            var openBtn = e.target.closest('[data-desc-readmore]');
+            if (openBtn) {
+                var wrap = openBtn.closest('[data-desc-wrap]');
+                var eid = wrap ? wrap.getAttribute('data-readmore-event-id') : null;
+                if (eid) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openReadMoreModal(eid);
+                }
+                return;
             }
+            if (e.target.closest('[data-readmore-close]') || e.target.closest('[data-readmore-backdrop]')) {
+                closeReadMoreModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || !readModal || readModal.classList.contains('hidden')) return;
+            closeReadMoreModal();
         });
     })();
 </script>

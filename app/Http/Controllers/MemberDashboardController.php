@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\AdminJob;
 use App\Models\AdminJobApplication;
-use App\Models\MemberJobRequest;
-use App\Models\MemberSavedJob;
 use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
+use App\Models\Hospital;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
+use App\Models\MemberJobRequest;
+use App\Models\MemberSavedJob;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\Nomination;
 use App\Models\NominationEntry;
@@ -20,12 +21,16 @@ use App\Models\PaymentTransaction;
 use App\Models\Polling;
 use App\Models\PollingPosition;
 use App\Models\PollingVote;
+use App\Support\EventInterestErrorFlash;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class MemberDashboardController extends Controller
@@ -39,7 +44,7 @@ class MemberDashboardController extends Controller
 
         $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
         $hasActiveSubscription = $user?->activeSubscription()->exists();
-        if ($canSeeMembership && !$hasActiveSubscription) {
+        if ($canSeeMembership && ! $hasActiveSubscription) {
             return redirect()->route('member.subscription.index');
         }
 
@@ -159,10 +164,9 @@ class MemberDashboardController extends Controller
 
             $resultPolls = Polling::query()
                 ->with(['positions' => fn ($q) => $q->with('winner')])
-                ->where('is_active', true)
                 ->where('publish_status', 'published')
                 ->where('results_visible_to_members', true)
-                ->whereIn('polling_status', ['live', 'ends'])
+                ->where('polling_status', 'ends')
                 ->latest('id')
                 ->limit(30)
                 ->get();
@@ -176,7 +180,7 @@ class MemberDashboardController extends Controller
                 }
 
                 $winners = $poll->positions
-                    ->filter(fn ($position) => !empty($position->winner_user_id) && $position->winner)
+                    ->filter(fn ($position) => ! empty($position->winner_user_id) && $position->winner)
                     ->map(fn ($position) => [
                         'position' => $position->position,
                         'winner_name' => $position->winner->name,
@@ -200,6 +204,18 @@ class MemberDashboardController extends Controller
         $showPollingDashboard = $dashboardPolls->isNotEmpty();
         $showPollingWinnerDashboard = $dashboardWinnerPolls->isNotEmpty();
 
+        $memberPollings = collect();
+        $pollingVotedPositionIds = collect();
+        $memberPollingVotes = collect();
+        $pollingResultStats = [];
+        if ($showFullMemberMenu && $user) {
+            $portalPolling = $this->memberPollingsPortalData($user);
+            $memberPollings = $portalPolling['memberPollings'];
+            $pollingVotedPositionIds = $portalPolling['pollingVotedPositionIds'];
+            $memberPollingVotes = $portalPolling['memberPollingVotes'];
+            $pollingResultStats = $portalPolling['pollingResultStats'];
+        }
+
         return view('member.dashboard', [
             'activeSubscription' => $user?->activeSubscription,
             'latestReceiptTransaction' => $latestReceiptTransaction,
@@ -212,6 +228,10 @@ class MemberDashboardController extends Controller
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,
             'showPollingWinnerDashboard' => $showPollingWinnerDashboard,
+            'memberPollings' => $memberPollings,
+            'pollingVotedPositionIds' => $pollingVotedPositionIds,
+            'memberPollingVotes' => $memberPollingVotes,
+            'pollingResultStats' => $pollingResultStats,
             'transactions' => PaymentTransaction::query()
                 ->with('subscriptionPlan')
                 ->where('user_id', $user?->id)
@@ -314,7 +334,7 @@ class MemberDashboardController extends Controller
 
         $jobsQuery = AdminJob::query()
             ->where('is_active', true)
-            ->where('listing_status', 'listed')
+            ->when($tab === 'search', fn ($query) => $query->where('listing_status', 'listed'))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('hospital', 'like', '%'.$q.'%')
@@ -349,6 +369,10 @@ class MemberDashboardController extends Controller
             ->latest('id')
             ->first();
 
+        $hospitalLogos = Hospital::query()
+            ->whereNotNull('logo_path')
+            ->pluck('logo_path', 'name');
+
         return view('member.jobs', [
             'activeSubscription' => $user->activeSubscription,
             'jobs' => $jobs,
@@ -360,6 +384,8 @@ class MemberDashboardController extends Controller
             'appliedCount' => count($appliedJobIds),
             'savedCount' => count($savedJobIds),
             'latestNeedJobRequest' => $latestNeedJobRequest,
+            'profileResumeAvailable' => (bool) ($user->educational_certificate_path),
+            'hospitalLogos' => $hospitalLogos,
         ]);
     }
 
@@ -382,18 +408,43 @@ class MemberDashboardController extends Controller
             return back()->with('job_apply_error', 'This job is not accepting applications right now.');
         }
 
+        $validated = $request->validate([
+            'resume_choice' => 'required|in:profile,upload',
+            'resume' => 'required_if:resume_choice,upload|nullable|file|mimes:pdf|max:5120',
+        ]);
+
+        if ($validated['resume_choice'] === 'profile') {
+            if (empty($user->educational_certificate_path)) {
+                return back()->with(
+                    'job_apply_error',
+                    'You do not have a profile resume on file. Upload a PDF below or add your educational certificate in your profile first.'
+                );
+            }
+            $resumePath = $user->educational_certificate_path;
+        } else {
+            if (! $request->hasFile('resume')) {
+                return back()->with('job_apply_error', 'Please choose a PDF resume to upload.');
+            }
+            $resumePath = $request->file('resume')->store('job-applications/resumes', 'public');
+        }
+
+        $existing = AdminJobApplication::query()
+            ->where('job_id', $job->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            return back()->with('job_apply_error', 'You have already applied for this job.');
+        }
+
         try {
-            AdminJobApplication::firstOrCreate(
-                [
-                    'job_id' => $job->id,
-                    'user_id' => $user->id,
-                ],
-                [
-                    'submitted_at' => now(),
-                    'application_status' => 'pending',
-                    'resume_path' => $user->educational_certificate_path,
-                ]
-            );
+            AdminJobApplication::query()->create([
+                'job_id' => $job->id,
+                'user_id' => $user->id,
+                'submitted_at' => now(),
+                'application_status' => 'pending',
+                'resume_path' => $resumePath,
+            ]);
         } catch (QueryException $e) {
             return back()->with('job_apply_error', 'Unable to submit your application right now. Please try again.');
         }
@@ -423,6 +474,7 @@ class MemberDashboardController extends Controller
 
         if ($existing) {
             $existing->delete();
+
             return back()->with('job_apply_success', 'Job removed from saved list.');
         }
 
@@ -535,16 +587,40 @@ class MemberDashboardController extends Controller
                 );
         }
 
+        $portal = $this->memberPollingsPortalData($user);
+
+        return view('member.pollings', [
+            'activeSubscription' => $user->activeSubscription,
+            'memberPollings' => $portal['memberPollings'],
+            'pollingVotedPositionIds' => $portal['pollingVotedPositionIds'],
+            'memberPollingVotes' => $portal['memberPollingVotes'],
+            'pollingResultStats' => $portal['pollingResultStats'],
+        ]);
+    }
+
+    /**
+     * Published pollings list, the member’s votes, and aggregated result stats (when the office has enabled results for members).
+     *
+     * @return array{
+     *     memberPollings: \Illuminate\Support\Collection<int, Polling>,
+     *     pollingVotedPositionIds: \Illuminate\Support\Collection<int, int>,
+     *     memberPollingVotes: \Illuminate\Support\Collection<int, PollingVote>,
+     *     pollingResultStats: array<int, array<int, array{winner_name: ?string, candidates: list<array<string, mixed>}>>
+     * }
+     */
+    private function memberPollingsPortalData($user): array
+    {
         $memberPollings = Polling::query()
             ->with(['positions' => fn ($q) => $q->with(['candidates', 'winner'])])
-            ->where('is_active', true)
             ->where('publish_status', 'published')
             ->where(function ($query) {
-                $query->where('polling_status', 'live')
-                    ->orWhere(function ($sub) {
-                        $sub->where('polling_status', 'ends')
-                            ->where('results_visible_to_members', true);
-                    });
+                $query->where(function ($live) {
+                    $live->where('is_active', true)
+                        ->where('polling_status', 'live');
+                })->orWhere(function ($ended) {
+                    $ended->where('polling_status', 'ends')
+                        ->where('results_visible_to_members', true);
+                });
             })
             ->latest('id')
             ->limit(20)
@@ -599,13 +675,12 @@ class MemberDashboardController extends Controller
             $pollingResultStats[$polling->id] = $positionStats;
         }
 
-        return view('member.pollings', [
-            'activeSubscription' => $user->activeSubscription,
+        return [
             'memberPollings' => $memberPollings,
             'pollingVotedPositionIds' => $pollingVotedPositionIds,
             'memberPollingVotes' => $memberPollingVotes,
             'pollingResultStats' => $pollingResultStats,
-        ]);
+        ];
     }
 
     private function pollingHasEnded(Polling $polling): bool
@@ -642,6 +717,7 @@ class MemberDashboardController extends Controller
                     'polling_status' => 'ends',
                     'is_active' => false,
                 ]);
+
                 continue;
             }
 
@@ -650,6 +726,7 @@ class MemberDashboardController extends Controller
                     'polling_status' => 'live',
                     'is_active' => true,
                 ]);
+
                 continue;
             }
 
@@ -974,9 +1051,10 @@ class MemberDashboardController extends Controller
             ->get()
             ->sortBy(function ($meeting) {
                 $schedule = $meeting->schedules->first();
-                if (!$schedule?->meeting_date) {
+                if (! $schedule?->meeting_date) {
                     return '9999-12-31 23:59:59';
                 }
+
                 return $schedule->meeting_date->format('Y-m-d').' '.($schedule->from_time ?? '23:59:59');
             })
             ->values();
@@ -985,7 +1063,7 @@ class MemberDashboardController extends Controller
     public function downloadEventCertificate(Event $event)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
@@ -994,14 +1072,14 @@ class MemberDashboardController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        if (!$invite || $invite->participation_status !== 'participated') {
+        if (! $invite || $invite->participation_status !== 'participated') {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Your certificate is available only after the admin marks you as attended for this event.'
             );
         }
 
-        if (!in_array($event->status, ['live', 'completed'], true)) {
+        if (! in_array($event->status, ['live', 'completed'], true)) {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Certificate download opens after the event is Live/Completed and the office has uploaded the certificate file.'
@@ -1010,7 +1088,7 @@ class MemberDashboardController extends Controller
 
         $event->loadMissing('dates');
 
-        if (empty($event->template_pdf_path) || !Storage::disk('public')->exists($event->template_pdf_path)) {
+        if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Certificate file is not available for this event yet. Please contact the office.'
@@ -1030,22 +1108,20 @@ class MemberDashboardController extends Controller
     public function submitInterest(Request $request, Event $event)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
-        if (!$event->is_active || $event->status === 'cancelled') {
-            return back()
-                ->with('event_interest_error', 'This event is not available for interest now.')
-                ->with('event_interest_error_modal', true);
+        if (! $event->is_active || $event->status === 'cancelled') {
+            return $this->interestSubmitErrorResponse($request, [
+                'event_interest_error_title' => 'Event registration unavailable',
+                'event_interest_error' => 'This event is not available for interest now.',
+            ]);
         }
 
         $event->loadMissing('dates');
-        $endedReason = $this->eventInterestClosedReason($event);
-        if ($endedReason !== null) {
-            return back()
-                ->with('event_interest_error', $endedReason)
-                ->with('event_interest_error_modal', true);
+        if ($event->isPastRegistrationDeadline()) {
+            return $this->interestSubmitErrorResponse($request, EventInterestErrorFlash::eventEnded());
         }
 
         $alreadyInterested = EventInvite::query()
@@ -1054,18 +1130,20 @@ class MemberDashboardController extends Controller
             ->exists();
 
         if ($alreadyInterested) {
-            return back()->with('event_interest_error', 'You have already submitted interest for this event.');
+            return $this->interestSubmitErrorResponse($request, [
+                'event_interest_error_title' => 'Event registration unavailable',
+                'event_interest_error' => 'You have already submitted interest for this event.',
+            ]);
         }
 
         try {
             DB::transaction(function () use ($event, $user) {
                 $event->refresh();
-                $closedReason = $this->eventInterestClosedReason($event);
-                if ($closedReason !== null) {
-                    throw new \RuntimeException($closedReason);
+                if ($event->isPastRegistrationDeadline()) {
+                    throw new \RuntimeException(EventInterestErrorFlash::ERR_ENDED);
                 }
-                if ($event->seat_mode === 'limited' && $event->seat_limit !== null && $event->interested_count >= $event->seat_limit) {
-                    throw new \RuntimeException('Seat limit reached for this event.');
+                if ($event->isAtSeatLimit()) {
+                    throw new \RuntimeException(EventInterestErrorFlash::ERR_SEAT_LIMIT);
                 }
 
                 $alreadyCountedViaPublic = EventInterest::query()
@@ -1080,43 +1158,59 @@ class MemberDashboardController extends Controller
                     'invited_at' => now(),
                 ]);
 
-                if (!$alreadyCountedViaPublic) {
+                if (! $alreadyCountedViaPublic) {
                     $event->update([
                         'interested_count' => (int) $event->interested_count + 1,
                     ]);
                 }
             });
         } catch (\RuntimeException $e) {
-            return back()
-                ->with('event_interest_error', $e->getMessage())
-                ->with('event_interest_error_modal', true);
+            return $this->interestSubmitErrorResponse($request, EventInterestErrorFlash::fromException($e));
         } catch (QueryException $e) {
-            return back()->with('event_interest_error', 'You have already submitted interest for this event.');
+            return $this->interestSubmitErrorResponse($request, [
+                'event_interest_error_title' => 'Event registration unavailable',
+                'event_interest_error' => 'You have already submitted interest for this event.',
+            ]);
+        }
+
+        return $this->interestSubmitSuccessResponse($request);
+    }
+
+    /**
+     * @param  array{event_interest_error_title?: string, event_interest_error: string}  $flash
+     */
+    private function interestSubmitErrorResponse(Request $request, array $flash): RedirectResponse|JsonResponse
+    {
+        $title = $flash['event_interest_error_title'] ?? 'Event registration unavailable';
+        $body = $flash['event_interest_error'] ?? 'Unable to complete request.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => false,
+                'event_interest_error_title' => $title,
+                'event_interest_error_html' => Str::markdown($body),
+            ], 422);
         }
 
         return back()
-            ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
+            ->with('event_interest_error_title', $title)
+            ->with('event_interest_error', $body)
+            ->with('event_interest_error_modal', true);
+    }
+
+    private function interestSubmitSuccessResponse(Request $request): RedirectResponse|JsonResponse
+    {
+        $message = 'Thank you. Your event interest has been recorded.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return back()
+            ->with('event_interest_success', $message)
             ->with('event_interest_success_modal', true);
     }
-
-    private function eventInterestClosedReason(Event $event): ?string
-    {
-        if ($event->status === 'completed') {
-            return 'This event has ended.';
-        }
-
-        $lastDate = $event->dates->sortBy('event_date')->last();
-        if (! $lastDate?->event_date) {
-            return null;
-        }
-
-        $endTime = $lastDate->end_time ?: '23:59';
-        $endAt = Carbon::parse($lastDate->event_date->format('Y-m-d').' '.$endTime);
-        if (now()->greaterThan($endAt)) {
-            return 'This event has ended.';
-        }
-
-        return null;
-    }
 }
-

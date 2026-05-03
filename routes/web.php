@@ -254,7 +254,11 @@ Route::prefix('admin')->group(function () {
         Route::delete('/meetings/{meeting}/invite/{invite}', [MeetingController::class, 'removeInvite'])->name('admin.meetings.invite.remove');
         Route::post('/meetings/{meeting}/invite/{invite}/attendance', [MeetingController::class, 'updateInviteAttendance'])->name('admin.meetings.invite.attendance');
 
-        // Jobs Management
+        // Jobs Management — static paths before jobs/{job} so "need-job" is never treated as a job id
+        Route::get('/jobs/need-job/requests/report', [AdminJobController::class, 'downloadNeedJobRequestsReport'])->name('admin.jobs.need-job.requests.report');
+        Route::get('/jobs/need-job/requests', [AdminJobController::class, 'needJobRequests'])->name('admin.jobs.need-job.requests');
+        Route::post('/jobs/need-job/requests/{requestRow}/status', [AdminJobController::class, 'updateNeedJobRequestStatus'])->name('admin.jobs.need-job.requests.status');
+
         Route::resource('jobs', AdminJobController::class)->except(['show'])->parameters([
             'jobs' => 'job',
         ])->names([
@@ -274,8 +278,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/jobs/{job}/applications', [AdminJobController::class, 'applications'])->name('admin.jobs.applications');
         Route::get('/jobs/{job}/report', [AdminJobController::class, 'downloadReport'])->name('admin.jobs.report');
         Route::post('/jobs/{job}/applications/{application}/status', [AdminJobController::class, 'updateApplicationStatus'])->name('admin.jobs.applications.status');
-        Route::get('/jobs/need-job/requests', [AdminJobController::class, 'needJobRequests'])->name('admin.jobs.need-job.requests');
-        Route::post('/jobs/need-job/requests/{requestRow}/status', [AdminJobController::class, 'updateNeedJobRequestStatus'])->name('admin.jobs.need-job.requests.status');
 
         // Nominations Management
         Route::resource('nominations', NominationController::class)->except(['show'])->names([

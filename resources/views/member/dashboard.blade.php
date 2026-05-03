@@ -112,6 +112,7 @@
         }
         .md-modal-overlay.is-open { display: flex; }
         .md-btn-interest {
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -204,6 +205,7 @@
             border-radius: 1rem;
         }
         .md-btn-interest-card {
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -849,6 +851,15 @@
                     </div>
                 </article>
             </section>
+
+            @if($memberPollings->isNotEmpty())
+                @include('member.partials.member-pollings-panel', [
+                    'memberPollings' => $memberPollings,
+                    'pollingVotedPositionIds' => $pollingVotedPositionIds,
+                    'memberPollingVotes' => $memberPollingVotes ?? collect(),
+                    'pollingResultStats' => $pollingResultStats ?? [],
+                ])
+            @endif
             @endif
 
             @if($showFullMemberMenu)

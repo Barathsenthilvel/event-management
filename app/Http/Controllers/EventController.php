@@ -128,22 +128,66 @@ class EventController extends Controller
             $interestType = 'all';
         }
 
-        $allInterests = $event->interests->values();
-        $memberInterests = $allInterests->filter(fn ($row) => ! empty($row->user_id))->values();
-        $nonMemberInterests = $allInterests->filter(fn ($row) => empty($row->user_id))->values();
-        $filteredInterests = match ($interestType) {
-            'members' => $memberInterests,
-            'non_members' => $nonMemberInterests,
-            default => $allInterests,
+        $inviteUserIds = $event->invites->pluck('user_id')->filter()->map(fn ($id) => (int) $id)->unique()->all();
+
+        $unifiedAttendeeRows = collect();
+        foreach ($event->invites as $invite) {
+            $unifiedAttendeeRows->push([
+                'kind' => 'invite',
+                'invite' => $invite,
+                'interest' => null,
+            ]);
+        }
+        foreach ($event->interests as $interest) {
+            if ($interest->user_id && in_array((int) $interest->user_id, $inviteUserIds, true)) {
+                continue;
+            }
+            $unifiedAttendeeRows->push([
+                'kind' => 'interest',
+                'invite' => null,
+                'interest' => $interest,
+            ]);
+        }
+
+        $unifiedAttendeeRows = $unifiedAttendeeRows
+            ->sortBy(function (array $r) {
+                if ($r['kind'] === 'invite') {
+                    return strtolower((string) ($r['invite']->user->name ?? ''));
+                }
+
+                return strtolower((string) ($r['interest']->name ?? ''));
+            })
+            ->values();
+
+        $unifiedCountAll = $unifiedAttendeeRows->count();
+        $unifiedCountMembers = $unifiedAttendeeRows->filter(function (array $r) {
+            if ($r['kind'] === 'invite') {
+                return true;
+            }
+
+            return ! empty($r['interest']->user_id);
+        })->count();
+        $unifiedCountGuests = $unifiedAttendeeRows->filter(fn (array $r) => $r['kind'] === 'interest' && empty($r['interest']->user_id))->count();
+
+        $filteredUnifiedRows = match ($interestType) {
+            'members' => $unifiedAttendeeRows->filter(function (array $r) {
+                if ($r['kind'] === 'invite') {
+                    return true;
+                }
+
+                return ! empty($r['interest']->user_id);
+            })->values(),
+            'non_members' => $unifiedAttendeeRows->filter(fn (array $r) => $r['kind'] === 'interest' && empty($r['interest']->user_id))->values(),
+            default => $unifiedAttendeeRows,
         };
 
         return view('admin.events.show', compact(
             'event',
             'interestType',
-            'filteredInterests',
-            'memberInterests',
-            'nonMemberInterests',
-            'allInterests'
+            'filteredUnifiedRows',
+            'unifiedCountAll',
+            'unifiedCountMembers',
+            'unifiedCountGuests'
         ));
     }
 
@@ -254,7 +298,7 @@ class EventController extends Controller
             return response()->json([
                 'ok' => true,
                 'message' => $alreadyAttended ? 'Already marked as attended.' : 'Member attendance marked as attended.',
-                'who' => $invite->user->name ?? ('Member #' . $invite->user_id),
+                'who' => $invite->user->name ?? ('Member #'.$invite->user_id),
                 'source' => 'member',
             ]);
         }
@@ -275,7 +319,7 @@ class EventController extends Controller
         return response()->json([
             'ok' => true,
             'message' => $alreadyAttended ? 'Already marked as attended.' : 'Public attendee marked as attended.',
-            'who' => $interest->name ?: ('Public #' . $interest->id),
+            'who' => $interest->name ?: ('Public #'.$interest->id),
             'source' => 'public',
         ]);
     }
@@ -452,7 +496,7 @@ class EventController extends Controller
             );
         }
 
-        $event->update(['interested_count' => EventInvite::where('event_id', $event->id)->count()]);
+        $event->syncInterestedCountFromRegistrations();
 
         return redirect()->route('admin.events.index')->with('success', 'Members invited successfully.');
     }
@@ -466,10 +510,6 @@ class EventController extends Controller
 
     public function albumStore(Request $request, Event $event)
     {
-        if ($event->status !== 'completed') {
-            return back()->with('error', 'You can add album photos only after event completion.');
-        }
-
         $validated = $request->validate([
             'photos' => 'required|array|min:1|max:20',
             'photos.*' => 'image|max:5120',
@@ -558,8 +598,8 @@ class EventController extends Controller
 
             $result[] = [
                 'event_date' => $item['date'],
-                'start_time' => !empty($item['start_time']) ? $this->normalizeHiTime($item['start_time']) : null,
-                'end_time' => !empty($item['end_time']) ? $this->normalizeHiTime($item['end_time']) : null,
+                'start_time' => ! empty($item['start_time']) ? $this->normalizeHiTime($item['start_time']) : null,
+                'end_time' => ! empty($item['end_time']) ? $this->normalizeHiTime($item['end_time']) : null,
             ];
         }
 
@@ -570,7 +610,7 @@ class EventController extends Controller
     {
         $rows = (array) $request->input('event_dates', []);
         foreach ($rows as $idx => $row) {
-            if (!is_array($row)) {
+            if (! is_array($row)) {
                 continue;
             }
             if (array_key_exists('start_time', $row)) {
@@ -599,6 +639,7 @@ class EventController extends Controller
                 return $value;
             }
         }
+
         return $value;
     }
 
@@ -645,11 +686,13 @@ class EventController extends Controller
                     'status' => 'completed',
                     'is_active' => false,
                 ]);
+
                 continue;
             }
 
             if ($now->greaterThanOrEqualTo($start) && $event->status !== 'live') {
                 $event->update(['status' => 'live']);
+
                 continue;
             }
 

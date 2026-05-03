@@ -57,6 +57,7 @@
                 </div>
                 <p class="mt-1 text-[11px] text-slate-500">Choose from available hospitals (searchable select).</p>
                 @error('hospital')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
+                <p class="mt-1 text-[11px] text-slate-500">Hospital logo is added in the <strong>Add hospital</strong> modal (optional).</p>
             </div>
             <div>
                 <label class="block text-xs font-black text-slate-600 mb-2">Job Title @include('admin.partials.required-mark')</label>
@@ -127,13 +128,24 @@
 </form>
 
 <div id="hospitalModal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-slate-900/45 p-4">
-    <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <div>
-                <h3 class="text-sm font-extrabold text-slate-900">Add Hospital</h3>
-                <p class="mt-0.5 text-[11px] text-slate-500">Create a hospital name and address for quick selection.</p>
+    <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+        <div class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-5 py-4">
+            <div class="flex min-w-0 flex-1 gap-4">
+                <div class="min-w-0 flex-1">
+                    <h3 class="text-sm font-extrabold text-slate-900">Add Hospital</h3>
+                    <p class="mt-0.5 text-[11px] text-slate-500">Create a hospital name and address for quick selection.</p>
+                </div>
+                <div class="shrink-0 text-center">
+                    <p class="mb-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">Logo</p>
+                    <div class="relative mx-auto h-16 w-16">
+                        <img id="hospitalModalLogoPreview" src="" alt="" class="pointer-events-none absolute inset-0 hidden h-16 w-16 rounded-xl border border-slate-200 bg-white object-cover shadow-sm" width="64" height="64">
+                        <span id="hospitalModalLogoPlaceholder" class="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white text-[10px] font-bold text-slate-400">Optional</span>
+                        <input type="file" id="hospitalModalLogoInput" accept="image/*" class="absolute inset-0 cursor-pointer opacity-0" title="Upload hospital logo" tabindex="-1">
+                    </div>
+                    <p class="mt-1 max-w-[5.5rem] text-[9px] leading-tight text-slate-400">PNG or JPG</p>
+                </div>
             </div>
-            <button type="button" id="closeHospitalModalBtn" class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close hospital modal">✕</button>
+            <button type="button" id="closeHospitalModalBtn" class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close hospital modal">✕</button>
         </div>
         <form id="hospitalModalForm" class="space-y-4 px-5 py-4">
             <div>
@@ -173,6 +185,10 @@
         const hospitalNoResults = document.getElementById('hospitalNoResults');
         const hospitalToggle = document.getElementById('hospitalDropdownToggle');
         const hospitalWrap = document.getElementById('hospitalSearchWrap');
+        const logoInput = document.getElementById('hospitalModalLogoInput');
+        const logoPreview = document.getElementById('hospitalModalLogoPreview');
+        const logoPlaceholder = document.getElementById('hospitalModalLogoPlaceholder');
+        let logoPreviewObjectUrl = null;
         if (!modal || !openBtn || !form || !hospitalValue || !hospitalInput || !hospitalPanel || !hospitalList || !hospitalToggle || !hospitalWrap) return;
 
         let hospitalOptions = @json($hospitalOptions->values()->all());
@@ -188,10 +204,24 @@
             nameInput?.focus();
         };
 
+        const resetLogoPicker = () => {
+            if (logoPreviewObjectUrl) {
+                URL.revokeObjectURL(logoPreviewObjectUrl);
+                logoPreviewObjectUrl = null;
+            }
+            if (logoInput) logoInput.value = '';
+            if (logoPreview) {
+                logoPreview.src = '';
+                logoPreview.classList.add('hidden');
+            }
+            logoPlaceholder?.classList.remove('hidden');
+        };
+
         const hideModal = () => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             form.reset();
+            resetLogoPicker();
             errorBox?.classList.add('hidden');
             errorBox.textContent = '';
         };
@@ -243,7 +273,20 @@
             });
         };
 
-        openBtn.addEventListener('click', showModal);
+        logoInput?.addEventListener('change', () => {
+            const file = logoInput.files && logoInput.files[0];
+            if (!file || !logoPreview) return;
+            if (logoPreviewObjectUrl) URL.revokeObjectURL(logoPreviewObjectUrl);
+            logoPreviewObjectUrl = URL.createObjectURL(file);
+            logoPreview.src = logoPreviewObjectUrl;
+            logoPreview.classList.remove('hidden');
+            logoPlaceholder?.classList.add('hidden');
+        });
+
+        openBtn.addEventListener('click', () => {
+            resetLogoPicker();
+            showModal();
+        });
         closeBtn?.addEventListener('click', hideModal);
         cancelBtn?.addEventListener('click', hideModal);
         modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
@@ -306,6 +349,7 @@
 
             const fd = new FormData(form);
             fd.append('_token', csrf);
+            if (logoInput?.files?.length) fd.append('logo', logoInput.files[0]);
             saveBtn.disabled = true;
             saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
             errorBox?.classList.add('hidden');
@@ -322,7 +366,7 @@
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok || !data?.success) {
-                    const msg = data?.message || data?.errors?.name?.[0] || data?.errors?.address?.[0] || 'Could not add hospital.';
+                    const msg = data?.message || data?.errors?.name?.[0] || data?.errors?.address?.[0] || data?.errors?.logo?.[0] || 'Could not add hospital.';
                     errorBox.textContent = msg;
                     errorBox?.classList.remove('hidden');
                     return;

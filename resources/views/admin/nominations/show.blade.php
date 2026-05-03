@@ -5,6 +5,7 @@
     $n = $nomination;
     $coverUrl = $n->cover_image_path ? asset('storage/' . ltrim($n->cover_image_path, '/')) : null;
     $bannerUrl = $n->banner_image_path ? asset('storage/' . ltrim($n->banner_image_path, '/')) : null;
+    $hasNominationImages = (bool) ($coverUrl || $bannerUrl);
 @endphp
 <div class="flex-1 overflow-y-auto custom-scroll p-6">
     <div class="mx-auto max-w-6xl space-y-5">
@@ -25,7 +26,7 @@
 
         <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div class="space-y-4">
+                <div class="min-w-0 space-y-4">
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Title</p>
                         <p class="mt-1 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">{{ $n->title }}</p>
@@ -40,10 +41,10 @@
                     </div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Terms</p>
-                        <div class="mt-1 min-h-[6rem] whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700">{{ $n->terms ?: '—' }}</div>
+                        <div class="mt-1 min-h-[6rem] min-w-0 max-w-full whitespace-pre-wrap break-words break-all rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700">{{ $n->terms ?: '—' }}</div>
                     </div>
                 </div>
-                <div class="space-y-4">
+                <div class="min-w-0 space-y-4">
                     <div class="rounded-xl border border-slate-100 p-4">
                         <p class="text-xs font-black text-slate-600">Interest window</p>
                         <p class="mt-2 text-sm font-semibold text-slate-900">
@@ -59,27 +60,25 @@
                             {{ $n->polling_to ? \Illuminate\Support\Carbon::parse($n->polling_to)->format('h:i A') : '-' }}
                         </p>
                     </div>
-                    <div class="rounded-xl border border-slate-100 p-4">
-                        <p class="text-xs font-black text-slate-600 mb-3">Images</p>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Cover</p>
+                    @if($hasNominationImages)
+                        <div class="rounded-xl border border-slate-100 p-4">
+                            <p class="text-xs font-black text-slate-600 mb-3">Images</p>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 @if($coverUrl)
-                                    <img src="{{ $coverUrl }}" alt="Cover" class="h-40 w-full rounded-xl object-cover ring-1 ring-slate-100" />
-                                @else
-                                    <p class="rounded-xl border border-dashed border-slate-200 py-8 text-center text-xs text-slate-400">No cover image</p>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Cover</p>
+                                        <img src="{{ $coverUrl }}" alt="Cover" class="h-40 w-full rounded-xl object-cover ring-1 ring-slate-100" />
+                                    </div>
                                 @endif
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Banner</p>
                                 @if($bannerUrl)
-                                    <img src="{{ $bannerUrl }}" alt="Banner" class="h-40 w-full rounded-xl object-cover ring-1 ring-slate-100" />
-                                @else
-                                    <p class="rounded-xl border border-dashed border-slate-200 py-8 text-center text-xs text-slate-400">No banner image</p>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Banner</p>
+                                        <img src="{{ $bannerUrl }}" alt="Banner" class="h-40 w-full rounded-xl object-cover ring-1 ring-slate-100" />
+                                    </div>
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    @endif
                     <div class="flex flex-wrap gap-4 rounded-xl border border-slate-100 p-4">
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>

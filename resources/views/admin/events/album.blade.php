@@ -15,21 +15,15 @@
         </div>
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-            @if($event->status !== 'completed')
-                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
-                    Album upload is available only when event status is Completed.
-                </div>
-            @else
-                <form method="POST" action="{{ route('admin.events.album.store', $event->id) }}" enctype="multipart/form-data" class="space-y-3">
-                    @csrf
-                    <label class="block text-xs font-black uppercase tracking-wider text-slate-500">Upload Event Photos</label>
-                    <input type="file" name="photos[]" multiple accept="image/*"
-                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">
-                    @error('photos')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
-                    @error('photos.*')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-extrabold">Upload Photos</button>
-                </form>
-            @endif
+            <form method="POST" action="{{ route('admin.events.album.store', $event->id) }}" enctype="multipart/form-data" class="space-y-3">
+                @csrf
+                <label class="block text-xs font-black uppercase tracking-wider text-slate-500">Upload Event Photos</label>
+                <input type="file" name="photos[]" multiple accept="image/*"
+                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">
+                @error('photos')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                @error('photos.*')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-extrabold">Upload Photos</button>
+            </form>
         </div>
 
         <div class="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">

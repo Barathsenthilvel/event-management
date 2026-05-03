@@ -8,9 +8,14 @@
                 <h1 class="text-xl font-extrabold text-slate-900">Need Job Requests</h1>
                 <p class="mt-1 text-xs font-bold text-slate-500">Members who submitted the Need Job form.</p>
             </div>
-            <a href="{{ route('admin.jobs.index') }}" class="inline-flex px-4 py-2 rounded-xl border border-slate-200 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
-                Back to Jobs
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.jobs.need-job.requests.report', array_filter(['q' => $q ?? '', 'status' => $status ?? ''])) }}" class="inline-flex px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold hover:bg-slate-800">
+                    Download report
+                </a>
+                <a href="{{ route('admin.jobs.index') }}" class="inline-flex px-4 py-2 rounded-xl border border-slate-200 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                    Back to Jobs
+                </a>
+            </div>
         </div>
     </div>
 

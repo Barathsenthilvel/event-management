@@ -1,5 +1,6 @@
 @php
     $eventError = session('event_interest_error');
+    $eventErrorTitle = session('event_interest_error_title', 'Event registration unavailable');
     $showEventErrorModal = (bool) session('event_interest_error_modal', false) && filled($eventError);
 @endphp
 
@@ -18,8 +19,10 @@
                     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <h2 id="home-event-interest-error-title" class="text-center text-lg font-extrabold text-[#351c42]">Event registration unavailable</h2>
-            <p class="mt-2 text-center text-sm leading-relaxed text-[#351c42]/75">{{ $eventError }}</p>
+            <h2 id="home-event-interest-error-title" class="text-center text-lg font-extrabold text-[#351c42]">{{ $eventErrorTitle }}</h2>
+            <div class="event-interest-error-markdown mt-3 text-left text-sm leading-relaxed text-[#351c42]/80 [&_p:not(:last-child)]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-extrabold [&_strong]:text-[#351c42]">
+                {!! \Illuminate\Support\Str::markdown((string) $eventError) !!}
+            </div>
             <button
                 type="button"
                 class="mt-6 w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:brightness-105"

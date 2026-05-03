@@ -6,15 +6,16 @@
     aria-hidden="true"
     aria-labelledby="read-more-modal-title"
 >
-    <div data-read-more-backdrop class="absolute inset-0" aria-hidden="true"></div>
+    <div data-read-more-backdrop class="absolute inset-0 cursor-pointer" aria-hidden="true" title="Close"></div>
     <div class="relative w-full max-w-2xl rounded-3xl border border-white/20 bg-white shadow-2xl">
         <div class="flex items-start justify-between gap-4 border-b border-[#351c42]/10 bg-[#faf9fc] px-5 py-4">
             <h3 id="read-more-modal-title" class="min-w-0 text-base font-extrabold text-[#351c42] sm:text-lg"></h3>
             <button
                 type="button"
                 data-close-read-more
-                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-[#351c42]/55 transition hover:bg-[#351c42]/5 hover:text-[#351c42]"
+                class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl text-[#351c42]/55 transition hover:bg-[#351c42]/5 hover:text-[#351c42]"
                 aria-label="Close"
+                title="Close"
             >
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6l-12 12"/>
@@ -59,7 +60,8 @@
             <button
                 type="button"
                 data-close-read-more
-                class="w-full rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
+                class="w-full cursor-pointer rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
+                title="Close"
             >
                 Close
             </button>
