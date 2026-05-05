@@ -1423,6 +1423,12 @@
         const donateBtnEl = document.getElementById("read-more-modal-donate-btn");
         const backdrop = modal.querySelector("[data-read-more-backdrop]");
         const closeEls = modal.querySelectorAll("[data-close-read-more]");
+        const jobActionsEl = document.getElementById("read-more-modal-job-actions");
+        const jobSaveForm = document.getElementById("read-more-modal-job-save-form");
+        const jobSaveAddBtn = document.getElementById("read-more-modal-job-save-add");
+        const jobSaveRemoveBtn = document.getElementById("read-more-modal-job-save-remove");
+        const jobApplyBtn = document.getElementById("read-more-modal-job-apply-btn");
+        const jobAppliedBadge = document.getElementById("read-more-modal-job-applied-badge");
 
         let lastActive = null;
 
@@ -1516,6 +1522,32 @@
 
                 actionsEl.classList.toggle("hidden", !hasAction);
             }
+
+            const jobId = btn.getAttribute("data-read-more-job-id");
+            if (jobId && jobActionsEl && jobSaveForm && jobSaveAddBtn && jobSaveRemoveBtn && jobApplyBtn && jobAppliedBadge) {
+                jobActionsEl.classList.remove("hidden");
+                jobSaveForm.action = btn.getAttribute("data-read-more-job-save-url") || "#";
+                const saved = btn.getAttribute("data-read-more-job-saved") === "1";
+                jobSaveAddBtn.classList.toggle("hidden", saved);
+                jobSaveRemoveBtn.classList.toggle("hidden", !saved);
+                const applied = btn.getAttribute("data-read-more-job-applied") === "1";
+                const applyUrl = btn.getAttribute("data-read-more-job-apply-url") || "";
+                const profileResume = btn.getAttribute("data-read-more-job-profile-resume") || "0";
+                if (applied) {
+                    jobApplyBtn.classList.add("hidden");
+                    jobAppliedBadge.classList.remove("hidden");
+                } else {
+                    jobApplyBtn.classList.remove("hidden");
+                    jobAppliedBadge.classList.add("hidden");
+                    jobApplyBtn.setAttribute("data-apply-url", applyUrl);
+                    jobApplyBtn.setAttribute("data-job-title", title);
+                    jobApplyBtn.setAttribute("data-profile-resume", profileResume);
+                }
+            } else if (jobActionsEl) {
+                jobActionsEl.classList.add("hidden");
+                if (jobSaveForm) jobSaveForm.action = "#";
+            }
+
             setOpen(true);
             (closeEls[0] || modal).focus?.({ preventScroll: true });
         }

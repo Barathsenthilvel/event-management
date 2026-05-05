@@ -38,8 +38,9 @@ class AdminJobController extends Controller
             ->withQueryString();
 
         $hospitalSuggestions = $this->hospitalSuggestions();
+        $needJobRequestsCount = MemberJobRequest::query()->count();
 
-        return view('admin.jobs.index', compact('jobs', 'q', 'hospital', 'hospitalSuggestions'));
+        return view('admin.jobs.index', compact('jobs', 'q', 'hospital', 'hospitalSuggestions', 'needJobRequestsCount'));
     }
 
     public function create()

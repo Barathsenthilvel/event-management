@@ -156,6 +156,12 @@
                                     data-read-more-title="{{ e($job->title) }}"
                                     data-read-more-meta='@json($jobReadMoreMeta)'
                                     data-read-more-content='@json($jobReadMoreBody)'
+                                    data-read-more-job-id="{{ $job->id }}"
+                                    data-read-more-job-save-url="{{ route('member.jobs.save-toggle', $job->id) }}"
+                                    data-read-more-job-apply-url="{{ route('member.jobs.apply', $job->id) }}"
+                                    data-read-more-job-saved="{{ $isSaved ? '1' : '0' }}"
+                                    data-read-more-job-applied="{{ $alreadyApplied ? '1' : '0' }}"
+                                    data-read-more-job-profile-resume="{{ $profileResumeAvailable ? '1' : '0' }}"
                                 >
                                     Read more
                                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -253,6 +259,13 @@
                         }
 
                         function openModal(url, jobTitle, profileOk) {
+                            var readMoreModal = document.getElementById('read-more-modal');
+                            if (readMoreModal && readMoreModal.classList.contains('flex')) {
+                                readMoreModal.classList.add('hidden');
+                                readMoreModal.classList.remove('flex');
+                                readMoreModal.setAttribute('aria-hidden', 'true');
+                                document.body.style.overflow = '';
+                            }
                             form.action = url;
                             if (subtitle) subtitle.textContent = jobTitle ? ('Role: ' + jobTitle) : '';
                             var hasProfile = profileOk === '1' || profileOk === true;
@@ -289,10 +302,10 @@
                             if (fileInput) fileInput.value = '';
                         }
 
-                        document.querySelectorAll('.job-apply-open-btn').forEach(function (btn) {
-                            btn.addEventListener('click', function () {
-                                openModal(btn.getAttribute('data-apply-url'), btn.getAttribute('data-job-title'), btn.getAttribute('data-profile-resume'));
-                            });
+                        document.addEventListener('click', function (e) {
+                            var btn = e.target.closest('.job-apply-open-btn');
+                            if (!btn || btn.disabled) return;
+                            openModal(btn.getAttribute('data-apply-url'), btn.getAttribute('data-job-title'), btn.getAttribute('data-profile-resume'));
                         });
 
                         if (profileRadio) profileRadio.addEventListener('change', toggleUploadField);

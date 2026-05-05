@@ -531,7 +531,7 @@ class MemberDashboardController extends Controller
 
         return redirect()
             ->route('member.jobs.index', ['tab' => 'need-job'])
-            ->with('job_apply_success', 'Need Job form submitted successfully.');
+            ->with('job_apply_success', 'Need Job Request submitted successfully.');
     }
 
     public function nominationsPage()
