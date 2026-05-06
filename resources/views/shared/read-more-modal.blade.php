@@ -31,7 +31,7 @@
                     href="#"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="hidden inline-flex items-center gap-2 rounded-full border border-[#351c42]/25 bg-white px-5 py-2.5 text-sm font-extrabold text-[#351c42] transition hover:bg-[#f5f1f8]"
+                    class="hidden inline-flex min-h-[2.75rem] items-center gap-2 rounded-full border border-[#351c42]/25 bg-white px-5 py-2.5 text-sm font-extrabold text-[#351c42] transition hover:bg-[#f5f1f8]"
                 >
                     <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42]">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
@@ -98,16 +98,6 @@
                     Applied
                 </button>
             </div>
-        </div>
-        <div class="rounded-b-3xl border-t border-[#351c42]/10 bg-white px-5 py-4 sm:px-6">
-            <button
-                type="button"
-                data-close-read-more
-                class="w-full cursor-pointer rounded-2xl bg-[#351c42] py-3 text-sm font-extrabold text-[#fddc6a] transition hover:bg-[#4a2660]"
-                title="Close"
-            >
-                Close
-            </button>
         </div>
     </div>
 </div>

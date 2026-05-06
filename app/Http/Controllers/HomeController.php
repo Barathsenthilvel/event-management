@@ -12,6 +12,7 @@ use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -224,5 +225,40 @@ class HomeController extends Controller
             'home.donations',
             array_merge(config('homepage', []), compact('donations', 'q'))
         );
+    }
+
+    public function about()
+    {
+        return view('home.about', config('homepage', []));
+    }
+
+    public function contact()
+    {
+        return view('home.contact', config('homepage', []));
+    }
+
+    public function submitContact(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'subject' => ['required', 'string', 'max:160'],
+            'message' => ['required', 'string', 'max:4000'],
+        ]);
+
+        Log::info('Public contact form submission', [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'subject' => $data['subject'],
+            'message' => $data['message'],
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect()
+            ->route('contact')
+            ->with('success', 'Thanks! Your message has been sent. Our team will contact you soon.');
     }
 }

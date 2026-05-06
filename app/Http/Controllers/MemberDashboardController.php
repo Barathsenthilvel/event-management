@@ -66,6 +66,7 @@ class MemberDashboardController extends Controller
         $dashboardNominations = collect();
         $dashboardPolls = collect();
         $dashboardWinnerPolls = collect();
+        $winnerPollsAll = collect();
         $upcomingMeetings = collect();
 
         if ($showFullMemberMenu && $user) {
@@ -172,9 +173,6 @@ class MemberDashboardController extends Controller
                 ->get();
 
             foreach ($resultPolls as $poll) {
-                if ($dismissedPollingWinnerIds->contains($poll->id)) {
-                    continue;
-                }
                 if (! $this->pollingHasEnded($poll)) {
                     continue;
                 }
@@ -191,6 +189,16 @@ class MemberDashboardController extends Controller
                     continue;
                 }
 
+                // Always provide winners for the trophy icon popup (even if the member previously closed it).
+                $winnerPollsAll->push([
+                    'polling' => $poll,
+                    'winners' => $winners,
+                ]);
+
+                // This set is used only for the auto-popup on page load (suppressed after dismiss).
+                if ($dismissedPollingWinnerIds->contains($poll->id)) {
+                    continue;
+                }
                 $dashboardWinnerPolls->push([
                     'polling' => $poll,
                     'winners' => $winners,
@@ -224,6 +232,7 @@ class MemberDashboardController extends Controller
             'dashboardNominations' => $dashboardNominations,
             'dashboardPolls' => $dashboardPolls,
             'dashboardWinnerPolls' => $dashboardWinnerPolls,
+            'winnerPollsAll' => $winnerPollsAll,
             'upcomingMeetings' => $upcomingMeetings,
             'showNominationDashboard' => $showNominationDashboard,
             'showPollingDashboard' => $showPollingDashboard,

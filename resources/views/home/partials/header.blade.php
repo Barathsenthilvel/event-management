@@ -31,6 +31,8 @@
                 @foreach ($nav as $link)
                     <a href="{{ url('/') }}{{ $link['href'] }}" class="site-nav-link">{{ $link['label'] }}</a>
                 @endforeach
+                <a href="{{ route('about') }}" class="site-nav-link">About Page</a>
+                <a href="{{ route('contact') }}" class="site-nav-link">Contact Page</a>
             </nav>
 
             <div class="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
@@ -178,6 +180,8 @@
             @foreach ($nav as $link)
                 <a href="{{ url('/') }}{{ $link['href'] }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">{{ $link['label'] }}</a>
             @endforeach
+            <a href="{{ route('about') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">About Page</a>
+            <a href="{{ route('contact') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Contact Page</a>
             @auth
                 <div class="mt-4 border-t border-white/10 pt-4">
                     <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#fddc6a]/90">Member portal</p>

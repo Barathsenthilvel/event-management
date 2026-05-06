@@ -37,6 +37,9 @@ use Illuminate\Support\Facades\Route;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
 Route::get('/blogs', [HomeController::class, 'blogs'])->name('blogs.index');
 Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery.index');
 Route::get('/events', [HomeController::class, 'events'])->name('events.index');

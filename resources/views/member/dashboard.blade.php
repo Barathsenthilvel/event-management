@@ -398,18 +398,27 @@
                     $winnerRows = $winnerPopup['winners'] ?? collect();
                 @endphp
                 @if($winnerPoll && $winnerRows->isNotEmpty())
-                    <div id="polling-winner-modal" class="fixed inset-0 z-[121] flex items-center justify-center bg-[#351c42]/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="polling-winner-title">
-                        <div class="w-full max-w-lg rounded-3xl border border-[#351c42]/10 bg-white p-7 shadow-2xl">
+                    <div id="polling-winner-modal" class="fixed inset-0 z-[121] hidden items-center justify-center bg-[#351c42]/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="polling-winner-title" data-winner-modal data-winner-poll-id="{{ $winnerPoll->id }}">
+                        <div class="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white p-7 shadow-2xl">
+                            <div class="pointer-events-none absolute inset-0 overflow-hidden" data-winner-confetti></div>
                             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8m-4-4v4m6-17h2a1 1 0 011 1v2a7 7 0 01-7 7h-1.07A8.001 8.001 0 0112 16a8.001 8.001 0 01-3.93-2H7a7 7 0 01-7-7V5a1 1 0 011-1h2m6 1V3a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                             </div>
                             <h3 id="polling-winner-title" class="mt-5 text-center text-xl font-extrabold text-[#351c42]">Polling winner announced</h3>
                             <p class="mt-1 text-center text-sm font-semibold text-[#351c42]/75">{{ $winnerPoll->title }}</p>
                             <div class="mt-4 space-y-2 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4">
                                 @foreach($winnerRows as $row)
-                                    <div class="flex items-center justify-between gap-3 border-b border-[#351c42]/10 pb-2 text-sm last:border-b-0 last:pb-0">
-                                        <span class="font-semibold text-[#351c42]/70">{{ $row['position'] }}</span>
-                                        <span class="font-extrabold text-emerald-800">{{ $row['winner_name'] }}</span>
+                                    <div class="flex items-center justify-between gap-3 rounded-2xl border border-[#351c42]/10 bg-white px-4 py-3 text-sm">
+                                        <div class="min-w-0">
+                                            <p class="break-all font-extrabold text-[#351c42]">{{ $row['position'] }}</p>
+                                            <p class="mt-1 text-xs font-semibold text-[#351c42]/60">
+                                                Winner:
+                                                <span class="font-extrabold text-emerald-800">{{ $row['winner_name'] }}</span>
+                                            </p>
+                                        </div>
+                                        <span class="inline-flex items-center rounded-full bg-[#351c42] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#fddc6a]">
+                                            Champion
+                                        </span>
                                     </div>
                                 @endforeach
                             </div>
@@ -448,12 +457,36 @@
                     @endif
                 </div>
                 @if($showFullMemberMenu)
-                    <a
-                        href="{{ route('member.meetings.index') }}"
-                        class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#351c42]/15 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/45 hover:bg-[#faf9fc]"
-                        aria-label="Meetings"
-                        title="Meetings"
-                    >
+                    <div class="flex items-center gap-2">
+                        @php
+                            $winnerAll = $winnerPollsAll ?? collect();
+                            $winnerAllFirst = $winnerAll->first();
+                            $winnerAllPoll = $winnerAllFirst['polling'] ?? null;
+                        @endphp
+                        @if(($winnerAllPoll?->id ?? 0) > 0)
+                            <button
+                                type="button"
+                                class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#fddc6a]/55 bg-white text-[#351c42] shadow-sm transition hover:border-[#fddc6a] hover:bg-[#fffdf6]"
+                                aria-label="Polling winners"
+                                title="Polling winners"
+                                data-winner-open
+                                data-winner-poll-id="{{ $winnerAllPoll->id }}"
+                            >
+                                <svg class="h-5 w-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8m-4-4v4m6-17h2a1 1 0 011 1v2a7 7 0 01-7 7h-1.07A8.001 8.001 0 0112 16a8.001 8.001 0 01-3.93-2H7a7 7 0 01-7-7V5a1 1 0 011-1h2m6 1V3a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                                </svg>
+                                <span class="absolute -right-1 -top-1 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-black leading-none text-white" title="Winner announced">
+                                    ✓
+                                </span>
+                            </button>
+                        @endif
+
+                        <a
+                            href="{{ route('member.meetings.index') }}"
+                            class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#351c42]/15 bg-white text-[#351c42] shadow-sm transition hover:border-[#965995]/45 hover:bg-[#faf9fc]"
+                            aria-label="Meetings"
+                            title="Meetings"
+                        >
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -462,7 +495,8 @@
                                     {{ $meetingCount > 9 ? '9+' : $meetingCount }}
                                 </span>
                             @endif
-                    </a>
+                        </a>
+                    </div>
                 @endif
             </header>
 
@@ -852,14 +886,8 @@
                 </article>
             </section>
 
-            @if($memberPollings->isNotEmpty())
-                @include('member.partials.member-pollings-panel', [
-                    'memberPollings' => $memberPollings,
-                    'pollingVotedPositionIds' => $pollingVotedPositionIds,
-                    'memberPollingVotes' => $memberPollingVotes ?? collect(),
-                    'pollingResultStats' => $pollingResultStats ?? [],
-                ])
-            @endif
+            {{-- Polling section intentionally hidden on dashboard.
+                 Members can vote/view polling from the Pollings page; winners are shown via the trophy popup. --}}
             @endif
 
             @if($showFullMemberMenu)
@@ -1487,14 +1515,84 @@
                     if (winnerBtn) {
                         e.preventDefault();
                         const pid = winnerBtn.getAttribute("data-polling-id");
-                        document.getElementById("polling-winner-modal")?.remove();
+                        const modal = document.querySelector("[data-winner-modal]");
+                        if (modal) {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }
                         if (pid) {
-                            persistDismiss("polling_winner", pid);
+                            try { localStorage.setItem(`md_winner_seen_${pid}`, "1"); } catch (_) {}
                         }
                     }
                 },
                 true
             );
+
+            function burstConfetti(modal) {
+                const host = modal?.querySelector("[data-winner-confetti]");
+                if (!host) return;
+                host.innerHTML = "";
+                const colors = ["#fddc6a", "#965995", "#34d399", "#60a5fa", "#f472b6", "#fb7185"];
+                const count = 44;
+                for (let i = 0; i < count; i++) {
+                    const el = document.createElement("span");
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 0.25;
+                    const dur = 1.5 + Math.random() * 0.9;
+                    const size = 6 + Math.floor(Math.random() * 6);
+                    const rot = Math.floor(Math.random() * 360);
+                    el.style.cssText = `
+                        position:absolute;
+                        top:-12px;
+                        left:${left}%;
+                        width:${size}px;
+                        height:${size * 0.6}px;
+                        background:${colors[i % colors.length]};
+                        opacity:0.95;
+                        transform:rotate(${rot}deg);
+                        border-radius:2px;
+                        animation: mdConfettiFall ${dur}s ease-in ${delay}s both;
+                    `;
+                    host.appendChild(el);
+                }
+                window.setTimeout(() => { host.innerHTML = ""; }, 2600);
+            }
+
+            const style = document.createElement("style");
+            style.textContent = `
+                @keyframes mdConfettiFall {
+                    0% { transform: translate3d(0,0,0) rotate(0deg); opacity: 0; }
+                    10% { opacity: 1; }
+                    100% { transform: translate3d(-20px, 340px, 0) rotate(520deg); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            function openWinnerModal(force = false) {
+                const modal = document.querySelector("[data-winner-modal]");
+                if (!modal) return;
+                const pid = modal.getAttribute("data-winner-poll-id") || "";
+                if (!force && pid) {
+                    try {
+                        if (localStorage.getItem(`md_winner_seen_${pid}`) === "1") return;
+                    } catch (_) {}
+                }
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                burstConfetti(modal);
+            }
+
+            document.addEventListener("click", (e) => {
+                const btn = e.target.closest("[data-winner-open]");
+                if (!btn) return;
+                e.preventDefault();
+                openWinnerModal(true);
+            }, true);
+
+            // Auto-show once (per poll id) if server says winner popup is available.
+            if (document.querySelector("[data-winner-modal]")) {
+                openWinnerModal(false);
+            }
         })();
     </script>
 </body>
