@@ -19,7 +19,12 @@
             <div class="grid md:grid-cols-2 divide-y-0">
                 <div class="divide-y divide-[#351c42]/10">
                     @foreach (array_slice($services, 0, 3) as $svc)
-                        <a href="{{ url('/') }}{{ $svc['href'] ?? '#contact' }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995]" aria-label="{{ $svc['label'] }}{{ isset($svc['href']) && $svc['href'] === '#jobs' ? ' — careers' : ' — get in touch' }}">
+                        @php
+                            $svcHref = $svc['href'] ?? null;
+                            $svcUrl = $svcHref ? url($svcHref) : route('contact');
+                            $svcCareers = isset($svc['href']) && $svc['href'] === '/careers';
+                        @endphp
+                        <a href="{{ $svcUrl }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995]" aria-label="{{ $svc['label'] }}{{ $svcCareers ? ' — careers' : ' — get in touch' }}">
                             <div class="flex items-center gap-6 min-w-0">
                                 <span class="text-sm font-bold text-[#351c42]/20 tabular-nums transition-colors duration-300 group-hover:text-[#351c42]/40">{{ $svc['num'] }}</span>
                                 <span class="text-base md:text-lg font-semibold text-[#351c42] transition-colors duration-300 group-hover:text-[#2a1533]">{{ $svc['label'] }}</span>
@@ -33,7 +38,12 @@
                 </div>
                 <div class="divide-y divide-[#351c42]/10 md:border-l md:border-[#351c42]/10">
                     @foreach (array_slice($services, 3, 3) as $svc)
-                        <a href="{{ url('/') }}{{ $svc['href'] ?? '#contact' }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995] md:pl-8" aria-label="{{ $svc['label'] }}{{ isset($svc['href']) && $svc['href'] === '#jobs' ? ' — careers' : ' — get in touch' }}">
+                        @php
+                            $svcHref = $svc['href'] ?? null;
+                            $svcUrl = $svcHref ? url($svcHref) : route('contact');
+                            $svcCareers = isset($svc['href']) && $svc['href'] === '/careers';
+                        @endphp
+                        <a href="{{ $svcUrl }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995] md:pl-8" aria-label="{{ $svc['label'] }}{{ $svcCareers ? ' — careers' : ' — get in touch' }}">
                             <div class="flex items-center gap-6 min-w-0">
                                 <span class="text-sm font-bold text-[#351c42]/20 tabular-nums transition-colors duration-300 group-hover:text-[#351c42]/40">{{ $svc['num'] }}</span>
                                 <span class="text-base md:text-lg font-semibold text-[#351c42] transition-colors duration-300 group-hover:text-[#2a1533]">{{ $svc['label'] }}</span>

@@ -37,6 +37,19 @@ use Illuminate\Support\Facades\Route;
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+/** Homepage sections (avoid hash URLs like /#events — use these paths + ?section= for scroll). */
+Route::redirect('/home', '/?section=home', 302)->name('home.landing');
+Route::get('/activity', function () {
+    return redirect()->route('home', ['section' => 'association-activity']);
+})->name('activity');
+Route::redirect('/campaign', '/?section=events', 302)->name('home.campaign');
+Route::redirect('/stories', '/?section=blog', 302)->name('home.stories');
+Route::redirect('/photos', '/?section=gallery', 302)->name('home.photos');
+Route::redirect('/careers', '/?section=jobs', 302)->name('home.careers');
+Route::redirect('/give', '/?section=donate', 302)->name('home.give');
+Route::redirect('/more-about', '/?section=about2', 302)->name('home.more-about');
+
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');

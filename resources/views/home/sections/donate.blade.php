@@ -1,4 +1,4 @@
-<section id="donate" class="relative z-30">
+<section id="donate" class="relative z-30 scroll-mt-32">
     <div class="bg-[#f6f6f4] py-10 lg:py-14 border-b border-[#351c42]/10">
         <div class="mx-auto max-w-7xl px-4">
             <div class="flex flex-col gap-3 min-[520px]:flex-row min-[520px]:items-start min-[520px]:justify-between min-[520px]:gap-6 mb-6 lg:mb-8">

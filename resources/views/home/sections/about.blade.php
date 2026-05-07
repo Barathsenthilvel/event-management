@@ -1,4 +1,4 @@
-<section id="about2" class="relative bg-[#351c42] overflow-hidden py-16 lg:py-24">
+<section id="about2" class="relative scroll-mt-32 bg-[#351c42] overflow-hidden py-16 lg:py-24">
     <div class="pointer-events-none absolute -left-6 -top-8 h-28 w-28 rounded-b-[38px] border border-[#fddc6a]/35"></div>
     <div class="pointer-events-none absolute -right-10 -bottom-12 h-40 w-40 rounded-tl-[56px] border border-[#fddc6a]/35"></div>
 
@@ -46,7 +46,7 @@
                 </p>
 
                 <div class="mt-8 flex flex-wrap items-center gap-5">
-                    <a href="{{ url('/') }}#about2" class="click-btn btn-style506">
+                    <a href="{{ route('about') }}" class="click-btn btn-style506">
                         <span class="click-btn__icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" aria-hidden="true">
                                 <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

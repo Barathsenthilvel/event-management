@@ -25,13 +25,13 @@ return [
     ],
 
     'nav' => [
-        ['label' => 'Home', 'href' => '#home'],
-        ['label' => 'Activity', 'href' => '#association-activity'],
+        ['label' => 'Home', 'href' => '/home'],
+        ['label' => 'Activity', 'href' => '/activity'],
         ['label' => 'About Us', 'href' => '/about'],
-        ['label' => 'Events', 'href' => '#events'],
-        ['label' => 'Blog', 'href' => '#blog'],
-        ['label' => 'Gallery', 'href' => '#gallery'],
-        ['label' => 'Jobs', 'href' => '#jobs'],
+        ['label' => 'Events', 'href' => '/campaign'],
+        ['label' => 'Blog', 'href' => '/stories'],
+        ['label' => 'Gallery', 'href' => '/photos'],
+        ['label' => 'Jobs', 'href' => '/careers'],
         ['label' => 'Contact Us', 'href' => '/contact'],
     ],
 
@@ -90,7 +90,7 @@ return [
 
     'banners' => [
         [
-            'href' => '#events',
+            'href' => '/campaign',
             'src' => 'images/events/event-1-1.jpg',
             'alt' => 'Community education and outreach',
             'eyebrow' => 'EVENTS',
@@ -98,7 +98,7 @@ return [
             'text' => 'Thank-you gatherings and impact stories from Chennai neighborhoods.',
         ],
         [
-            'href' => '#donate',
+            'href' => '/give',
             'src' => 'images/events/event-1-2.jpg',
             'alt' => 'Programs and fundraising support',
             'eyebrow' => 'PROGRAMS',
@@ -106,7 +106,7 @@ return [
             'text' => 'Transparent campaigns and accountable giving across education, health, and community.',
         ],
         [
-            'href' => '#gallery',
+            'href' => '/photos',
             'src' => 'images/events/event-1-3.jpg',
             'alt' => 'Volunteers at community events',
             'eyebrow' => 'COMMUNITY',
@@ -215,9 +215,9 @@ return [
         ['num' => '01', 'label' => 'Quick Fundraising'],
         ['num' => '02', 'label' => 'School & Education Support'],
         ['num' => '03', 'label' => 'Medical Treatment'],
-        ['num' => '04', 'label' => 'Careers & opportunities', 'href' => '#jobs'],
-        ['num' => '05', 'label' => 'Job openings & applications', 'href' => '#jobs'],
-        ['num' => '06', 'label' => 'Fundraising Goals'],
+        ['num' => '04', 'label' => 'Careers & opportunities', 'href' => '/careers'],
+        ['num' => '05', 'label' => 'Job openings & applications', 'href' => '/careers'],
+        ['num' => '06', 'label' => 'Fundraising Goals', 'href' => '/give'],
     ],
 
     'blog' => [

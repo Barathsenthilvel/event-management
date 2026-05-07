@@ -66,11 +66,11 @@
                 <span class="absolute left-0 bottom-0 h-0.5 w-12 bg-[#fddc6a] rounded-full" aria-hidden="true"></span>
             </h3>
             <ul class="space-y-2.5 text-sm font-medium">
-                <li><a href="{{ url('/') }}#about2" class="text-white/80 hover:text-[#fddc6a] transition-colors">About Us</a></li>
+                <li><a href="{{ route('about') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">About Us</a></li>
                 <li><button type="button" data-open-donate-modal class="text-white/80 hover:text-[#fddc6a] transition-colors text-left bg-transparent border-0 p-0 cursor-pointer font-medium">Give Donation</button></li>
-                <li><a href="{{ url('/') }}#association-activity" class="text-white/80 hover:text-[#fddc6a] transition-colors">Activity</a></li>
-                <li><a href="{{ url('/') }}#events" class="text-white/80 hover:text-[#fddc6a] transition-colors">Our Campaign</a></li>
-                <li><a href="{{ url('/') }}#gallery" class="text-white/80 hover:text-[#fddc6a] transition-colors">Gallery</a></li>
+                <li><a href="{{ route('activity') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Activity</a></li>
+                <li><a href="{{ route('home.campaign') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Our Campaign</a></li>
+                <li><a href="{{ route('home.photos') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Gallery</a></li>
                 <li><a href="{{ route('contact') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Contact Us</a></li>
             </ul>
         </div>
@@ -78,7 +78,7 @@
 
     <div class="relative border-t border-black/10 bg-gradient-to-b from-[#f0d78c] via-[#fddc6a] to-[#e8c45c]">
         <div class="mx-auto max-w-7xl px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-5 text-[#351c42]">
-            <a href="{{ url('/') }}#home" class="shrink-0">
+            <a href="{{ route('home') }}" class="shrink-0">
                 <img src="{{ asset($logo['src']) }}" alt="{{ $logo['alt'] }}" class="h-10 sm:h-11 w-auto max-w-[200px] object-contain object-left" width="200" height="48" loading="lazy" />
             </a>
             <p class="text-sm font-semibold text-center order-last md:order-none">

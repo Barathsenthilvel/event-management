@@ -1,4 +1,4 @@
-<section id="home" class="relative bg-[#351c42] overflow-hidden py-16 lg:py-24">
+<section id="home" class="relative scroll-mt-32 bg-[#351c42] overflow-hidden py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4">
         <div class="grid gap-10 lg:grid-cols-2 lg:gap-14 items-start">
             <div>

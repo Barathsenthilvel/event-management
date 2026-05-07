@@ -26,14 +26,48 @@
         overlay.addEventListener("click", closeDrawer);
         closeBtn?.addEventListener("click", closeDrawer);
 
-        drawer.querySelectorAll("a[href*='#']").forEach((a) => {
-            const href = a.getAttribute("href") || "";
-            if (href.length > 1) a.addEventListener("click", () => closeDrawer());
+        drawer.querySelector("nav")?.querySelectorAll("a[href]").forEach((a) => {
+            a.addEventListener("click", () => closeDrawer());
         });
 
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape") closeDrawer();
         });
+    })();
+</script>
+
+<script>
+    (() => {
+        if (location.pathname !== "/") return;
+        const hashToSection = {
+            "#home": "home",
+            "#association-activity": "association-activity",
+            "#events": "events",
+            "#blog": "blog",
+            "#gallery": "gallery",
+            "#jobs": "jobs",
+            "#donate": "donate",
+            "#about2": "about2",
+            "#testimonials": "testimonials",
+        };
+        const mapped = hashToSection[location.hash];
+        if (mapped) {
+            history.replaceState(null, "", "?section=" + mapped);
+            location.hash = "";
+        }
+        const params = new URLSearchParams(location.search);
+        const id = params.get("section");
+        if (!id || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id)) return;
+        const run = () => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => requestAnimationFrame(run));
+        } else {
+            requestAnimationFrame(run);
+        }
     })();
 </script>
 
@@ -1220,6 +1254,99 @@
     (() => {
         const fy = document.getElementById("footer-year");
         if (fy) fy.textContent = String(new Date().getFullYear());
+    })();
+</script>
+
+<script>
+    (() => {
+        const form = document.querySelector("[data-contact-form]");
+        if (!form) return;
+
+        const submitBtn = form.querySelector("[data-contact-submit]");
+        const submitLabel = form.querySelector("[data-contact-submit-label]");
+        const errorsBox = document.getElementById("contact-form-errors");
+        const errorsList = document.getElementById("contact-form-errors-list");
+
+        const modal = document.getElementById("contact-success-modal");
+        const modalBody = document.getElementById("contact-success-body");
+        const backdrop = modal?.querySelector("[data-contact-success-backdrop]");
+        const closeBtn = modal?.querySelector("[data-contact-success-close]");
+        const okBtn = modal?.querySelector("[data-contact-success-ok]");
+
+        function csrfToken() {
+            const m = document.querySelector('meta[name="csrf-token"]');
+            return m ? m.getAttribute("content") : "";
+        }
+
+        function setLoading(loading) {
+            if (submitBtn) submitBtn.disabled = !!loading;
+            if (submitLabel) submitLabel.textContent = loading ? "Sending..." : "Send Message";
+        }
+
+        function showErrors(items) {
+            if (!errorsBox || !errorsList) return;
+            errorsList.innerHTML = "";
+            (items || []).forEach((msg) => {
+                const li = document.createElement("li");
+                li.textContent = String(msg);
+                errorsList.appendChild(li);
+            });
+            errorsBox.classList.toggle("hidden", errorsList.children.length === 0);
+        }
+
+        function setModalOpen(open) {
+            if (!modal) return;
+            modal.classList.toggle("hidden", !open);
+            modal.classList.toggle("flex", open);
+            modal.setAttribute("aria-hidden", open ? "false" : "true");
+            document.body.style.overflow = open ? "hidden" : "";
+        }
+
+        function closeModal() { setModalOpen(false); }
+
+        backdrop?.addEventListener("click", closeModal);
+        closeBtn?.addEventListener("click", closeModal);
+        okBtn?.addEventListener("click", closeModal);
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal && modal.classList.contains("flex")) closeModal();
+        });
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            showErrors([]);
+            setLoading(true);
+
+            try {
+                const fd = new FormData(form);
+                const res = await fetch(form.getAttribute("action") || "/contact", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": csrfToken(),
+                    },
+                    body: fd,
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    const fieldErrors = data?.errors ? Object.values(data.errors).flat() : [];
+                    const msg = data?.message ? [data.message] : [];
+                    showErrors(fieldErrors.length ? fieldErrors : (msg.length ? msg : ["Unable to send message. Please try again."]));
+                    setLoading(false);
+                    return;
+                }
+
+                if (modalBody) modalBody.textContent = data?.message || "Thanks! Your message has been sent.";
+                form.reset();
+                setLoading(false);
+                setModalOpen(true);
+            } catch (_) {
+                showErrors(["Network error. Please check your connection and try again."]);
+                setLoading(false);
+            }
+        });
     })();
 </script>
 

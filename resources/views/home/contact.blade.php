@@ -46,6 +46,7 @@
             </div>
         </div>
 
+        {{-- Server-side fallbacks (JS disabled). When JS is enabled, we show a modal without reload. --}}
         @if(session('success'))
             <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-900">
                 <p class="text-sm font-extrabold">Success</p>
@@ -70,8 +71,13 @@
             <h2 class="text-lg font-extrabold tracking-tight">Send a message</h2>
             <p class="mt-1 text-sm text-[#351c42]/65">We usually respond within 1–2 working days.</p>
 
-            <form method="POST" action="{{ route('contact.submit') }}" class="mt-6 space-y-4">
+            <form method="POST" action="{{ route('contact.submit') }}" class="mt-6 space-y-4" data-contact-form>
                 @csrf
+
+                <div id="contact-form-errors" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-rose-900">
+                    <p class="text-sm font-extrabold">Please fix the errors</p>
+                    <ul id="contact-form-errors-list" class="mt-2 space-y-1 text-sm text-rose-900/80 list-disc list-inside"></ul>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -113,10 +119,11 @@
 
                 <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between pt-2">
                     <button type="submit"
-                            class="inline-flex items-center justify-center rounded-2xl bg-[#351c42] px-6 py-3 text-sm font-extrabold text-[#fddc6a] hover:bg-[#4d2a5c] shadow-lg shadow-[#351c42]/15">
-                        Send Message
+                            data-contact-submit
+                            class="inline-flex items-center justify-center rounded-2xl bg-[#351c42] px-6 py-3 text-sm font-extrabold text-[#fddc6a] hover:bg-[#4d2a5c] shadow-lg shadow-[#351c42]/15 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <span data-contact-submit-label>Send Message</span>
                     </button>
-                    <a href="{{ route('home') }}#donate" class="text-sm font-bold text-[#965995] hover:underline">
+                    <a href="{{ route('home.give') }}" class="text-sm font-bold text-[#965995] hover:underline">
                         Want to donate instead?
                     </a>
                 </div>
@@ -149,6 +156,36 @@
         </div>
     </section>
 </main>
+
+<div
+    id="contact-success-modal"
+    class="fixed inset-0 z-[210] hidden items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="contact-success-title"
+>
+    <div class="absolute inset-0 bg-[#351c42]/55" data-contact-success-backdrop></div>
+    <div class="relative w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-2xl shadow-[#351c42]/20">
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-700">Success</p>
+                <h2 id="contact-success-title" class="mt-1 text-lg font-extrabold text-[#351c42]">Message sent</h2>
+            </div>
+            <button type="button" class="rounded-2xl p-2 text-[#351c42]/50 hover:bg-[#351c42]/5 hover:text-[#351c42]" data-contact-success-close aria-label="Close">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <p id="contact-success-body" class="mt-4 text-sm text-[#351c42]/75 leading-relaxed">
+            Thanks! Your message has been sent.
+        </p>
+        <div class="mt-6 flex flex-col gap-2">
+            <button type="button" class="w-full rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-md hover:bg-[#4d2a5c]" data-contact-success-ok>
+                OK
+            </button>
+        </div>
+    </div>
+</div>
 
 @include('home.partials.footer')
 @include('home.partials.floating')

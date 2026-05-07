@@ -1,4 +1,4 @@
-<a href="{{ url('/') }}#home" class="back-to-top-floating" aria-label="Back to top">
+<a href="{{ route('home') }}" class="back-to-top-floating" aria-label="Back to top">
     <span class="back-to-top-floating__bar" aria-hidden="true"></span>
     <span class="back-to-top-floating__text">Back to top</span>
 </a>
@@ -37,7 +37,7 @@
                         <path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
-                <a href="{{ url('/') }}#about2" class="text-xs font-semibold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">
+                <a href="{{ route('about') }}" class="text-xs font-semibold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">
                     Learn about us
                 </a>
             </div>

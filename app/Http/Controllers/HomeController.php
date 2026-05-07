@@ -274,6 +274,13 @@ class HomeController extends Controller
                 'from_email' => $data['email'],
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'We could not send your message right now. Please try again in a moment or email us directly at '.$recipient.'.',
+                ], 422);
+            }
+
             return redirect()
                 ->route('contact')
                 ->withInput()
@@ -300,8 +307,17 @@ class HomeController extends Controller
             'ip' => $request->ip(),
         ]);
 
+        $successMessage = 'Thanks! Your message has been sent to our team. We have also emailed a copy to your address for your records.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $successMessage,
+            ]);
+        }
+
         return redirect()
             ->route('contact')
-            ->with('success', 'Thanks! Your message has been sent to our team. We have also emailed a copy to your address for your records.');
+            ->with('success', $successMessage);
     }
 }

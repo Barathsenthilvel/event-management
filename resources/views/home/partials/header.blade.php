@@ -16,7 +16,7 @@
                 </span>
             </button>
 
-            <a href="{{ url('/') }}#home" class="flex items-center shrink-0 min-w-0 max-w-[min(52vw,200px)] sm:max-w-[220px]" aria-label="GNAT Association home">
+            <a href="{{ route('home') }}" class="flex items-center shrink-0 min-w-0 max-w-[min(52vw,200px)] sm:max-w-[220px]" aria-label="GNAT Association home">
                 <img
                     src="{{ asset($logo['src']) }}"
                     alt="{{ $logo['alt'] }}"
@@ -89,7 +89,7 @@
     aria-hidden="true"
 >
     <div class="flex items-center justify-between gap-4 p-5 border-b border-white/10 shrink-0">
-        <a href="{{ url('/') }}#home" class="flex items-center gap-2 min-w-0 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-sm" aria-label="GNAT Association home">
+        <a href="{{ route('home') }}" class="flex items-center gap-2 min-w-0 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-sm" aria-label="GNAT Association home">
             <img
                 src="{{ asset($logo['src']) }}"
                 alt="{{ $logo['alt'] }}"
