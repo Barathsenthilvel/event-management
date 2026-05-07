@@ -38,7 +38,8 @@ class AdminJobController extends Controller
             ->withQueryString();
 
         $hospitalSuggestions = $this->hospitalSuggestions();
-        $needJobRequestsCount = MemberJobRequest::query()->count();
+        // Only show NEW requests count as the badge.
+        $needJobRequestsCount = MemberJobRequest::query()->where('status', 'new')->count();
 
         return view('admin.jobs.index', compact('jobs', 'q', 'hospital', 'hospitalSuggestions', 'needJobRequestsCount'));
     }

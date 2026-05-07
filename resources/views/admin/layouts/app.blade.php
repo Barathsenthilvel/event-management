@@ -204,6 +204,9 @@
             $jobApplicationsPendingCount = \App\Models\AdminJobApplication::query()
                 ->where('application_status', 'pending')
                 ->count();
+            $needJobRequestsNewCount = \App\Models\MemberJobRequest::query()
+                ->where('status', 'new')
+                ->count();
         @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
             {{-- 1. Dashboard (first) --}}
@@ -249,6 +252,13 @@
                                 {{ $jobApplicationsPendingCount > 99 ? '99+' : $jobApplicationsPendingCount }}
                             </span>
                         @endif
+                        @if($menuIsJobs && $needJobRequestsNewCount > 0)
+                            <span x-show="sidebarOpen"
+                                class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-amber-500 text-white text-[10px] font-black"
+                                title="Need Job requests (New)">
+                                {{ $needJobRequestsNewCount > 99 ? '99+' : $needJobRequestsNewCount }}
+                            </span>
+                        @endif
                     </a>
                 @else
                     @php
@@ -276,6 +286,13 @@
                                         class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-indigo-500 text-white text-[10px] font-black"
                                         title="Job applications still on Pending (set status to hide from this count)">
                                         {{ $jobApplicationsPendingCount > 99 ? '99+' : $jobApplicationsPendingCount }}
+                                    </span>
+                                @endif
+                                @if($menuIsJobs && $needJobRequestsNewCount > 0)
+                                    <span x-show="sidebarOpen"
+                                        class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-amber-500 text-white text-[10px] font-black"
+                                        title="Need Job requests (New)">
+                                        {{ $needJobRequestsNewCount > 99 ? '99+' : $needJobRequestsNewCount }}
                                     </span>
                                 @endif
                             </a>
@@ -387,8 +404,9 @@
                 <span x-show="sidebarOpen" class="text-sm font-medium">Member Approvals</span>
                 @if($pendingApprovalsCount > 0)
                     <span x-show="sidebarOpen"
-                        class="ml-auto inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-rose-500 text-white text-[10px] font-black">
-                        {{ (int) $pendingApprovalsCount }}
+                        class="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black tabular-nums"
+                        title="Pending member approvals">
+                        {{ (int) $pendingApprovalsCount > 99 ? '99+' : (int) $pendingApprovalsCount }}
                     </span>
                 @endif
             </a>

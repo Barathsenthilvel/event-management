@@ -35,7 +35,11 @@
             <div class="flex shrink-0 justify-end gap-2">
                 <a href="{{ route('admin.jobs.need-job.requests') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-indigo-200 text-indigo-700 text-xs font-extrabold hover:bg-indigo-50">
                     Need Job Requests
-                    <span class="inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-100 px-1.5 text-[10px] font-black text-indigo-800 tabular-nums">{{ $needJobRequestsCount ?? 0 }}</span>
+                    @if(($needJobRequestsCount ?? 0) > 0)
+                        <span class="inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-100 px-1.5 text-[10px] font-black text-indigo-800 tabular-nums">
+                            {{ ($needJobRequestsCount ?? 0) > 99 ? '99+' : ($needJobRequestsCount ?? 0) }}
+                        </span>
+                    @endif
                 </a>
                 <a href="{{ route('admin.jobs.create') }}" class="inline-flex px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">+ Add</a>
             </div>
