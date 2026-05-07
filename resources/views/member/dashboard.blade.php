@@ -906,14 +906,8 @@
                                 <p class="text-sm font-black uppercase tracking-[0.2em] text-white/95">ID Card</p>
                             </div>
                             <div class="relative z-[1] grid grid-cols-[4.5rem_minmax(0,1fr)_2rem] items-center gap-3 px-4 py-3">
-                                <div class="relative h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-md border border-[#fddc6a]/40 bg-white/10">
-                                    @if($member->passport_photo_path)
-                                        <img src="{{ asset('storage/' . $member->passport_photo_path) }}" alt="" class="h-full w-full object-cover" width="72" height="72" />
-                                    @else
-                                        <div class="flex h-full w-full items-center justify-center text-[#fddc6a]/75">
-                                            <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        </div>
-                                    @endif
+                                <div class="relative h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-full border-2 border-[#fddc6a]/50 bg-[#0d9488]/30">
+                                    @include('partials.user-letter-avatar', ['user' => $member, 'class' => 'h-full w-full text-lg sm:text-xl border-0'])
                                 </div>
                                 <div class="min-w-0">
                                     <p class="truncate text-[13px] font-extrabold leading-snug text-white">{{ $member->name }}</p>

@@ -1,10 +1,10 @@
 {{-- Single-slide hero carousel: one banner visible; modern overlay controls + dock --}}
-<section class="relative bg-gradient-to-b from-[#eae7f3] via-[#f0edf7] to-[#f8f6fc] py-10 lg:py-14" aria-label="Featured banners">
+<section class="relative bg-transparent py-10 lg:py-14" aria-label="Featured banners">
     <div class="mx-auto max-w-7xl px-4 sm:px-6">
         <div class="relative">
             <div
                 id="bannerCarouselViewport"
-                class="banner-carousel-viewport relative w-full min-w-0 overflow-hidden rounded-3xl border border-[#351c42]/10 bg-[#1a0f24] shadow-[0_24px_60px_-12px_rgba(53,28,66,0.35)] ring-1 ring-black/5"
+                class="banner-carousel-viewport relative w-full min-w-0 overflow-hidden rounded-3xl border border-[#351c42]/10 bg-transparent shadow-[0_24px_60px_-12px_rgba(53,28,66,0.35)] ring-1 ring-black/5"
             >
                 {{-- Track: one slide width = 100% of viewport (JS); gap-0 --}}
                 <div

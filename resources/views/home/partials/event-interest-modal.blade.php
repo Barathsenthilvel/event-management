@@ -9,8 +9,8 @@
         <div class="flex items-start justify-between gap-3">
             <div>
                 <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#965995]">Events</p>
-                <h2 id="interest-modal-title" class="mt-1 text-lg font-extrabold text-[#351c42]">Register your interest</h2>
-                <p id="interest-modal-subtitle" class="mt-1 text-xs text-[#351c42]/65">Tell us how you’d like to continue.</p>
+                <h2 id="interest-modal-title" class="mt-1 text-lg font-extrabold text-[#351c42]">Register to attend</h2>
+                <p id="interest-modal-subtitle" class="mt-1 text-xs text-[#351c42]/65">Confirm attendance — tell us how you’d like to continue.</p>
             </div>
             <button type="button" class="rounded-xl p-2 text-[#351c42]/50 hover:bg-[#351c42]/5 hover:text-[#351c42]" data-interest-modal-close aria-label="Close">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>

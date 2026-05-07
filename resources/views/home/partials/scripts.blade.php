@@ -1220,10 +1220,6 @@
     (() => {
         const fy = document.getElementById("footer-year");
         if (fy) fy.textContent = String(new Date().getFullYear());
-        document.querySelector("[data-footer-newsletter]")?.addEventListener("submit", (e) => {
-            e.preventDefault();
-            alert("Thank you for subscribing to GNAT Association!");
-        });
     })();
 </script>
 

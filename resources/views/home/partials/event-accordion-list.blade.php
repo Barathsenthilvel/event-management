@@ -57,6 +57,12 @@
             $seatPct = ($seatLimited && $seatCap > 0) ? min(100, (int) round((100 * $seatFilled) / $seatCap)) : 0;
             $isAdminEvent = filled($event->created_by_admin_id);
             $memberInterestReturn = request()->fullUrl();
+            $interestClosed = ! $event->acceptsPublicAttendance();
+            $attendCtaLabel = match ($event->status) {
+                'live' => 'Attend now',
+                'upcoming' => 'Attend',
+                default => 'Register',
+            };
         @endphp
         <div class="rounded-2xl bg-white border border-[#351c42]/10 overflow-x-hidden overflow-y-visible" data-events-accordion-item @if($expandAll) data-events-open="true" @endif>
             @if($hasDesc)
@@ -108,8 +114,17 @@
                         <span class="h-1 w-1 rounded-full bg-[#351c42]/30"></span>
                         <span>{{ $timeRange }}</span>
                     </div>
-                    <div class="mt-2 text-sm md:text-base font-bold text-[#351c42] truncate" data-events-header-title>
-                        {{ $event->title }}
+                    <div class="mt-2 flex flex-wrap items-center gap-2 min-w-0">
+                        <span class="text-sm md:text-base font-bold text-[#351c42] truncate" data-events-header-title>
+                            {{ $event->title }}
+                        </span>
+                        @if($event->status === 'live')
+                            <span class="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-800">Live</span>
+                        @elseif($event->status === 'completed')
+                            <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80">Completed</span>
+                        @elseif($event->status === 'upcoming')
+                            <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-indigo-800">Upcoming</span>
+                        @endif
                     </div>
                 </div>
 
@@ -287,6 +302,18 @@
                                     </span>
                                 </div>
                             @endif
+                        @elseif($interestClosed)
+                            <div class="mt-6" data-readmore-footer>
+                                <span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/15 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/60 cursor-default">
+                                    @if($event->status === 'cancelled')
+                                        This event was cancelled
+                                    @elseif($event->status === 'completed')
+                                        Event completed — view only
+                                    @else
+                                        Registration closed
+                                    @endif
+                                </span>
+                            </div>
                         @elseif($isAdminEvent)
                             <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5" data-readmore-footer>
                                 @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
@@ -298,7 +325,7 @@
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                             data-member-interest-url="{{ route('member.events.interest', $event) }}"
                                         >
-                                            Interested
+                                            {{ $attendCtaLabel }}
                                         </button>
                                     @else
                                         <button
@@ -306,7 +333,7 @@
                                             class="interest-open-btn cursor-pointer inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                         >
-                                            Interested
+                                            {{ $attendCtaLabel }}
                                         </button>
                                     @endauth
                                 </div>
@@ -320,7 +347,7 @@
                                         data-interest-url="{{ route('events.interest', $event) }}"
                                         data-member-interest-url="{{ route('member.events.interest', $event) }}"
                                     >
-                                        Interested
+                                        {{ $attendCtaLabel }}
                                     </button>
                                 @else
                                     <button
@@ -328,7 +355,7 @@
                                         class="interest-open-btn cursor-pointer inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors"
                                         data-interest-url="{{ route('events.interest', $event) }}"
                                     >
-                                        Interested
+                                        {{ $attendCtaLabel }}
                                     </button>
                                 @endauth
                             </div>

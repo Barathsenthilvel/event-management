@@ -60,7 +60,16 @@
                                 </label>
                                 <a href="{{ route('member.password.request') }}" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]">Forgot password?</a>
                             </div>
-                            <button type="submit" class="ml-btn-primary mt-2 w-full">Sign in</button>
+                            <button type="submit" class="ml-btn-primary mt-2 w-full" id="signin-submit-btn">
+                                <span class="signin-btn-idle inline-flex w-full items-center justify-center gap-2">Sign in</span>
+                                <span class="signin-btn-loading hidden w-full items-center justify-center gap-2">
+                                    <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Signing in…
+                                </span>
+                            </button>
                         </form>
                     </div>
 
@@ -143,6 +152,29 @@
             </div>
 
             <p class="mx-auto mt-10 max-w-xl text-center text-xs text-[#351c42]/45">After sign in or registration, you’ll be asked to verify a one-time code sent to your mobile.</p>
+
+            <div id="member-account-not-found-modal" class="fixed inset-0 z-[220] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="member-not-found-title" aria-hidden="true">
+                <div class="absolute inset-0 bg-[#351c42]/60 backdrop-blur-sm" data-member-not-found-close></div>
+                <div class="relative w-full max-w-md rounded-[28px] border border-[#351c42]/10 bg-white p-8 shadow-2xl">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                        <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                    </div>
+                    <h3 id="member-not-found-title" class="mt-5 text-center text-xl font-extrabold tracking-tight text-[#351c42]">No member account found</h3>
+                    <p id="member-not-found-body" class="mt-3 text-center text-sm leading-relaxed text-[#351c42]/70">
+                        We couldn’t find a member account for the email or mobile you entered. Check for typos, try again, or register as a new member.
+                    </p>
+                    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                        <button type="button" class="inline-flex flex-1 items-center justify-center rounded-2xl border border-[#351c42]/15 bg-white px-5 py-3 text-sm font-bold text-[#351c42] transition hover:bg-[#351c42]/5 sm:flex-none" data-member-not-found-close>
+                            Close
+                        </button>
+                        <button type="button" class="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#351c42] px-5 py-3 text-sm font-extrabold text-[#fddc6a] shadow-lg shadow-[#351c42]/15 transition hover:bg-[#4d2a5c] sm:flex-none" data-open-signup-from-modal>
+                            Create account
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     <script>
         (() => {
@@ -212,6 +244,43 @@
 
             const signinForm = document.getElementById("member-signin-form");
             const signupForm = document.getElementById("member-signup-form");
+            const accountNotFoundModal = document.getElementById("member-account-not-found-modal");
+            const memberNotFoundBody = document.getElementById("member-not-found-body");
+
+            function openAccountNotFoundModal(message) {
+                if (memberNotFoundBody) {
+                    memberNotFoundBody.textContent =
+                        message ||
+                        "We couldn’t find a member account for the email or mobile you entered. Check for typos, try again, or register as a new member.";
+                }
+                if (!accountNotFoundModal) return;
+                accountNotFoundModal.classList.remove("hidden");
+                accountNotFoundModal.classList.add("flex");
+                accountNotFoundModal.setAttribute("aria-hidden", "false");
+                document.body.style.overflow = "hidden";
+            }
+
+            function closeAccountNotFoundModal() {
+                if (!accountNotFoundModal) return;
+                accountNotFoundModal.classList.add("hidden");
+                accountNotFoundModal.classList.remove("flex");
+                accountNotFoundModal.setAttribute("aria-hidden", "true");
+                document.body.style.overflow = "";
+            }
+
+            accountNotFoundModal?.querySelectorAll("[data-member-not-found-close]").forEach((el) => {
+                el.addEventListener("click", closeAccountNotFoundModal);
+            });
+            document.querySelector("[data-open-signup-from-modal]")?.addEventListener("click", () => {
+                closeAccountNotFoundModal();
+                setTab("signup");
+                if (history.replaceState) history.replaceState(null, "", "#signup");
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && accountNotFoundModal && !accountNotFoundModal.classList.contains("hidden")) {
+                    closeAccountNotFoundModal();
+                }
+            });
             const passwordInput = document.getElementById("su-pass");
             const confirmPasswordInput = document.getElementById("su-pass2");
             const passwordError = document.getElementById("su-password-error");
@@ -271,14 +340,32 @@
                 formError.classList.remove("hidden");
             }
 
+            function setSigninButtonLoading(isLoading) {
+                const submitBtn = document.getElementById("signin-submit-btn");
+                if (!submitBtn) return;
+                const idle = submitBtn.querySelector(".signin-btn-idle");
+                const loading = submitBtn.querySelector(".signin-btn-loading");
+                submitBtn.disabled = isLoading;
+                if (idle && loading) {
+                    idle.classList.toggle("hidden", isLoading);
+                    loading.classList.toggle("hidden", !isLoading);
+                    loading.classList.toggle("inline-flex", isLoading);
+                }
+            }
+
             async function submitAuthFormAjax(form) {
                 clearFormErrors(form);
 
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn ? submitBtn.textContent : "";
+                const isSignin = form.id === "member-signin-form";
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.textContent = "Please wait...";
+                    if (isSignin) {
+                        setSigninButtonLoading(true);
+                    } else {
+                        submitBtn.textContent = "Please wait...";
+                    }
                 }
 
                 try {
@@ -306,6 +393,16 @@
 
                     if (response.status === 422) {
                         const errors = payload.errors || {};
+                        const idMsg = errors.identifier?.[0] || "";
+                        if (
+                            idMsg &&
+                            form.id === "member-signin-form" &&
+                            /not\s*found/i.test(idMsg)
+                        ) {
+                            openAccountNotFoundModal(idMsg);
+                            return;
+                        }
+
                         let hasFieldErrors = false;
                         Object.entries(errors).forEach(([fieldName, messages]) => {
                             if (!messages || !messages.length) return;
@@ -328,7 +425,11 @@
                 } finally {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.textContent = originalBtnText;
+                        if (form.id === "member-signin-form") {
+                            setSigninButtonLoading(false);
+                        } else {
+                            submitBtn.textContent = originalBtnText;
+                        }
                     }
                 }
             }

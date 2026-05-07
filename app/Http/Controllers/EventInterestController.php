@@ -14,16 +14,10 @@ class EventInterestController extends Controller
 {
     public function store(Request $request, Event $event)
     {
-        if (! $event->is_active || $event->status === 'cancelled') {
-            return back()
-                ->with('event_interest_error', 'This event is not accepting interest right now.')
-                ->with('event_interest_error_modal', true);
-        }
-
         $event->loadMissing('dates');
-        if ($event->isPastRegistrationDeadline()) {
+        if (! $event->is_active || ! $event->acceptsPublicAttendance()) {
             return back()
-                ->with(EventInterestErrorFlash::eventEnded())
+                ->with('event_interest_error', 'This event is not accepting registrations right now.')
                 ->with('event_interest_error_modal', true);
         }
 
@@ -60,7 +54,8 @@ class EventInterestController extends Controller
         try {
             DB::transaction(function () use ($event, $data, $email) {
                 $event->refresh();
-                if ($event->isPastRegistrationDeadline()) {
+                $event->loadMissing('dates');
+                if (! $event->acceptsPublicAttendance()) {
                     throw new \RuntimeException(EventInterestErrorFlash::ERR_ENDED);
                 }
                 if ($event->isAtSeatLimit()) {

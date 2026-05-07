@@ -12,7 +12,7 @@
                 <a href="{{ route('admin.events.edit', $event->id) }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-700">Edit</a>
                 <a href="{{ route('admin.events.invite', $event->id) }}" class="px-4 py-2 rounded-xl bg-indigo-600 text-xs font-extrabold text-white">Invite Members</a>
                 <a href="{{ route('admin.events.attendance.scanner', $event->id) }}" class="px-4 py-2 rounded-xl border border-indigo-300 bg-indigo-50 text-xs font-extrabold text-indigo-700">QR Scanner</a>
-                @if($event->status === 'completed')
+                @if($event->status !== 'cancelled')
                     <a href="{{ route('admin.events.album', $event->id) }}" class="px-4 py-2 rounded-xl border border-emerald-300 bg-emerald-50 text-xs font-extrabold text-emerald-700">Album</a>
                 @endif
                 <a href="{{ route('admin.events.index') }}" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-700">Back</a>

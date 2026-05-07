@@ -1121,16 +1121,12 @@ class MemberDashboardController extends Controller
             abort(403);
         }
 
-        if (! $event->is_active || $event->status === 'cancelled') {
+        $event->loadMissing('dates');
+        if (! $event->is_active || ! $event->acceptsPublicAttendance()) {
             return $this->interestSubmitErrorResponse($request, [
                 'event_interest_error_title' => 'Event registration unavailable',
-                'event_interest_error' => 'This event is not available for interest now.',
+                'event_interest_error' => 'This event is not open for registration right now.',
             ]);
-        }
-
-        $event->loadMissing('dates');
-        if ($event->isPastRegistrationDeadline()) {
-            return $this->interestSubmitErrorResponse($request, EventInterestErrorFlash::eventEnded());
         }
 
         $alreadyInterested = EventInvite::query()
@@ -1148,7 +1144,8 @@ class MemberDashboardController extends Controller
         try {
             DB::transaction(function () use ($event, $user) {
                 $event->refresh();
-                if ($event->isPastRegistrationDeadline()) {
+                $event->loadMissing('dates');
+                if (! $event->acceptsPublicAttendance()) {
                     throw new \RuntimeException(EventInterestErrorFlash::ERR_ENDED);
                 }
                 if ($event->isAtSeatLimit()) {

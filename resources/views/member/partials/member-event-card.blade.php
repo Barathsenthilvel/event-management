@@ -252,6 +252,13 @@
                 <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</p>
             </div>
         @else
+            @php
+                $memberAttendLabel = match ($event->status ?? '') {
+                    'live' => 'Attend now',
+                    'upcoming' => 'Attend',
+                    default => 'Register',
+                };
+            @endphp
             <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
                 <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 sm:ml-auto" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
@@ -260,7 +267,7 @@
                         type="submit"
                         class="inline-flex min-h-[2.1rem] min-w-[6.75rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Interested
+                        {{ $memberAttendLabel }}
                     </button>
                 </form>
             </div>

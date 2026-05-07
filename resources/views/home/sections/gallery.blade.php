@@ -103,7 +103,7 @@
                     Open in Maps
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
-                <a href="{{ url('/') }}#contact" class="inline-flex items-center gap-2 rounded-full border-2 border-[#351c42]/20 bg-transparent px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995] hover:text-[#965995]">
+                <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 rounded-full border-2 border-[#351c42]/20 bg-transparent px-5 py-2.5 text-sm font-bold text-[#351c42] transition hover:border-[#965995] hover:text-[#965995]">
                     Contact team
                 </a>
             </div>

@@ -10,9 +10,14 @@ use App\Models\HomeBlogPost;
 use App\Models\HomeBanner;
 use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
+use App\Mail\ContactFormAcknowledgment;
+use App\Mail\ContactFormSubmitted;
+use App\Services\EventScheduleStatusService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
@@ -22,6 +27,10 @@ class HomeController extends Controller
      */
     public function index()
     {
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncAll();
+        }
+
         $config = config('homepage', []);
         $dbBanners = HomeBanner::query()
             ->where('is_active', true)
@@ -46,7 +55,8 @@ class HomeController extends Controller
             ->with(['dates:id,event_id,event_date,start_time,end_time', 'creator:id,name'])
             ->withCount('invites')
             ->where('is_active', true)
-            ->whereIn('status', ['upcoming', 'live'])
+            ->whereIn('status', ['upcoming', 'live', 'completed'])
+            ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
             ->latest('id')
             ->limit(8)
             ->get();
@@ -146,9 +156,13 @@ class HomeController extends Controller
 
     public function events(Request $request)
     {
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncAll();
+        }
+
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', 'all'));
-        $allowedStatuses = ['all', 'upcoming', 'live'];
+        $allowedStatuses = ['all', 'upcoming', 'live', 'completed'];
         if (! in_array($status, $allowedStatuses, true)) {
             $status = 'all';
         }
@@ -157,7 +171,7 @@ class HomeController extends Controller
             ->with(['dates:id,event_id,event_date,start_time,end_time', 'creator:id,name'])
             ->withCount('invites')
             ->where('is_active', true)
-            ->whereIn('status', ['upcoming', 'live'])
+            ->whereIn('status', ['upcoming', 'live', 'completed'])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', '%'.$q.'%')
@@ -166,6 +180,7 @@ class HomeController extends Controller
                 });
             })
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
+            ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
             ->latest('id')
             ->paginate(24)
             ->withQueryString();
@@ -247,18 +262,46 @@ class HomeController extends Controller
             'message' => ['required', 'string', 'max:4000'],
         ]);
 
-        Log::info('Public contact form submission', [
+        $recipient = config('homepage.contact_form_to')
+            ?: config('homepage.contact.email');
+
+        try {
+            Mail::to($recipient)->send(new ContactFormSubmitted($data));
+        } catch (\Throwable $e) {
+            Log::error('Contact form email failed', [
+                'exception' => $e->getMessage(),
+                'recipient' => $recipient,
+                'from_email' => $data['email'],
+            ]);
+
+            return redirect()
+                ->route('contact')
+                ->withInput()
+                ->withErrors([
+                    'send' => 'We could not send your message right now. Please try again in a moment or email us directly at '.$recipient.'.',
+                ]);
+        }
+
+        try {
+            Mail::to($data['email'])->send(new ContactFormAcknowledgment($data));
+        } catch (\Throwable $e) {
+            Log::warning('Contact form sender acknowledgment email failed', [
+                'exception' => $e->getMessage(),
+                'recipient' => $recipient,
+                'sender_email' => $data['email'],
+            ]);
+        }
+
+        Log::info('Public contact form submission emailed', [
+            'recipient' => $recipient,
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
             'subject' => $data['subject'],
-            'message' => $data['message'],
             'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
         ]);
 
         return redirect()
             ->route('contact')
-            ->with('success', 'Thanks! Your message has been sent. Our team will contact you soon.');
+            ->with('success', 'Thanks! Your message has been sent to our team. We have also emailed a copy to your address for your records.');
     }
 }

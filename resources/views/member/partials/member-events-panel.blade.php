@@ -4,7 +4,7 @@
         <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <h2 id="member-my-events-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Events you’re tracking</h2>
-                <p class="mt-1 text-sm text-[#351c42]/60">Events where you registered <span class="font-semibold text-[#351c42]">Interested</span> — status updates from the office.</p>
+                <p class="mt-1 text-sm text-[#351c42]/60">Events where you registered to <span class="font-semibold text-[#351c42]">attend</span> — status updates from the office.</p>
             </div>
             <a href="{{ route('events.index') }}" class="text-sm font-semibold text-[#965995] hover:text-[#351c42]">Browse public events</a>
         </div>

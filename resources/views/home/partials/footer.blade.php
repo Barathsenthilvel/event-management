@@ -1,5 +1,5 @@
 <footer id="contact" class="relative bg-[#351c42] text-white overflow-hidden">
-    <div class="mx-auto max-w-7xl px-4 pt-16 pb-12 grid gap-12 lg:grid-cols-4 lg:gap-10">
+    <div class="mx-auto max-w-7xl px-4 pt-16 pb-12 grid gap-12 lg:grid-cols-3 lg:gap-10">
         <div>
             <h3 class="text-lg font-bold text-white relative inline-block pb-2 mb-4">
                 About GNAT Association
@@ -71,37 +71,8 @@
                 <li><a href="{{ url('/') }}#association-activity" class="text-white/80 hover:text-[#fddc6a] transition-colors">Activity</a></li>
                 <li><a href="{{ url('/') }}#events" class="text-white/80 hover:text-[#fddc6a] transition-colors">Our Campaign</a></li>
                 <li><a href="{{ url('/') }}#gallery" class="text-white/80 hover:text-[#fddc6a] transition-colors">Gallery</a></li>
-                <li><a href="{{ url('/') }}#contact" class="text-white/80 hover:text-[#fddc6a] transition-colors">Contact Us</a></li>
+                <li><a href="{{ route('contact') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Contact Us</a></li>
             </ul>
-        </div>
-
-        <div>
-            <h3 class="text-lg font-bold text-white relative inline-block pb-2 mb-4">
-                Subscribe Now
-                <span class="absolute left-0 bottom-0 h-0.5 w-12 bg-[#fddc6a] rounded-full" aria-hidden="true"></span>
-            </h3>
-            <p class="text-sm text-white/75 leading-relaxed mb-4">Don’t miss our future updates. Get subscribed today!</p>
-            <form class="flex flex-col gap-3" action="#" method="get" onsubmit="return false;" data-footer-newsletter>
-                <div class="flex rounded-xl overflow-hidden border border-white/15 bg-[#2a1635] focus-within:border-[#fddc6a]/60">
-                    <label class="sr-only" for="footer-subscribe-email">Email</label>
-                    <input
-                        id="footer-subscribe-email"
-                        type="email"
-                        placeholder="Enter Mail"
-                        class="flex-1 min-w-0 bg-transparent px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none"
-                        required
-                    />
-                    <button type="submit" class="shrink-0 px-4 bg-[#351c42] hover:bg-[#4a2a56] text-[#fddc6a] border-l border-white/10 transition-colors" aria-label="Subscribe">
-                        <svg class="h-5 w-5 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <label class="flex items-start gap-2 cursor-pointer text-xs text-white/60">
-                    <input type="checkbox" name="terms" class="mt-0.5 rounded border-white/30 bg-transparent text-[#fddc6a] focus:ring-[#fddc6a]" required />
-                    <span>I accept terms &amp; conditions</span>
-                </label>
-            </form>
         </div>
     </div>
 

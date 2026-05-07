@@ -29,15 +29,14 @@
 
                 <div class="mt-8 flex items-center gap-4" aria-label="{{ $hero['registered_count'] }} people registered with GNAT Association">
                     <div class="flex shrink-0 items-center">
-                        <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] bg-[#351c42] ring-2 ring-[#351c42]">
-                            <img class="h-full w-full object-cover" src="{{ asset($hero['avatar_image']) }}" alt="" width="44" height="44" loading="lazy" decoding="async" />
+                        <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
+                            @include('partials.user-letter-avatar', ['letter' => 'G', 'class' => 'h-full w-full text-sm sm:text-base'])
                         </div>
-                        <div class="relative z-[2] -ml-3 h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] bg-[#351c42] ring-2 ring-[#351c42]">
-                            <img class="h-full w-full object-cover object-top" src="{{ asset($hero['avatar_image']) }}" alt="" width="44" height="44" loading="lazy" decoding="async" />
+                        <div class="relative z-[2] -ml-3 h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
+                            @include('partials.user-letter-avatar', ['letter' => 'N', 'class' => 'h-full w-full text-sm sm:text-base'])
                         </div>
-                        <div class="relative z-[3] -ml-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#115e59] bg-[#351c42] ring-2 ring-[#351c42]">
-                            <img class="absolute inset-0 h-full w-full scale-125 object-cover opacity-40 blur-sm" src="{{ asset($hero['avatar_image']) }}" alt="" width="44" height="44" loading="lazy" decoding="async" aria-hidden="true" />
-                            <span class="relative text-xl font-light leading-none text-[#fddc6a]" aria-hidden="true">+</span>
+                        <div class="relative z-[3] -ml-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#115e59] bg-[#0d9488] ring-2 ring-[#351c42]">
+                            <span class="text-xl font-semibold leading-none text-white" aria-hidden="true">+</span>
                         </div>
                     </div>
                     <div class="min-w-0 border-l border-white/15 pl-4">

@@ -103,7 +103,8 @@ return [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
-            'throttle' => 60,
+            // Seconds before another reset email can be requested (spam protection). Lower locally if testing, e.g. 15.
+            'throttle' => (int) env('AUTH_PASSWORD_RESET_THROTTLE_SECONDS', 60),
         ],
     ],
 

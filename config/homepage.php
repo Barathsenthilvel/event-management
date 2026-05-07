@@ -8,6 +8,12 @@ return [
         'alt' => 'GNAT Association',
     ],
 
+    /*
+    | Inbox for public contact form submissions (defaults to contact.email).
+    | Set CONTACT_FORM_TO in .env to override, e.g. secretary@example.org
+    */
+    'contact_form_to' => env('CONTACT_FORM_TO'),
+
     'contact' => [
         'email' => 'info@gnatdonation.org',
         'address' => 'No. 36/76, Thiruveethi Amman Kovil 2nd Street, Aminjikarai, Chennai 600029',
@@ -21,12 +27,12 @@ return [
     'nav' => [
         ['label' => 'Home', 'href' => '#home'],
         ['label' => 'Activity', 'href' => '#association-activity'],
-        ['label' => 'About Us', 'href' => '#about2'],
+        ['label' => 'About Us', 'href' => '/about'],
         ['label' => 'Events', 'href' => '#events'],
         ['label' => 'Blog', 'href' => '#blog'],
         ['label' => 'Gallery', 'href' => '#gallery'],
         ['label' => 'Jobs', 'href' => '#jobs'],
-        ['label' => 'Contact Us', 'href' => '#contact'],
+        ['label' => 'Contact Us', 'href' => '/contact'],
     ],
 
     'hero' => [

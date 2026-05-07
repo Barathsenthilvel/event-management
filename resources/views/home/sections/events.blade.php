@@ -7,7 +7,7 @@
                     EVENTS
                 </div>
                 <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
-                    Upcoming Events<br />
+                    Events<br />
                     <span class="text-[#965995]">Don’t Miss Out</span>
                 </h2>
             </div>
@@ -19,7 +19,7 @@
         <div class="mt-10">
             @if(!isset($homeEvents) || $homeEvents->isEmpty())
                 <p class="rounded-2xl border border-dashed border-[#351c42]/20 bg-[#f8f6fa] px-6 py-10 text-center text-sm font-semibold text-[#351c42]/75">
-                    No upcoming events right now. Check back soon or browse the full list.
+                    No events to show right now. Check back soon or browse the full list.
                 </p>
             @else
                 @include('home.partials.event-accordion-list', [

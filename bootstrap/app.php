@@ -79,4 +79,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // For other routes, let Laravel handle with default behavior
             return null;
         });
-    })->create();
+    })
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
+        $schedule->command('events:sync-status')->everyMinute();
+    })
+    ->create();

@@ -225,9 +225,8 @@
             });
             overlay.addEventListener("click", closeDrawer);
             closeBtn?.addEventListener("click", closeDrawer);
-            drawer.querySelectorAll("a[href*='#']").forEach((a) => {
-                const href = a.getAttribute("href") || "";
-                if (href.length > 1) a.addEventListener("click", () => closeDrawer());
+            drawer.querySelectorAll("a[href]").forEach((a) => {
+                a.addEventListener("click", () => closeDrawer());
             });
             document.addEventListener("keydown", (e) => {
                 if (e.key === "Escape") closeDrawer();

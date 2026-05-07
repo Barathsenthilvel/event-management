@@ -7,16 +7,22 @@ use App\Models\EventInterest;
 use App\Models\EventInvite;
 use App\Models\EventPhoto;
 use App\Models\User;
+use App\Services\EventScheduleStatusService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
     public function index(Request $request)
     {
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncAll();
+        }
+
         $q = trim((string) $request->query('q', ''));
         $interestTab = trim((string) $request->query('interest_tab', 'members'));
         if (! in_array($interestTab, ['members', 'guests'], true)) {
@@ -641,64 +647,5 @@ class EventController extends Controller
         }
 
         return $value;
-    }
-
-    private function syncElapsedEvents(): void
-    {
-        $activeEvents = Event::query()
-            ->whereIn('status', ['upcoming', 'live'])
-            ->with(['dates:id,event_id,event_date,start_time,end_time'])
-            ->get(['id', 'status', 'is_active']);
-
-        $now = now();
-        foreach ($activeEvents as $event) {
-            $scheduleWindows = $event->dates
-                ->filter(fn ($row) => ! empty($row->event_date))
-                ->map(function ($row) {
-                    $eventDay = Carbon::parse($row->event_date)->startOfDay();
-                    $startTime = $row->start_time ?: '00:00';
-                    $endTime = $row->end_time ?: '23:59';
-
-                    $startAt = Carbon::parse($eventDay->format('Y-m-d').' '.$startTime);
-                    $endAt = Carbon::parse($eventDay->format('Y-m-d').' '.$endTime);
-
-                    // Handle overnight slot (e.g. 11:30 PM to 01:00 AM next day).
-                    if (! empty($row->start_time) && ! empty($row->end_time) && $endAt->lessThanOrEqualTo($startAt)) {
-                        $endAt->addDay();
-                    }
-
-                    return [
-                        'start' => $startAt,
-                        'end' => $endAt,
-                    ];
-                })
-                ->values();
-
-            if ($scheduleWindows->isEmpty()) {
-                continue;
-            }
-
-            $start = $scheduleWindows->min('start');
-            $end = $scheduleWindows->max('end');
-
-            if ($now->greaterThan($end)) {
-                $event->update([
-                    'status' => 'completed',
-                    'is_active' => false,
-                ]);
-
-                continue;
-            }
-
-            if ($now->greaterThanOrEqualTo($start) && $event->status !== 'live') {
-                $event->update(['status' => 'live']);
-
-                continue;
-            }
-
-            if ($now->lt($start) && $event->status !== 'upcoming') {
-                $event->update(['status' => 'upcoming']);
-            }
-        }
     }
 }

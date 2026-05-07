@@ -73,6 +73,7 @@
                             'all' => 'All',
                             'upcoming' => 'Upcoming',
                             'live' => 'Live',
+                            'completed' => 'Completed',
                         ];
                     @endphp
                     @foreach($tabs as $key => $label)

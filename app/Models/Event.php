@@ -79,6 +79,18 @@ class Event extends Model
         return now()->greaterThan($endAt);
     }
 
+    /**
+     * Public site: whether visitors can still register interest / attend (upcoming + live only, until the event ends).
+     */
+    public function acceptsPublicAttendance(): bool
+    {
+        if (in_array($this->status, ['cancelled', 'completed'], true)) {
+            return false;
+        }
+
+        return ! $this->isPastRegistrationDeadline();
+    }
+
     public function isAtSeatLimit(): bool
     {
         return $this->seat_mode === 'limited'

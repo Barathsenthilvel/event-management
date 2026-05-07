@@ -29,10 +29,14 @@
 
             <nav class="hidden lg:flex flex-1 justify-center items-center gap-2 xl:gap-3 text-sm font-semibold text-[#3d4d5c]" aria-label="Primary">
                 @foreach ($nav as $link)
-                    <a href="{{ url('/') }}{{ $link['href'] }}" class="site-nav-link">{{ $link['label'] }}</a>
+                    @php
+                        $rawHref = $link['href'];
+                        $navUrl = str_starts_with($rawHref, '/')
+                            ? url($rawHref)
+                            : rtrim(url('/'), '/') . $rawHref;
+                    @endphp
+                    <a href="{{ $navUrl }}" class="site-nav-link">{{ $link['label'] }}</a>
                 @endforeach
-                <a href="{{ route('about') }}" class="site-nav-link">About Page</a>
-                <a href="{{ route('contact') }}" class="site-nav-link">Contact Page</a>
             </nav>
 
             <div class="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
@@ -178,10 +182,14 @@
 
         <nav class="mt-10 flex flex-col gap-1 border-t border-white/10 pt-8" aria-label="Mobile">
             @foreach ($nav as $link)
-                <a href="{{ url('/') }}{{ $link['href'] }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">{{ $link['label'] }}</a>
+                @php
+                    $rawHrefDrawer = $link['href'];
+                    $navUrlDrawer = str_starts_with($rawHrefDrawer, '/')
+                        ? url($rawHrefDrawer)
+                        : rtrim(url('/'), '/') . $rawHrefDrawer;
+                @endphp
+                <a href="{{ $navUrlDrawer }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">{{ $link['label'] }}</a>
             @endforeach
-            <a href="{{ route('about') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">About Page</a>
-            <a href="{{ route('contact') }}" class="py-2.5 text-white font-bold border-b border-white/5 hover:text-[#fddc6a]">Contact Page</a>
             @auth
                 <div class="mt-4 border-t border-white/10 pt-4">
                     <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#fddc6a]/90">Member portal</p>

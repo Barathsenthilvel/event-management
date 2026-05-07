@@ -108,7 +108,8 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
-            <label class="block text-xs font-bold text-slate-700 mb-2">Cover Image</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Event image (cover)</label>
+            <p class="text-[11px] text-slate-500 mb-2 leading-relaxed">Public listing &amp; homepage card image. Use a clear photo or graphic (JPG/PNG, max 5&nbsp;MB). If you skip this, a default image is shown.</p>
             <input type="file" name="cover_image" accept="image/*" class="w-full text-sm">
             @if($isEdit && !empty($event->cover_image_path))
                 <div class="mt-2 rounded-xl border border-slate-200 bg-white p-2">
