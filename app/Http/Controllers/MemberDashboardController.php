@@ -131,7 +131,9 @@ class MemberDashboardController extends Controller
                 ->where('polling_status', 'live')
                 ->latest('id')
                 ->limit(30)
-                ->get();
+                ->get()
+                ->filter(fn ($poll) => $this->pollingHasStarted($poll))
+                ->values();
 
             $votesByPolling = PollingVote::query()
                 ->where('voter_user_id', $user->id)
@@ -633,7 +635,15 @@ class MemberDashboardController extends Controller
             })
             ->latest('id')
             ->limit(20)
-            ->get();
+            ->get()
+            ->filter(function ($polling) {
+                // Hide live pollings whose scheduled start time hasn't been reached yet.
+                if ($polling->polling_status !== 'live') {
+                    return true;
+                }
+                return $this->pollingHasStarted($polling);
+            })
+            ->values();
 
         $pollingVotedPositionIds = PollingVote::query()
             ->where('voter_user_id', $user->id)
@@ -702,6 +712,18 @@ class MemberDashboardController extends Controller
         $end = Carbon::parse($endDate.' '.$polling->polling_to);
 
         return now()->greaterThan($end);
+    }
+
+    private function pollingHasStarted(Polling $polling): bool
+    {
+        if (! $polling->polling_date || ! $polling->polling_from) {
+            return false;
+        }
+
+        $startDate = $polling->polling_date->format('Y-m-d');
+        $start = Carbon::parse($startDate.' '.$polling->polling_from);
+
+        return now()->greaterThanOrEqualTo($start);
     }
 
     private function syncElapsedPollings(): void

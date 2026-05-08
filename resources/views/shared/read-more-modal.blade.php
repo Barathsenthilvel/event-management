@@ -7,9 +7,21 @@
     aria-labelledby="read-more-modal-title"
 >
     <div data-read-more-backdrop class="absolute inset-0 cursor-pointer" aria-hidden="true" title="Close"></div>
-    <div class="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+    <div class="relative flex w-full max-w-2xl max-h-[90vh] flex-col overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
         <div class="flex items-start justify-between gap-4 rounded-t-3xl border-b border-[#351c42]/10 bg-[#faf9fc] px-5 py-4">
-            <h3 id="read-more-modal-title" class="min-w-0 text-base font-extrabold text-[#351c42] sm:text-lg"></h3>
+            <div class="flex min-w-0 items-center gap-3">
+                <a href="{{ route('home') }}" class="hidden shrink-0 sm:inline-flex" aria-label="GNAT Association home" title="GNAT Association">
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="GNAT Association"
+                        class="h-10 w-auto max-w-[120px] object-contain"
+                        width="120"
+                        height="40"
+                        loading="lazy"
+                    />
+                </a>
+                <h3 id="read-more-modal-title" class="min-w-0 text-base font-extrabold text-[#351c42] sm:text-lg"></h3>
+            </div>
             <button
                 type="button"
                 data-close-read-more
@@ -22,7 +34,7 @@
                 </svg>
             </button>
         </div>
-        <div class="px-5 py-5 sm:px-6">
+        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <dl id="read-more-modal-meta" class="mb-4 hidden space-y-2 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-xs"></dl>
             <div id="read-more-modal-body" class="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#351c42]/75"></div>
             <div id="read-more-modal-actions" class="mt-4 hidden flex-wrap items-center gap-2">
@@ -56,7 +68,7 @@
                 </button>
             </div>
         </div>
-        <div id="read-more-modal-job-actions" class="hidden border-t border-[#351c42]/10 bg-[#faf9fc] px-5 py-4 sm:px-6">
+        <div id="read-more-modal-job-actions" class="hidden shrink-0 rounded-b-3xl border-t border-[#351c42]/10 bg-[#faf9fc] px-5 py-4 sm:px-6">
             <p class="mb-3 text-[11px] font-black uppercase tracking-wide text-[#351c42]/45">Actions</p>
             <div class="flex flex-wrap items-stretch gap-2 sm:items-center">
                 <form id="read-more-modal-job-save-form" method="POST" action="#" class="inline-flex shrink-0">

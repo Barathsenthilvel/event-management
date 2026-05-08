@@ -103,9 +103,17 @@
                     </div>
                     <div>
                         <label class="block text-xs font-black uppercase tracking-[0.2em] text-[#965995]" for="subject">Subject</label>
-                        <input id="subject" name="subject" value="{{ old('subject') }}" required
-                               class="mt-2 w-full rounded-2xl border border-[#351c42]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#965995]/40 focus:ring-2 focus:ring-[#965995]/25"
-                               placeholder="How can we help?" />
+                        @php
+                            $subjectOptions = ['General', 'Feedbacks', 'Grievance', 'Others'];
+                            $selectedSubject = old('subject', '');
+                        @endphp
+                        <select id="subject" name="subject" required
+                                class="mt-2 w-full rounded-2xl border border-[#351c42]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#965995]/40 focus:ring-2 focus:ring-[#965995]/25">
+                            <option value="" disabled {{ $selectedSubject === '' ? 'selected' : '' }}>Select a subject</option>
+                            @foreach($subjectOptions as $opt)
+                                <option value="{{ $opt }}" {{ $selectedSubject === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -166,7 +174,7 @@
     aria-labelledby="contact-success-title"
 >
     <div class="absolute inset-0 bg-[#351c42]/55" data-contact-success-backdrop></div>
-    <div class="relative w-full max-w-md rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-2xl shadow-[#351c42]/20">
+    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-2xl shadow-[#351c42]/20">
         <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
                 <p class="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-700">Success</p>

@@ -164,22 +164,6 @@
             </a>
         </div>
 
-        <h3 class="mt-10 text-[#fddc6a] text-xs font-extrabold tracking-[0.2em] uppercase">Newsletter Subscribe</h3>
-        <form class="mt-3 flex gap-2" action="#" method="get" onsubmit="return false;">
-            <label class="sr-only" for="drawer-newsletter-email">Email address</label>
-            <input
-                id="drawer-newsletter-email"
-                type="email"
-                placeholder="Email Address"
-                class="flex-1 min-w-0 rounded-xl bg-[#2a1635] border border-white/15 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-[#fddc6a]"
-            />
-            <button type="submit" class="shrink-0 h-12 w-12 rounded-xl bg-[#fddc6a] text-[#351c42] flex items-center justify-center hover:bg-[#ffe082] transition-colors" aria-label="Subscribe">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </form>
-
         <nav class="mt-10 flex flex-col gap-1 border-t border-white/10 pt-8" aria-label="Mobile">
             @foreach ($nav as $link)
                 @php

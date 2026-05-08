@@ -114,16 +114,37 @@
                 @endif
             </div>
 
-            <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#965995]">{{ strtoupper((string) $event->status) }}</p>
-            <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#351c42]/70">
-                <span>{{ $primaryDate }}</span>
-                @if($extraDatesCount > 0)
-                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help"
-                          title="{{ $moreDatesTooltip }}">
-                        +{{ $extraDatesCount }} more
+            @php $eventStatusKey = strtolower((string) $event->status); @endphp
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+                @if($eventStatusKey === 'live')
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
+                        <span class="relative flex h-2 w-2">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                        </span>
+                        Live
                     </span>
+                @elseif($eventStatusKey === 'upcoming')
+                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-indigo-800">Upcoming</span>
+                @elseif($eventStatusKey === 'completed')
+                    <span class="inline-flex items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/80">Completed</span>
+                @elseif($eventStatusKey === 'cancelled')
+                    <span class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">Cancelled</span>
+                @elseif($eventStatusKey !== '')
+                    <span class="inline-flex items-center rounded-full border border-[#351c42]/15 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/75">{{ strtoupper((string) $event->status) }}</span>
                 @endif
             </div>
+            @if($eventStatusKey !== 'live')
+                <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#351c42]/70">
+                    <span>{{ $primaryDate }}</span>
+                    @if($extraDatesCount > 0)
+                        <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help"
+                              title="{{ $moreDatesTooltip }}">
+                            +{{ $extraDatesCount }} more
+                        </span>
+                    @endif
+                </div>
+            @endif
             <h3 class="mt-1 text-base font-bold text-[#351c42] break-words sm:text-lg">{{ $event->title }}</h3>
             @if($hasDesc)
                 <div class="mt-2" data-desc-wrap>

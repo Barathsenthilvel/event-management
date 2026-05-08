@@ -119,7 +119,13 @@
                             {{ $event->title }}
                         </span>
                         @if($event->status === 'live')
-                            <span class="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-800">Live</span>
+                            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                </span>
+                                Live
+                            </span>
                         @elseif($event->status === 'completed')
                             <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80">Completed</span>
                         @elseif($event->status === 'upcoming')
@@ -218,8 +224,21 @@
                             @endif
                         </div>
 
-                        <div class="mt-3 text-sm md:text-base font-bold text-[#351c42] break-words">
-                            {{ $event->title }}
+                        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm md:text-base font-bold text-[#351c42] break-words">
+                            <span>{{ $event->title }}</span>
+                            @if($event->status === 'live')
+                                <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                                    </span>
+                                    Live
+                                </span>
+                            @elseif($event->status === 'upcoming')
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-indigo-800">Upcoming</span>
+                            @elseif($event->status === 'completed')
+                                <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80">Completed</span>
+                            @endif
                         </div>
                         <!-- @if($sortedDates->isNotEmpty())
                             <div class="mt-3 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-3">
