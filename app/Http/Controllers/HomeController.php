@@ -6,8 +6,8 @@ use App\Models\Donation;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
-use App\Models\HomeBlogPost;
 use App\Models\HomeBanner;
+use App\Models\HomeBlogPost;
 use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
 use App\Services\EventScheduleStatusService;
@@ -40,7 +40,7 @@ class HomeController extends Controller
             ? $dbBanners->map(function (HomeBanner $banner) {
                 return [
                     'href' => $banner->link_url ?: '#',
-                    'src' => 'storage/' . ltrim((string) $banner->image_path, '/'),
+                    'src' => 'storage/'.ltrim((string) $banner->image_path, '/'),
                     'alt' => $banner->alt_text ?: ($banner->title ?: 'Homepage banner'),
                     'eyebrow' => $banner->eyebrow,
                     'title' => $banner->caption_title ?: $banner->title,
@@ -293,7 +293,11 @@ class HomeController extends Controller
         }
 
         try {
-            $gnatMail->sendSupportConfirmation($data['email'], trim((string) $data['name']));
+            $gnatMail->sendSupportConfirmation(
+                $data['email'],
+                trim((string) $data['name']),
+                isset($data['phone']) ? trim((string) $data['phone']) : null
+            );
         } catch (\Throwable $e) {
             Log::warning('Contact form sender acknowledgment email failed', [
                 'exception' => $e->getMessage(),

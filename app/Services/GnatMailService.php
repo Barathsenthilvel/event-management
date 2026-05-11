@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Mail\GnatAdminNotification;
 use App\Mail\GnatMemberNotification;
 use App\Models\AdminJob;
+use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
 use App\Models\DonationPayment;
 use App\Models\Event;
-use App\Models\AdminJobAlert;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\MemberJobRequest;
@@ -26,6 +26,11 @@ use Illuminate\Support\Facades\Mail;
 
 class GnatMailService
 {
+    private function sms(): GnatSmsService
+    {
+        return app(GnatSmsService::class);
+    }
+
     /** @var array<string, string> */
     private const MEMBER_SUBJECTS = [
         'm01_registration_successful' => 'GNAT Registration Successful – Complete Your Profile',
@@ -155,12 +160,14 @@ class GnatMailService
 
     public function sendRegistrationSuccessful(User $user): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm01_registration_successful', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Welcome to GNAT',
             'heroSubtext' => 'Your registration is complete. Complete your profile to unlock member services.',
             'showPortalCta' => true,
         ]);
+        $this->sms()->registrationComplete($user->mobile, $name);
     }
 
     public function sendProfileSubmitted(User $user): void
@@ -177,33 +184,40 @@ class GnatMailService
             'mobile' => $user->mobile ?? '—',
             'submittedOn' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->profileSubmitted($user->mobile, $this->memberDisplayName($user));
     }
 
     public function sendProfileApproved(User $user): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm03_profile_approved_subscription', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Profile Verified',
             'heroSubtext' => 'You may now complete your membership subscription.',
             'showPortalCta' => true,
         ]);
+        $this->sms()->profileVerified($user->mobile, $name);
     }
 
     public function sendProfileRejected(User $user): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm04_profile_verification_failed', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Profile Verification Update',
             'showPortalCta' => true,
         ]);
+        $this->sms()->profileRejected($user->mobile, $name);
     }
 
     public function sendMembershipActivated(User $user, MemberSubscription $subscription, PaymentTransaction $transaction): void
     {
         $planLabel = $subscription->subscription_type.' • '.str_replace('_', ' ', (string) $subscription->payment_type);
+        $name = $this->memberDisplayName($user);
 
         $this->sendMember($user->email, 'm05_membership_activated', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Membership Active',
             'heroSubtext' => 'Thank you — your GNAT membership is now active.',
             'showPortalCta' => true,
@@ -212,12 +226,14 @@ class GnatMailService
         $txnId = $transaction->razorpay_payment_id ?: ('TXN-'.$transaction->id);
 
         $this->sendAdmin('a02_subscription_payment', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'membershipPlan' => $planLabel,
             'transactionId' => $txnId,
             'amount' => 'INR '.number_format((float) $transaction->amount, 2),
             'paymentDate' => ($transaction->paid_at ?? now())->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->membershipPaymentReceived($user->mobile, $name);
     }
 
     /**
@@ -247,7 +263,7 @@ class GnatMailService
         $parts = $this->meetingScheduleParts($meeting);
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
-            if (! $user || ! $user->email) {
+            if (! $user) {
                 continue;
             }
 
@@ -256,50 +272,63 @@ class GnatMailService
                 ->where('user_id', $userId)
                 ->first();
 
-            if (! $invite || ! $invite->notify_email) {
+            if (! $invite) {
                 continue;
             }
 
-            $this->sendMember($user->email, 'm10_meeting_schedule', [
-                'memberName' => $this->memberDisplayName($user),
-                'meetingDate' => $parts['date'],
-                'meetingTime' => $parts['time'],
-                'heroHeadline' => 'New Meeting Scheduled',
-                'showPortalCta' => true,
-            ]);
+            $name = $this->memberDisplayName($user);
+
+            if ($invite->notify_email && $user->email) {
+                $this->sendMember($user->email, 'm10_meeting_schedule', [
+                    'memberName' => $name,
+                    'meetingDate' => $parts['date'],
+                    'meetingTime' => $parts['time'],
+                    'heroHeadline' => 'New Meeting Scheduled',
+                    'showPortalCta' => true,
+                ]);
+            }
+
+            if ($invite->notify_sms) {
+                $this->sms()->meetingScheduled($user->mobile, $name, $parts['date'], $parts['time']);
+            }
         }
     }
 
     public function sendMeetingMemberResponse(User $user, Meeting $meeting, bool $attending): void
     {
         $parts = $this->meetingScheduleParts($meeting);
+        $name = $this->memberDisplayName($user);
 
         if ($attending) {
             $this->sendMember($user->email, 'm11_meeting_attendance_confirmed', [
-                'memberName' => $this->memberDisplayName($user),
+                'memberName' => $name,
                 'meetingDate' => $parts['date'],
                 'heroHeadline' => 'Attendance Confirmed',
                 'showPortalCta' => true,
             ]);
 
             $this->sendAdmin('a07_meeting_attendance_confirmed', [
-                'memberName' => $this->memberDisplayName($user),
+                'memberName' => $name,
                 'meetingName' => $meeting->title,
                 'meetingDate' => $parts['date'],
             ]);
+
+            $this->sms()->meetingAttendanceConfirmed($user->mobile, $name, $parts['date']);
         } else {
             $this->sendMember($user->email, 'm12_meeting_non_attendance', [
-                'memberName' => $this->memberDisplayName($user),
+                'memberName' => $name,
                 'meetingDate' => $parts['date'],
                 'heroHeadline' => 'Response Recorded',
                 'showPortalCta' => true,
             ]);
 
             $this->sendAdmin('a08_meeting_non_attendance', [
-                'memberName' => $this->memberDisplayName($user),
+                'memberName' => $name,
                 'meetingName' => $meeting->title,
                 'meetingDate' => $parts['date'],
             ]);
+
+            $this->sms()->meetingNonAttendance($user->mobile, $name, $parts['date']);
         }
     }
 
@@ -307,7 +336,7 @@ class GnatMailService
     {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
-            if (! $user || ! $user->email) {
+            if (! $user) {
                 continue;
             }
 
@@ -316,15 +345,23 @@ class GnatMailService
                 ->where('user_id', $userId)
                 ->first();
 
-            if (! $alert || ! $alert->notify_email) {
+            if (! $alert) {
                 continue;
             }
 
-            $this->sendMember($user->email, 'm16_nomination_live', [
-                'memberName' => $this->memberDisplayName($user),
-                'heroHeadline' => 'Nominations Open',
-                'showPortalCta' => true,
-            ]);
+            $name = $this->memberDisplayName($user);
+
+            if ($alert->notify_email && $user->email) {
+                $this->sendMember($user->email, 'm16_nomination_live', [
+                    'memberName' => $name,
+                    'heroHeadline' => 'Nominations Open',
+                    'showPortalCta' => true,
+                ]);
+            }
+
+            if ($alert->notify_sms) {
+                $this->sms()->nominationLive($user->mobile, $name);
+            }
         }
     }
 
@@ -333,57 +370,67 @@ class GnatMailService
         $position->loadMissing('nomination');
         $category = $position->position;
 
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm17_nomination_submitted', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Nomination Received',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a10_nomination_received', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'category' => $category,
             'submittedOn' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->nominationSubmitted($user->mobile, $name);
     }
 
     public function sendPollingLiveAlert(User $user, Polling $polling): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm18_polling_live', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Polling Is Live',
             'showPortalCta' => true,
         ]);
+        $this->sms()->pollingLive($user->mobile, $name);
     }
 
     public function sendPollingVoteRecorded(User $user, Polling $polling): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm19_polling_response', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Vote Recorded',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a11_poll_response', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'pollTitle' => $polling->title,
             'submittedOn' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->pollingResponseRecorded($user->mobile, $name);
     }
 
     public function sendPollingResultsPublished(User $user, Polling $polling): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm20_polling_results', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Results Published',
             'showPortalCta' => true,
         ]);
+        $this->sms()->pollingResults($user->mobile, $name);
     }
 
     public function sendJobPostingAlerts(AdminJob $job, iterable $userIds): void
     {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
-            if (! $user || ! $user->email) {
+            if (! $user) {
                 continue;
             }
 
@@ -392,43 +439,64 @@ class GnatMailService
                 ->where('user_id', $userId)
                 ->first();
 
-            if (! $alert || ! $alert->notify_email) {
+            if (! $alert) {
                 continue;
             }
 
-            $this->sendMember($user->email, 'm21_job_posting', [
-                'memberName' => $this->memberDisplayName($user),
-                'heroHeadline' => 'New Job Posting',
-                'showPortalCta' => true,
-            ]);
+            $name = $this->memberDisplayName($user);
+
+            if ($alert->notify_email && $user->email) {
+                $this->sendMember($user->email, 'm21_job_posting', [
+                    'memberName' => $name,
+                    'heroHeadline' => 'New Job Posting',
+                    'showPortalCta' => true,
+                ]);
+            }
+
+            if ($alert->notify_sms) {
+                $this->sms()->jobPostingAlert($user->mobile, $name);
+            }
         }
     }
 
     public function sendJobApplicationSubmitted(User $user, AdminJob $job): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm22_job_application_confirmation', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'jobCode' => $job->code,
             'heroHeadline' => 'Application Received',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a12_job_application', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'jobTitle' => $job->title,
             'companyName' => $job->hospital ?? 'GNAT Association',
             'applicationDate' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->jobApplicationSubmitted($user->mobile, $name);
     }
 
     public function sendJobApplicationStatusToMember(User $user, AdminJobApplication $application): void
     {
-        if ($application->application_status === 'selected') {
+        $name = $this->memberDisplayName($user);
+        $status = (string) $application->application_status;
+
+        if ($status === 'selected') {
             $this->sendMember($user->email, 'm25_job_application_selected', [
-                'memberName' => $this->memberDisplayName($user),
+                'memberName' => $name,
                 'heroHeadline' => 'Congratulations',
                 'showPortalCta' => true,
             ]);
+            $this->sms()->jobApplicationCommunication($user->mobile, $name);
+
+            return;
+        }
+
+        if (in_array($status, ['not_selected', 'joined', 'not_joined'], true)) {
+            $this->sms()->jobApplicationPortalStatusUpdated($user->mobile, $name);
         }
     }
 
@@ -443,12 +511,14 @@ class GnatMailService
                 'heroHeadline' => 'Job Request Update',
                 'showPortalCta' => true,
             ]);
+            $this->sms()->needJobRequestReviewed($row->mobile, $name);
         } elseif ($row->status === 'contacted') {
             $this->sendMember($email, 'm24_job_request_contact', [
                 'memberName' => $name,
                 'heroHeadline' => 'Job Request Update',
                 'showPortalCta' => true,
             ]);
+            $this->sms()->jobApplicationCommunication($row->mobile, $name);
         }
     }
 
@@ -467,23 +537,28 @@ class GnatMailService
         User::query()
             ->where('is_approved', true)
             ->whereHas('activeSubscription')
-            ->whereNotNull('email')
+            ->where(function ($q) {
+                $q->whereNotNull('email')
+                    ->orWhereNotNull('mobile');
+            })
             ->orderBy('id')
             ->chunkById(80, function ($users) use ($event, $eventDateLabel) {
                 foreach ($users as $user) {
+                    $display = $this->memberDisplayName($user);
                     $this->sendMember($user->email, 'm13_new_event', [
-                        'memberName' => $this->memberDisplayName($user),
+                        'memberName' => $display,
                         'heroHeadline' => $event->title,
                         'heroSubtext' => 'Event date: '.$eventDateLabel,
                         'showPortalCta' => true,
                     ]);
+                    $this->sms()->newEventUpdate($user->mobile, $display);
                 }
             });
 
         $event->forceFill(['member_notification_sent_at' => now()])->save();
     }
 
-    public function sendEventInterestConfirmation(string $email, string $memberName, Event $event): void
+    public function sendEventInterestConfirmation(string $email, string $memberName, Event $event, ?string $phone = null): void
     {
         $event->loadMissing('dates');
         $firstDate = $event->dates->sortBy('event_date')->first();
@@ -502,32 +577,39 @@ class GnatMailService
             'eventName' => $event->title,
             'eventDate' => $eventDateLabel,
         ]);
+
+        $this->sms()->eventInterestRecorded($phone, $memberName);
     }
 
     public function sendEventParticipationConfirmation(User $user, Event $event): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm15_event_participation', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Participation Recorded',
             'showPortalCta' => true,
         ]);
+        $this->sms()->eventParticipationRecorded($user->mobile, $name);
     }
 
     /**
      * Template 15 for guests / any attendee reached by email (public registration, QR scan, etc.).
      */
-    public function sendEventParticipationConfirmationByEmail(string $email, string $attendeeName, Event $event): void
+    public function sendEventParticipationConfirmationByEmail(string $email, string $attendeeName, Event $event, ?string $phone = null): void
     {
         $email = trim($email);
-        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return;
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->sendMember($email, 'm15_event_participation', [
+                'memberName' => $attendeeName !== '' ? $attendeeName : 'Member',
+                'heroHeadline' => 'Participation Recorded',
+                'showPortalCta' => true,
+            ]);
         }
 
-        $this->sendMember($email, 'm15_event_participation', [
-            'memberName' => $attendeeName !== '' ? $attendeeName : 'Member',
-            'heroHeadline' => 'Participation Recorded',
-            'showPortalCta' => true,
-        ]);
+        $this->sms()->eventParticipationRecorded(
+            $phone,
+            $attendeeName !== '' ? $attendeeName : 'Member'
+        );
     }
 
     public function sendDonationReceipt(DonationPayment $payment): void
@@ -548,15 +630,18 @@ class GnatMailService
             'amount' => 'INR '.number_format((float) $payment->amount, 2),
             'paymentDate' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->donationReceived($payment->donor_mobile, $name);
     }
 
-    public function sendSupportConfirmation(string $email, string $memberName): void
+    public function sendSupportConfirmation(string $email, string $memberName, ?string $phone = null): void
     {
         $this->sendMember($email, 'm27_support_confirmation', [
             'memberName' => $memberName,
             'heroHeadline' => 'Support Request Received',
             'showPortalCta' => false,
         ]);
+        $this->sms()->supportRequestReceived($phone, $memberName);
     }
 
     public function sendWebsiteContactAdmin(array $payload): void
@@ -584,18 +669,21 @@ class GnatMailService
     public function sendRenewalReminder(User $user, MemberSubscription $subscription): void
     {
         $expiry = $subscription->end_date?->format('d M Y') ?? '—';
+        $name = $this->memberDisplayName($user);
 
         $this->sendMember($user->email, 'm06_renewal_reminder', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'expiryDate' => $expiry,
             'heroHeadline' => 'Renewal Reminder',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a03_renewal_reminder_sent', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'expiryDate' => $expiry,
         ]);
+
+        $this->sms()->membershipExpiryReminder($user->mobile, $name, $expiry);
     }
 
     /**
@@ -604,19 +692,22 @@ class GnatMailService
     public function sendMembershipExpiredNotice(User $user, MemberSubscription $subscription): void
     {
         $expiry = $subscription->end_date?->format('d M Y') ?? '—';
+        $name = $this->memberDisplayName($user);
 
         $this->sendMember($user->email, 'm07_membership_expired', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'expiryDate' => $expiry,
             'heroHeadline' => 'Membership Expired',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a04_membership_expired', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'membershipId' => (string) $subscription->id,
             'expiryDate' => $expiry,
         ]);
+
+        $this->sms()->membershipExpired($user->mobile, $name, $expiry);
     }
 
     /**
@@ -625,18 +716,21 @@ class GnatMailService
     public function sendInactiveAccountNotice(User $user, ?MemberSubscription $lastSubscription): void
     {
         $pendingSince = $lastSubscription?->end_date?->format('d M Y') ?? '—';
+        $name = $this->memberDisplayName($user);
 
         $this->sendMember($user->email, 'm09_account_inactive_pending_subscription', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Account Inactive',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a05_account_inactive', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'membershipId' => $lastSubscription ? (string) $lastSubscription->id : '—',
             'pendingSince' => $pendingSince,
         ]);
+
+        $this->sms()->accountInactivePendingSubscription($user->mobile, $name);
     }
 
     /**
@@ -647,7 +741,9 @@ class GnatMailService
     {
         $user->refresh();
 
-        if ($user->email === null || trim((string) $user->email) === '') {
+        $hasEmail = $user->email !== null && trim((string) $user->email) !== '';
+        $hasMobile = $this->sms()->normalizeMobile($user->mobile) !== null;
+        if (! $hasEmail && ! $hasMobile) {
             return;
         }
 
@@ -719,17 +815,20 @@ class GnatMailService
      */
     public function sendMembershipCancellationConfirmed(User $user, MemberSubscription $subscription): void
     {
+        $name = $this->memberDisplayName($user);
         $this->sendMember($user->email, 'm08_membership_cancellation', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'heroHeadline' => 'Cancellation Confirmed',
             'showPortalCta' => true,
         ]);
 
         $this->sendAdmin('a06_cancellation', [
-            'memberName' => $this->memberDisplayName($user),
+            'memberName' => $name,
             'membershipId' => (string) $subscription->id,
             'cancellationDate' => now()->format('d M Y, h:i A'),
         ]);
+
+        $this->sms()->membershipCancellation($user->mobile, $name);
     }
 
     private function safeSend(callable $callback): void

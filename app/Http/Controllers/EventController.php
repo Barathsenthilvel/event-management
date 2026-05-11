@@ -330,7 +330,7 @@ class EventController extends Controller
             $alreadyAttended = $invite->participation_status === 'participated';
             if (! $alreadyAttended) {
                 $invite->update(['participation_status' => 'participated']);
-                if ($invite->user && ! empty($invite->user->email)) {
+                if ($invite->user) {
                     app(GnatMailService::class)->sendEventParticipationConfirmation($invite->user, $event);
                 }
             }
@@ -354,11 +354,12 @@ class EventController extends Controller
         $alreadyAttended = $interest->participation_status === 'participated';
         if (! $alreadyAttended) {
             $interest->update(['participation_status' => 'participated']);
-            if (! empty($interest->email)) {
+            if ($interest->email || $interest->phone) {
                 app(GnatMailService::class)->sendEventParticipationConfirmationByEmail(
-                    (string) $interest->email,
+                    (string) ($interest->email ?? ''),
                     (string) ($interest->name ?: 'Guest'),
-                    $event
+                    $event,
+                    $interest->phone ? (string) $interest->phone : null
                 );
             }
         }
@@ -443,12 +444,13 @@ class EventController extends Controller
         if (
             $validated['participation_status'] === 'participated'
             && ! $wasParticipated
-            && ! empty($interest->email)
+            && ($interest->email || $interest->phone)
         ) {
             app(GnatMailService::class)->sendEventParticipationConfirmationByEmail(
-                (string) $interest->email,
+                (string) ($interest->email ?? ''),
                 (string) ($interest->name ?: 'Guest'),
-                $event
+                $event,
+                $interest->phone ? (string) $interest->phone : null
             );
         }
 

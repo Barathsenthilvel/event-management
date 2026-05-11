@@ -646,6 +646,7 @@ class MemberDashboardController extends Controller
                 if ($polling->polling_status !== 'live') {
                     return true;
                 }
+
                 return $this->pollingHasStarted($polling);
             })
             ->values();
@@ -1241,10 +1242,13 @@ class MemberDashboardController extends Controller
             ]);
         }
 
-        if ($user->email) {
-            $mail = app(GnatMailService::class);
-            $mail->sendEventInterestConfirmation($user->email, $mail->memberDisplayName($user), $event);
-        }
+        $mail = app(GnatMailService::class);
+        $mail->sendEventInterestConfirmation(
+            $user->email ?? '',
+            $mail->memberDisplayName($user),
+            $event,
+            $user->mobile
+        );
 
         return $this->interestSubmitSuccessResponse($request);
     }

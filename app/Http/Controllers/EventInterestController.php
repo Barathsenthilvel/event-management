@@ -93,7 +93,8 @@ class EventInterestController extends Controller
         app(GnatMailService::class)->sendEventInterestConfirmation(
             $email,
             $data['name'],
-            $event
+            $event,
+            $data['phone'] ?? null
         );
 
         return back()

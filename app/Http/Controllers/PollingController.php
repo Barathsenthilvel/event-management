@@ -147,7 +147,10 @@ class PollingController extends Controller
             User::query()
                 ->where('is_approved', true)
                 ->whereHas('activeSubscription')
-                ->whereNotNull('email')
+                ->where(function ($q) {
+                    $q->whereNotNull('email')
+                        ->orWhereNotNull('mobile');
+                })
                 ->orderBy('id')
                 ->chunkById(100, function ($users) use ($polling, $mail) {
                     foreach ($users as $u) {
@@ -222,6 +225,7 @@ class PollingController extends Controller
                     ->sortByDesc('voted_at')
                     ->map(function ($vote) use ($position) {
                         $candidateName = optional($position->candidates->firstWhere('id', (int) ($vote->candidate_user_id ?? 0)))->name;
+
                         return [
                             'candidate_user_id' => (int) ($vote->candidate_user_id ?? 0),
                             'candidate_name' => $candidateName ?: '-',
@@ -287,7 +291,10 @@ class PollingController extends Controller
             if ($voterIds !== []) {
                 User::query()
                     ->whereIn('id', $voterIds)
-                    ->whereNotNull('email')
+                    ->where(function ($q) {
+                        $q->whereNotNull('email')
+                            ->orWhereNotNull('mobile');
+                    })
                     ->orderBy('id')
                     ->chunkById(100, function ($users) use ($polling, $mail) {
                         foreach ($users as $u) {
@@ -449,6 +456,7 @@ class PollingController extends Controller
 
                 $position->candidates()->sync($candidateIds);
                 $keptIds[] = $positionId;
+
                 continue;
             }
 
@@ -534,6 +542,7 @@ class PollingController extends Controller
                     'polling_status' => 'ends',
                     'is_active' => false,
                 ]);
+
                 continue;
             }
 
@@ -542,6 +551,7 @@ class PollingController extends Controller
                     'polling_status' => 'live',
                     'is_active' => true,
                 ]);
+
                 continue;
             }
 
