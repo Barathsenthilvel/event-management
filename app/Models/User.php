@@ -52,6 +52,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'designation_id',
         'referred_by_user_id',
         'password',
+        'gnat_inactive_notice_sent_at',
     ];
 
     /**
@@ -77,6 +78,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             'dob' => 'date',
             'profile_completed' => 'boolean',
             'is_approved' => 'boolean',
+            'gnat_inactive_notice_sent_at' => 'datetime',
         ];
     }
 

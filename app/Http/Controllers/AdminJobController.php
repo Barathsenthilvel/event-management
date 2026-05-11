@@ -9,6 +9,7 @@ use App\Models\Designation;
 use App\Models\Hospital;
 use App\Models\MemberJobRequest;
 use App\Models\User;
+use App\Services\GnatMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -242,6 +243,8 @@ class AdminJobController extends Controller
             }
         });
 
+        app(GnatMailService::class)->sendJobPostingAlerts($job, $memberIds);
+
         return redirect()->route('admin.jobs.applications', $job->id)->with('success', 'Job alert sent successfully.');
     }
 
@@ -315,6 +318,11 @@ class AdminJobController extends Controller
             'application_status' => $validated['application_status'],
             'status_emailed_at' => now(), // mark mail trigger point
         ]);
+
+        $application->loadMissing('user');
+        if ($application->user) {
+            app(GnatMailService::class)->sendJobApplicationStatusToMember($application->user, $application);
+        }
 
         return back()->with('success', 'Application status updated and mail trigger marked.');
     }
@@ -420,9 +428,16 @@ class AdminJobController extends Controller
             'status' => 'required|in:new,reviewed,contacted,closed',
         ]);
 
+        $previous = (string) $requestRow->status;
+
         $requestRow->update([
             'status' => $validated['status'],
         ]);
+
+        if ($previous !== $validated['status'] && in_array($validated['status'], ['reviewed', 'contacted'], true)) {
+            $requestRow->refresh();
+            app(GnatMailService::class)->sendNeedJobRequestStatus($requestRow);
+        }
 
         return back()->with('success', 'Need Job request status updated.');
     }

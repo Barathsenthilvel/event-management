@@ -8,6 +8,7 @@ use App\Models\EventInvite;
 use App\Models\EventPhoto;
 use App\Models\User;
 use App\Services\EventScheduleStatusService;
+use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -108,7 +109,8 @@ class EventController extends Controller
         $this->mergeNormalizedEventTimes($request);
         $validated = $request->validate($this->rules());
 
-        DB::transaction(function () use ($request, $validated) {
+        $event = null;
+        DB::transaction(function () use ($request, $validated, &$event) {
             $event = Event::create($this->buildEventPayload($request, $validated, true));
 
             $dates = $this->extractDates($request);
@@ -117,11 +119,21 @@ class EventController extends Controller
             }
         });
 
+        if ($event) {
+            $this->refreshEventStatusFromSchedule($event);
+        }
+
+        if ($event && $event->is_active) {
+            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
+        }
+
         return redirect()->route('admin.events.index')->with('success', 'Event created successfully.');
     }
 
     public function show(Request $request, Event $event)
     {
+        $this->refreshEventStatusFromSchedule($event);
+
         $event->load([
             'dates',
             'creator:id,name',
@@ -200,6 +212,7 @@ class EventController extends Controller
     public function edit(Event $event)
     {
         $event->load('dates');
+        $this->refreshEventStatusFromSchedule($event);
 
         return view('admin.events.edit', compact('event'));
     }
@@ -217,6 +230,13 @@ class EventController extends Controller
                 $event->dates()->create($date);
             }
         });
+
+        $this->refreshEventStatusFromSchedule($event);
+        $event->refresh();
+
+        if ($event->is_active && $event->status !== 'cancelled' && $event->member_notification_sent_at === null) {
+            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
+        }
 
         return redirect()->route('admin.events.index')->with('success', 'Event updated successfully.');
     }
@@ -245,6 +265,13 @@ class EventController extends Controller
     public function toggleDisplay(Event $event)
     {
         $event->update(['is_active' => ! $event->is_active]);
+        $event->refresh();
+        $this->refreshEventStatusFromSchedule($event);
+        $event->refresh();
+
+        if ($event->is_active && $event->status !== 'cancelled' && $event->member_notification_sent_at === null) {
+            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
+        }
 
         return redirect()->route('admin.events.index')->with('success', 'Display status updated.');
     }
@@ -260,11 +287,15 @@ class EventController extends Controller
 
     public function attendanceScanner(Event $event)
     {
+        $this->refreshEventStatusFromSchedule($event);
+
         return view('admin.events.attendance-scanner', compact('event'));
     }
 
     public function consumeAttendanceQr(Request $request, Event $event, string $source, int $entryId)
     {
+        $this->refreshEventStatusFromSchedule($event);
+
         if ($event->status === 'cancelled') {
             return response()->json([
                 'ok' => false,
@@ -288,7 +319,7 @@ class EventController extends Controller
 
         if ($source === 'invite') {
             $invite = EventInvite::query()
-                ->with('user:id,name')
+                ->with('user:id,name,email')
                 ->where('event_id', $event->id)
                 ->where('id', $entryId)
                 ->first();
@@ -299,6 +330,9 @@ class EventController extends Controller
             $alreadyAttended = $invite->participation_status === 'participated';
             if (! $alreadyAttended) {
                 $invite->update(['participation_status' => 'participated']);
+                if ($invite->user && ! empty($invite->user->email)) {
+                    app(GnatMailService::class)->sendEventParticipationConfirmation($invite->user, $event);
+                }
             }
 
             return response()->json([
@@ -320,6 +354,13 @@ class EventController extends Controller
         $alreadyAttended = $interest->participation_status === 'participated';
         if (! $alreadyAttended) {
             $interest->update(['participation_status' => 'participated']);
+            if (! empty($interest->email)) {
+                app(GnatMailService::class)->sendEventParticipationConfirmationByEmail(
+                    (string) $interest->email,
+                    (string) ($interest->name ?: 'Guest'),
+                    $event
+                );
+            }
         }
 
         return response()->json([
@@ -336,6 +377,8 @@ class EventController extends Controller
             abort(404);
         }
 
+        $this->refreshEventStatusFromSchedule($event);
+
         if ($event->status === 'cancelled') {
             return back()->with('error', 'Participation status cannot be changed for a cancelled event.');
         }
@@ -351,9 +394,19 @@ class EventController extends Controller
             'participation_status' => 'required|in:interested,participated,not_participated',
         ]);
 
+        $wasParticipated = $invite->participation_status === 'participated';
+
         $invite->update([
             'participation_status' => $validated['participation_status'],
         ]);
+
+        if (
+            $validated['participation_status'] === 'participated'
+            && ! $wasParticipated
+            && $invite->user
+        ) {
+            app(GnatMailService::class)->sendEventParticipationConfirmation($invite->user, $event);
+        }
 
         return back()->with('success', 'Participation status updated.');
     }
@@ -363,6 +416,8 @@ class EventController extends Controller
         if ($interest->event_id !== $event->id) {
             abort(404);
         }
+
+        $this->refreshEventStatusFromSchedule($event);
 
         if ($event->status === 'cancelled') {
             return back()->with('error', 'Attendance cannot be changed for a cancelled event.');
@@ -379,9 +434,23 @@ class EventController extends Controller
             'participation_status' => 'required|in:interested,participated,not_participated',
         ]);
 
+        $wasParticipated = $interest->participation_status === 'participated';
+
         $interest->update([
             'participation_status' => $validated['participation_status'],
         ]);
+
+        if (
+            $validated['participation_status'] === 'participated'
+            && ! $wasParticipated
+            && ! empty($interest->email)
+        ) {
+            app(GnatMailService::class)->sendEventParticipationConfirmationByEmail(
+                (string) $interest->email,
+                (string) ($interest->name ?: 'Guest'),
+                $event
+            );
+        }
 
         return back()->with('success', 'Public registration attendance updated.');
     }
@@ -391,6 +460,8 @@ class EventController extends Controller
         if ($interest->event_id !== $event->id) {
             abort(404);
         }
+
+        $this->refreshEventStatusFromSchedule($event);
 
         if ($interest->participation_status !== 'participated') {
             return back()->with('error', 'Certificate is available only for attended registrations.');
@@ -416,6 +487,8 @@ class EventController extends Controller
             abort(404);
         }
 
+        $this->refreshEventStatusFromSchedule($event);
+
         if ($invite->participation_status !== 'participated') {
             return back()->with('error', 'Certificate download is available only for participated members.');
         }
@@ -436,6 +509,8 @@ class EventController extends Controller
 
     public function inviteForm(Event $event, Request $request)
     {
+        $this->refreshEventStatusFromSchedule($event);
+
         $q = trim((string) $request->query('q', ''));
         $members = User::query()
             ->where('is_approved', true)
@@ -627,6 +702,20 @@ class EventController extends Controller
             }
         }
         $request->merge(['event_dates' => $rows]);
+    }
+
+    /**
+     * Recompute this event's status (upcoming / live / completed) from its dates — no scheduler required.
+     */
+    private function refreshEventStatusFromSchedule(Event $event): void
+    {
+        if (! Schema::hasTable('events')) {
+            return;
+        }
+
+        $event->loadMissing('dates');
+        resolve(EventScheduleStatusService::class)->syncOne($event);
+        $event->refresh();
     }
 
     private function normalizeHiTime(mixed $value): ?string

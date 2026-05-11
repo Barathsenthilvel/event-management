@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'member.subscribed' => \App\Http\Middleware\EnsureMemberHasActiveSubscription::class,
+            'gnat.membership.lifecycle' => \App\Http\Middleware\EnsureGnatMembershipLifecycleChecked::class,
         ]);
 
         // Configure authentication redirect for admin guard
@@ -79,8 +80,5 @@ return Application::configure(basePath: dirname(__DIR__))
             // For other routes, let Laravel handle with default behavior
             return null;
         });
-    })
-    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
-        $schedule->command('events:sync-status')->everyMinute();
     })
     ->create();

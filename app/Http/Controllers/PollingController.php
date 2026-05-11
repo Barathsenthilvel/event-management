@@ -6,6 +6,7 @@ use App\Models\Polling;
 use App\Models\PollingPosition;
 use App\Models\PollingVote;
 use App\Models\User;
+use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -132,7 +133,29 @@ class PollingController extends Controller
 
     public function toggleStatus(Polling $polling)
     {
+        $wasLive = $polling->polling_status === 'live';
         $polling->update(['polling_status' => $polling->polling_status === 'live' ? 'ends' : 'live']);
+        $polling->refresh();
+
+        if (
+            ! $wasLive
+            && $polling->polling_status === 'live'
+            && $polling->publish_status === 'published'
+            && ! $polling->live_alert_sent_at
+        ) {
+            $mail = app(GnatMailService::class);
+            User::query()
+                ->where('is_approved', true)
+                ->whereHas('activeSubscription')
+                ->whereNotNull('email')
+                ->orderBy('id')
+                ->chunkById(100, function ($users) use ($polling, $mail) {
+                    foreach ($users as $u) {
+                        $mail->sendPollingLiveAlert($u, $polling);
+                    }
+                });
+            $polling->forceFill(['live_alert_sent_at' => now()])->save();
+        }
 
         return back()->with('success', 'Polling status updated.');
     }
@@ -245,6 +268,35 @@ class PollingController extends Controller
                 }
             }
             $position->update(['winner_user_id' => $winnerUserId]);
+        }
+
+        $polling->refresh();
+        if (
+            $polling->results_visible_to_members
+            && $polling->publish_status === 'published'
+            && ! $polling->results_mail_sent_at
+        ) {
+            $mail = app(GnatMailService::class);
+            $voterIds = PollingVote::query()
+                ->where('polling_id', $polling->id)
+                ->distinct()
+                ->pluck('voter_user_id')
+                ->filter()
+                ->all();
+
+            if ($voterIds !== []) {
+                User::query()
+                    ->whereIn('id', $voterIds)
+                    ->whereNotNull('email')
+                    ->orderBy('id')
+                    ->chunkById(100, function ($users) use ($polling, $mail) {
+                        foreach ($users as $u) {
+                            $mail->sendPollingResultsPublished($u, $polling);
+                        }
+                    });
+            }
+
+            $polling->forceFill(['results_mail_sent_at' => now()])->save();
         }
 
         return redirect()

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\User;
+use App\Services\GnatMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -254,6 +255,8 @@ class MeetingController extends Controller
             $invite->invited_at = $now;
             $invite->save();
         }
+
+        app(GnatMailService::class)->sendMeetingInvites($meeting, $userIds);
 
         return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Members invited successfully.');
     }

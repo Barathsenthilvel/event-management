@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
+use App\Services\GnatMailService;
 
 class MemberProfileController extends Controller
 {
@@ -192,8 +193,13 @@ class MemberProfileController extends Controller
             $user->password = $data['new_password'];
         }
 
+        $wasProfileCompleted = (bool) $user->profile_completed;
         $user->profile_completed = $this->isProfileComplete($user);
         $user->save();
+
+        if (! $wasProfileCompleted && $user->profile_completed) {
+            app(GnatMailService::class)->sendProfileSubmitted($user);
+        }
 
         if ($user->profile_completed && !$user->is_approved) {
             return redirect()

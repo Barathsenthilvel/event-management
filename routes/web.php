@@ -352,7 +352,7 @@ Route::prefix('member')->name('member.')->group(function () {
 
     Route::post('/logout', [MemberAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'gnat.membership.lifecycle'])->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
         Route::post('/dashboard/announcements/dismiss', [MemberDashboardController::class, 'dismissDashboardAnnouncement'])
             ->name('dashboard.announcements.dismiss');

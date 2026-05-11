@@ -26,6 +26,7 @@ class Event extends Model
         'cover_image_path',
         'banner_image_path',
         'template_pdf_path',
+        'member_notification_sent_at',
     ];
 
     protected function casts(): array
@@ -33,6 +34,7 @@ class Event extends Model
         return [
             'promote_front' => 'boolean',
             'is_active' => 'boolean',
+            'member_notification_sent_at' => 'datetime',
         ];
     }
 

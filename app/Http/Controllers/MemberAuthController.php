@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\GnatMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -183,6 +184,8 @@ class MemberAuthController extends Controller
         if (!$user) {
             return redirect()->route('member.dashboard');
         }
+
+        app(GnatMailService::class)->sendRegistrationSuccessful($user);
 
         $return = $request->session()->pull('member_return_url');
         if (is_string($return) && $this->isSafeMemberRedirectUrl($return)) {

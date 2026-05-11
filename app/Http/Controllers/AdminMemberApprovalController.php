@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\GnatMailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class AdminMemberApprovalController extends Controller
@@ -50,15 +50,8 @@ class AdminMemberApprovalController extends Controller
         $user->save();
 
         try {
-            if (!empty($user->email)) {
-                $paymentUrl = route('member.subscription.index');
-                $memberName = $user->name ?: trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
-                Mail::raw(
-                    "Hello {$memberName},\n\nYour GNAT member profile has been approved.\n\nPlease complete your membership payment to activate access:\n{$paymentUrl}\n\nThank you,\nGNAT Team",
-                    function ($message) use ($user) {
-                        $message->to($user->email)->subject('Profile approved - complete membership payment');
-                    }
-                );
+            if (! empty($user->email)) {
+                app(GnatMailService::class)->sendProfileApproved($user);
             }
         } catch (Throwable $e) {
             // Approval should succeed even if email provider is unavailable.
@@ -74,6 +67,14 @@ class AdminMemberApprovalController extends Controller
         // Keep the record, just mark as not approved.
         $user->is_approved = false;
         $user->save();
+
+        try {
+            if (! empty($user->email)) {
+                app(GnatMailService::class)->sendProfileRejected($user);
+            }
+        } catch (Throwable $e) {
+            //
+        }
 
         return redirect()
             ->route('admin.members.pending-approvals.index')

@@ -26,6 +26,8 @@ class Polling extends Model
         'show_stats',
         'results_visible_to_members',
         'is_active',
+        'live_alert_sent_at',
+        'results_mail_sent_at',
     ];
 
     protected function casts(): array
@@ -37,6 +39,8 @@ class Polling extends Model
             'show_stats' => 'boolean',
             'results_visible_to_members' => 'boolean',
             'is_active' => 'boolean',
+            'live_alert_sent_at' => 'datetime',
+            'results_mail_sent_at' => 'datetime',
         ];
     }
 

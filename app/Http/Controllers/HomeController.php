@@ -10,13 +10,11 @@ use App\Models\HomeBlogPost;
 use App\Models\HomeBanner;
 use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
-use App\Mail\ContactFormAcknowledgment;
-use App\Mail\ContactFormSubmitted;
 use App\Services\EventScheduleStatusService;
+use App\Services\GnatMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
@@ -265,8 +263,13 @@ class HomeController extends Controller
         $recipient = config('homepage.contact_form_to')
             ?: config('homepage.contact.email');
 
+        $gnatMail = app(GnatMailService::class);
+
         try {
-            Mail::to($recipient)->send(new ContactFormSubmitted($data));
+            if ($gnatMail->adminRecipients() === []) {
+                throw new \RuntimeException('GNAT admin mail recipients are not configured.');
+            }
+            $gnatMail->sendWebsiteContactAdmin($data);
         } catch (\Throwable $e) {
             Log::error('Contact form email failed', [
                 'exception' => $e->getMessage(),
@@ -290,7 +293,7 @@ class HomeController extends Controller
         }
 
         try {
-            Mail::to($data['email'])->send(new ContactFormAcknowledgment($data));
+            $gnatMail->sendSupportConfirmation($data['email'], trim((string) $data['name']));
         } catch (\Throwable $e) {
             Log::warning('Contact form sender acknowledgment email failed', [
                 'exception' => $e->getMessage(),

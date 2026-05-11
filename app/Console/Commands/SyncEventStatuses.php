@@ -9,7 +9,7 @@ class SyncEventStatuses extends Command
 {
     protected $signature = 'events:sync-status';
 
-    protected $description = 'Set event status (upcoming/live/completed) from scheduled dates';
+    protected $description = 'Manually recompute all event statuses from dates (the app also syncs on relevant web requests; no cron required)';
 
     public function handle(EventScheduleStatusService $service): int
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DonationPayment;
+use App\Services\GnatMailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
@@ -152,6 +153,9 @@ class DonationPaymentController extends Controller
             'payment_id' => $data['razorpay_payment_id'],
             'meta' => $meta,
         ]);
+
+        $payment->refresh();
+        app(GnatMailService::class)->sendDonationReceipt($payment);
 
         $request->session()->forget([
             'public_donation.razorpay_order_id',

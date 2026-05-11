@@ -21,6 +21,8 @@ use App\Models\PaymentTransaction;
 use App\Models\Polling;
 use App\Models\PollingPosition;
 use App\Models\PollingVote;
+use App\Services\EventScheduleStatusService;
+use App\Services\GnatMailService;
 use App\Support\EventInterestErrorFlash;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -29,6 +31,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -460,6 +463,8 @@ class MemberDashboardController extends Controller
             return back()->with('job_apply_error', 'Unable to submit your application right now. Please try again.');
         }
 
+        app(GnatMailService::class)->sendJobApplicationSubmitted($user, $job);
+
         return back()->with('job_apply_success', 'Application submitted successfully.');
     }
 
@@ -787,6 +792,13 @@ class MemberDashboardController extends Controller
             return back()->with('nomination_error', 'This nomination is closed now.');
         }
 
+        $existing = NominationEntry::query()
+            ->where('nomination_id', $nomination->id)
+            ->where('position_id', $nominationPosition->id)
+            ->where('user_id', $user->id)
+            ->first();
+        $alreadyInterested = $existing && $existing->response_status === 'interested';
+
         try {
             NominationEntry::updateOrCreate(
                 [
@@ -801,6 +813,10 @@ class MemberDashboardController extends Controller
             );
         } catch (QueryException $e) {
             return back()->with('nomination_error', 'Could not save your interest. Please try again.');
+        }
+
+        if (! $alreadyInterested) {
+            app(GnatMailService::class)->sendNominationSubmitted($user, $nominationPosition);
         }
 
         return back()
@@ -883,7 +899,7 @@ class MemberDashboardController extends Controller
         }
 
         try {
-            PollingVote::updateOrCreate(
+            $vote = PollingVote::updateOrCreate(
                 [
                     'polling_id' => $polling->id,
                     'position_id' => $position->id,
@@ -896,6 +912,10 @@ class MemberDashboardController extends Controller
             );
         } catch (QueryException $e) {
             return back()->with('polling_error', 'Could not save your vote. Please try again.');
+        }
+
+        if ($vote->wasRecentlyCreated) {
+            app(GnatMailService::class)->sendPollingVoteRecorded($user, $polling);
         }
 
         return back()
@@ -946,6 +966,10 @@ class MemberDashboardController extends Controller
                     'member_gate_error',
                     'Your events list is available after you have an active membership plan.'
                 );
+        }
+
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncAll();
         }
 
         $eventCardWith = [
@@ -1051,6 +1075,13 @@ class MemberDashboardController extends Controller
             'attended_at' => null,
         ]);
 
+        $meeting->loadMissing('schedules');
+        app(GnatMailService::class)->sendMeetingMemberResponse(
+            $user,
+            $meeting,
+            $validated['response'] === 'interested'
+        );
+
         if ($validated['response'] === 'interested') {
             return back()
                 ->with('event_interest_success', 'Thank you for letting us know. We have recorded your interest in this meeting.')
@@ -1110,14 +1141,18 @@ class MemberDashboardController extends Controller
             );
         }
 
+        $event->loadMissing('dates');
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncOne($event);
+            $event->refresh();
+        }
+
         if (! in_array($event->status, ['live', 'completed'], true)) {
             return redirect()->route('member.events.index')->with(
                 'event_interest_error',
                 'Certificate download opens after the event is Live/Completed and the office has uploaded the certificate file.'
             );
         }
-
-        $event->loadMissing('dates');
 
         if (empty($event->template_pdf_path) || ! Storage::disk('public')->exists($event->template_pdf_path)) {
             return redirect()->route('member.events.index')->with(
@@ -1144,6 +1179,11 @@ class MemberDashboardController extends Controller
         }
 
         $event->loadMissing('dates');
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncOne($event);
+            $event->refresh();
+        }
+
         if (! $event->is_active || ! $event->acceptsPublicAttendance()) {
             return $this->interestSubmitErrorResponse($request, [
                 'event_interest_error_title' => 'Event registration unavailable',
@@ -1199,6 +1239,11 @@ class MemberDashboardController extends Controller
                 'event_interest_error_title' => 'Event registration unavailable',
                 'event_interest_error' => 'You have already submitted interest for this event.',
             ]);
+        }
+
+        if ($user->email) {
+            $mail = app(GnatMailService::class);
+            $mail->sendEventInterestConfirmation($user->email, $mail->memberDisplayName($user), $event);
         }
 
         return $this->interestSubmitSuccessResponse($request);

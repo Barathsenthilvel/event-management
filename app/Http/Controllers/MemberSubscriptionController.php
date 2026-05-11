@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MemberSubscription;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\PaymentTransaction;
+use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -268,7 +269,23 @@ class MemberSubscriptionController extends Controller
             $end = (clone $end)->addDays((int) $plan->grace_period);
         }
 
-        // Expire any previous active subscriptions.
+        // Expire any previous active subscriptions. Send expiry mail only for natural lapse
+        // (end date already passed), not when an active plan is merely superseded early.
+        $user = Auth::user();
+        $today = Carbon::today()->toDateString();
+        $superseded = MemberSubscription::query()
+            ->where('user_id', Auth::id())
+            ->where('status', 'active')
+            ->get();
+
+        foreach ($superseded as $old) {
+            $oldEnd = $old->end_date?->toDateString();
+            if ($oldEnd !== null && $oldEnd < $today && $old->expiry_notification_sent_at === null && $user) {
+                app(GnatMailService::class)->sendMembershipExpiredNotice($user->fresh(), $old);
+                $old->forceFill(['expiry_notification_sent_at' => now()])->save();
+            }
+        }
+
         MemberSubscription::query()
             ->where('user_id', Auth::id())
             ->where('status', 'active')
@@ -287,6 +304,11 @@ class MemberSubscriptionController extends Controller
             'razorpay_order_id' => $data['razorpay_order_id'],
             'last_razorpay_payment_id' => $data['razorpay_payment_id'],
         ]);
+
+        if ($user) {
+            $transaction->refresh();
+            app(GnatMailService::class)->sendMembershipActivated($user, $subscription, $transaction);
+        }
 
         $request->session()->forget([
             'member.selected_membership_setting_id',

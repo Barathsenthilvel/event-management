@@ -7,6 +7,7 @@ use App\Models\NominationAlert;
 use App\Models\NominationEntry;
 use App\Models\NominationPosition;
 use App\Models\User;
+use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -228,6 +229,8 @@ class NominationController extends Controller
                 );
             }
         });
+
+        app(GnatMailService::class)->sendNominationAlerts($nomination, $memberIds);
 
         return redirect()->route('admin.nominations.submissions', $nomination->id)->with('success', 'Nomination alert sent. Members register interest from their dashboard; submissions appear here as they respond.');
     }

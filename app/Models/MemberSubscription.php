@@ -21,6 +21,8 @@ class MemberSubscription extends Model
         'status',
         'razorpay_order_id',
         'last_razorpay_payment_id',
+        'renewal_reminder_sent_at',
+        'expiry_notification_sent_at',
     ];
 
     protected function casts(): array
@@ -29,6 +31,8 @@ class MemberSubscription extends Model
             'amount' => 'decimal:2',
             'start_date' => 'date',
             'end_date' => 'date',
+            'renewal_reminder_sent_at' => 'datetime',
+            'expiry_notification_sent_at' => 'datetime',
         ];
     }
 

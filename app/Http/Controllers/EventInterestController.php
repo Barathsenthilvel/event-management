@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Services\EventScheduleStatusService;
+use App\Services\GnatMailService;
 use App\Support\EventInterestErrorFlash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class EventInterestController extends Controller
@@ -15,6 +18,11 @@ class EventInterestController extends Controller
     public function store(Request $request, Event $event)
     {
         $event->loadMissing('dates');
+        if (Schema::hasTable('events')) {
+            resolve(EventScheduleStatusService::class)->syncOne($event);
+            $event->refresh();
+        }
+
         if (! $event->is_active || ! $event->acceptsPublicAttendance()) {
             return back()
                 ->with('event_interest_error', 'This event is not accepting registrations right now.')
@@ -81,6 +89,12 @@ class EventInterestController extends Controller
         if (! Auth::check()) {
             $request->session()->push('guest_event_interests', $event->id);
         }
+
+        app(GnatMailService::class)->sendEventInterestConfirmation(
+            $email,
+            $data['name'],
+            $event
+        );
 
         return back()
             ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
