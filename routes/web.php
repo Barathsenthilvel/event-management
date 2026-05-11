@@ -51,6 +51,10 @@ Route::redirect('/give', '/?section=donate', 302)->name('home.give');
 Route::redirect('/more-about', '/?section=about2', 302)->name('home.more-about');
 
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('legal.privacy');
+Route::get('/terms-and-conditions', [HomeController::class, 'termsAndConditions'])->name('legal.terms');
+Route::get('/disclaimer', [HomeController::class, 'disclaimer'])->name('legal.disclaimer');
+Route::get('/cancellation-refund-policy', [HomeController::class, 'cancellationRefundPolicy'])->name('legal.cancellation-refund');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
 Route::get('/blogs', [HomeController::class, 'blogs'])->name('blogs.index');

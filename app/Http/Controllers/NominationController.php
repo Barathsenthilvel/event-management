@@ -343,7 +343,7 @@ class NominationController extends Controller
             'polling_from' => $validated['polling_from'],
             'polling_to' => $validated['polling_to'],
             'status' => $validated['status'],
-            'is_active' => $request->boolean('is_active', true),
+            'is_active' => $request->boolean('is_active'),
         ];
 
         if ($creating) {

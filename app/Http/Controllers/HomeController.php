@@ -250,6 +250,36 @@ class HomeController extends Controller
         return view('home.contact', config('homepage', []));
     }
 
+    public function privacyPolicy()
+    {
+        return view('home.legal.privacy', $this->legalPageData());
+    }
+
+    public function termsAndConditions()
+    {
+        return view('home.legal.terms', $this->legalPageData());
+    }
+
+    public function disclaimer()
+    {
+        return view('home.legal.disclaimer', $this->legalPageData(showEffectiveDate: false));
+    }
+
+    public function cancellationRefundPolicy()
+    {
+        return view('home.legal.cancellation-refund', $this->legalPageData(showEffectiveDate: false));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function legalPageData(bool $showEffectiveDate = true): array
+    {
+        return array_merge(config('homepage', []), [
+            'effectiveDate' => $showEffectiveDate ? config('homepage.legal.effective_date', 'May 11, 2026') : null,
+        ]);
+    }
+
     public function submitContact(Request $request)
     {
         $data = $request->validate([

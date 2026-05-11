@@ -76,6 +76,17 @@
         </div>
     </div>
 
+    <nav class="mx-auto max-w-7xl px-4 pb-10 pt-2 border-t border-white/10" aria-label="Legal and policies">
+        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">Legal</p>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2.5 text-sm font-medium">
+            <li><a href="{{ route('legal.privacy') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Privacy Policy</a></li>
+            <li><a href="{{ route('legal.terms') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Terms &amp; Conditions</a></li>
+            <li><a href="{{ route('legal.cancellation-refund') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Cancellation &amp; Refund Policy</a></li>
+            <li><a href="{{ route('legal.disclaimer') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Disclaimer</a></li>
+            <li><a href="{{ route('contact') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Contact Us</a></li>
+        </ul>
+    </nav>
+
     <div class="relative border-t border-black/10 bg-gradient-to-b from-[#f0d78c] via-[#fddc6a] to-[#e8c45c]">
         <div class="mx-auto max-w-7xl px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-5 text-[#351c42]">
             <a href="{{ route('home') }}" class="shrink-0">

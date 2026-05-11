@@ -107,7 +107,7 @@
                             <th class="px-4 py-3">Positions</th>
                             <th class="px-4 py-3">Entries</th>
                             <th class="px-4 py-3">Created On / By</th>
-                            <th class="px-4 py-3">Display</th>
+                            <th class="px-4 py-3">Live nominations</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3 text-right">Action</th>
                         </tr>
@@ -138,7 +138,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $nomination->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                        {{ $nomination->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $nomination->is_active ? 'On' : 'Off' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">

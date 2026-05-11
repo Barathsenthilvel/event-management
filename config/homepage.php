@@ -14,6 +14,14 @@ return [
     */
     'contact_form_to' => env('CONTACT_FORM_TO'),
 
+    /*
+    | Shown on Privacy Policy, Terms & Conditions, and related public pages.
+    | Override with LEGAL_EFFECTIVE_DATE in .env (e.g. "January 1, 2026").
+    */
+    'legal' => [
+        'effective_date' => env('LEGAL_EFFECTIVE_DATE', 'May 11, 2026'),
+    ],
+
     'contact' => [
         'email' => 'info@gnatdonation.org',
         'address' => 'No. 36/76, Thiruveethi Amman Kovil 2nd Street, Aminjikarai, Chennai 600029',

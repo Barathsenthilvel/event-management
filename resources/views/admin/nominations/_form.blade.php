@@ -97,7 +97,11 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <label class="text-xs"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $n?->is_active ?? true) ? 'checked' : '' }}> Display Active</label>
+                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                        <input type="hidden" name="is_active" value="0">
+                        <input type="checkbox" name="is_active" value="1" class="rounded border-slate-300" {{ filter_var(old('is_active', $n?->is_active ?? true), FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
+                        Live nominations
+                    </label>
                 </div>
             </div>
         </div>

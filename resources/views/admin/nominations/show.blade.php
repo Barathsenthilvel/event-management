@@ -85,8 +85,8 @@
                             <p class="mt-1 text-sm font-bold capitalize text-slate-900">{{ $n->status }}</p>
                         </div>
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Display</p>
-                            <p class="mt-1 text-sm font-bold text-slate-900">{{ $n->is_active ? 'Active' : 'Inactive' }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Live nominations</p>
+                            <p class="mt-1 text-sm font-bold text-slate-900">{{ $n->is_active ? 'On' : 'Off' }}</p>
                         </div>
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Created</p>
