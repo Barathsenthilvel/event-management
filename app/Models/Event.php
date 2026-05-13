@@ -101,24 +101,36 @@ class Event extends Model
     }
 
     /**
-     * Recompute interested_count: all invites plus guest interests and member interests
-     * that are not already represented by an invite (avoids double-counting the same user).
+     * Recompute interested_count: confirmed member invites (interested or attended) plus public interests
+     * for users not already counted as confirmed invitees (avoids double-counting).
      */
     public function syncInterestedCountFromRegistrations(): void
     {
-        $invitedUserIds = $this->invites()->pluck('user_id')->filter()->unique()->values()->all();
+        $registeredUserIds = $this->invites()
+            ->where('has_confirmed_interest', true)
+            ->whereIn('participation_status', ['interested', 'participated'])
+            ->pluck('user_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $registeredInviteCount = $this->invites()
+            ->where('has_confirmed_interest', true)
+            ->whereIn('participation_status', ['interested', 'participated'])
+            ->count();
 
         $extraInterests = $this->interests()
-            ->where(function ($q) use ($invitedUserIds) {
+            ->where(function ($q) use ($registeredUserIds) {
                 $q->whereNull('user_id');
-                if ($invitedUserIds !== []) {
-                    $q->orWhereNotIn('user_id', $invitedUserIds);
+                if ($registeredUserIds !== []) {
+                    $q->orWhereNotIn('user_id', $registeredUserIds);
                 }
             })
             ->count();
 
         $this->update([
-            'interested_count' => $this->invites()->count() + $extraInterests,
+            'interested_count' => $registeredInviteCount + $extraInterests,
         ]);
     }
 }

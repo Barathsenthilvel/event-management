@@ -79,10 +79,18 @@
                     </div>
                 @endif
 
+                @php
+                    $initialPlanId = null;
+                    if (old('membership_setting_id') !== null && old('membership_setting_id') !== '') {
+                        $initialPlanId = (int) old('membership_setting_id');
+                    } elseif (! empty($preselectedPlanId)) {
+                        $initialPlanId = (int) $preselectedPlanId;
+                    }
+                @endphp
                 <form id="subscription-form" class="space-y-6"
                     x-data="{
                         viewType: 'grid',
-                        selectedPlan: {{ old('membership_setting_id') !== null && old('membership_setting_id') !== '' ? (int) old('membership_setting_id') : 'null' }},
+                        selectedPlan: {{ $initialPlanId !== null ? $initialPlanId : 'null' }},
                         pick(id) {
                             this.selectedPlan = id;
                             const el = document.getElementById('mp-' + id);
@@ -93,8 +101,13 @@
                     {{-- Single radio group: grid + table both control these inputs --}}
                     <div class="sr-only" aria-hidden="true">
                         @foreach($plans as $p)
+                            @php
+                                $radioChecked = (old('membership_setting_id') !== null && old('membership_setting_id') !== '')
+                                    ? (string) old('membership_setting_id') === (string) $p->id
+                                    : (! empty($preselectedPlanId) && (int) $preselectedPlanId === (int) $p->id);
+                            @endphp
                             <input type="radio" name="membership_setting_id" id="mp-{{ $p->id }}" value="{{ $p->id }}"
-                                {{ (string) old('membership_setting_id') === (string) $p->id ? 'checked' : '' }} />
+                                {{ $radioChecked ? 'checked' : '' }} />
                         @endforeach
                     </div>
 

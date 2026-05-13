@@ -123,11 +123,9 @@ class EventController extends Controller
             $this->refreshEventStatusFromSchedule($event);
         }
 
-        if ($event && $event->is_active) {
-            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
-        }
-
-        return redirect()->route('admin.events.index')->with('success', 'Event created successfully.');
+        return redirect()
+            ->route('admin.events.invite', $event)
+            ->with('success', 'Event created successfully. Invite approved members now.');
     }
 
     public function show(Request $request, Event $event)
@@ -234,11 +232,9 @@ class EventController extends Controller
         $this->refreshEventStatusFromSchedule($event);
         $event->refresh();
 
-        if ($event->is_active && $event->status !== 'cancelled' && $event->member_notification_sent_at === null) {
-            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
-        }
-
-        return redirect()->route('admin.events.index')->with('success', 'Event updated successfully.');
+        return redirect()
+            ->route('admin.events.invite', $event)
+            ->with('success', 'Event updated successfully. Invite or re-notify approved members below.');
     }
 
     public function destroy(Event $event)
@@ -268,10 +264,6 @@ class EventController extends Controller
         $event->refresh();
         $this->refreshEventStatusFromSchedule($event);
         $event->refresh();
-
-        if ($event->is_active && $event->status !== 'cancelled' && $event->member_notification_sent_at === null) {
-            app(GnatMailService::class)->sendNewEventBroadcast($event->fresh(['dates']));
-        }
 
         return redirect()->route('admin.events.index')->with('success', 'Display status updated.');
     }
@@ -399,6 +391,7 @@ class EventController extends Controller
 
         $invite->update([
             'participation_status' => $validated['participation_status'],
+            'has_confirmed_interest' => true,
         ]);
 
         if (
@@ -527,12 +520,7 @@ class EventController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $invitedUserIds = EventInvite::query()
-            ->where('event_id', $event->id)
-            ->pluck('user_id')
-            ->all();
-
-        return view('admin.events.invite', compact('event', 'members', 'invitedUserIds', 'q'));
+        return view('admin.events.invite', compact('event', 'members', 'q'));
     }
 
     public function inviteStore(Event $event, Request $request)
@@ -568,20 +556,37 @@ class EventController extends Controller
 
         $now = now();
         foreach ($userIds as $userId) {
-            EventInvite::updateOrCreate(
-                ['event_id' => $event->id, 'user_id' => $userId],
-                [
-                    'notify_whatsapp' => $notifyWhatsApp,
-                    'notify_sms' => $notifySms,
-                    'notify_email' => $notifyEmail,
-                    'invited_at' => $now,
-                ]
-            );
+            $invite = EventInvite::query()->firstOrNew([
+                'event_id' => $event->id,
+                'user_id' => $userId,
+            ]);
+
+            $hadConfirmed = $invite->exists && $invite->has_confirmed_interest;
+
+            $invite->fill([
+                'notify_whatsapp' => $notifyWhatsApp,
+                'notify_sms' => $notifySms,
+                'notify_email' => $notifyEmail,
+                'invited_at' => $now,
+            ]);
+
+            if (! $invite->exists) {
+                $invite->participation_status = 'interested';
+                $invite->has_confirmed_interest = false;
+            } elseif (! $hadConfirmed) {
+                $invite->has_confirmed_interest = false;
+            }
+
+            $invite->save();
         }
 
         $event->syncInterestedCountFromRegistrations();
 
-        return redirect()->route('admin.events.index')->with('success', 'Members invited successfully.');
+        app(GnatMailService::class)->sendEventInvites($event, $userIds);
+
+        return redirect()
+            ->route('admin.events.index')
+            ->with('success', 'Members invited successfully.');
     }
 
     public function album(Event $event)

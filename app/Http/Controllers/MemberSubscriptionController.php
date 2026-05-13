@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 class MemberSubscriptionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $activeSubscription = $user?->activeSubscription;
@@ -51,12 +51,19 @@ class MemberSubscriptionController extends Controller
 
         $plans = $query->get();
 
+        $preselectedPlanId = null;
+        $candidate = (int) $request->query('plan', 0);
+        if ($candidate > 0 && $plans->contains(fn ($p) => (int) $p->id === $candidate)) {
+            $preselectedPlanId = $candidate;
+        }
+
         return view('member.subscription.index', [
             'user' => $user,
             'plans' => $plans,
             'settingsCount' => $plans->count(),
             'activeSubscription' => $activeSubscription,
             'filterType' => $filterType,
+            'preselectedPlanId' => $preselectedPlanId,
         ]);
     }
 

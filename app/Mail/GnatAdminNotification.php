@@ -14,13 +14,13 @@ class GnatAdminNotification extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param  array<string, mixed>  $viewData
+     * @param  array<string, mixed>  $payload  Template variables (not named $viewData — reserved on {@see Mailable})
      * @param  list<Address>  $replyToAddresses
      */
     public function __construct(
         public string $templateKey,
         public string $mailSubject,
-        public array $viewData = [],
+        public array $payload = [],
         public array $replyToAddresses = [],
     ) {}
 
@@ -45,7 +45,7 @@ class GnatAdminNotification extends Mailable
 
         return new Content(
             html: 'emails.gnat.admin',
-            with: array_merge($defaults, $this->viewData),
+            with: array_merge($defaults, $this->payload),
         );
     }
 

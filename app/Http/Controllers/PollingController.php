@@ -56,7 +56,8 @@ class PollingController extends Controller
         $validated = $request->validate($this->rules());
         $this->assertPollingWindowCoherent($validated);
 
-        DB::transaction(function () use ($request, $validated) {
+        $polling = null;
+        DB::transaction(function () use ($request, $validated, &$polling) {
             $polling = Polling::create($this->buildPayload($request, $validated, true));
             foreach ($this->extractPositions($request) as $position) {
                 $candidateIds = $position['candidate_ids'];
@@ -69,7 +70,82 @@ class PollingController extends Controller
         });
         $this->syncElapsedPollings();
 
-        return redirect()->route('admin.pollings.index')->with('success', 'Polling created successfully.');
+        return redirect()
+            ->route('admin.pollings.alert', $polling)
+            ->with('success', 'Polling saved. Choose members below and send the GNAT Live Polling Alert (email / SMS).');
+    }
+
+    public function alertForm(Polling $polling, Request $request)
+    {
+        $this->syncElapsedPollings();
+        $q = trim((string) $request->query('q', ''));
+        $members = User::query()
+            ->where('is_approved', true)
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
+                });
+            })
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('admin.pollings.alert', compact('polling', 'members', 'q'));
+    }
+
+    public function alertStore(Polling $polling, Request $request)
+    {
+        $this->syncElapsedPollings();
+        $validated = $request->validate([
+            'target' => 'required|in:all,specific,leaders',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'integer|exists:users,id',
+            'notify_whatsapp' => 'nullable|boolean',
+            'notify_sms' => 'nullable|boolean',
+            'notify_email' => 'nullable|boolean',
+        ]);
+
+        $notifyWhatsApp = $request->boolean('notify_whatsapp');
+        $notifySms = $request->boolean('notify_sms');
+        $notifyEmail = $request->boolean('notify_email');
+
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
+            return back()->withErrors(['notify_channel' => 'Select at least one notification channel.'])->withInput();
+        }
+
+        $target = $validated['target'];
+        if ($target === 'all') {
+            $memberIds = User::query()->where('is_approved', true)->pluck('id')->all();
+        } elseif ($target === 'leaders') {
+            $memberIds = User::query()
+                ->where('is_approved', true)
+                ->whereNotNull('currently_working')
+                ->where('currently_working', '!=', '')
+                ->pluck('id')
+                ->all();
+        } else {
+            $memberIds = array_values(array_unique($validated['member_ids'] ?? []));
+        }
+
+        if ($memberIds === []) {
+            return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
+        }
+
+        app(GnatMailService::class)->sendPollingLiveAlerts(
+            $polling,
+            $memberIds,
+            $notifyEmail,
+            $notifySms,
+            $notifyWhatsApp
+        );
+
+        $polling->forceFill(['live_alert_sent_at' => now()])->save();
+
+        return redirect()
+            ->route('admin.pollings.index')
+            ->with('success', 'GNAT Live Polling Alert sent to selected members.');
     }
 
     public function edit(Polling $polling)
@@ -114,7 +190,9 @@ class PollingController extends Controller
         });
         $this->syncElapsedPollings();
 
-        return redirect()->route('admin.pollings.index')->with('success', 'Polling updated successfully.');
+        return redirect()
+            ->route('admin.pollings.alert', $polling)
+            ->with('success', 'Polling updated. Send the GNAT Live Polling Alert below if members need to be notified again.');
     }
 
     public function destroy(Polling $polling)
@@ -133,32 +211,7 @@ class PollingController extends Controller
 
     public function toggleStatus(Polling $polling)
     {
-        $wasLive = $polling->polling_status === 'live';
         $polling->update(['polling_status' => $polling->polling_status === 'live' ? 'ends' : 'live']);
-        $polling->refresh();
-
-        if (
-            ! $wasLive
-            && $polling->polling_status === 'live'
-            && $polling->publish_status === 'published'
-            && ! $polling->live_alert_sent_at
-        ) {
-            $mail = app(GnatMailService::class);
-            User::query()
-                ->where('is_approved', true)
-                ->whereHas('activeSubscription')
-                ->where(function ($q) {
-                    $q->whereNotNull('email')
-                        ->orWhereNotNull('mobile');
-                })
-                ->orderBy('id')
-                ->chunkById(100, function ($users) use ($polling, $mail) {
-                    foreach ($users as $u) {
-                        $mail->sendPollingLiveAlert($u, $polling);
-                    }
-                });
-            $polling->forceFill(['live_alert_sent_at' => now()])->save();
-        }
 
         return back()->with('success', 'Polling status updated.');
     }
@@ -251,6 +304,8 @@ class PollingController extends Controller
             'winners.*' => 'nullable|integer|exists:users,id',
         ]);
 
+        $wasVisible = (bool) $polling->results_visible_to_members;
+
         $polling->update([
             'results_visible_to_members' => $request->boolean('results_visible_to_members'),
         ]);
@@ -275,40 +330,108 @@ class PollingController extends Controller
         }
 
         $polling->refresh();
-        if (
-            $polling->results_visible_to_members
-            && $polling->publish_status === 'published'
-            && ! $polling->results_mail_sent_at
-        ) {
-            $mail = app(GnatMailService::class);
-            $voterIds = PollingVote::query()
-                ->where('polling_id', $polling->id)
-                ->distinct()
-                ->pluck('voter_user_id')
-                ->filter()
-                ->all();
 
-            if ($voterIds !== []) {
-                User::query()
-                    ->whereIn('id', $voterIds)
-                    ->where(function ($q) {
-                        $q->whereNotNull('email')
-                            ->orWhereNotNull('mobile');
-                    })
-                    ->orderBy('id')
-                    ->chunkById(100, function ($users) use ($polling, $mail) {
-                        foreach ($users as $u) {
-                            $mail->sendPollingResultsPublished($u, $polling);
-                        }
-                    });
-            }
+        $becameVisible = $polling->results_visible_to_members && ! $wasVisible;
+        if ($becameVisible && $polling->publish_status === 'published') {
+            return redirect()
+                ->route('admin.pollings.results-notify', $polling)
+                ->with('success', 'Results are now visible to members in the portal. Send the GNAT Polling Result Notification (email / SMS) below.');
+        }
 
-            $polling->forceFill(['results_mail_sent_at' => now()])->save();
+        if ($becameVisible && $polling->publish_status !== 'published') {
+            return redirect()
+                ->route('admin.pollings.stats', $polling)
+                ->with('warning', 'Results visibility saved. Publish this polling before members can see results in the portal; then use "Send results notification" to email members.');
         }
 
         return redirect()
             ->route('admin.pollings.stats', $polling)
             ->with('success', 'Results visibility and winners saved.');
+    }
+
+    public function resultsNotifyForm(Polling $polling, Request $request)
+    {
+        $this->syncElapsedPollings();
+        if (! $polling->results_visible_to_members || $polling->publish_status !== 'published') {
+            return redirect()
+                ->route('admin.pollings.stats', $polling)
+                ->with('warning', 'Turn on "Show results to members" and ensure this polling is published before sending the results notification.');
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        $members = User::query()
+            ->where('is_approved', true)
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('email', 'like', '%'.$q.'%')
+                        ->orWhere('mobile', 'like', '%'.$q.'%');
+                });
+            })
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('admin.pollings.results-notify', compact('polling', 'members', 'q'));
+    }
+
+    public function resultsNotifyStore(Polling $polling, Request $request)
+    {
+        $this->syncElapsedPollings();
+        if (! $polling->results_visible_to_members || $polling->publish_status !== 'published') {
+            return redirect()
+                ->route('admin.pollings.stats', $polling)
+                ->with('warning', 'Turn on "Show results to members" and ensure this polling is published before sending the results notification.');
+        }
+
+        $validated = $request->validate([
+            'target' => 'required|in:all,specific,leaders',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'integer|exists:users,id',
+            'notify_whatsapp' => 'nullable|boolean',
+            'notify_sms' => 'nullable|boolean',
+            'notify_email' => 'nullable|boolean',
+        ]);
+
+        $notifyWhatsApp = $request->boolean('notify_whatsapp');
+        $notifySms = $request->boolean('notify_sms');
+        $notifyEmail = $request->boolean('notify_email');
+
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
+            return back()->withErrors(['notify_channel' => 'Select at least one notification channel.'])->withInput();
+        }
+
+        $target = $validated['target'];
+        if ($target === 'all') {
+            $memberIds = User::query()->where('is_approved', true)->pluck('id')->all();
+        } elseif ($target === 'leaders') {
+            $memberIds = User::query()
+                ->where('is_approved', true)
+                ->whereNotNull('currently_working')
+                ->where('currently_working', '!=', '')
+                ->pluck('id')
+                ->all();
+        } else {
+            $memberIds = array_values(array_unique($validated['member_ids'] ?? []));
+        }
+
+        if ($memberIds === []) {
+            return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
+        }
+
+        app(GnatMailService::class)->sendPollingResultsPublishedAlerts(
+            $polling,
+            $memberIds,
+            $notifyEmail,
+            $notifySms,
+            $notifyWhatsApp
+        );
+
+        $polling->forceFill(['results_mail_sent_at' => now()])->save();
+
+        return redirect()
+            ->route('admin.pollings.stats', $polling)
+            ->with('success', 'GNAT Polling Result Notification sent to selected members.');
     }
 
     public function downloadReport(Polling $polling)

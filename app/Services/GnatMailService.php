@@ -9,6 +9,7 @@ use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
 use App\Models\DonationPayment;
 use App\Models\Event;
+use App\Models\EventInvite;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\MemberJobRequest;
@@ -294,6 +295,49 @@ class GnatMailService
         }
     }
 
+    /**
+     * Send event invite notifications (email / SMS). WhatsApp uses the same SMS template until a dedicated channel exists.
+     */
+    public function sendEventInvites(Event $event, iterable $userIds): void
+    {
+        $event->loadMissing('dates');
+        $firstDate = $event->dates->sortBy('event_date')->first();
+        $eventDateLabel = $firstDate && $firstDate->event_date
+            ? $firstDate->event_date->format('d M Y')
+            : '—';
+
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if (! $user) {
+                continue;
+            }
+
+            $invite = EventInvite::query()
+                ->where('event_id', $event->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (! $invite) {
+                continue;
+            }
+
+            $name = $this->memberDisplayName($user);
+
+            if ($invite->notify_email && $user->email) {
+                $this->sendMember($user->email, 'm13_new_event', [
+                    'memberName' => $name,
+                    'heroHeadline' => $event->title,
+                    'heroSubtext' => 'Event date: '.$eventDateLabel,
+                    'showPortalCta' => true,
+                ]);
+            }
+
+            if ($invite->notify_sms || $invite->notify_whatsapp) {
+                $this->sms()->newEventUpdate($user->mobile, $name);
+            }
+        }
+    }
+
     public function sendMeetingMemberResponse(User $user, Meeting $meeting, bool $attending): void
     {
         $parts = $this->meetingScheduleParts($meeting);
@@ -386,15 +430,47 @@ class GnatMailService
         $this->sms()->nominationSubmitted($user->mobile, $name);
     }
 
-    public function sendPollingLiveAlert(User $user, Polling $polling): void
-    {
+    /**
+     * GNAT Live Polling Alert (m18) — body copy matches association template; channels respect admin choices.
+     */
+    public function sendPollingLiveAlert(
+        User $user,
+        Polling $polling,
+        bool $notifyEmail = true,
+        bool $notifySms = false,
+        bool $notifyWhatsApp = false
+    ): void {
         $name = $this->memberDisplayName($user);
-        $this->sendMember($user->email, 'm18_polling_live', [
-            'memberName' => $name,
-            'heroHeadline' => 'Polling Is Live',
-            'showPortalCta' => true,
-        ]);
-        $this->sms()->pollingLive($user->mobile, $name);
+        if ($notifyEmail) {
+            $this->sendMember($user->email, 'm18_polling_live', [
+                'memberName' => $name,
+                'heroHeadline' => 'GNAT Live Polling Alert',
+                'heroSubtext' => $polling->title,
+                'showPortalCta' => true,
+            ]);
+        }
+        if ($notifySms || $notifyWhatsApp) {
+            $this->sms()->pollingLive($user->mobile, $name);
+        }
+    }
+
+    /**
+     * @param  iterable<int|string>  $userIds
+     */
+    public function sendPollingLiveAlerts(
+        Polling $polling,
+        iterable $userIds,
+        bool $notifyEmail,
+        bool $notifySms,
+        bool $notifyWhatsApp
+    ): void {
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if (! $user) {
+                continue;
+            }
+            $this->sendPollingLiveAlert($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp);
+        }
     }
 
     public function sendPollingVoteRecorded(User $user, Polling $polling): void
@@ -415,15 +491,47 @@ class GnatMailService
         $this->sms()->pollingResponseRecorded($user->mobile, $name);
     }
 
-    public function sendPollingResultsPublished(User $user, Polling $polling): void
-    {
+    /**
+     * GNAT Polling Result Notification (m20) — body matches association template; channels respect admin choices.
+     */
+    public function sendPollingResultsPublished(
+        User $user,
+        Polling $polling,
+        bool $notifyEmail = true,
+        bool $notifySms = false,
+        bool $notifyWhatsApp = false
+    ): void {
         $name = $this->memberDisplayName($user);
-        $this->sendMember($user->email, 'm20_polling_results', [
-            'memberName' => $name,
-            'heroHeadline' => 'Results Published',
-            'showPortalCta' => true,
-        ]);
-        $this->sms()->pollingResults($user->mobile, $name);
+        if ($notifyEmail) {
+            $this->sendMember($user->email, 'm20_polling_results', [
+                'memberName' => $name,
+                'heroHeadline' => 'GNAT Polling Result Notification',
+                'heroSubtext' => $polling->title,
+                'showPortalCta' => true,
+            ]);
+        }
+        if ($notifySms || $notifyWhatsApp) {
+            $this->sms()->pollingResults($user->mobile, $name);
+        }
+    }
+
+    /**
+     * @param  iterable<int|string>  $userIds
+     */
+    public function sendPollingResultsPublishedAlerts(
+        Polling $polling,
+        iterable $userIds,
+        bool $notifyEmail,
+        bool $notifySms,
+        bool $notifyWhatsApp
+    ): void {
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if (! $user) {
+                continue;
+            }
+            $this->sendPollingResultsPublished($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp);
+        }
     }
 
     public function sendJobPostingAlerts(AdminJob $job, iterable $userIds): void
@@ -448,12 +556,13 @@ class GnatMailService
             if ($alert->notify_email && $user->email) {
                 $this->sendMember($user->email, 'm21_job_posting', [
                     'memberName' => $name,
-                    'heroHeadline' => 'New Job Posting',
+                    'heroHeadline' => 'New Job Posting Alert',
+                    'heroSubtext' => trim($job->title.($job->code ? ' • Code '.$job->code : '')),
                     'showPortalCta' => true,
                 ]);
             }
 
-            if ($alert->notify_sms) {
+            if ($alert->notify_sms || $alert->notify_whatsapp) {
                 $this->sms()->jobPostingAlert($user->mobile, $name);
             }
         }
@@ -465,7 +574,8 @@ class GnatMailService
         $this->sendMember($user->email, 'm22_job_application_confirmation', [
             'memberName' => $name,
             'jobCode' => $job->code,
-            'heroHeadline' => 'Application Received',
+            'heroHeadline' => 'GNAT Job Application Confirmation',
+            'heroSubtext' => 'Job code '.$job->code,
             'showPortalCta' => true,
         ]);
 
@@ -487,7 +597,8 @@ class GnatMailService
         if ($status === 'selected') {
             $this->sendMember($user->email, 'm25_job_application_selected', [
                 'memberName' => $name,
-                'heroHeadline' => 'Congratulations',
+                'heroHeadline' => 'GNAT Job Communication Update',
+                'heroSubtext' => 'Your application status is now selected.',
                 'showPortalCta' => true,
             ]);
             $this->sms()->jobApplicationCommunication($user->mobile, $name);
@@ -508,14 +619,16 @@ class GnatMailService
         if ($row->status === 'reviewed') {
             $this->sendMember($email, 'm23_job_request_reviewed', [
                 'memberName' => $name,
-                'heroHeadline' => 'Job Request Update',
+                'heroHeadline' => 'GNAT Job Request Status Update',
+                'heroSubtext' => 'Your request has been reviewed.',
                 'showPortalCta' => true,
             ]);
             $this->sms()->needJobRequestReviewed($row->mobile, $name);
         } elseif ($row->status === 'contacted') {
             $this->sendMember($email, 'm24_job_request_contact', [
                 'memberName' => $name,
-                'heroHeadline' => 'Job Request Update',
+                'heroHeadline' => 'GNAT Job Request Status Update',
+                'heroSubtext' => 'Communication has been initiated on your request.',
                 'showPortalCta' => true,
             ]);
             $this->sms()->jobApplicationCommunication($row->mobile, $name);

@@ -993,63 +993,32 @@
 
             @if($canSeeMembership)
             <section aria-labelledby="plans-heading">
-                <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h2 id="plans-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription plans</h2>
-                        <p class="mt-1 text-sm text-[#351c42]/60">
-                            @if($hasActiveSubscription)
-                                Your membership is active. When it is time to renew, use renewal plans only.
-                            @else
-                                Your account is approved. Choose a new subscription plan to activate membership.
-                            @endif
-                        </p>
-                    </div>
-                    <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
-                </div>
-
-                @if(!$hasActiveSubscription)
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
-                <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
-                        <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[#351c42]">Subscription plan</p>
-                        <p class="mt-1 text-sm text-[#351c42]/65">Choose and purchase your membership plan.</p>
-                        <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
-                            <li>Includes registration where applicable</li>
-                            <li>Pay securely via Razorpay</li>
-                        </ul>
-                        <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
-                    </article>
-                </div>
-                @endif
-
                 @if($hasActiveSubscription)
-                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">Renewal options</h3>
-                <p class="mb-4 text-sm text-[#351c42]/55">Your current subscription is active. Use renewal plans for your next membership period.</p>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @forelse($renewalPlans as $plan)
-                        @php
-                            $cycleLabel = match($plan->payment_type) {
-                                'monthly' => 'Monthly',
-                                'bi_monthly' => 'Bi - Monthly',
-                                'quarterly' => 'Quarterly',
-                                'half_yearly' => 'Half Yearly',
-                                'yearly' => 'Yearly',
-                                default => ucfirst((string) $plan->payment_type),
-                            };
-                        @endphp
-                        <article class="md-plan-card p-6">
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">Renewal · {{ $cycleLabel }}</p>
-                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">₹{{ number_format((float) $plan->membership_fee, 0) }}</p>
-                            <p class="mt-1 text-sm text-[#351c42]/65">{{ (int) ($plan->grace_period ?? 0) }} days grace period</p>
-                            <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose renewal</a>
-                        </article>
-                    @empty
-                        <div class="sm:col-span-2 lg:col-span-3 rounded-2xl border border-dashed border-[#351c42]/15 bg-white/70 p-8 text-center">
-                            <p class="text-sm font-bold text-[#351c42]/70">No renewal plans available right now. Please contact admin.</p>
+                    @include('member.partials.dashboard-renewal-plans', ['renewalPlans' => $renewalPlans])
+                @else
+                    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 id="plans-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription plans</h2>
+                            <p class="mt-1 text-sm text-[#351c42]/60">
+                                Your account is approved. Choose a new subscription plan to activate membership.
+                            </p>
                         </div>
-                    @endforelse
-                </div>
+                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
+                    </div>
+
+                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
+                    <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
+                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">Subscription plan</p>
+                            <p class="mt-1 text-sm text-[#351c42]/65">Choose and purchase your membership plan.</p>
+                            <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
+                                <li>Includes registration where applicable</li>
+                                <li>Pay securely via Razorpay</li>
+                            </ul>
+                            <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
+                        </article>
+                    </div>
                 @endif
             </section>
             @endif

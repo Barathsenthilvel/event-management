@@ -1192,46 +1192,54 @@ class MemberDashboardController extends Controller
             ]);
         }
 
-        $alreadyInterested = EventInvite::query()
+        $invite = EventInvite::query()
             ->where('event_id', $event->id)
             ->where('user_id', $user->id)
-            ->exists();
+            ->first();
 
-        if ($alreadyInterested) {
+        if ($invite && $invite->has_confirmed_interest) {
             return $this->interestSubmitErrorResponse($request, [
                 'event_interest_error_title' => 'Event registration unavailable',
                 'event_interest_error' => 'You have already submitted interest for this event.',
             ]);
         }
 
+        $pendingInvite = $invite && ! $invite->has_confirmed_interest;
+
+        if (! $pendingInvite && $event->isAtSeatLimit()) {
+            return $this->interestSubmitErrorResponse($request, [
+                'event_interest_error_title' => 'Event registration unavailable',
+                'event_interest_error' => 'This event has reached its registration limit.',
+            ]);
+        }
+
         try {
-            DB::transaction(function () use ($event, $user) {
+            DB::transaction(function () use ($event, $user, $invite, $pendingInvite) {
                 $event->refresh();
                 $event->loadMissing('dates');
                 if (! $event->acceptsPublicAttendance()) {
                     throw new \RuntimeException(EventInterestErrorFlash::ERR_ENDED);
                 }
-                if ($event->isAtSeatLimit()) {
+                if (! $pendingInvite && $event->isAtSeatLimit()) {
                     throw new \RuntimeException(EventInterestErrorFlash::ERR_SEAT_LIMIT);
                 }
 
-                $alreadyCountedViaPublic = EventInterest::query()
-                    ->where('event_id', $event->id)
-                    ->where('user_id', $user->id)
-                    ->exists();
-
-                EventInvite::create([
-                    'event_id' => $event->id,
-                    'user_id' => $user->id,
-                    'participation_status' => 'interested',
-                    'invited_at' => now(),
-                ]);
-
-                if (! $alreadyCountedViaPublic) {
-                    $event->update([
-                        'interested_count' => (int) $event->interested_count + 1,
+                if ($pendingInvite) {
+                    $invite->update([
+                        'participation_status' => 'interested',
+                        'has_confirmed_interest' => true,
+                    ]);
+                } else {
+                    EventInvite::create([
+                        'event_id' => $event->id,
+                        'user_id' => $user->id,
+                        'participation_status' => 'interested',
+                        'has_confirmed_interest' => true,
+                        'invited_at' => now(),
                     ]);
                 }
+
+                $event->syncInterestedCountFromRegistrations();
             });
         } catch (\RuntimeException $e) {
             return $this->interestSubmitErrorResponse($request, EventInterestErrorFlash::fromException($e));

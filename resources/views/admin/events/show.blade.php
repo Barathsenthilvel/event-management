@@ -26,7 +26,10 @@
                 <p class="text-xs font-bold text-slate-500">Venue: <span class="text-slate-700 break-words [overflow-wrap:anywhere]">{{ $event->venue ?: 'N/A' }}</span></p>
                 <p class="text-xs font-bold text-slate-500">Seats: <span class="text-slate-700">{{ ucfirst($event->seat_mode) }} @if($event->seat_mode === 'limited') ({{ $event->seat_limit }}) @endif</span></p>
                 @php
-                    $memberInterestedCount = (int) $event->invites->whereNotNull('participation_status')->count();
+                    $memberInterestedCount = (int) $event->invites
+                        ->where('has_confirmed_interest', true)
+                        ->whereIn('participation_status', ['interested', 'participated'])
+                        ->count();
                     $memberParticipatedCount = (int) $event->invites->where('participation_status', 'participated')->count();
                     $publicInterestedCount = (int) $event->interests->whereNull('user_id')->count();
                     $publicParticipatedCount = (int) $event->interests->whereNull('user_id')->where('participation_status', 'participated')->count();
@@ -143,6 +146,9 @@
                                             <p class="text-[11px] text-slate-500 break-all sm:break-words">{{ $invite->user->mobile ?? '—' }}</p>
                                         </td>
                                         <td class="px-4 py-3 align-top text-slate-600">
+                                            @if(! ($invite->has_confirmed_interest ?? true))
+                                                <p class="mb-2 text-[11px] font-bold text-amber-800">Invite sent — awaiting member confirmation on the portal.</p>
+                                            @endif
                                             <form method="POST" action="{{ route('admin.events.invites.status', [$event->id, $invite->id]) }}" class="flex flex-wrap items-center gap-2">
                                                 @csrf
                                                 <select name="participation_status"

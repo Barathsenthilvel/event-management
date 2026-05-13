@@ -327,6 +327,10 @@ Route::prefix('admin')->group(function () {
         ]);
         Route::post('/pollings/{polling}/toggle-promote', [PollingController::class, 'togglePromote'])->name('admin.pollings.toggle-promote');
         Route::post('/pollings/{polling}/toggle-status', [PollingController::class, 'toggleStatus'])->name('admin.pollings.toggle-status');
+        Route::get('/pollings/{polling}/alert', [PollingController::class, 'alertForm'])->name('admin.pollings.alert');
+        Route::post('/pollings/{polling}/alert', [PollingController::class, 'alertStore'])->name('admin.pollings.alert.store');
+        Route::get('/pollings/{polling}/results-notify', [PollingController::class, 'resultsNotifyForm'])->name('admin.pollings.results-notify');
+        Route::post('/pollings/{polling}/results-notify', [PollingController::class, 'resultsNotifyStore'])->name('admin.pollings.results-notify.store');
         Route::get('/pollings/{polling}/stats', [PollingController::class, 'stats'])->name('admin.pollings.stats');
         Route::get('/pollings/{polling}/report', [PollingController::class, 'downloadReport'])->name('admin.pollings.report');
         Route::post('/pollings/{polling}/results', [PollingController::class, 'saveResults'])->name('admin.pollings.results');

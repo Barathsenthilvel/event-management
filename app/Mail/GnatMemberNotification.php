@@ -13,12 +13,12 @@ class GnatMemberNotification extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param  array<string, mixed>  $viewData
+     * @param  array<string, mixed>  $payload  Template variables (not named $viewData — reserved on {@see Mailable})
      */
     public function __construct(
         public string $templateKey,
         public string $mailSubject,
-        public array $viewData = [],
+        public array $payload = [],
     ) {}
 
     public function envelope(): Envelope
@@ -41,7 +41,7 @@ class GnatMemberNotification extends Mailable
 
         return new Content(
             html: 'emails.gnat.member',
-            with: array_merge($defaults, $this->viewData),
+            with: array_merge($defaults, $this->payload),
         );
     }
 

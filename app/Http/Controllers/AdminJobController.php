@@ -58,9 +58,11 @@ class AdminJobController extends Controller
         $validated = $request->validate($this->rules());
         $this->validateChoiceGroups($request);
         $payload = $this->buildPayload($request, $validated, true);
-        AdminJob::create($payload);
+        $job = AdminJob::create($payload);
 
-        return redirect()->route('admin.jobs.index')->with('success', 'Job created successfully.');
+        return redirect()
+            ->route('admin.jobs.alert', $job)
+            ->with('success', 'Job saved. Choose members below and send the GNAT Job Posting Notification (email / SMS).');
     }
 
     public function edit(AdminJob $job)
@@ -125,7 +127,9 @@ class AdminJobController extends Controller
         $payload = $this->buildPayload($request, $validated, false);
         $job->update($payload);
 
-        return redirect()->route('admin.jobs.index')->with('success', 'Job updated successfully.');
+        return redirect()
+            ->route('admin.jobs.alert', $job)
+            ->with('success', 'Job updated. Send job posting notifications below if members need to be notified again.');
     }
 
     public function destroy(AdminJob $job)
@@ -183,10 +187,9 @@ class AdminJobController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $alertedIds = AdminJobAlert::query()->where('job_id', $job->id)->pluck('user_id')->all();
         $designations = Designation::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
 
-        return view('admin.jobs.alert', compact('job', 'members', 'alertedIds', 'q', 'designationId', 'designations', 'leadersOnly'));
+        return view('admin.jobs.alert', compact('job', 'members', 'q', 'designationId', 'designations', 'leadersOnly'));
     }
 
     public function alertStore(AdminJob $job, Request $request)
@@ -245,7 +248,9 @@ class AdminJobController extends Controller
 
         app(GnatMailService::class)->sendJobPostingAlerts($job, $memberIds);
 
-        return redirect()->route('admin.jobs.applications', $job->id)->with('success', 'Job alert sent successfully.');
+        return redirect()
+            ->route('admin.jobs.index')
+            ->with('success', 'GNAT Job Posting Notification sent to selected members.');
     }
 
     public function applications(AdminJob $job, Request $request)

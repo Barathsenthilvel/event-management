@@ -108,14 +108,17 @@ class NominationController extends Controller
         $validated = $request->validate($this->rules());
         $this->assertNominationPollingWindowCoherent($validated);
 
-        DB::transaction(function () use ($request, $validated) {
+        $nomination = null;
+        DB::transaction(function () use ($request, $validated, &$nomination) {
             $nomination = Nomination::create($this->buildPayload($request, $validated, true));
             foreach ($this->extractPositions($request) as $position) {
                 $nomination->positions()->create($position);
             }
         });
 
-        return redirect()->route('admin.nominations.index')->with('success', 'Nomination created successfully.');
+        return redirect()
+            ->route('admin.nominations.alert', $nomination)
+            ->with('success', 'Nomination saved. Choose members below and send the live nomination alert (email / SMS).');
     }
 
     public function edit(Nomination $nomination)
@@ -137,7 +140,9 @@ class NominationController extends Controller
             $this->syncPositionsOnUpdate($nomination, $request);
         });
 
-        return redirect()->route('admin.nominations.index')->with('success', 'Nomination updated successfully.');
+        return redirect()
+            ->route('admin.nominations.alert', $nomination)
+            ->with('success', 'Nomination updated. Send the live nomination alert below if members need to be notified again.');
     }
 
     public function destroy(Nomination $nomination)
@@ -174,9 +179,7 @@ class NominationController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $alertedIds = NominationAlert::query()->where('nomination_id', $nomination->id)->pluck('user_id')->all();
-
-        return view('admin.nominations.alert', compact('nomination', 'members', 'alertedIds', 'q'));
+        return view('admin.nominations.alert', compact('nomination', 'members', 'q'));
     }
 
     public function alertStore(Nomination $nomination, Request $request)
@@ -232,7 +235,9 @@ class NominationController extends Controller
 
         app(GnatMailService::class)->sendNominationAlerts($nomination, $memberIds);
 
-        return redirect()->route('admin.nominations.submissions', $nomination->id)->with('success', 'Nomination alert sent. Members register interest from their dashboard; submissions appear here as they respond.');
+        return redirect()
+            ->route('admin.nominations.index')
+            ->with('success', 'Nomination alert sent. Members can respond from their dashboard; open this nomination from the list to view submissions.');
     }
 
     public function submissions(Nomination $nomination, Request $request)

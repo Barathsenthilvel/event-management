@@ -17,6 +17,7 @@ class EventInvite extends Model
         'notify_sms',
         'notify_email',
         'participation_status',
+        'has_confirmed_interest',
         'invited_at',
         'reminder_sent_at',
     ];
@@ -27,6 +28,7 @@ class EventInvite extends Model
             'notify_whatsapp' => 'boolean',
             'notify_sms' => 'boolean',
             'notify_email' => 'boolean',
+            'has_confirmed_interest' => 'boolean',
             'invited_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
         ];

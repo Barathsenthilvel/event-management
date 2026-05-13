@@ -197,7 +197,10 @@
 
     {{-- Footer: light strip for attendance / certificate; dark bar with member avatar stack + action for interest --}}
     @if($mode === 'tracking' && isset($invite))
-        @php $ps = $invite->participation_status; @endphp
+        @php
+            $ps = $invite->participation_status;
+            $inviteConfirmed = $invite->has_confirmed_interest ?? true;
+        @endphp
         @php
             $attendanceQrUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'admin.events.attendance.consume',
@@ -220,6 +223,23 @@
         @elseif($ps === 'not_participated')
             <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                 <p class="text-center text-sm font-extrabold text-[#351c42]/75">Did not attend</p>
+            </div>
+        @elseif(! $inviteConfirmed)
+            <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                @include('member.partials.member-event-interested-stack', ['event' => $event])
+                <div class="min-w-0 shrink-0 sm:ml-auto text-right">
+                    <p class="text-sm font-extrabold text-[#fddc6a]">You’re invited</p>
+                    <p class="mt-0.5 text-xs text-white/75">Confirm on the portal to register for this event.</p>
+                </div>
+                <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 w-full sm:w-auto sm:ml-2" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="inline-flex w-full min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 sm:w-auto"
+                    >
+                        Confirm attendance
+                    </button>
+                </form>
             </div>
         @else
             <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
@@ -260,6 +280,15 @@
             @elseif($myInvite->participation_status === 'not_participated')
                 <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                     <p class="text-center text-sm font-extrabold text-[#351c42]/75">Did not attend</p>
+                </div>
+            @elseif(! ($myInvite->has_confirmed_interest ?? true))
+                <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">
+                    @include('member.partials.member-event-interested-stack', ['event' => $event])
+                    <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">You’re invited</p>
+                    <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 w-full sm:w-auto" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
+                        @csrf
+                        <button type="submit" class="inline-flex w-full min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 sm:w-auto">Confirm attendance</button>
+                    </form>
                 </div>
             @else
                 <div class="flex flex-wrap items-center gap-3 border-t border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-6 rounded-b-2xl">

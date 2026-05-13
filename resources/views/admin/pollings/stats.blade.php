@@ -35,6 +35,10 @@
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{{ session('success') }}</div>
     @endif
 
+    @if(session('warning'))
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">{{ session('warning') }}</div>
+    @endif
+
     <form method="POST" action="{{ route('admin.pollings.results', $polling) }}" class="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 shadow-sm space-y-4">
         @csrf
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -48,6 +52,20 @@
                 Show results to members
             </label>
         </div>
+        @if($polling->results_visible_to_members && $polling->publish_status === 'published')
+            <div class="rounded-xl border border-indigo-200 bg-white/80 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs font-extrabold text-slate-900">Member notification</p>
+                    <p class="text-[11px] font-bold text-slate-600 mt-1">Send the GNAT Polling Result Notification (email / SMS) so members open the portal for published results.</p>
+                    @if($polling->results_mail_sent_at)
+                        <p class="text-[10px] font-bold text-slate-500 mt-2">Last sent {{ $polling->results_mail_sent_at->format('d M Y, h:i A') }}</p>
+                    @endif
+                </div>
+                <a href="{{ route('admin.pollings.results-notify', $polling) }}" class="inline-flex shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-indigo-700">
+                    Send results notification
+                </a>
+            </div>
+        @endif
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($positionStats as $block)
                 @php $pos = $block['position']; @endphp
