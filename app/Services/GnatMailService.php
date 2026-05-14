@@ -62,6 +62,8 @@ class GnatMailService
         'm25_job_application_selected' => 'GNAT Job Communication Update',
         'm26_donation_confirmation' => 'GNAT Donation Payment Confirmation',
         'm27_support_confirmation' => 'GNAT Support Request Confirmation',
+        'm28_event_invite_reminder' => 'GNAT Event Reminder',
+        'm29_meeting_invite_reminder' => 'GNAT Meeting Reminder',
     ];
 
     /** @var array<string, string> */
@@ -323,6 +325,83 @@ class GnatMailService
     }
 
     /**
+     * Reminder for invited members. Each channel sends only if this broadcast enables it and the member’s invite opted in.
+     *
+     * @param  iterable<int|string>  $userIds
+     */
+    public function sendMeetingInviteReminders(
+        Meeting $meeting,
+        iterable $userIds,
+        ?int $broadcastBatchId = null,
+        bool $broadcastEmail = true,
+        bool $broadcastSms = true,
+        bool $broadcastWhatsApp = true,
+    ): void {
+        $parts = $this->meetingScheduleParts($meeting);
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if (! $user) {
+                continue;
+            }
+
+            $invite = MeetingInvite::query()
+                ->where('meeting_id', $meeting->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (! $invite) {
+                continue;
+            }
+
+            $name = $this->memberDisplayName($user);
+            $channels = [];
+
+            $wantEmail = $broadcastEmail && $invite->notify_email;
+            $wantSms = $broadcastSms && $invite->notify_sms;
+            $wantWhatsApp = $broadcastWhatsApp && $invite->notify_whatsapp;
+
+            if ($wantEmail) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm29_meeting_invite_reminder', [
+                        'memberName' => $name,
+                        'meetingDate' => $parts['date'],
+                        'meetingTime' => $parts['time'],
+                        'heroHeadline' => 'Meeting reminder',
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $smsCombined = null;
+            if ($wantSms || $wantWhatsApp) {
+                $smsCombined = $this->sms()->trySendScenario('s11_meeting_scheduled', $user->mobile, [$name, $parts['date'], $parts['time']]);
+            }
+
+            if ($wantSms) {
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            if ($wantWhatsApp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
+        }
+    }
+
+    /**
      * Send event invite notifications (email / SMS). WhatsApp uses the same SMS template until a dedicated channel exists.
      */
     public function sendEventInvites(Event $event, iterable $userIds, ?int $broadcastBatchId = null): void
@@ -380,6 +459,87 @@ class GnatMailService
             }
 
             if ($invite->notify_whatsapp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
+        }
+    }
+
+    /**
+     * Reminder for invited members. Each channel sends only if this broadcast enables it and the member’s invite opted in.
+     *
+     * @param  iterable<int|string>  $userIds
+     */
+    public function sendEventInviteReminders(
+        Event $event,
+        iterable $userIds,
+        ?int $broadcastBatchId = null,
+        bool $broadcastEmail = true,
+        bool $broadcastSms = true,
+        bool $broadcastWhatsApp = true,
+    ): void {
+        $event->loadMissing('dates');
+        $firstDate = $event->dates->sortBy('event_date')->first();
+        $eventDateLabel = $firstDate && $firstDate->event_date
+            ? $firstDate->event_date->format('d M Y')
+            : '—';
+
+        foreach ($userIds as $userId) {
+            $user = User::query()->find($userId);
+            if (! $user) {
+                continue;
+            }
+
+            $invite = EventInvite::query()
+                ->where('event_id', $event->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if (! $invite) {
+                continue;
+            }
+
+            $name = $this->memberDisplayName($user);
+            $channels = [];
+
+            $wantEmail = $broadcastEmail && $invite->notify_email;
+            $wantSms = $broadcastSms && $invite->notify_sms;
+            $wantWhatsApp = $broadcastWhatsApp && $invite->notify_whatsapp;
+
+            if ($wantEmail) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm28_event_invite_reminder', [
+                        'memberName' => $name,
+                        'heroHeadline' => 'Reminder: '.$event->title,
+                        'heroSubtext' => 'Event date: '.$eventDateLabel,
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $smsCombined = null;
+            if ($wantSms || $wantWhatsApp) {
+                $smsCombined = $this->sms()->trySendScenario('s14_new_event', $user->mobile, [$name]);
+            }
+
+            if ($wantSms) {
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            if ($wantWhatsApp) {
                 $channels['whatsapp'] = $smsCombined !== null
                     ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
                     : ['status' => 'skipped', 'error' => 'Not requested'];

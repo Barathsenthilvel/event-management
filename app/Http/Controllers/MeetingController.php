@@ -122,13 +122,110 @@ class MeetingController extends Controller
         return redirect()->route('admin.meetings.index')->with('success', 'Meeting cancelled.');
     }
 
-    public function sendReminder(Meeting $meeting)
+    public function sendReminder(Request $request, Meeting $meeting)
     {
+        if ($redirect = $this->gateMeetingReminder($meeting)) {
+            return $redirect;
+        }
+
+        $validated = $request->validate([
+            'target' => 'required|in:all,specific',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'integer|exists:users,id',
+            'notify_whatsapp' => 'nullable|boolean',
+            'notify_sms' => 'nullable|boolean',
+            'notify_email' => 'nullable|boolean',
+        ]);
+
+        $notifyWhatsApp = $request->boolean('notify_whatsapp');
+        $notifySms = $request->boolean('notify_sms');
+        $notifyEmail = $request->boolean('notify_email');
+
+        if (! $notifyWhatsApp && ! $notifySms && ! $notifyEmail) {
+            return redirect()
+                ->route('admin.meetings.invite', ['meeting' => $meeting, 'reminder' => 1])
+                ->withErrors(['notify_channel' => 'Select at least one notification channel.'])
+                ->withInput();
+        }
+
+        $eligibleQuery = $this->meetingReminderEligibleInvitesQuery($meeting);
+        $eligibleUserIds = (clone $eligibleQuery)->pluck('user_id')->unique()->map(fn ($id) => (int) $id)->values()->all();
+
+        if ($eligibleUserIds === []) {
+            return redirect()
+                ->route('admin.meetings.invite', ['meeting' => $meeting, 'reminder' => 1])
+                ->with('warning', 'No invited members were found for this meeting. Send invites first.');
+        }
+
+        if ($validated['target'] === 'all') {
+            $selectedUserIds = $eligibleUserIds;
+        } else {
+            $picked = array_values(array_unique(array_map('intval', $validated['member_ids'] ?? [])));
+            $selectedUserIds = array_values(array_intersect($eligibleUserIds, $picked));
+            if ($selectedUserIds === []) {
+                return redirect()
+                    ->route('admin.meetings.invite', ['meeting' => $meeting, 'reminder' => 1])
+                    ->withErrors(['member_ids' => 'Select at least one invited member from the list.'])
+                    ->withInput();
+            }
+        }
+
+        $invites = (clone $eligibleQuery)
+            ->whereIn('user_id', $selectedUserIds)
+            ->get(['id', 'user_id']);
+
+        if ($invites->isEmpty()) {
+            return redirect()
+                ->route('admin.meetings.invite', ['meeting' => $meeting, 'reminder' => 1])
+                ->with('warning', 'No matching invites were found for the members you selected.');
+        }
+
+        $userIds = $invites->pluck('user_id')->unique()->values()->map(fn ($id) => (int) $id)->all();
+        $inviteIds = $invites->pluck('id')->all();
+
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_MEETING_INVITE_REMINDERS,
+            (int) $meeting->id,
+            (string) $meeting->title,
+            count($userIds),
+            $chunkSize,
+            [
+                'reminder' => true,
+                'reminder_target' => $validated['target'],
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_MEETING_INVITE_REMINDERS,
+            (int) $meeting->id,
+            $userIds,
+            $notifyEmail,
+            $notifySms,
+            $notifyWhatsApp,
+            $chunkSize,
+            $batch->id
+        );
+
         MeetingInvite::query()
-            ->where('meeting_id', $meeting->id)
+            ->whereIn('id', $inviteIds)
             ->update(['reminder_sent_at' => now()]);
 
-        return redirect()->route('admin.meetings.index')->with('success', 'Reminder sent (marked) successfully.');
+        $success = $this->formatAdminReminderQueuedMessage(
+            'Meeting',
+            count($userIds),
+            $notifyEmail,
+            $notifySms,
+            $notifyWhatsApp
+        );
+
+        return redirect()
+            ->route('admin.meetings.invite', ['meeting' => $meeting, 'reminder' => 1])
+            ->with('success', $success);
     }
 
     public function toggleDisplay(Meeting $meeting)
@@ -141,6 +238,17 @@ class MeetingController extends Controller
     public function inviteForm(Meeting $meeting, Request $request)
     {
         $this->syncElapsedMeetings();
+        $meeting->refresh();
+
+        $reminderMode = $request->boolean('reminder');
+        if ($reminderMode) {
+            if (! $meeting->is_active || ! in_array($meeting->status, ['upcoming', 'live'], true)) {
+                return redirect()
+                    ->route('admin.meetings.index')
+                    ->with('error', 'Reminders are only available when the meeting display is Active and the status is Upcoming or Live.');
+            }
+        }
+
         $q = trim((string) $request->query('q', ''));
         $statusTab = (string) $request->query('status_tab', 'all');
         $allowedTabs = ['all', 'invited', 'interested', 'participated', 'not_participated'];
@@ -192,7 +300,7 @@ class MeetingController extends Controller
             ->selectRaw("SUM(CASE WHEN participation_status = 'not_participated' THEN 1 ELSE 0 END) as not_attended_count")
             ->first();
 
-        return view('admin.meetings.invite', compact('meeting', 'members', 'invitedUserIds', 'invites', 'q', 'statusTab', 'statusCounts'));
+        return view('admin.meetings.invite', compact('meeting', 'members', 'invitedUserIds', 'invites', 'q', 'statusTab', 'statusCounts', 'reminderMode'));
     }
 
     public function inviteStore(Meeting $meeting, Request $request)
@@ -284,7 +392,7 @@ class MeetingController extends Controller
             $batch->id
         );
 
-        return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Invitations queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
+        return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Invitations have been queued and will be sent in the background.');
     }
 
     public function removeInvite(Meeting $meeting, MeetingInvite $invite)
@@ -440,5 +548,61 @@ class MeetingController extends Controller
                 $meeting->update(['status' => 'upcoming']);
             }
         }
+    }
+
+    /**
+     * Invited members (have been sent an invite at least once).
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<\App\Models\MeetingInvite>
+     */
+    private function meetingReminderEligibleInvitesQuery(Meeting $meeting)
+    {
+        return MeetingInvite::query()
+            ->where('meeting_id', $meeting->id)
+            ->whereNotNull('invited_at');
+    }
+
+    private function gateMeetingReminder(Meeting $meeting): ?\Illuminate\Http\RedirectResponse
+    {
+        $this->syncElapsedMeetings();
+        $meeting->refresh();
+
+        if (! $meeting->is_active) {
+            return redirect()
+                ->route('admin.meetings.invite', $meeting)
+                ->with('error', 'Reminders can only be sent when the meeting display status is Active.');
+        }
+
+        if (! in_array($meeting->status, ['upcoming', 'live'], true)) {
+            return redirect()
+                ->route('admin.meetings.invite', $meeting)
+                ->with('error', 'Reminders can only be sent for meetings in Upcoming or Live status.');
+        }
+
+        return null;
+    }
+
+    private function formatAdminReminderQueuedMessage(
+        string $entityLabel,
+        int $memberCount,
+        bool $notifyEmail,
+        bool $notifySms,
+        bool $notifyWhatsApp
+    ): string {
+        $channels = [];
+        if ($notifyEmail) {
+            $channels[] = 'email';
+        }
+        if ($notifySms) {
+            $channels[] = 'SMS';
+        }
+        if ($notifyWhatsApp) {
+            $channels[] = 'WhatsApp';
+        }
+        $via = $channels === []
+            ? 'your selected channels'
+            : implode(', ', $channels);
+
+        return $entityLabel.' reminders have been queued for '.$memberCount.' member(s) via '.$via.'. Delivery runs in the background; each member only receives channels they agreed to when invited.';
     }
 }

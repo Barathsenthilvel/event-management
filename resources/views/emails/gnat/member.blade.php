@@ -81,6 +81,13 @@
 <p>Warm Regards,<br><strong>GNAT Association</strong></p>
 @break
 
+@case('m29_meeting_invite_reminder')
+<p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
+<p>This is a friendly reminder about the GNAT meeting you were invited to, on <strong>{{ $meetingDate }}</strong> at <strong>{{ $meetingTime }}</strong>.</p>
+<p>Please sign in to the GNAT portal for the latest details and to confirm your attendance if you have not already.</p>
+<p>Warm Regards,<br><strong>GNAT Association</strong></p>
+@break
+
 @case('m11_meeting_attendance_confirmed')
 <p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
 <p>Thank you for confirming your attendance for the GNAT meeting scheduled on <strong>{{ $meetingDate }}</strong>.</p>
@@ -99,6 +106,13 @@
 <p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
 <p>GNAT Association is pleased to announce a new upcoming event for members.</p>
 <p>We invite you to participate and engage with fellow members through this initiative. Kindly login to the GNAT portal for complete event information and registration details.</p>
+<p>Warm Regards,<br><strong>GNAT Association</strong></p>
+@break
+
+@case('m28_event_invite_reminder')
+<p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
+<p>This is a friendly reminder about the GNAT event you were invited to.</p>
+<p>Please sign in to the GNAT portal for the latest details, schedule, and any actions required before the event.</p>
 <p>Warm Regards,<br><strong>GNAT Association</strong></p>
 @break
 

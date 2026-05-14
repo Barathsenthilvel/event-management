@@ -37,16 +37,16 @@
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <dl id="read-more-modal-meta" class="mb-4 hidden space-y-2 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-4 text-xs"></dl>
             <div id="read-more-modal-body" class="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#351c42]/75"></div>
-            <div id="read-more-modal-actions" class="mt-4 hidden flex-wrap items-center gap-2">
+            <div id="read-more-modal-actions" class="mt-4 hidden flex flex-wrap items-center gap-2">
                 <a
                     id="read-more-modal-document-link"
                     href="#"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="hidden inline-flex min-h-[2.75rem] items-center gap-2 rounded-full border border-[#351c42]/25 bg-white px-5 py-2.5 text-sm font-extrabold text-[#351c42] transition hover:bg-[#f5f1f8]"
+                    class="hidden inline-flex min-h-[2.75rem] shrink-0 items-center gap-2 rounded-full border border-[#351c42]/25 bg-white px-4 py-2 text-sm font-extrabold text-[#351c42] transition hover:bg-[#f5f1f8]"
                 >
-                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42]">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+                    <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42]">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true">
                             <path d="M12 5v10m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                         </svg>
                     </span>
@@ -57,7 +57,7 @@
                     id="read-more-modal-donate-btn"
                     data-open-donate-modal
                     data-read-more-donate
-                    class="click-btn click-btn--sm btn-style506 hidden text-left"
+                    class="click-btn click-btn--sm btn-style506 hidden shrink-0 text-left"
                 >
                     <span class="click-btn__icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">

@@ -180,13 +180,13 @@
                                                     Album
                                                 </a>
                                             @endif
-                                            <form method="POST" action="{{ route('admin.events.send-reminder', $event->id) }}" class="border-t border-slate-100">
-                                                @csrf
-                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                            @if($event->is_active && in_array($event->status, ['upcoming', 'live'], true))
+                                                <a href="{{ route('admin.events.invite', ['event' => $event->id, 'reminder' => 1]) }}"
+                                                    class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 border-t border-slate-100">
                                                     <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" /></svg>
                                                     Send reminder
-                                                </button>
-                                            </form>
+                                                </a>
+                                            @endif
                                             @if($event->status !== 'cancelled')
                                             <form method="POST" action="{{ route('admin.events.cancel', $event->id) }}" class="border-t border-slate-100">
                                                 @csrf

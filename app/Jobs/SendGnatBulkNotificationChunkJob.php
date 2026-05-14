@@ -27,7 +27,11 @@ class SendGnatBulkNotificationChunkJob implements ShouldQueue
 
     public const TYPE_EVENT_INVITES = 'event_invites';
 
+    public const TYPE_EVENT_INVITE_REMINDERS = 'event_invite_reminders';
+
     public const TYPE_MEETING_INVITES = 'meeting_invites';
+
+    public const TYPE_MEETING_INVITE_REMINDERS = 'meeting_invite_reminders';
 
     public const TYPE_NOMINATION_ALERTS = 'nomination_alerts';
 
@@ -85,7 +89,9 @@ class SendGnatBulkNotificationChunkJob implements ShouldQueue
 
         match ($this->type) {
             self::TYPE_EVENT_INVITES => $this->runEventInvites($mail),
+            self::TYPE_EVENT_INVITE_REMINDERS => $this->runEventInviteReminders($mail),
             self::TYPE_MEETING_INVITES => $this->runMeetingInvites($mail),
+            self::TYPE_MEETING_INVITE_REMINDERS => $this->runMeetingInviteReminders($mail),
             self::TYPE_NOMINATION_ALERTS => $this->runNominationAlerts($mail),
             self::TYPE_JOB_POSTING_ALERTS => $this->runJobPostingAlerts($mail),
             self::TYPE_POLLING_LIVE_ALERTS => $this->runPollingLiveAlerts($mail),
@@ -128,6 +134,22 @@ class SendGnatBulkNotificationChunkJob implements ShouldQueue
         $mail->sendEventInvites($event, $this->userIds, $this->broadcastBatchId);
     }
 
+    private function runEventInviteReminders(GnatMailService $mail): void
+    {
+        $event = Event::query()->find($this->entityId);
+        if (! $event) {
+            return;
+        }
+        $mail->sendEventInviteReminders(
+            $event,
+            $this->userIds,
+            $this->broadcastBatchId,
+            $this->notifyEmail,
+            $this->notifySms,
+            $this->notifyWhatsApp
+        );
+    }
+
     private function runMeetingInvites(GnatMailService $mail): void
     {
         $meeting = Meeting::query()->find($this->entityId);
@@ -135,6 +157,22 @@ class SendGnatBulkNotificationChunkJob implements ShouldQueue
             return;
         }
         $mail->sendMeetingInvites($meeting, $this->userIds, $this->broadcastBatchId);
+    }
+
+    private function runMeetingInviteReminders(GnatMailService $mail): void
+    {
+        $meeting = Meeting::query()->find($this->entityId);
+        if (! $meeting) {
+            return;
+        }
+        $mail->sendMeetingInviteReminders(
+            $meeting,
+            $this->userIds,
+            $this->broadcastBatchId,
+            $this->notifyEmail,
+            $this->notifySms,
+            $this->notifyWhatsApp
+        );
     }
 
     private function runNominationAlerts(GnatMailService $mail): void
