@@ -84,56 +84,58 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-4 text-right">
-                                    <div class="inline-flex items-center justify-end gap-2">
-                                        <a href="{{ route('admin.meetings.edit', $meeting->id) }}" title="Modify Meeting"
-                                           class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
-                                            </svg>
-                                        </a>
-                                        <a href="{{ route('admin.meetings.duplicate', $meeting->id) }}" title="Duplicate Meeting"
-                                           class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a2 2 0 012-2h8a2 2 0 012 2v8m-6 2H6a2 2 0 01-2-2V7a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2z" />
-                                            </svg>
-                                        </a>
-                                        <a href="{{ route('admin.meetings.invite', $meeting->id) }}" title="Invite or Remove Members"
-                                           class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" />
-                                            </svg>
-                                        </a>
-                                        <form method="POST" action="{{ route('admin.meetings.send-reminder', $meeting->id) }}">
-                                            @csrf
-                                            <button title="Send Reminder" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" />
+                                    <x-admin.row-actions>
+                                        <x-slot:primary>
+                                            <a href="{{ route('admin.meetings.invite', $meeting->id) }}" title="Invite members"
+                                                class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" />
                                                 </svg>
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.meetings.cancel', $meeting->id) }}">
-                                            @csrf
-                                            <button title="Cancel Meeting" class="w-8 h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </a>
+                                            <a href="{{ route('admin.meetings.edit', $meeting->id) }}" title="Edit meeting"
+                                                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
                                                 </svg>
-                                            </button>
-                                        </form>
-                                        <form id="admin-delete-meeting-{{ $meeting->id }}" method="POST" action="{{ route('admin.meetings.destroy', $meeting->id) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" title="Delete Meeting"
-                                                data-delete-form="admin-delete-meeting-{{ $meeting->id }}"
-                                                data-delete-title="Delete this meeting?"
-                                                data-delete-message="Invites and reminders linked to this meeting will be removed."
-                                                onclick="adminOpenDeleteModalFromEl(this)"
-                                                class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
+                                            </a>
+                                        </x-slot:primary>
+                                        <x-slot:more>
+                                            <a href="{{ route('admin.meetings.duplicate', $meeting->id) }}"
+                                                class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a2 2 0 012-2h8a2 2 0 012 2v8m-6 2H6a2 2 0 01-2-2V7a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2z" /></svg>
+                                                Duplicate
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.meetings.send-reminder', $meeting->id) }}" class="border-t border-slate-100">
+                                                @csrf
+                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" /></svg>
+                                                    Send reminder
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.meetings.cancel', $meeting->id) }}" class="border-t border-slate-100">
+                                                @csrf
+                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    Cancel meeting
+                                                </button>
+                                            </form>
+                                            <div class="border-t border-slate-100">
+                                                <form id="admin-delete-meeting-{{ $meeting->id }}" method="POST" action="{{ route('admin.meetings.destroy', $meeting->id) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button"
+                                                        data-delete-form="admin-delete-meeting-{{ $meeting->id }}"
+                                                        data-delete-title="Delete this meeting?"
+                                                        data-delete-message="Invites and reminders linked to this meeting will be removed."
+                                                        onclick="adminOpenDeleteModalFromEl(this)"
+                                                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                                        Delete meeting
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </x-slot:more>
+                                    </x-admin.row-actions>
                                 </td>
                             </tr>
                         @endforeach

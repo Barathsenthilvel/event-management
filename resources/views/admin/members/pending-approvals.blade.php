@@ -78,23 +78,33 @@
                                     </a>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-lg transition-all"
-                                            data-open-approve-modal
-                                            data-approve-url="{{ route('admin.members.pending-approvals.approve', $m->id) }}"
-                                            data-member-name="{{ $m->name }}"
-                                        >
-                                            Approve
-                                        </button>
-                                        <form method="POST" action="{{ route('admin.members.pending-approvals.reject', $m->id) }}">
-                                            @csrf
-                                            <button class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-extrabold shadow-sm transition-all">
-                                                Reject
+                                    <x-admin.row-actions>
+                                        <x-slot:primary>
+                                            <button
+                                                type="button"
+                                                class="w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 inline-flex items-center justify-center shadow-sm"
+                                                title="Approve"
+                                                data-open-approve-modal
+                                                data-approve-url="{{ route('admin.members.pending-approvals.approve', $m->id) }}"
+                                                data-member-name="{{ $m->name }}"
+                                                aria-label="Approve {{ $m->name }}">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
                                             </button>
-                                        </form>
-                                    </div>
+                                            <form method="POST" action="{{ route('admin.members.pending-approvals.reject', $m->id) }}" class="inline-flex">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="w-8 h-8 rounded-lg border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 inline-flex items-center justify-center"
+                                                    title="Reject"
+                                                    aria-label="Reject {{ $m->name }}">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </x-slot:primary>
+                                    </x-admin.row-actions>
                                 </td>
                             </tr>
                         @endforeach

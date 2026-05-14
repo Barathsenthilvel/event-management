@@ -131,78 +131,88 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2 flex-wrap">
-                                        <a href="{{ route('admin.events.show', $event->id) }}"
-                                            title="Event details (info, public interest list)"
-                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </a>
-                                        @if($event->status !== 'cancelled')
-                                            <a href="{{ route('admin.events.show', $event->id) }}#event-member-attendance"
-                                                title="Attendees & registrations — mark attendance when event is Live or Completed"
-                                                class="h-8 min-w-8 px-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 inline-flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wide">
-                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span class="hidden sm:inline">Attendance</span>
-                                            </a>
-                                        @endif
-                                        <a href="{{ route('admin.events.edit', $event->id) }}"
-                                            title="Modify Event"
-                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
-                                            </svg>
-                                        </a>
-                                        <a href="{{ route('admin.events.invite', $event->id) }}"
-                                            title="Invite Members"
-                                            class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" />
-                                            </svg>
-                                        </a>
-                                        @if($event->status !== 'cancelled')
-                                            <a href="{{ route('admin.events.album', $event->id) }}"
-                                                title="Event gallery — upload photos"
-                                                class="w-8 h-8 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <x-admin.row-actions>
+                                        <x-slot:primary>
+                                            <a href="{{ route('admin.events.show', $event->id) }}"
+                                                title="View event"
+                                                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
-                                        @endif
-                                        <form method="POST" action="{{ route('admin.events.send-reminder', $event->id) }}">
-                                            @csrf
-                                            <button title="Send Reminder" class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.events.cancel', $event->id) }}">
-                                            @csrf
-                                            <button title="Cancel Event" class="w-8 h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                        <form id="admin-delete-event-{{ $event->id }}" method="POST" action="{{ route('admin.events.destroy', $event->id) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" title="Delete Event"
-                                                data-delete-form="admin-delete-event-{{ $event->id }}"
-                                                data-delete-title="Delete this event?"
-                                                data-delete-message="All event dates, invites, and album photos linked to this event will be removed."
-                                                onclick="adminOpenDeleteModalFromEl(this)"
-                                                class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
+                                            @if($event->status !== 'cancelled')
+                                                <a href="{{ route('admin.events.show', $event->id) }}#event-member-attendance"
+                                                    title="Attendance"
+                                                    class="h-8 min-w-8 px-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-wide">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span class="hidden sm:inline">Attendance</span>
+                                                </a>
+                                            @else
+                                                <a href="{{ route('admin.events.edit', $event->id) }}"
+                                                    title="Edit event"
+                                                    class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                        </x-slot:primary>
+                                        <x-slot:more>
+                                            @if($event->status !== 'cancelled')
+                                                <a href="{{ route('admin.events.edit', $event->id) }}"
+                                                    class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
+                                                    Edit event
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('admin.events.invite', $event->id) }}"
+                                                class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
+                                                Invite members
+                                            </a>
+                                            @if($event->status !== 'cancelled')
+                                                <a href="{{ route('admin.events.album', $event->id) }}"
+                                                    class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-emerald-800 hover:bg-emerald-50">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                    Album
+                                                </a>
+                                            @endif
+                                            <form method="POST" action="{{ route('admin.events.send-reminder', $event->id) }}" class="border-t border-slate-100">
+                                                @csrf
+                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" /></svg>
+                                                    Send reminder
+                                                </button>
+                                            </form>
+                                            @if($event->status !== 'cancelled')
+                                            <form method="POST" action="{{ route('admin.events.cancel', $event->id) }}" class="border-t border-slate-100">
+                                                @csrf
+                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    Cancel event
+                                                </button>
+                                            </form>
+                                            @endif
+                                            <div class="border-t border-slate-100">
+                                                <form id="admin-delete-event-{{ $event->id }}" method="POST" action="{{ route('admin.events.destroy', $event->id) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button"
+                                                        data-delete-form="admin-delete-event-{{ $event->id }}"
+                                                        data-delete-title="Delete this event?"
+                                                        data-delete-message="All event dates, invites, and album photos linked to this event will be removed."
+                                                        onclick="adminOpenDeleteModalFromEl(this)"
+                                                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                                        Delete event
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </x-slot:more>
+                                    </x-admin.row-actions>
                                 </td>
                             </tr>
                         @endforeach

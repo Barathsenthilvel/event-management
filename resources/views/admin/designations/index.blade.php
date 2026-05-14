@@ -77,21 +77,23 @@
                                     <span class="inline-flex min-w-8 justify-center rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-700">{{ $d->users_count }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('admin.designations.edit', $d) }}"
-                                           class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-extrabold shadow-sm transition-all">
-                                            Edit
-                                        </a>
-                                        <form method="POST" action="{{ route('admin.designations.destroy', $d) }}" class="inline"
-                                              onsubmit="return confirm('Remove this designation? Members using it will have no designation.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="px-4 py-2 rounded-xl border border-rose-100 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-extrabold transition-all">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <x-admin.row-actions>
+                                        <x-slot:primary>
+                                            <a href="{{ route('admin.designations.edit', $d) }}" title="Edit"
+                                                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.designations.destroy', $d) }}" class="inline-flex"
+                                                onsubmit="return confirm('Remove this designation? Members using it will have no designation.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Delete"
+                                                    class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                                </button>
+                                            </form>
+                                        </x-slot:primary>
+                                    </x-admin.row-actions>
                                 </td>
                             </tr>
                         @endforeach

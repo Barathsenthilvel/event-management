@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendGnatBulkNotificationChunkJob;
+use App\Models\GnatNotificationBatch;
 use App\Models\Polling;
 use App\Models\PollingPosition;
 use App\Models\PollingVote;
 use App\Models\User;
-use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -133,19 +134,38 @@ class PollingController extends Controller
             return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
         }
 
-        app(GnatMailService::class)->sendPollingLiveAlerts(
-            $polling,
-            $memberIds,
+        $intMemberIds = array_map('intval', $memberIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_POLLING_LIVE_ALERTS,
+            (int) $polling->id,
+            (string) $polling->title,
+            count($intMemberIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_POLLING_LIVE_ALERTS,
+            (int) $polling->id,
+            $intMemberIds,
             $notifyEmail,
             $notifySms,
-            $notifyWhatsApp
+            $notifyWhatsApp,
+            $chunkSize,
+            $batch->id
         );
 
         $polling->forceFill(['live_alert_sent_at' => now()])->save();
 
         return redirect()
             ->route('admin.pollings.index')
-            ->with('success', 'GNAT Live Polling Alert sent to selected members.');
+            ->with('success', 'Live polling alerts queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function edit(Polling $polling)
@@ -419,19 +439,38 @@ class PollingController extends Controller
             return back()->withErrors(['member_ids' => 'Please select at least one member.'])->withInput();
         }
 
-        app(GnatMailService::class)->sendPollingResultsPublishedAlerts(
-            $polling,
-            $memberIds,
+        $intMemberIds = array_map('intval', $memberIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_POLLING_RESULTS_ALERTS,
+            (int) $polling->id,
+            (string) $polling->title,
+            count($intMemberIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_POLLING_RESULTS_ALERTS,
+            (int) $polling->id,
+            $intMemberIds,
             $notifyEmail,
             $notifySms,
-            $notifyWhatsApp
+            $notifyWhatsApp,
+            $chunkSize,
+            $batch->id
         );
 
         $polling->forceFill(['results_mail_sent_at' => now()])->save();
 
         return redirect()
             ->route('admin.pollings.stats', $polling)
-            ->with('success', 'GNAT Polling Result Notification sent to selected members.');
+            ->with('success', 'Polling result notifications queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function downloadReport(Polling $polling)

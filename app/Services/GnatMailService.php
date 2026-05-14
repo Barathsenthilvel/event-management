@@ -10,6 +10,7 @@ use App\Models\AdminJobApplication;
 use App\Models\DonationPayment;
 use App\Models\Event;
 use App\Models\EventInvite;
+use App\Models\GnatNotificationDeliveryLog;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\MemberJobRequest;
@@ -259,7 +260,7 @@ class GnatMailService
         ];
     }
 
-    public function sendMeetingInvites(Meeting $meeting, iterable $userIds): void
+    public function sendMeetingInvites(Meeting $meeting, iterable $userIds, ?int $broadcastBatchId = null): void
     {
         $parts = $this->meetingScheduleParts($meeting);
         foreach ($userIds as $userId) {
@@ -278,27 +279,53 @@ class GnatMailService
             }
 
             $name = $this->memberDisplayName($user);
+            $channels = [];
 
-            if ($invite->notify_email && $user->email) {
-                $this->sendMember($user->email, 'm10_meeting_schedule', [
-                    'memberName' => $name,
-                    'meetingDate' => $parts['date'],
-                    'meetingTime' => $parts['time'],
-                    'heroHeadline' => 'New Meeting Scheduled',
-                    'showPortalCta' => true,
-                ]);
+            if ($invite->notify_email) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm10_meeting_schedule', [
+                        'memberName' => $name,
+                        'meetingDate' => $parts['date'],
+                        'meetingTime' => $parts['time'],
+                        'heroHeadline' => 'New Meeting Scheduled',
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $smsCombined = null;
+            if ($invite->notify_sms || $invite->notify_whatsapp) {
+                $smsCombined = $this->sms()->trySendScenario('s11_meeting_scheduled', $user->mobile, [$name, $parts['date'], $parts['time']]);
             }
 
             if ($invite->notify_sms) {
-                $this->sms()->meetingScheduled($user->mobile, $name, $parts['date'], $parts['time']);
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
+
+            if ($invite->notify_whatsapp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
     }
 
     /**
      * Send event invite notifications (email / SMS). WhatsApp uses the same SMS template until a dedicated channel exists.
      */
-    public function sendEventInvites(Event $event, iterable $userIds): void
+    public function sendEventInvites(Event $event, iterable $userIds, ?int $broadcastBatchId = null): void
     {
         $event->loadMissing('dates');
         $firstDate = $event->dates->sortBy('event_date')->first();
@@ -322,19 +349,45 @@ class GnatMailService
             }
 
             $name = $this->memberDisplayName($user);
+            $channels = [];
 
-            if ($invite->notify_email && $user->email) {
-                $this->sendMember($user->email, 'm13_new_event', [
-                    'memberName' => $name,
-                    'heroHeadline' => $event->title,
-                    'heroSubtext' => 'Event date: '.$eventDateLabel,
-                    'showPortalCta' => true,
-                ]);
+            if ($invite->notify_email) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm13_new_event', [
+                        'memberName' => $name,
+                        'heroHeadline' => $event->title,
+                        'heroSubtext' => 'Event date: '.$eventDateLabel,
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
+            $smsCombined = null;
             if ($invite->notify_sms || $invite->notify_whatsapp) {
-                $this->sms()->newEventUpdate($user->mobile, $name);
+                $smsCombined = $this->sms()->trySendScenario('s14_new_event', $user->mobile, [$name]);
             }
+
+            if ($invite->notify_sms) {
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            if ($invite->notify_whatsapp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
     }
 
@@ -376,7 +429,7 @@ class GnatMailService
         }
     }
 
-    public function sendNominationAlerts(Nomination $nomination, iterable $userIds): void
+    public function sendNominationAlerts(Nomination $nomination, iterable $userIds, ?int $broadcastBatchId = null): void
     {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
@@ -394,18 +447,44 @@ class GnatMailService
             }
 
             $name = $this->memberDisplayName($user);
+            $channels = [];
 
-            if ($alert->notify_email && $user->email) {
-                $this->sendMember($user->email, 'm16_nomination_live', [
-                    'memberName' => $name,
-                    'heroHeadline' => 'Nominations Open',
-                    'showPortalCta' => true,
-                ]);
+            if ($alert->notify_email) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm16_nomination_live', [
+                        'memberName' => $name,
+                        'heroHeadline' => 'Nominations Open',
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $smsCombined = null;
+            if ($alert->notify_sms || $alert->notify_whatsapp) {
+                $smsCombined = $this->sms()->trySendScenario('s17_nomination_live', $user->mobile, [$name]);
             }
 
             if ($alert->notify_sms) {
-                $this->sms()->nominationLive($user->mobile, $name);
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
+
+            if ($alert->notify_whatsapp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
     }
 
@@ -438,20 +517,49 @@ class GnatMailService
         Polling $polling,
         bool $notifyEmail = true,
         bool $notifySms = false,
-        bool $notifyWhatsApp = false
+        bool $notifyWhatsApp = false,
+        ?int $broadcastBatchId = null
     ): void {
         $name = $this->memberDisplayName($user);
+        $channels = [];
+
         if ($notifyEmail) {
-            $this->sendMember($user->email, 'm18_polling_live', [
-                'memberName' => $name,
-                'heroHeadline' => 'GNAT Live Polling Alert',
-                'heroSubtext' => $polling->title,
-                'showPortalCta' => true,
-            ]);
+            if (! $user->email) {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+            } else {
+                $channels['email'] = $this->trySendMemberEmail($user->email, 'm18_polling_live', [
+                    'memberName' => $name,
+                    'heroHeadline' => 'GNAT Live Polling Alert',
+                    'heroSubtext' => $polling->title,
+                    'showPortalCta' => true,
+                ]);
+            }
+        } else {
+            $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
         }
+
+        $smsCombined = null;
         if ($notifySms || $notifyWhatsApp) {
-            $this->sms()->pollingLive($user->mobile, $name);
+            $smsCombined = $this->sms()->trySendScenario('s19_polling_live', $user->mobile, [$name]);
         }
+
+        if ($notifySms) {
+            $channels['sms'] = $smsCombined !== null
+                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                : ['status' => 'skipped', 'error' => 'Not requested'];
+        } else {
+            $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+        }
+
+        if ($notifyWhatsApp) {
+            $channels['whatsapp'] = $smsCombined !== null
+                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                : ['status' => 'skipped', 'error' => 'Not requested'];
+        } else {
+            $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+        }
+
+        $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
     }
 
     /**
@@ -462,14 +570,15 @@ class GnatMailService
         iterable $userIds,
         bool $notifyEmail,
         bool $notifySms,
-        bool $notifyWhatsApp
+        bool $notifyWhatsApp,
+        ?int $broadcastBatchId = null
     ): void {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
             if (! $user) {
                 continue;
             }
-            $this->sendPollingLiveAlert($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp);
+            $this->sendPollingLiveAlert($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp, $broadcastBatchId);
         }
     }
 
@@ -499,20 +608,49 @@ class GnatMailService
         Polling $polling,
         bool $notifyEmail = true,
         bool $notifySms = false,
-        bool $notifyWhatsApp = false
+        bool $notifyWhatsApp = false,
+        ?int $broadcastBatchId = null
     ): void {
         $name = $this->memberDisplayName($user);
+        $channels = [];
+
         if ($notifyEmail) {
-            $this->sendMember($user->email, 'm20_polling_results', [
-                'memberName' => $name,
-                'heroHeadline' => 'GNAT Polling Result Notification',
-                'heroSubtext' => $polling->title,
-                'showPortalCta' => true,
-            ]);
+            if (! $user->email) {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+            } else {
+                $channels['email'] = $this->trySendMemberEmail($user->email, 'm20_polling_results', [
+                    'memberName' => $name,
+                    'heroHeadline' => 'GNAT Polling Result Notification',
+                    'heroSubtext' => $polling->title,
+                    'showPortalCta' => true,
+                ]);
+            }
+        } else {
+            $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
         }
+
+        $smsCombined = null;
         if ($notifySms || $notifyWhatsApp) {
-            $this->sms()->pollingResults($user->mobile, $name);
+            $smsCombined = $this->sms()->trySendScenario('s20_polling_results', $user->mobile, [$name]);
         }
+
+        if ($notifySms) {
+            $channels['sms'] = $smsCombined !== null
+                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                : ['status' => 'skipped', 'error' => 'Not requested'];
+        } else {
+            $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+        }
+
+        if ($notifyWhatsApp) {
+            $channels['whatsapp'] = $smsCombined !== null
+                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                : ['status' => 'skipped', 'error' => 'Not requested'];
+        } else {
+            $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+        }
+
+        $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
     }
 
     /**
@@ -523,18 +661,19 @@ class GnatMailService
         iterable $userIds,
         bool $notifyEmail,
         bool $notifySms,
-        bool $notifyWhatsApp
+        bool $notifyWhatsApp,
+        ?int $broadcastBatchId = null
     ): void {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
             if (! $user) {
                 continue;
             }
-            $this->sendPollingResultsPublished($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp);
+            $this->sendPollingResultsPublished($user, $polling, $notifyEmail, $notifySms, $notifyWhatsApp, $broadcastBatchId);
         }
     }
 
-    public function sendJobPostingAlerts(AdminJob $job, iterable $userIds): void
+    public function sendJobPostingAlerts(AdminJob $job, iterable $userIds, ?int $broadcastBatchId = null): void
     {
         foreach ($userIds as $userId) {
             $user = User::query()->find($userId);
@@ -552,19 +691,45 @@ class GnatMailService
             }
 
             $name = $this->memberDisplayName($user);
+            $channels = [];
 
-            if ($alert->notify_email && $user->email) {
-                $this->sendMember($user->email, 'm21_job_posting', [
-                    'memberName' => $name,
-                    'heroHeadline' => 'New Job Posting Alert',
-                    'heroSubtext' => trim($job->title.($job->code ? ' • Code '.$job->code : '')),
-                    'showPortalCta' => true,
-                ]);
+            if ($alert->notify_email) {
+                if (! $user->email) {
+                    $channels['email'] = ['status' => 'skipped', 'error' => 'No email on file'];
+                } else {
+                    $channels['email'] = $this->trySendMemberEmail($user->email, 'm21_job_posting', [
+                        'memberName' => $name,
+                        'heroHeadline' => 'New Job Posting Alert',
+                        'heroSubtext' => trim($job->title.($job->code ? ' • Code '.$job->code : '')),
+                        'showPortalCta' => true,
+                    ]);
+                }
+            } else {
+                $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
+            $smsCombined = null;
             if ($alert->notify_sms || $alert->notify_whatsapp) {
-                $this->sms()->jobPostingAlert($user->mobile, $name);
+                $smsCombined = $this->sms()->trySendScenario('s22_job_posting', $user->mobile, [$name]);
             }
+
+            if ($alert->notify_sms) {
+                $channels['sms'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            if ($alert->notify_whatsapp) {
+                $channels['whatsapp'] = $smsCombined !== null
+                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
+                    : ['status' => 'skipped', 'error' => 'Not requested'];
+            } else {
+                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
+            }
+
+            $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
     }
 
@@ -942,6 +1107,45 @@ class GnatMailService
         ]);
 
         $this->sms()->membershipCancellation($user->mobile, $name);
+    }
+
+    /**
+     * @param  array<string, mixed>  $viewData
+     * @return array{status: string, error: ?string}
+     */
+    private function trySendMemberEmail(string $email, string $templateKey, array $viewData = []): array
+    {
+        $email = trim($email);
+        if ($email === '') {
+            return ['status' => 'skipped', 'error' => 'No email on file'];
+        }
+
+        $subject = self::MEMBER_SUBJECTS[$templateKey] ?? 'GNAT Association';
+        $viewData['portalUrl'] = $viewData['portalUrl'] ?? $this->memberPortalUrl();
+
+        try {
+            Mail::to($email)->send(new GnatMemberNotification($templateKey, $subject, $viewData));
+
+            return ['status' => 'success', 'error' => null];
+        } catch (\Throwable $e) {
+            Log::warning('GNAT mail send failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return ['status' => 'failed', 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * @param  array<string, array{status: string, error?: ?string}>  $channels
+     */
+    private function recordBroadcastChannels(?int $broadcastBatchId, int $userId, array $channels): void
+    {
+        if ($broadcastBatchId === null) {
+            return;
+        }
+
+        GnatNotificationDeliveryLog::recordChannelResults($broadcastBatchId, $userId, $channels);
     }
 
     private function safeSend(callable $callback): void

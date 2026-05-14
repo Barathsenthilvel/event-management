@@ -114,28 +114,31 @@
                         </form>
                     </td>
                     <td class="px-6 py-4 text-right align-middle">
-                        <div class="inline-flex items-center justify-end gap-2">
-                            <a href="{{ route('admin.home-blogs.edit', $post->id) }}"
-                               class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
-                                </svg>
-                            </a>
-                            <form id="admin-delete-home-blog-{{ $post->id }}" method="POST" action="{{ route('admin.home-blogs.destroy', $post->id) }}" class="inline-flex">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button"
+                        <x-admin.row-actions>
+                            <x-slot:primary>
+                                <a href="{{ route('admin.home-blogs.edit', $post->id) }}" title="Edit"
+                                    class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
+                                    </svg>
+                                </a>
+                                <form id="admin-delete-home-blog-{{ $post->id }}" method="POST" action="{{ route('admin.home-blogs.destroy', $post->id) }}" class="inline-flex">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button"
                                         data-delete-form="admin-delete-home-blog-{{ $post->id }}"
                                         data-delete-title="Delete this blog post?"
                                         data-delete-message="This will permanently remove the blog card and image from storage."
                                         onclick="adminOpenDeleteModalFromEl(this)"
-                                        class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
+                                        class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center"
+                                        title="Delete">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </x-slot:primary>
+                        </x-admin.row-actions>
                     </td>
                 </tr>
             @empty

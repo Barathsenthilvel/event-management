@@ -102,32 +102,40 @@
                                 </form>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <div class="inline-flex items-center gap-2">
-                                    <a href="{{ route('admin.jobs.applications', $job->id) }}" title="More Details"
-                                       class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    </a>
-                                    <a href="{{ route('admin.jobs.edit', $job->id) }}" title="Modify Job"
-                                       class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
-                                    </a>
-                                    <a href="{{ route('admin.jobs.alert', $job->id) }}" title="Invite / Alert Members"
-                                       class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
-                                    </a>
-                                    <form id="admin-delete-job-{{ $job->id }}" method="POST" action="{{ route('admin.jobs.destroy', $job->id) }}" class="inline-flex">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" title="Delete Job"
-                                            data-delete-form="admin-delete-job-{{ $job->id }}"
-                                            data-delete-title="Delete this job listing?"
-                                            data-delete-message="Applications linked to this job may become inaccessible."
-                                            onclick="adminOpenDeleteModalFromEl(this)"
-                                            class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
-                                        </button>
-                                    </form>
-                                </div>
+                                <x-admin.row-actions>
+                                    <x-slot:primary>
+                                        <a href="{{ route('admin.jobs.applications', $job->id) }}" title="Applications"
+                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </a>
+                                        <a href="{{ route('admin.jobs.edit', $job->id) }}" title="Edit job"
+                                            class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
+                                        </a>
+                                    </x-slot:primary>
+                                    <x-slot:more>
+                                        <a href="{{ route('admin.jobs.alert', $job->id) }}"
+                                            class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">
+                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
+                                            Member alert
+                                        </a>
+                                        <div class="border-t border-slate-100">
+                                            <form id="admin-delete-job-{{ $job->id }}" method="POST" action="{{ route('admin.jobs.destroy', $job->id) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button"
+                                                    data-delete-form="admin-delete-job-{{ $job->id }}"
+                                                    data-delete-title="Delete this job listing?"
+                                                    data-delete-message="Applications linked to this job may become inaccessible."
+                                                    onclick="adminOpenDeleteModalFromEl(this)"
+                                                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                                    Delete job
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </x-slot:more>
+                                </x-admin.row-actions>
                             </td>
                         </tr>
                     @empty

@@ -151,42 +151,52 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <div class="inline-flex items-center gap-1.5 flex-wrap justify-end">
-                                        <a href="{{ route('admin.nominations.show', $nomination->id) }}" title="View details (read-only)"
-                                           class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        </a>
-                                        <a href="{{ route('admin.nominations.submissions', $nomination->id) }}" title="Interested members list"
-                                           class="w-8 h-8 rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-800 hover:bg-indigo-100 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                        </a>
-                                        <a href="{{ route('admin.nominations.edit', $nomination->id) }}" title="Modify Nomination"
-                                           class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
-                                        </a>
-                                        <a href="{{ route('admin.nominations.alert', $nomination->id) }}" title="Nomination Alert"
-                                           class="w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
-                                        </a>
-                                        <form method="POST" action="{{ route('admin.nominations.cancel', $nomination->id) }}" class="inline">
-                                            @csrf
-                                            <button title="Cancel Nomination" class="w-8 h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                            </button>
-                                        </form>
-                                        <form id="admin-delete-nomination-{{ $nomination->id }}" method="POST" action="{{ route('admin.nominations.destroy', $nomination->id) }}" class="inline-flex">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" title="Delete Nomination"
-                                                data-delete-form="admin-delete-nomination-{{ $nomination->id }}"
-                                                data-delete-title="Delete this nomination?"
-                                                data-delete-message="This will remove the nomination and related submissions from the system."
-                                                onclick="adminOpenDeleteModalFromEl(this)"
-                                                class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <x-admin.row-actions>
+                                        <x-slot:primary>
+                                            <a href="{{ route('admin.nominations.show', $nomination->id) }}" title="View"
+                                                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            </a>
+                                            <a href="{{ route('admin.nominations.submissions', $nomination->id) }}" title="Interested members"
+                                                class="w-8 h-8 rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-800 hover:bg-indigo-100 inline-flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                            </a>
+                                        </x-slot:primary>
+                                        <x-slot:more>
+                                            <a href="{{ route('admin.nominations.edit', $nomination->id) }}"
+                                                class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50">
+                                                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" /></svg>
+                                                Edit nomination
+                                            </a>
+                                            <a href="{{ route('admin.nominations.alert', $nomination->id) }}"
+                                                class="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-5a3 3 0 00-6 0v5m6 0H9" /></svg>
+                                                Send alert
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.nominations.cancel', $nomination->id) }}" class="border-t border-slate-100">
+                                                @csrf
+                                                <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    Cancel nomination
+                                                </button>
+                                            </form>
+                                            <div class="border-t border-slate-100">
+                                                <form id="admin-delete-nomination-{{ $nomination->id }}" method="POST" action="{{ route('admin.nominations.destroy', $nomination->id) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button"
+                                                        data-delete-form="admin-delete-nomination-{{ $nomination->id }}"
+                                                        data-delete-title="Delete this nomination?"
+                                                        data-delete-message="This will remove the nomination and related submissions from the system."
+                                                        onclick="adminOpenDeleteModalFromEl(this)"
+                                                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12H6L5 7m3 0V5a1 1 0 011-1h6a1 1 0 011 1v2M4 7h16" /></svg>
+                                                        Delete nomination
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </x-slot:more>
+                                    </x-admin.row-actions>
                                 </td>
                             </tr>
                         @empty

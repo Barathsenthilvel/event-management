@@ -401,37 +401,43 @@ document.addEventListener('alpine:init', () => {
                     </td>
                     <td
                         class="px-6 py-4 bg-white border-y border-r border-slate-100 last:rounded-r-2xl text-right">
-                        <div class="flex items-center justify-end gap-1">
+                        <x-admin.row-actions>
+                            <x-slot:primary>
+                                <button type="button" data-action="edit" data-role-id="{{ $role->id }}"
+                                    class="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 inline-flex items-center justify-center"
+                                    title="Edit Role">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                @if($canManageMenuPermissions ?? false)
+                                    <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
+                                        class="w-8 h-8 rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 inline-flex items-center justify-center"
+                                        title="Menu Permissions">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </button>
+                                @else
+                                    <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
+                                        class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center"
+                                        title="Delete Role">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                @endif
+                            </x-slot:primary>
                             @if($canManageMenuPermissions ?? false)
-                            <button type="button" data-action="permissions" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
-                                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                                title="Menu Permissions">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </button>
+                                <x-slot:more>
+                                    <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
+                                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-bold text-rose-700 hover:bg-rose-50">
+                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        Delete role
+                                    </button>
+                                </x-slot:more>
                             @endif
-                            <button type="button" data-action="edit" data-role-id="{{ $role->id }}"
-                                class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                                title="Edit Role">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                            </button>
-                            <button type="button" data-action="delete" data-role-id="{{ $role->id }}" data-role-name="{{ e($role->name) }}"
-                                class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
-                                title="Delete Role">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </div>
+                        </x-admin.row-actions>
                     </td>
                 </tr>
                 @empty

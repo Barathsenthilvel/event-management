@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendGnatBulkNotificationChunkJob;
 use App\Models\AdminJob;
+use App\Models\GnatNotificationBatch;
 use App\Models\AdminJobAlert;
 use App\Models\AdminJobApplication;
 use App\Models\Designation;
@@ -246,11 +248,36 @@ class AdminJobController extends Controller
             }
         });
 
-        app(GnatMailService::class)->sendJobPostingAlerts($job, $memberIds);
+        $intMemberIds = array_map('intval', $memberIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_JOB_POSTING_ALERTS,
+            (int) $job->id,
+            trim($job->title.($job->code ? ' ('.$job->code.')' : '')),
+            count($intMemberIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_JOB_POSTING_ALERTS,
+            (int) $job->id,
+            $intMemberIds,
+            true,
+            false,
+            false,
+            $chunkSize,
+            $batch->id
+        );
 
         return redirect()
             ->route('admin.jobs.index')
-            ->with('success', 'GNAT Job Posting Notification sent to selected members.');
+            ->with('success', 'Job posting notifications queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function applications(AdminJob $job, Request $request)

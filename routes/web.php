@@ -18,6 +18,7 @@ use App\Http\Controllers\DonationPaymentController;
 use App\Http\Controllers\EBookController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventInterestController;
+use App\Http\Controllers\GnatNotificationBatchController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MemberAuthController;
@@ -75,6 +76,11 @@ Route::prefix('admin')->group(function () {
 
     Route::middleware('auth:admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+        Route::get('/notification-batches', [GnatNotificationBatchController::class, 'index'])->name('admin.notification-batches.index');
+        Route::get('/notification-batches/{id}', [GnatNotificationBatchController::class, 'show'])
+            ->whereNumber('id')
+            ->name('admin.notification-batches.show');
 
         // Admin Users Management
         Route::resource('admins', AdminController::class)->names([

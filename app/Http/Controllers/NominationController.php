@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendGnatBulkNotificationChunkJob;
+use App\Models\GnatNotificationBatch;
 use App\Models\Nomination;
 use App\Models\NominationAlert;
 use App\Models\NominationEntry;
 use App\Models\NominationPosition;
 use App\Models\User;
-use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -233,11 +234,36 @@ class NominationController extends Controller
             }
         });
 
-        app(GnatMailService::class)->sendNominationAlerts($nomination, $memberIds);
+        $intMemberIds = array_map('intval', $memberIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_NOMINATION_ALERTS,
+            (int) $nomination->id,
+            (string) $nomination->title,
+            count($intMemberIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_NOMINATION_ALERTS,
+            (int) $nomination->id,
+            $intMemberIds,
+            true,
+            false,
+            false,
+            $chunkSize,
+            $batch->id
+        );
 
         return redirect()
             ->route('admin.nominations.index')
-            ->with('success', 'Nomination alert sent. Members can respond from their dashboard; open this nomination from the list to view submissions.');
+            ->with('success', 'Nomination alerts queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function submissions(Nomination $nomination, Request $request)

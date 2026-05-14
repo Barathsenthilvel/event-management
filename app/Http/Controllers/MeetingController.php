@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
+use App\Jobs\SendGnatBulkNotificationChunkJob;
+use App\Models\GnatNotificationBatch;
 use App\Models\Meeting;
 use App\Models\MeetingInvite;
 use App\Models\User;
-use App\Services\GnatMailService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -256,9 +257,34 @@ class MeetingController extends Controller
             $invite->save();
         }
 
-        app(GnatMailService::class)->sendMeetingInvites($meeting, $userIds);
+        $intUserIds = array_map('intval', $userIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_MEETING_INVITES,
+            (int) $meeting->id,
+            (string) $meeting->title,
+            count($intUserIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
 
-        return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Members invited successfully.');
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_MEETING_INVITES,
+            (int) $meeting->id,
+            $intUserIds,
+            true,
+            false,
+            false,
+            $chunkSize,
+            $batch->id
+        );
+
+        return redirect()->route('admin.meetings.invite', $meeting->id)->with('success', 'Invitations queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function removeInvite(Meeting $meeting, MeetingInvite $invite)

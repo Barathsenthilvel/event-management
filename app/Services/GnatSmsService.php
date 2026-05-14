@@ -216,14 +216,23 @@ class GnatSmsService
      */
     public function sendScenario(string $scenarioKey, ?string $mobile, array $values): void
     {
+        $this->trySendScenario($scenarioKey, $mobile, $values);
+    }
+
+    /**
+     * @param  list<string>  $values
+     * @return array{status: string, error: ?string} status: success|failed|skipped
+     */
+    public function trySendScenario(string $scenarioKey, ?string $mobile, array $values): array
+    {
         $normalized = $this->normalizeMobile($mobile);
         if ($normalized === null) {
-            return;
+            return ['status' => 'skipped', 'error' => 'No mobile number'];
         }
 
         $driver = strtolower((string) config('gnat_sms.driver', 'off'));
         if ($driver === 'off' || $driver === '' || $driver === 'false') {
-            return;
+            return ['status' => 'skipped', 'error' => 'SMS driver disabled'];
         }
 
         $body = $this->renderBody($scenarioKey, $values);
@@ -236,34 +245,42 @@ class GnatSmsService
                     'body' => $body,
                 ]);
 
-                return;
+                return ['status' => 'success', 'error' => null];
             }
 
             if ($driver === 'msg91') {
-                $this->sendViaMsg91Flow($scenarioKey, $normalized, $values, $body);
+                $err = $this->sendViaMsg91Flow($scenarioKey, $normalized, $values, $body);
+                if ($err === null) {
+                    return ['status' => 'success', 'error' => null];
+                }
 
-                return;
+                return ['status' => 'failed', 'error' => $err];
             }
 
             Log::warning('GNAT SMS unknown driver', ['driver' => $driver]);
+
+            return ['status' => 'skipped', 'error' => 'Unknown SMS driver: '.$driver];
         } catch (\Throwable $e) {
             Log::warning('GNAT SMS send failed', [
                 'scenario' => $scenarioKey,
                 'message' => $e->getMessage(),
             ]);
+
+            return ['status' => 'failed', 'error' => $e->getMessage()];
         }
     }
 
     /**
      * @param  list<string>  $values
+     * @return ?string Error message or null on success
      */
-    private function sendViaMsg91Flow(string $scenarioKey, string $normalizedMobile, array $values, string $renderedBody): void
+    private function sendViaMsg91Flow(string $scenarioKey, string $normalizedMobile, array $values, string $renderedBody): ?string
     {
         $authkey = trim((string) config('gnat_sms.authkey', ''));
         if ($authkey === '') {
             Log::warning('GNAT SMS MSG91 authkey missing; set GNAT_MSG91_AUTHKEY');
 
-            return;
+            return 'MSG91 authkey missing';
         }
 
         $flowId = config('gnat_sms.flow_ids.'.$scenarioKey);
@@ -275,7 +292,7 @@ class GnatSmsService
                 'preview' => $renderedBody,
             ]);
 
-            return;
+            return 'MSG91 flow id not configured for scenario';
         }
 
         $sender = trim((string) config('gnat_sms.sender', ''));
@@ -308,7 +325,11 @@ class GnatSmsService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
+
+            return 'HTTP '.$response->status().': '.mb_substr($response->body(), 0, 500);
         }
+
+        return null;
     }
 
     public function normalizeMobile(?string $raw): ?string

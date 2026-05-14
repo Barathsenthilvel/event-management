@@ -6,8 +6,10 @@ use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\EventInvite;
 use App\Models\EventPhoto;
+use App\Models\GnatNotificationBatch;
 use App\Models\User;
 use App\Services\EventScheduleStatusService;
+use App\Jobs\SendGnatBulkNotificationChunkJob;
 use App\Services\GnatMailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -582,11 +584,36 @@ class EventController extends Controller
 
         $event->syncInterestedCountFromRegistrations();
 
-        app(GnatMailService::class)->sendEventInvites($event, $userIds);
+        $intUserIds = array_map('intval', $userIds);
+        $chunkSize = 200;
+        $batch = GnatNotificationBatch::start(
+            auth('admin')->id(),
+            SendGnatBulkNotificationChunkJob::TYPE_EVENT_INVITES,
+            (int) $event->id,
+            (string) $event->title,
+            count($intUserIds),
+            $chunkSize,
+            [
+                'notify_email' => $notifyEmail,
+                'notify_sms' => $notifySms,
+                'notify_whatsapp' => $notifyWhatsApp,
+            ]
+        );
+
+        SendGnatBulkNotificationChunkJob::dispatchChunks(
+            SendGnatBulkNotificationChunkJob::TYPE_EVENT_INVITES,
+            (int) $event->id,
+            $intUserIds,
+            true,
+            false,
+            false,
+            $chunkSize,
+            $batch->id
+        );
 
         return redirect()
             ->route('admin.events.index')
-            ->with('success', 'Members invited successfully.');
+            ->with('success', 'Invitations queued. A queue worker will send emails and SMS in the background (php artisan queue:work).');
     }
 
     public function album(Event $event)
