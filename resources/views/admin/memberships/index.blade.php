@@ -20,6 +20,20 @@
 <div class="h-full flex gap-3 workspace-transition relative p-6" x-data="membershipPage()">
     <div class="flex flex-col gap-3 workspace-transition flex-1 min-w-0" :class="showPanel ? 'w-2/3' : 'w-full'">
 
+        @if($errors->any())
+            <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
+                <p class="font-extrabold">Could not save membership setting</p>
+                <ul class="mt-2 list-disc pl-5 text-xs font-semibold space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        @if(session('success'))
+            <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-900" x-init="showToast(@js(session('success')))"></div>
+        @endif
+
         <!-- Header -->
         <div class="flex items-center justify-between mb-2">
             <div>
@@ -212,6 +226,7 @@
                     Subscription Type <span class="text-red-500">*</span>
                 </label>
                 <select name="subscription_type" x-model="form.subscription_type"
+                    @change="if (form.subscription_type === 'Renewal') { form.registration_fee = '0'; form.registration_fee_enabled = false; }"
                     :class="errors.subscription_type ? 'border-red-400 bg-red-50' : 'border-slate-100 bg-slate-50'"
                     class="w-full rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 border transition-all">
                     <option value="">Select Type</option>
@@ -233,7 +248,13 @@
                 <p x-show="errors.membership_fee" x-cloak class="mt-1 text-[10px] text-red-600 font-medium" x-text="errors.membership_fee"></p>
             </div>
 
-            <!-- Registration Fee (hidden for Renewal) -->
+            <!-- Registration Fee (New plans only — omitted from POST for Renewal) -->
+            <template x-if="form.subscription_type === 'Renewal'">
+                <div>
+                    <input type="hidden" name="registration_fee" value="0">
+                    <input type="hidden" name="registration_fee_enabled" value="0">
+                </div>
+            </template>
             <div x-show="form.subscription_type !== 'Renewal'" x-cloak>
                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">
                     Registration Fee <span class="text-red-500">*</span>
@@ -291,10 +312,13 @@
             <!-- Grace Period (shown after payment type is selected) -->
             <div x-show="form.payment_type">
                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">
-                    Grace Period <span class="font-normal normal-case text-slate-400">(days, optional)</span>
+                    Grace Period <span class="font-normal normal-case text-slate-400">(days after plan ends)</span>
                 </label>
-                <input type="number" name="grace_period" x-model="form.grace_period" min="0" placeholder="0"
+                <input type="number" name="grace_period" x-model="form.grace_period" min="0" max="365" step="1" placeholder="0"
                     class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                <p class="mt-1.5 text-[10px] font-semibold leading-relaxed text-slate-500">
+                    Example: monthly plan + 15 days grace — member keeps access for the billing month, then 15 extra days to renew before going inactive.
+                </p>
             </div>
 
             <!-- Submit -->

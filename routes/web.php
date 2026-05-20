@@ -208,6 +208,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/members/{user}/details', [AdminMemberController::class, 'show'])->name('admin.members.show');
         Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation'])
             ->name('admin.members.designation.update');
+        Route::patch('/members/{user}/membership-status', [AdminMemberController::class, 'updateMembershipStatus'])
+            ->name('admin.members.membership-status.update');
 
         // Member designations (admin-defined titles for members)
         Route::get('/designations', [AdminDesignationController::class, 'index'])->name('admin.designations.index');

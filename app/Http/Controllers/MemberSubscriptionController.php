@@ -6,6 +6,8 @@ use App\Models\MemberSubscription;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\PaymentTransaction;
 use App\Services\GnatMailService;
+use App\Services\MembershipLifecycleService;
+use App\Support\MembershipPeriod;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,16 +38,15 @@ class MemberSubscriptionController extends Controller
         $filterType = !empty($activeSubscription) ? 'Renewal' : 'New';
         $query->where('subscription_type', $filterType);
 
-        // If validity is NOT expired, show renewal blocked popup message.
+        // Block renewal during paid period only; grace period allows renewal.
         if (
             $filterType === 'Renewal'
-            && !empty($activeSubscription?->end_date)
-            && Carbon::parse($activeSubscription->end_date)->isFuture()
+            && MembershipLifecycleService::renewalBlockedDuringPaidPeriod($activeSubscription)
         ) {
             session()->flash('renewal_blocked', true);
             session()->flash(
                 'renewal_blocked_message',
-                'Your membership is still active. Please wait until it expires, then renew.'
+                'Your current billing period is still active. You can renew during the grace period after it ends, or once access expires.'
             );
         }
 
@@ -87,13 +88,12 @@ class MemberSubscriptionController extends Controller
         $activeSubscription = $user?->activeSubscription;
         if (
             $plan->subscription_type === 'Renewal'
-            && !empty($activeSubscription?->end_date)
-            && Carbon::parse($activeSubscription->end_date)->isFuture()
+            && MembershipLifecycleService::renewalBlockedDuringPaidPeriod($activeSubscription)
         ) {
             return redirect()
                 ->route('member.subscription.index', ['type' => 'New'])
                 ->with('renewal_blocked', true)
-                ->with('renewal_blocked_message', 'Your current membership is still active. Please wait until it expires, then you can purchase a Renewal plan.');
+                ->with('renewal_blocked_message', 'Your current billing period is still active. You can renew during the grace period after it ends.');
         }
 
         $registrationFee = 0.0;
@@ -163,13 +163,12 @@ class MemberSubscriptionController extends Controller
         $activeSubscription = $user?->activeSubscription;
         if (
             $plan->subscription_type === 'Renewal'
-            && !empty($activeSubscription?->end_date)
-            && Carbon::parse($activeSubscription->end_date)->isFuture()
+            && MembershipLifecycleService::renewalBlockedDuringPaidPeriod($activeSubscription)
         ) {
             return response()->json([
-                'message' => 'Renewal not available while your membership is active. Please wait until your plan expires, then renew.',
+                'message' => 'Renewal is not available during the paid billing period. You can renew during the grace period after it ends.',
                 'renewal_blocked' => true,
-                'valid_till' => optional($activeSubscription->end_date)->format('d M Y'),
+                'valid_till' => MembershipPeriod::formatDate($activeSubscription->end_date),
             ], 422);
         }
 
@@ -260,25 +259,15 @@ class MemberSubscriptionController extends Controller
         $transaction->raw_payload = $data;
         $transaction->save();
 
-        $start = Carbon::today();
-        $months = match ((string) $plan->payment_type) {
-            'monthly' => 1,
-            'bi_monthly' => 2,
-            'quarterly' => 3,
-            'half_yearly' => 6,
-            'yearly' => 12,
-            default => 12,
-        };
-        $end = (clone $start)->addMonthsNoOverflow($months);
-
-        // If a grace period exists (days), extend the end date.
-        if (!empty($plan->grace_period) && (int) $plan->grace_period > 0) {
-            $end = (clone $end)->addDays((int) $plan->grace_period);
-        }
+        $user = Auth::user();
+        $currentActive = $user?->activeSubscription;
+        $period = MembershipPeriod::buildPeriod($plan, $currentActive);
+        $start = $period['start'];
+        $end = $period['end'];
+        $normalizedPaymentType = $period['payment_type'];
 
         // Expire any previous active subscriptions. Send expiry mail only for natural lapse
         // (end date already passed), not when an active plan is merely superseded early.
-        $user = Auth::user();
         $today = Carbon::today()->toDateString();
         $superseded = MemberSubscription::query()
             ->where('user_id', Auth::id())
@@ -302,7 +291,7 @@ class MemberSubscriptionController extends Controller
             'user_id' => Auth::id(),
             'membership_subscription_setting_id' => $plan->id,
             'subscription_type' => $plan->subscription_type,
-            'payment_type' => (string) $plan->payment_type,
+            'payment_type' => $normalizedPaymentType ?? MembershipPeriod::normalizePaymentType($plan->payment_type),
             'amount' => $transaction->amount,
             'currency' => 'INR',
             'start_date' => $start,
@@ -315,6 +304,7 @@ class MemberSubscriptionController extends Controller
         if ($user) {
             $transaction->refresh();
             app(GnatMailService::class)->sendMembershipActivated($user, $subscription, $transaction);
+            app(MembershipLifecycleService::class)->syncUser($user->fresh());
         }
 
         $request->session()->forget([
@@ -338,8 +328,8 @@ class MemberSubscriptionController extends Controller
                 'grace_period' => (int) ($plan->grace_period ?? 0),
             ],
             'subscription' => [
-                'start_date' => $subscription->start_date?->format('d M Y'),
-                'end_date' => $subscription->end_date?->format('d M Y'),
+                'start_date' => $subscription->formattedStartDate(),
+                'end_date' => $subscription->formattedEndDate(),
                 'amount' => (float) $subscription->amount,
                 'currency' => $subscription->currency,
             ],

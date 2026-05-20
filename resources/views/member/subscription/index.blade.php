@@ -33,7 +33,7 @@
                         {{ $activeSubscription->subscription_type }} • {{ ucfirst(str_replace('_', ' ', (string) $activeSubscription->payment_type)) }}
                     </p>
                     <p class="mt-1 text-xs font-bold text-emerald-800/80">
-                        Valid till: {{ optional($activeSubscription->end_date)->format('M d, Y') }}
+                        Valid till: {{ $activeSubscription->formattedEndDate() }}
                     </p>
                 </div>
                 <div class="flex gap-3">
@@ -338,7 +338,7 @@
                 @if(!empty($activeSubscription) && !empty($activeSubscription->end_date))
                     <div class="rounded-2xl border border-slate-100 bg-white p-4 flex items-center justify-between">
                         <p class="text-xs font-bold text-slate-500">Current validity ends on</p>
-                        <p class="text-xs font-extrabold text-slate-900">{{ optional($activeSubscription->end_date)->format('M d, Y') }}</p>
+                        <p class="text-xs font-extrabold text-slate-900">{{ $activeSubscription->formattedEndDate() }}</p>
                     </div>
                 @endif
                 <div class="flex justify-end pt-2">

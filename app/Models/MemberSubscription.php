@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MembershipPeriod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -44,6 +45,25 @@ class MemberSubscription extends Model
     public function plan()
     {
         return $this->belongsTo(MembershipSubscriptionSetting::class, 'membership_subscription_setting_id');
+    }
+
+    public function isValidThrough(): bool
+    {
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        return MembershipPeriod::isValidThrough($this->end_date);
+    }
+
+    public function formattedEndDate(): string
+    {
+        return MembershipPeriod::formatDate($this->end_date);
+    }
+
+    public function formattedStartDate(): string
+    {
+        return MembershipPeriod::formatDate($this->start_date);
     }
 }
 

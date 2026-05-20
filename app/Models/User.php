@@ -49,6 +49,8 @@ class User extends Authenticatable implements CanResetPasswordContract
         'mobile',
         'profile_completed',
         'is_approved',
+        'membership_status',
+        'membership_inactive_type',
         'designation_id',
         'referred_by_user_id',
         'password',
@@ -99,8 +101,15 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function activeSubscription(): HasOne
     {
+        $today = now()->toDateString();
+
         return $this->hasOne(MemberSubscription::class)
+            ->with('plan')
             ->where('status', 'active')
+            ->where(function ($query) use ($today) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', $today);
+            })
             ->latestOfMany();
     }
 

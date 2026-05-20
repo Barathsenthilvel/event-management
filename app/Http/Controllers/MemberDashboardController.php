@@ -24,6 +24,8 @@ use App\Models\PollingVote;
 use App\Services\EventScheduleStatusService;
 use App\Services\GnatMailService;
 use App\Support\EventInterestErrorFlash;
+use App\Services\MembershipLifecycleService;
+use App\Support\MembershipPeriod;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +46,17 @@ class MemberDashboardController extends Controller
         $user = Auth::user();
         $user?->refresh();
         $user?->loadMissing('designation');
+
+        if ($user) {
+            MembershipPeriod::expireElapsedForUser((int) $user->id);
+            $user->refresh();
+            $activeSub = $user->activeSubscription()->first();
+            if ($activeSub) {
+                MembershipPeriod::repairEndDateIfMisaligned($activeSub);
+            }
+            app(MembershipLifecycleService::class)->syncUser($user);
+            $user->refresh();
+        }
 
         $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
         $hasActiveSubscription = $user?->activeSubscription()->exists();
@@ -230,7 +243,7 @@ class MemberDashboardController extends Controller
         }
 
         return view('member.dashboard', [
-            'activeSubscription' => $user?->activeSubscription,
+            'activeSubscription' => $user?->activeSubscription()->with('plan')->first(),
             'latestReceiptTransaction' => $latestReceiptTransaction,
             'memberDonationsTotal' => $memberDonationsTotal,
             'renewalPlans' => $renewalPlans,

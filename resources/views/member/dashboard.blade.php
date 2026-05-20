@@ -312,7 +312,6 @@
                     <a href="{{ route('member.ebooks.index') }}" class="md-sidebar-link {{ request()->routeIs('member.ebooks.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.ebooks.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> E-Books</a>
                     <a href="{{ route('member.subscription.index') }}" class="md-sidebar-link {{ request()->routeIs('member.subscription.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.subscription.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Membership</a>
                     <a href="{{ route('member.events.index') }}" class="md-sidebar-link {{ request()->routeIs('member.events.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.events.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Events</a>
-                    <a href="{{ route('member.nominations.index') }}" class="md-sidebar-link {{ request()->routeIs('member.nominations.index') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.nominations.index') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Nominations</a>
                     <a href="{{ route('member.jobs.index', ['tab' => 'search']) }}" class="md-sidebar-link {{ request()->routeIs('member.jobs.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.jobs.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Search jobs</a>
                     <a href="{{ route('member.profile.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.profile.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.profile.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Profile</a>
                     <a href="{{ route('member.password.edit') }}" class="md-sidebar-link {{ request()->routeIs('member.password.*') ? 'is-active' : '' }}" data-md-nav><span class="h-1.5 w-1.5 rounded-full {{ request()->routeIs('member.password.*') ? 'bg-[#965995]' : 'bg-[#351c42]/25' }}"></span> Change password</a>
@@ -916,7 +915,20 @@
                                         <p class="mt-0.5 truncate text-[11px] text-white/75">{{ $member->designation->name }}</p>
                                     @endif
                                     <p class="mt-1 font-mono text-[11px] font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
-                                    <p class="mt-0.5 text-[10px] text-white/75">Valid till: {{ $sub?->end_date?->format('d M Y') ?? '—' }}</p>
+                                    @php
+                                        $idBillingEnd = ($sub && $sub->start_date)
+                                            ? \App\Support\MembershipPeriod::billingEndDate($sub->start_date, $sub->payment_type)
+                                            : null;
+                                        $idGraceDays = (int) ($sub?->plan?->grace_period ?? 0);
+                                    @endphp
+                                    <p class="mt-0.5 text-[10px] text-white/75">
+                                        @if($sub && $idGraceDays > 0 && $idBillingEnd)
+                                            Valid till: {{ $sub->formattedEndDate() }}
+                                            <span class="block text-[9px] text-white/60">Includes {{ $idGraceDays }}d grace after {{ $idBillingEnd->format('j M Y') }}</span>
+                                        @else
+                                            Valid till: {{ $sub ? $sub->formattedEndDate() : '—' }}
+                                        @endif
+                                    </p>
                                 </div>
                                 <div class="flex h-[4.25rem] flex-col justify-between rounded-sm bg-black/20 px-1 py-1">
                                     <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
@@ -975,11 +987,11 @@
                                 </div>
                                 <div>
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Valid till</dt>
-                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub?->end_date?->format('d M Y') ?? '—' }}</dd>
+                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub ? $sub->formattedEndDate() : '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Purchased on</dt>
-                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub?->start_date?->format('d M Y') ?? '—' }}</dd>
+                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub ? $sub->formattedStartDate() : '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Member since</dt>
@@ -989,50 +1001,6 @@
                         </article>
                     </div>
                 </section>
-            @endif
-
-            @if($canSeeMembership)
-            <section aria-labelledby="plans-heading">
-                @if($hasActiveSubscription)
-                    @include('member.partials.dashboard-renewal-plans', ['renewalPlans' => $renewalPlans])
-                @else
-                    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h2 id="plans-heading" class="text-xl font-bold text-[#351c42] sm:text-2xl">Subscription plans</h2>
-                            <p class="mt-1 text-sm text-[#351c42]/60">
-                                Your account is approved. Choose a new subscription plan to activate membership.
-                            </p>
-                        </div>
-                        <a href="{{ route('member.subscription.index') }}" class="text-sm font-bold text-[#965995] hover:text-[#351c42]">Open membership page →</a>
-                    </div>
-
-                    <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-[#965995]">New members</h3>
-                    <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <article class="md-plan-card p-6 sm:col-span-2 lg:col-span-1">
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#965995]">New member · Full year</p>
-                            <p class="mt-2 text-2xl font-extrabold text-[#351c42]">Subscription plan</p>
-                            <p class="mt-1 text-sm text-[#351c42]/65">Choose and purchase your membership plan.</p>
-                            <ul class="mt-4 space-y-1.5 text-sm text-[#351c42]/75">
-                                <li>Includes registration where applicable</li>
-                                <li>Pay securely via Razorpay</li>
-                            </ul>
-                            <a href="{{ route('member.subscription.index', ['type' => 'New']) }}" class="md-btn-pay mt-6 inline-flex w-full justify-center sm:w-auto">Choose plan</a>
-                        </article>
-                    </div>
-                @endif
-            </section>
-            @endif
-            @if($showFullMemberMenu)
-            <section class="rounded-2xl border border-[#351c42]/10 bg-white/90 p-5 shadow-md sm:p-6">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Events</p>
-                        <h2 class="mt-1 text-lg font-bold text-[#351c42]">Interested in GNAT events?</h2>
-                        <p class="mt-1 text-sm text-[#351c42]/60">Register interest, see attendance, and download certificates on the member events page.</p>
-                    </div>
-                    <a href="{{ route('member.events.index') }}" class="md-btn-pay shrink-0 text-center">Open events page</a>
-                </div>
-            </section>
             @endif
         </main>
     </div>

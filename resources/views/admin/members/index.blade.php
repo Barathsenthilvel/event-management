@@ -1,6 +1,15 @@
 @extends('admin.layouts.app')
 
 @section('content')
+@php
+    use App\Services\MembershipLifecycleService;
+    $membershipStatusLabels = [
+        MembershipLifecycleService::STATUS_NONE => 'No plan',
+        MembershipLifecycleService::STATUS_ACTIVE => 'Membership active',
+        MembershipLifecycleService::STATUS_GRACE => 'Grace period',
+        MembershipLifecycleService::STATUS_INACTIVE => 'Inactive',
+    ];
+@endphp
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-6"
      x-data="membersPage()">
     <div class="rounded-[24px] border border-white bg-linear-to-br from-white via-white to-indigo-50/40 shadow-sm p-6">
@@ -76,6 +85,7 @@
                                 <th class="px-6 py-4">Contact</th>
                                 <th class="px-6 py-4 text-center">Profile</th>
                                 <th class="px-6 py-4 text-center">Approval</th>
+                                <th class="px-6 py-4 text-center">Membership</th>
                                 <th class="px-6 py-4 min-w-[200px]">Designation</th>
                                 <th class="px-6 py-4 text-right">Details</th>
                             </tr>
@@ -110,6 +120,21 @@
                                             {{ $m->is_approved ? 'Approved' : 'Pending' }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @php($mStatus = $m->membership_status ?? 'none')
+                                        <span class="inline-flex items-center rounded-xl px-3 py-1 text-[10px] font-black uppercase tracking-widest
+                                            @if($mStatus === 'active') bg-emerald-50 text-emerald-800 border border-emerald-100
+                                            @elseif($mStatus === 'grace') bg-sky-50 text-sky-800 border border-sky-100
+                                            @elseif($mStatus === 'inactive') bg-rose-50 text-rose-800 border border-rose-100
+                                            @else bg-slate-50 text-slate-600 border border-slate-100 @endif">
+                                            {{ $membershipStatusLabels[$mStatus] ?? ucfirst($mStatus) }}
+                                        </span>
+                                        @if($m->membership_inactive_type)
+                                            <p class="mt-1 text-[9px] font-bold text-slate-500 max-w-[8rem] mx-auto leading-tight">
+                                                {{ $inactiveTypeOptions[$m->membership_inactive_type] ?? $m->membership_inactive_type }}
+                                            </p>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 align-top">
                                         <form method="POST" action="{{ route('admin.members.designation.update', $m) }}" class="flex flex-col sm:flex-row sm:items-center gap-2">
                                             @csrf
@@ -136,7 +161,7 @@
                                     </td>
                                 </tr>
                                 <tr id="member-detail-{{ $m->id }}" class="hidden bg-slate-50/90">
-                                    <td colspan="6" class="px-6 py-5">
+                                    <td colspan="7" class="px-6 py-5">
                                         <div class="grid gap-6 lg:grid-cols-2">
                                             <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Profile details</p>
@@ -156,17 +181,54 @@
                                                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership &amp; payments</p>
                                                 @php($activeSub = $m->activeSubscription)
                                                 @if($activeSub)
+                                                    @php
+                                                        $billingEnd = $activeSub->start_date
+                                                            ? \App\Support\MembershipPeriod::billingEndDate($activeSub->start_date, $activeSub->payment_type)
+                                                            : null;
+                                                        $graceDays = (int) ($activeSub->plan?->grace_period ?? 0);
+                                                    @endphp
                                                     <div class="rounded-xl bg-emerald-50/80 px-3 py-2 text-[11px] font-bold text-emerald-950">
                                                         <p class="text-[10px] font-black uppercase tracking-widest text-emerald-800/80">Active subscription</p>
-                                                        <p class="mt-1">{{ $activeSub->plan?->subscription_type ?? 'Plan' }} · {{ strtoupper((string) $activeSub->status) }}</p>
+                                                        <p class="mt-1">{{ $activeSub->plan?->subscription_type ?? 'Plan' }} · {{ ucfirst(str_replace('_', ' ', (string) $activeSub->payment_type)) }}</p>
                                                         <p class="mt-1 text-[10px] font-semibold text-emerald-900/80">
-                                                            {{ $activeSub->start_date?->format('M j, Y') ?? '—' }} — {{ $activeSub->end_date?->format('M j, Y') ?? '—' }}
-                                                            <span class="text-slate-600">·</span> {{ $activeSub->currency ?? 'INR' }} {{ number_format((float) $activeSub->amount, 2) }}
+                                                            Paid period: {{ $activeSub->start_date?->format('M j, Y') ?? '—' }} — {{ $billingEnd?->format('M j, Y') ?? '—' }}
                                                         </p>
+                                                        @if($graceDays > 0)
+                                                            <p class="mt-1 text-[10px] font-semibold text-sky-800/90">
+                                                                Grace (+{{ $graceDays }}d): access until {{ $activeSub->formattedEndDate() }}
+                                                            </p>
+                                                        @else
+                                                            <p class="mt-1 text-[10px] font-semibold text-emerald-900/80">
+                                                                Valid till: {{ $activeSub->formattedEndDate() }}
+                                                            </p>
+                                                        @endif
+                                                        <p class="mt-1 text-[10px] text-emerald-900/70">{{ $activeSub->currency ?? 'INR' }} {{ number_format((float) $activeSub->amount, 2) }}</p>
                                                     </div>
                                                 @else
                                                     <p class="text-[11px] font-bold text-slate-500">No active subscription on file.</p>
                                                 @endif
+                                                <form method="POST" action="{{ route('admin.members.membership-status.update', $m) }}" class="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Membership status (admin)</p>
+                                                    @if(($m->membership_status ?? '') === 'inactive')
+                                                        <input type="hidden" name="action" value="clear_inactive">
+                                                        <button type="submit" class="w-full rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-extrabold text-white hover:bg-emerald-700">
+                                                            Clear inactive flag
+                                                        </button>
+                                                    @else
+                                                        <input type="hidden" name="action" value="mark_inactive">
+                                                        <label class="block text-[10px] font-bold text-slate-500">Inactive type</label>
+                                                        <select name="membership_inactive_type" required class="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-[11px] font-bold">
+                                                            @foreach($inactiveTypeOptions as $value => $label)
+                                                                <option value="{{ $value }}">{{ $label }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <button type="submit" class="w-full rounded-xl bg-rose-600 px-3 py-2 text-[10px] font-extrabold text-white hover:bg-rose-700">
+                                                            Mark membership inactive
+                                                        </button>
+                                                    @endif
+                                                </form>
                                                 <div>
                                                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Recent payments</p>
                                                     @if($m->paymentTransactions->isEmpty())
