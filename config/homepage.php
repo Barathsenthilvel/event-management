@@ -49,7 +49,7 @@ return [
         'headline_line2' => 'Grow Stronger Communities',
         'description_html' => '<strong class="text-white">GNAT Association</strong> brings people together to create meaningful impact across communities.',
         'registered_count' => 2603,
-        'registered_label' => 'Peoples Registered',
+        'registered_label' => 'Members Registered',
         'avatar_image' => 'images/testimonials-images/thumb-10.2.webp',
     ],
 

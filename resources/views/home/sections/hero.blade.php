@@ -15,19 +15,7 @@
                     {!! $hero['description_html'] !!}
                 </p>
 
-                <div class="mt-7 flex items-center gap-4">
-                    <a href="{{ Auth::check() ? route('member.jobs.index') : route('member.login', ['return' => route('member.jobs.index')]) }}" class="click-btn btn-style506">
-                        <span class="click-btn__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7" fill="none" aria-hidden="true">
-                                <path d="M7 17L17 7" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M9 7H17V15" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </span>
-                        <span class="click-btn__label">Join Now</span>
-                    </a>
-                </div>
-
-                <div class="mt-8 flex items-center gap-4" aria-label="{{ $hero['registered_count'] }} people registered with GNAT Association">
+                <div class="mt-7 flex items-center gap-4" aria-label="{{ number_format($hero['registered_count']) }} members registered with GNAT Association">
                     <div class="flex shrink-0 items-center">
                         <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
                             @include('partials.user-letter-avatar', ['letter' => 'G', 'class' => 'h-full w-full text-sm sm:text-base'])

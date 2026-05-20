@@ -33,7 +33,10 @@
                         {{ $activeSubscription->subscription_type }} • {{ ucfirst(str_replace('_', ' ', (string) $activeSubscription->payment_type)) }}
                     </p>
                     <p class="mt-1 text-xs font-bold text-emerald-800/80">
-                        Valid till: {{ $activeSubscription->formattedEndDate() }}
+                        Valid till: {{ $activeSubscription->formattedValidTillDate() }}
+                        @if($activeSubscription->graceDays() > 0)
+                            <span class="block font-semibold text-emerald-800/65">+{{ $activeSubscription->graceDays() }}d grace · access until {{ $activeSubscription->formattedEndDate() }}</span>
+                        @endif
                     </p>
                 </div>
                 <div class="flex gap-3">

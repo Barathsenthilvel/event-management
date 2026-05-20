@@ -1606,8 +1606,22 @@
                         dt.textContent = String(item.label);
 
                         const dd = document.createElement("dd");
-                        dd.className = "text-right font-semibold text-[#351c42]";
-                        dd.textContent = String(item.value);
+                        dd.className = "flex items-center justify-end gap-2 text-right font-semibold text-[#351c42]";
+
+                        if (item.logo) {
+                            const logo = document.createElement("img");
+                            logo.src = String(item.logo);
+                            logo.alt = "";
+                            logo.className = "h-8 w-8 shrink-0 rounded-lg border border-[#351c42]/10 object-cover";
+                            logo.width = 32;
+                            logo.height = 32;
+                            logo.loading = "lazy";
+                            dd.appendChild(logo);
+                        }
+
+                        const valueSpan = document.createElement("span");
+                        valueSpan.textContent = String(item.value);
+                        dd.appendChild(valueSpan);
 
                         row.appendChild(dt);
                         row.appendChild(dd);

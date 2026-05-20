@@ -916,17 +916,12 @@
                                     @endif
                                     <p class="mt-1 font-mono text-[11px] font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
                                     @php
-                                        $idBillingEnd = ($sub && $sub->start_date)
-                                            ? \App\Support\MembershipPeriod::billingEndDate($sub->start_date, $sub->payment_type)
-                                            : null;
-                                        $idGraceDays = (int) ($sub?->plan?->grace_period ?? 0);
+                                        $idGraceDays = $sub ? $sub->graceDays() : 0;
                                     @endphp
                                     <p class="mt-0.5 text-[10px] text-white/75">
-                                        @if($sub && $idGraceDays > 0 && $idBillingEnd)
-                                            Valid till: {{ $sub->formattedEndDate() }}
-                                            <span class="block text-[9px] text-white/60">Includes {{ $idGraceDays }}d grace after {{ $idBillingEnd->format('j M Y') }}</span>
-                                        @else
-                                            Valid till: {{ $sub ? $sub->formattedEndDate() : '—' }}
+                                        Valid till: {{ $sub ? $sub->formattedValidTillDate() : '—' }}
+                                        @if($sub && $idGraceDays > 0)
+                                            <span class="block text-[9px] text-white/60">+{{ $idGraceDays }}d grace · access until {{ $sub->formattedEndDate() }}</span>
                                         @endif
                                     </p>
                                 </div>
@@ -987,7 +982,12 @@
                                 </div>
                                 <div>
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Valid till</dt>
-                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub ? $sub->formattedEndDate() : '—' }}</dd>
+                                    <dd class="mt-1 font-semibold tabular-nums">
+                                        {{ $sub ? $sub->formattedValidTillDate() : '—' }}
+                                        @if($sub && $sub->graceDays() > 0)
+                                            <span class="mt-0.5 block text-[10px] font-medium text-[#351c42]/55">+{{ $sub->graceDays() }}d grace · access until {{ $sub->formattedEndDate() }}</span>
+                                        @endif
+                                    </dd>
                                 </div>
                                 <div>
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Purchased on</dt>

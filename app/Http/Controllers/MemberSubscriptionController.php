@@ -168,7 +168,7 @@ class MemberSubscriptionController extends Controller
             return response()->json([
                 'message' => 'Renewal is not available during the paid billing period. You can renew during the grace period after it ends.',
                 'renewal_blocked' => true,
-                'valid_till' => MembershipPeriod::formatDate($activeSubscription->end_date),
+                'valid_till' => $activeSubscription->formattedValidTillDate(),
             ], 422);
         }
 
@@ -329,7 +329,9 @@ class MemberSubscriptionController extends Controller
             ],
             'subscription' => [
                 'start_date' => $subscription->formattedStartDate(),
-                'end_date' => $subscription->formattedEndDate(),
+                'end_date' => $subscription->formattedValidTillDate(),
+                'access_until' => $subscription->formattedEndDate(),
+                'grace_days' => $subscription->graceDays(),
                 'amount' => (float) $subscription->amount,
                 'currency' => $subscription->currency,
             ],
@@ -338,14 +340,30 @@ class MemberSubscriptionController extends Controller
 
     public function downloadInvoice($id)
     {
-        $transaction = \App\Models\PaymentTransaction::with('subscriptionPlan', 'user')
+        $transaction = PaymentTransaction::with('subscriptionPlan', 'user')
             ->where('user_id', Auth::id())
             ->findOrFail($id);
-            
+
+        $subscription = null;
+        if ($transaction->razorpay_order_id) {
+            $subscription = MemberSubscription::query()
+                ->where('user_id', $transaction->user_id)
+                ->where('razorpay_order_id', $transaction->razorpay_order_id)
+                ->first();
+        }
+
+        $contact = config('homepage.contact', []);
+
         return view('member.subscription.invoice', [
             'transaction' => $transaction,
-            'user' => Auth::user(),
+            'user' => $transaction->user ?? Auth::user(),
             'plan' => $transaction->subscriptionPlan,
+            'subscription' => $subscription,
+            'company' => [
+                'name' => 'GNAT Association',
+                'address' => (string) ($contact['address'] ?? ''),
+                'email' => (string) ($contact['email'] ?? ''),
+            ],
         ]);
     }
 }

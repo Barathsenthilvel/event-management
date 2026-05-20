@@ -65,5 +65,37 @@ class MemberSubscription extends Model
     {
         return MembershipPeriod::formatDate($this->start_date);
     }
+
+    /** Last day of the paid billing cycle (excludes grace days). */
+    public function billingEndDate(): ?\Carbon\Carbon
+    {
+        if ($this->start_date === null) {
+            return null;
+        }
+
+        return MembershipPeriod::billingEndDate($this->start_date, $this->payment_type);
+    }
+
+    public function formattedBillingEndDate(): string
+    {
+        return MembershipPeriod::formatDate($this->billingEndDate());
+    }
+
+    public function graceDays(): int
+    {
+        $this->loadMissing('plan');
+
+        return MembershipPeriod::graceDaysForPlan($this->plan);
+    }
+
+    /** Membership period end for display ("Valid till"); includes grace only when none is configured. */
+    public function formattedValidTillDate(): string
+    {
+        if ($this->graceDays() > 0) {
+            return $this->formattedBillingEndDate();
+        }
+
+        return $this->formattedEndDate();
+    }
 }
 

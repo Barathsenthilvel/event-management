@@ -80,7 +80,7 @@
                     $profileResumeAvailable = $profileResumeAvailable ?? false;
                     $hospitalLogos = $hospitalLogos ?? collect();
                 @endphp
-                <div class="grid max-w-4xl gap-5">
+                <div class="grid w-full gap-5">
                     @foreach($jobs as $job)
                         @php
                             $alreadyApplied = in_array((int) $job->id, $appliedJobIds ?? [], true);
@@ -100,8 +100,12 @@
                             $hospitalLabel = $job->hospital ?: 'Hospital';
                             $hospitalCompact = preg_replace('/\s+/u', '', $hospitalLabel) ?: 'H';
                             $hospitalInitials = mb_strtoupper(mb_substr($hospitalCompact, 0, 2));
+                            $hospitalMeta = ['label' => 'Hospital', 'value' => $hospitalLabel];
+                            if ($hospitalLogoUrl) {
+                                $hospitalMeta['logo'] = $hospitalLogoUrl;
+                            }
                             $jobReadMoreMeta = array_values(array_filter([
-                                ['label' => 'Hospital', 'value' => $hospitalLabel],
+                                $hospitalMeta,
                                 ['label' => 'Job code', 'value' => $job->code ? (string) $job->code : null],
                                 ['label' => 'Vacancy type', 'value' => $jobType !== '' ? $jobType : 'Any'],
                                 ['label' => 'Preference', 'value' => $prefType !== '' ? $prefType : 'Any'],
