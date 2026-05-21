@@ -48,7 +48,7 @@
             if ($dateLabels->count() > 1) {
                 $scheduleChipText .= ' +' . ($dateLabels->count() - 1) . ' more dates';
             }
-            $organizer = $event->creator?->name ?? 'GNAT Team';
+            $organizer = $event->publicOrganizerName();
             $desc = trim(strip_tags((string) ($event->description ?? '')));
             $hasDesc = $desc !== '';
             $seatLimited = ($event->seat_mode ?? '') === 'limited';
@@ -57,10 +57,13 @@
             $seatPct = ($seatLimited && $seatCap > 0) ? min(100, (int) round((100 * $seatFilled) / $seatCap)) : 0;
             $isAdminEvent = filled($event->created_by_admin_id);
             $memberInterestReturn = request()->fullUrl();
+            $scheduleStatus = $event->resolvedScheduleStatus();
             $interestClosed = ! $event->acceptsPublicAttendance();
-            $attendCtaLabel = match ($event->status) {
-                'live' => 'Attend now',
-                'upcoming' => 'Attend',
+            $hasRegisteredInterest = in_array((int) $event->id, array_map('intval', (array) ($interestedEventIds ?? [])), true)
+                || in_array((int) $event->id, array_map('intval', (array) ($guestInterestedEventIds ?? [])), true);
+            $registerCtaLabel = match ($event->status) {
+                'live' => 'Register now',
+                'upcoming' => 'Register interest',
                 default => 'Register',
             };
         @endphp
@@ -127,7 +130,14 @@
                                 Live
                             </span>
                         @elseif($event->status === 'completed')
-                            <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80">Completed</span>
+                            <span
+                                role="button"
+                                tabindex="0"
+                                class="inline-flex shrink-0 cursor-pointer items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80 transition hover:bg-[#351c42]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#965995]/40"
+                                data-open-home-event-status
+                                data-event-title="{{ $event->title }}"
+                                data-event-status="completed"
+                            >Completed</span>
                         @elseif($event->status === 'upcoming')
                             <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-indigo-800">Upcoming</span>
                         @endif
@@ -152,7 +162,7 @@
                     <div class="relative min-h-[13rem] rounded-2xl overflow-hidden border border-[#351c42]/10 bg-[#f6f3e9]">
                         <img src="{{ $cover }}" alt="{{ $event->title }}" class="absolute inset-0 h-full w-full object-cover" />
 
-                        <div class="absolute left-4 top-4 rounded-full bg-[#fddc6a] px-3 py-2 text-center shadow-sm">
+                        <div class="absolute left-4 top-4 min-w-[3.25rem] rounded-lg bg-[#fddc6a] px-2.5 py-2 text-center shadow-sm">
                             <div class="text-lg font-extrabold leading-none text-[#351c42]">{{ $day }}</div>
                             <div class="mt-0.5 text-[10px] font-extrabold tracking-widest leading-none text-[#965995] bg-white/70 rounded px-2 py-0.5 inline-block">{{ $month }}</div>
                         </div>
@@ -219,27 +229,12 @@
                                             <path d="M17.364 12.568c.833-.817 1.386-1.88 1.386-3.068 0-2.347-1.903-4.25-4.25-4.25-1.854 0-3.426 1.126-4.1 2.735-.352.82-.538 1.717-.538 2.765s.186 1.945.538 2.765c.774 1.609 2.246 2.735 4.1 2.735 1.182 0 2.26-.45 3.064-1.19"/>
                                         </svg>
                                     </span>
-                                    <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited</span>
+                                    <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited Seats</span>
                                 </div>
                             @endif
                         </div>
 
-                        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm md:text-base font-bold text-[#351c42] break-words">
-                            <span>{{ $event->title }}</span>
-                            @if($event->status === 'live')
-                                <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
-                                    <span class="relative flex h-2 w-2">
-                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                                    </span>
-                                    Live
-                                </span>
-                            @elseif($event->status === 'upcoming')
-                                <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-indigo-800">Upcoming</span>
-                            @elseif($event->status === 'completed')
-                                <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#351c42]/80">Completed</span>
-                            @endif
-                        </div>
+                        <p class="mt-3 text-sm md:text-base font-bold text-[#351c42] break-words">{{ $event->title }}</p>
                         <!-- @if($sortedDates->isNotEmpty())
                             <div class="mt-3 rounded-2xl border border-[#351c42]/10 bg-[#faf9fc] p-3">
                                 <p class="text-[10px] font-black uppercase tracking-[0.16em] text-[#965995]">Event schedule</p>
@@ -269,7 +264,7 @@
                                 </p>
                                 <button
                                     type="button"
-                                    class="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#965995]/40 rounded"
+                                    class="mt-2 mb-5 inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#965995]/40 rounded"
                                     data-desc-readmore
                                     aria-haspopup="dialog"
                                     aria-controls="home-event-readmore-modal"
@@ -306,7 +301,7 @@
                             </div>
                         </div>
 
-                        @if(in_array($event->id, $interestedEventIds ?? [], true) || in_array($event->id, $guestInterestedEventIds ?? [], true))
+                        @if($hasRegisteredInterest)
                             @if($isAdminEvent)
                                 <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5" data-readmore-footer>
                                     @include('home.partials.event-interested-facepile-static', ['registeredCount' => $seatFilled])
@@ -323,15 +318,25 @@
                             @endif
                         @elseif($interestClosed)
                             <div class="mt-6" data-readmore-footer>
-                                <span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/15 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/60 cursor-default">
-                                    @if($event->status === 'cancelled')
-                                        This event was cancelled
-                                    @elseif($event->status === 'completed')
-                                        Event completed — view only
-                                    @else
-                                        Registration closed
-                                    @endif
-                                </span>
+                                @if($scheduleStatus === 'completed' || $event->status === 'completed')
+                                    <button
+                                        type="button"
+                                        class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-[#351c42]/15 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/75 transition hover:bg-[#351c42]/5"
+                                        data-open-home-event-status
+                                        data-event-title="{{ $event->title }}"
+                                        data-event-status="completed"
+                                    >
+                                        Event completed — view details
+                                    </button>
+                                @else
+                                    <span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/15 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/60 cursor-default">
+                                        @if($event->status === 'cancelled' || $scheduleStatus === 'cancelled')
+                                            This event was cancelled
+                                        @else
+                                            Registration closed
+                                        @endif
+                                    </span>
+                                @endif
                             </div>
                         @elseif($isAdminEvent)
                             <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#351c42]/20 bg-[#351c42] px-4 py-3 sm:px-5" data-readmore-footer>
@@ -344,7 +349,7 @@
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                             data-member-interest-url="{{ route('member.events.interest', $event) }}"
                                         >
-                                            {{ $attendCtaLabel }}
+                                            {{ $registerCtaLabel }}
                                         </button>
                                     @else
                                         <button
@@ -352,7 +357,7 @@
                                             class="interest-open-btn cursor-pointer inline-flex min-h-[2.1rem] items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42]"
                                             data-interest-url="{{ route('events.interest', $event) }}"
                                         >
-                                            {{ $attendCtaLabel }}
+                                            {{ $registerCtaLabel }}
                                         </button>
                                     @endauth
                                 </div>
@@ -366,7 +371,7 @@
                                         data-interest-url="{{ route('events.interest', $event) }}"
                                         data-member-interest-url="{{ route('member.events.interest', $event) }}"
                                     >
-                                        {{ $attendCtaLabel }}
+                                        {{ $registerCtaLabel }}
                                     </button>
                                 @else
                                     <button
@@ -374,7 +379,7 @@
                                         class="interest-open-btn cursor-pointer inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-extrabold tracking-wide text-[#fddc6a] shadow-md shadow-[#351c42]/15 hover:brightness-105 transition-colors"
                                         data-interest-url="{{ route('events.interest', $event) }}"
                                     >
-                                        {{ $attendCtaLabel }}
+                                        {{ $registerCtaLabel }}
                                     </button>
                                 @endauth
                             </div>
@@ -384,6 +389,25 @@
             </div>
         </div>
     @endforeach
+</div>
+
+<div
+    id="home-event-status-modal"
+    class="fixed inset-0 z-[191] hidden items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="home-event-status-title"
+    aria-hidden="true"
+>
+    <div class="absolute inset-0 cursor-pointer bg-[#351c42]/45" data-home-status-backdrop title="Close"></div>
+    <div class="relative w-full max-w-sm rounded-2xl border border-[#351c42]/10 bg-white p-6 shadow-2xl">
+        <div class="flex items-start justify-between gap-3">
+            <h2 id="home-event-status-title" class="text-lg font-extrabold text-[#351c42]"></h2>
+            <button type="button" class="shrink-0 cursor-pointer rounded-xl p-2 text-[#351c42]/50 hover:bg-[#351c42]/5" data-home-status-close aria-label="Close">✕</button>
+        </div>
+        <p id="home-event-status-body" class="mt-3 text-sm font-semibold leading-relaxed text-[#351c42]/75"></p>
+        <button type="button" data-home-status-close class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-bold text-[#fddc6a] transition hover:brightness-105">Got it</button>
+    </div>
 </div>
 
 <div
@@ -478,5 +502,52 @@
             if (e.key !== 'Escape' || !readModal || readModal.classList.contains('hidden')) return;
             closeReadMoreModal();
         });
+
+        var statusModal = document.getElementById('home-event-status-modal');
+        var statusTitle = document.getElementById('home-event-status-title');
+        var statusBody = document.getElementById('home-event-status-body');
+        if (statusModal && statusTitle && statusBody) {
+            var statusCopy = {
+                completed: 'This event has ended. You can review the details, but new registrations are closed.'
+            };
+            var setStatusOpen = function (open) {
+                statusModal.classList.toggle('hidden', !open);
+                statusModal.classList.toggle('flex', open);
+                statusModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+                document.body.classList.toggle('overflow-hidden', open);
+            };
+            var closeStatusModal = function () {
+                setStatusOpen(false);
+            };
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                var openBtn = e.target.closest('[data-open-home-event-status][role="button"]');
+                if (!openBtn) return;
+                e.preventDefault();
+                openBtn.click();
+            });
+
+            document.addEventListener('click', function (e) {
+                var openBtn = e.target.closest('[data-open-home-event-status]');
+                if (openBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var key = openBtn.getAttribute('data-event-status') || 'completed';
+                    var eventTitle = openBtn.getAttribute('data-event-title') || 'Event';
+                    statusTitle.textContent = eventTitle + ' — Completed';
+                    statusBody.textContent = statusCopy[key] || statusCopy.completed;
+                    setStatusOpen(true);
+                    return;
+                }
+                if (e.target.closest('[data-home-status-close]') || e.target.closest('[data-home-status-backdrop]')) {
+                    closeStatusModal();
+                }
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && statusModal && !statusModal.classList.contains('hidden')) {
+                    closeStatusModal();
+                }
+            });
+        }
     })();
 </script>

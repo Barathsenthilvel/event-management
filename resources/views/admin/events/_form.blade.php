@@ -66,6 +66,11 @@
                 <option value="completed" {{ $status === 'completed' ? 'selected' : '' }}>Completed</option>
                 <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
             </select>
+            <p class="mt-1.5 text-[11px] font-semibold leading-relaxed text-slate-500">
+                Status is recalculated from event dates when you save and when the homepage loads.
+                Before start time → <strong>Upcoming</strong>; from start until end → <strong>Live</strong>; after end → <strong>Completed</strong>.
+                The public site shows <strong>Register interest</strong> for upcoming events and <strong>Register now</strong> once live.
+            </p>
             @error('status')<p class="text-[11px] text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
@@ -102,6 +107,9 @@
                 </div>
             @endforeach
         </div>
+        <p class="mt-2 text-[11px] font-semibold leading-relaxed text-slate-500">
+            If the end time is earlier than the start on the same day (e.g. 10:00 PM – 12:30 AM), the system treats the end as <strong>the next morning</strong> so registration stays open through the night.
+        </p>
         @error('event_dates')<p class="text-[11px] text-red-600 mt-2">{{ $message }}</p>@enderror
         @error('event_dates.*.date')<p class="text-[11px] text-red-600 mt-2">{{ $message }}</p>@enderror
     </div>

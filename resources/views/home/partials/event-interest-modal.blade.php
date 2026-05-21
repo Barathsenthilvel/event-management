@@ -337,9 +337,15 @@
             function onEsc(e) {
                 if (e.key === "Escape") tearDown();
             }
-            ok.addEventListener("click", tearDown);
+            ok.addEventListener("click", () => {
+                tearDown();
+                window.location.reload();
+            });
             root.addEventListener("click", (e) => {
-                if (e.target === root) tearDown();
+                if (e.target === root) {
+                    tearDown();
+                    window.location.reload();
+                }
             });
             document.addEventListener("keydown", onEsc);
             panel.appendChild(h2);

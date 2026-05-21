@@ -121,13 +121,14 @@ class EventController extends Controller
             }
         });
 
+        $successMessage = 'Event created successfully. Invite approved members now.';
         if ($event) {
-            $this->refreshEventStatusFromSchedule($event);
+            $successMessage = $this->appendScheduleStatusNotice($event, $validated['status'], $successMessage);
         }
 
         return redirect()
             ->route('admin.events.invite', $event)
-            ->with('success', 'Event created successfully. Invite approved members now.');
+            ->with('success', $successMessage);
     }
 
     public function show(Request $request, Event $event)
@@ -231,12 +232,13 @@ class EventController extends Controller
             }
         });
 
-        $this->refreshEventStatusFromSchedule($event);
+        $successMessage = 'Event updated successfully. Invite or re-notify approved members below.';
+        $successMessage = $this->appendScheduleStatusNotice($event, $validated['status'], $successMessage);
         $event->refresh();
 
         return redirect()
             ->route('admin.events.invite', $event)
-            ->with('success', 'Event updated successfully. Invite or re-notify approved members below.');
+            ->with('success', $successMessage);
     }
 
     public function destroy(Event $event)
@@ -857,6 +859,20 @@ class EventController extends Controller
         $event->loadMissing('dates');
         resolve(EventScheduleStatusService::class)->syncOne($event);
         $event->refresh();
+    }
+
+    private function appendScheduleStatusNotice(Event $event, string $requestedStatus, string $message): string
+    {
+        $this->refreshEventStatusFromSchedule($event);
+        $event->refresh();
+
+        if ($event->status === $requestedStatus) {
+            return $message;
+        }
+
+        $label = ucfirst($event->status);
+
+        return $message.' Status was set to "'.ucfirst($requestedStatus).'" but adjusted to "'.$label.'" automatically from the event date and start/end times.';
     }
 
     /**

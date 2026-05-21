@@ -87,7 +87,12 @@ class EventInterestController extends Controller
         }
 
         if (! Auth::check()) {
-            $request->session()->push('guest_event_interests', $event->id);
+            $guestIds = collect($request->session()->get('guest_event_interests', []))
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn ($id) => $id > 0);
+            if (! $guestIds->contains((int) $event->id)) {
+                $request->session()->push('guest_event_interests', (int) $event->id);
+            }
         }
 
         app(GnatMailService::class)->sendEventInterestConfirmation(

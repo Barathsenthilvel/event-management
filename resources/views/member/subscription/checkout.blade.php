@@ -88,6 +88,27 @@
                         <span x-text="isProcessing ? 'Processing...' : 'Proceed to Pay'"></span>
                     </button>
 
+                    <!-- Verifying payment (loader after Razorpay) -->
+                    <template x-teleport="body">
+                        <div x-show="isVerifying" x-cloak style="display: none;" class="fixed inset-0 z-[140]" aria-live="polite" aria-busy="true">
+                            <div class="absolute inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+                            <div class="relative min-h-full flex items-center justify-center p-4">
+                                <div class="w-full max-w-sm rounded-[28px] bg-white border border-[#351c42]/10 shadow-2xl p-8 text-center">
+                                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#965995]/15">
+                                        <svg class="h-8 w-8 animate-spin text-[#965995]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                            <path class="opacity-90" fill="currentColor" d="M22 12a10 10 0 00-10-10v3a7 7 0 017 7h3z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="mt-5 text-lg font-extrabold text-[#351c42]">Processing payment</h3>
+                                    <p class="mt-2 text-sm font-semibold leading-relaxed text-[#351c42]/70">
+                                        Please wait while we confirm your payment and prepare your membership invoice…
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
                     <!-- Success Modal -->
                     <template x-teleport="body">
                         <div x-show="showModal" style="display: none;" class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -107,7 +128,7 @@
                                         </div>
                                         <h3 class="text-xl font-extrabold text-slate-900 text-center" id="modal-title">Payment Successful!</h3>
                                         <p class="mt-2 text-sm text-slate-500 text-center">
-                                            Your transaction has been securely processed.
+                                            Your membership is active. You can download your invoice in the next step.
                                         </p>
                                         <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
                                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Plan purchased</p>
@@ -185,6 +206,7 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('checkoutPage', () => ({
             isProcessing: false,
+            isVerifying: false,
             showModal: false,
             modalStep: 1,
             paymentId: '',
@@ -243,38 +265,43 @@
                         "order_id": orderData.order_id,
                         "handler": async (response) => {
                             this.paymentId = response.razorpay_payment_id;
-                            
-                            // 3. Verify on backend
-                            const verifyResponse = await fetch("{{ route('member.subscription.verify') }}", {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                })
-                            });
-                            
-                            const verifyData = await verifyResponse.json();
-                            if (!verifyResponse.ok || !verifyData?.success) {
-                                throw new Error(verifyData?.message || 'Payment verification failed');
-                            }
+                            this.isVerifying = true;
+                            try {
+                                const verifyResponse = await fetch("{{ route('member.subscription.verify') }}", {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_signature: response.razorpay_signature,
+                                    })
+                                });
 
-                            this.transactionId = verifyData.transaction_id || '';
-                            this.plan = verifyData.plan || null;
-                            this.subscription = verifyData.subscription || null;
-                            this.planSummary = `${verifyData?.plan?.subscription_type || ''} • ${this.humanCycle(verifyData?.plan?.payment_type)} Plan`;
-                            const amt = verifyData?.subscription?.amount ?? orderData.amount ?? 0;
-                            this.amountPaid = `${this.formatInr(amt)} ${verifyData?.subscription?.currency || 'INR'}`;
-                            this.validTill = verifyData?.subscription?.end_date || '-';
-                            
-                            // 4. Show success modal
-                            this.isProcessing = false;
-                            this.modalStep = 1;
-                            this.showModal = true;
+                                const verifyData = await verifyResponse.json().catch(() => ({}));
+                                if (!verifyResponse.ok || !verifyData?.success) {
+                                    throw new Error(verifyData?.message || 'Payment verification failed');
+                                }
+
+                                this.transactionId = verifyData.transaction_id || '';
+                                this.plan = verifyData.plan || null;
+                                this.subscription = verifyData.subscription || null;
+                                this.planSummary = `${verifyData?.plan?.subscription_type || ''} • ${this.humanCycle(verifyData?.plan?.payment_type)} Plan`;
+                                const amt = verifyData?.subscription?.amount ?? orderData.amount ?? 0;
+                                this.amountPaid = `${this.formatInr(amt)} ${verifyData?.subscription?.currency || 'INR'}`;
+                                this.validTill = verifyData?.subscription?.end_date || '-';
+                                this.modalStep = 1;
+                                this.showModal = true;
+                            } catch (err) {
+                                console.error(err);
+                                alert(err?.message || 'Payment may have gone through but we could not confirm it. Please contact support.');
+                            } finally {
+                                this.isVerifying = false;
+                                this.isProcessing = false;
+                            }
                         },
                         "prefill": {
                             "name": "{{ $user->name ?? '' }}",
@@ -286,6 +313,7 @@
                         "modal": {
                             "ondismiss": () => {
                                 this.isProcessing = false;
+                                this.isVerifying = false;
                             }
                         }
                     };
@@ -295,8 +323,9 @@
                     
                 } catch (error) {
                     console.error('Payment Error', error);
-                    alert('Could not initialize payment. Please try again.');
+                    alert(error?.message || 'Could not complete payment. Please try again.');
                     this.isProcessing = false;
+                    this.isVerifying = false;
                 }
             }
         }));

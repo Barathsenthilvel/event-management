@@ -355,6 +355,25 @@
     </div>
 </div>
 
+<!-- Payment processing (after Razorpay, while verifying & preparing invoice) -->
+<div id="payment-processing-modal" class="fixed inset-0 z-[140] hidden" aria-live="polite" aria-busy="true">
+    <div class="absolute inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-[28px] bg-white border border-[#351c42]/10 shadow-2xl p-8 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#965995]/15">
+                <svg class="h-8 w-8 animate-spin text-[#965995]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                    <path class="opacity-90" fill="currentColor" d="M22 12a10 10 0 00-10-10v3a7 7 0 017 7h3z"></path>
+                </svg>
+            </div>
+            <h3 class="mt-5 text-lg font-extrabold text-[#351c42]">Processing payment</h3>
+            <p id="payment-processing-message" class="mt-2 text-sm font-semibold leading-relaxed text-[#351c42]/70">
+                Please wait while we confirm your payment and prepare your membership invoice…
+            </p>
+        </div>
+    </div>
+</div>
+
 <!-- Payment success: theme modal + download invoice -->
 <div id="payment-success-modal" class="fixed inset-0 z-[120] hidden">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeSuccessModal()"></div>
@@ -363,7 +382,7 @@
             <div class="p-6 bg-gradient-to-br from-[#351c42] via-[#4d2a5c] to-[#965995] text-white">
                 <p class="text-[10px] font-black uppercase tracking-widest text-[#fddc6a]/90">Payment successful</p>
                 <h3 class="mt-1 text-xl font-extrabold tracking-tight text-white" id="success-title">Thank you!</h3>
-                <p class="mt-2 text-xs font-bold text-white/85" id="success-subtitle"></p>
+                <p class="mt-2 text-xs font-bold text-white/85" id="success-subtitle">Your membership is active. You can download your invoice below.</p>
             </div>
 
             <div class="p-6 space-y-4 max-h-[min(70vh,520px)] overflow-y-auto">
@@ -451,6 +470,26 @@ function setRenewalBlockedMessage(message) {
 function closeRenewalBlockedModal() {
     const modal = document.getElementById('renewal-blocked-modal');
     if (modal) modal.classList.add('hidden');
+}
+
+function openPaymentProcessingModal(message) {
+    const modal = document.getElementById('payment-processing-modal');
+    const msg = document.getElementById('payment-processing-message');
+    if (msg && message) {
+        msg.textContent = message;
+    }
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+}
+
+function closePaymentProcessingModal() {
+    const modal = document.getElementById('payment-processing-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
 }
 
 function closeSuccessModal() {
@@ -594,6 +633,10 @@ async function startRazorpayCheckout() {
             order_id: data.order_id,
             handler: async function (response) {
                 razorpayOutcome = 'processing';
+                setPayNowLoading(true);
+                openPaymentProcessingModal(
+                    'Please wait while we confirm your payment and prepare your membership invoice…'
+                );
                 try {
                     const verifyRes = await fetch("{{ route('member.subscription.verify') }}", {
                         method: 'POST',
@@ -610,6 +653,8 @@ async function startRazorpayCheckout() {
                     });
 
                     const payload = await verifyRes.json().catch(() => ({}));
+                    closePaymentProcessingModal();
+                    setPayNowLoading(false);
                     if (!verifyRes.ok || !payload?.success) {
                         razorpayOutcome = 'failed';
                         openFailureModal(
@@ -624,9 +669,12 @@ async function startRazorpayCheckout() {
                     razorpayOutcome = 'success';
                     payload.razorpay_payment_id = response.razorpay_payment_id;
                     payload.razorpay_order_id = response.razorpay_order_id;
+                    payload.message = payload.message || 'Your membership payment was received successfully.';
                     openSuccessModal(payload);
                 } catch (err) {
                     console.error(err);
+                    closePaymentProcessingModal();
+                    setPayNowLoading(false);
                     razorpayOutcome = 'failed';
                     openFailureModal(
                         'Something went wrong',

@@ -59,28 +59,8 @@ class HomeController extends Controller
             ->limit(8)
             ->get();
 
-        $interestedEventIds = [];
-        if (Auth::check() && $homeEvents->isNotEmpty()) {
-            $ids = $homeEvents->pluck('id');
-            $interestedEventIds = EventInvite::query()
-                ->where('user_id', Auth::id())
-                ->whereIn('event_id', $ids)
-                ->pluck('event_id')
-                ->merge(
-                    EventInterest::query()
-                        ->where('user_id', Auth::id())
-                        ->whereIn('event_id', $ids)
-                        ->pluck('event_id')
-                )
-                ->unique()
-                ->values()
-                ->all();
-        }
-
-        $guestInterestedEventIds = collect(session('guest_event_interests', []))
-            ->unique()
-            ->values()
-            ->all();
+        $interestedEventIds = $this->resolveInterestedEventIdsForHome($homeEvents);
+        $guestInterestedEventIds = $this->resolveGuestInterestedEventIds();
 
         $homeDonations = Donation::query()
             ->where('is_active', true)
@@ -183,28 +163,8 @@ class HomeController extends Controller
             ->paginate(24)
             ->withQueryString();
 
-        $interestedEventIds = [];
-        if (Auth::check() && $events->count() > 0) {
-            $ids = $events->pluck('id');
-            $interestedEventIds = EventInvite::query()
-                ->where('user_id', Auth::id())
-                ->whereIn('event_id', $ids)
-                ->pluck('event_id')
-                ->merge(
-                    EventInterest::query()
-                        ->where('user_id', Auth::id())
-                        ->whereIn('event_id', $ids)
-                        ->pluck('event_id')
-                )
-                ->unique()
-                ->values()
-                ->all();
-        }
-
-        $guestInterestedEventIds = collect(session('guest_event_interests', []))
-            ->unique()
-            ->values()
-            ->all();
+        $interestedEventIds = $this->resolveInterestedEventIdsForHome($events);
+        $guestInterestedEventIds = $this->resolveGuestInterestedEventIds();
 
         return view(
             'home.events',
@@ -268,6 +228,51 @@ class HomeController extends Controller
     public function cancellationRefundPolicy()
     {
         return view('home.legal.cancellation-refund', $this->legalPageData(showEffectiveDate: false));
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Event>|iterable<int, Event>  $events
+     * @return list<int>
+     */
+    private function resolveInterestedEventIdsForHome(iterable $events): array
+    {
+        if (! Auth::check()) {
+            return [];
+        }
+
+        $ids = collect($events)->pluck('id')->map(fn ($id) => (int) $id)->filter()->values();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        return EventInvite::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('event_id', $ids)
+            ->where('has_confirmed_interest', true)
+            ->pluck('event_id')
+            ->merge(
+                EventInterest::query()
+                    ->where('user_id', Auth::id())
+                    ->whereIn('event_id', $ids)
+                    ->pluck('event_id')
+            )
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function resolveGuestInterestedEventIds(): array
+    {
+        return collect(session('guest_event_interests', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

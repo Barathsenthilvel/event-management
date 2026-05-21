@@ -42,7 +42,7 @@
     if ($dateLabels->count() > 1) {
         $scheduleChipText .= ' +' . ($dateLabels->count() - 1) . ' more dates';
     }
-    $organizer = $event->creator?->name ?? 'GNAT Team';
+    $organizer = $event->publicOrganizerName();
     $desc = trim(strip_tags((string) ($event->description ?? '')));
     $hasDesc = $desc !== '';
     $seatLimited = ($event->seat_mode ?? '') === 'limited';
@@ -54,9 +54,9 @@
     <div class="grid gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,280px)_1fr] md:items-stretch">
         <div class="relative min-h-[12rem] overflow-hidden rounded-2xl border border-[#351c42]/10 bg-[#f6f3e9] md:min-h-[14rem]">
             <img src="{{ $cover }}" alt="{{ $event->title }}" class="h-full w-full object-cover" loading="lazy" />
-            <div class="absolute left-3 top-3 rounded-full bg-[#fddc6a] px-3 py-2 text-center shadow-sm">
+            <div class="absolute left-3 top-3 min-w-[3.25rem] rounded-lg bg-[#fddc6a] px-2.5 py-2 text-center shadow-sm">
                 <div class="text-lg font-extrabold leading-none text-[#351c42]">{{ $day }}</div>
-                <div class="mt-0.5 inline-block rounded bg-white/70 px-2 py-0.5 text-[10px] font-extrabold tracking-widest text-[#965995]">{{ $month }}</div>
+                <div class="mt-0.5 inline-block rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-extrabold tracking-widest text-[#965995]">{{ $month }}</div>
             </div>
         </div>
 
@@ -109,15 +109,16 @@
                                 <path d="M17.364 12.568c.833-.817 1.386-1.88 1.386-3.068 0-2.347-1.903-4.25-4.25-4.25-1.854 0-3.426 1.126-4.1 2.735-.352.82-.538 1.717-.538 2.765s.186 1.945.538 2.765c.774 1.609 2.246 2.735 4.1 2.735 1.182 0 2.26-.45 3.064-1.19"/>
                             </svg>
                         </span>
-                        <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited</span>
+                        <span class="text-[10px] font-bold text-[#351c42]/80">Unlimited Seats</span>
                     </div>
                 @endif
             </div>
 
             @php $eventStatusKey = strtolower((string) $event->status); @endphp
-            <div class="mt-1 flex flex-wrap items-center gap-2">
+            <div class="mt-2 flex flex-wrap items-center gap-2 min-w-0">
+                <h3 class="text-base font-bold text-[#351c42] break-words sm:text-lg">{{ $event->title }}</h3>
                 @if($eventStatusKey === 'live')
-                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
+                    <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
                         <span class="relative flex h-2 w-2">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -125,27 +126,23 @@
                         Live
                     </span>
                 @elseif($eventStatusKey === 'upcoming')
-                    <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-indigo-800">Upcoming</span>
-                @elseif($eventStatusKey === 'completed')
-                    <span class="inline-flex items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/80">Completed</span>
+                    <span class="inline-flex shrink-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-indigo-800">Upcoming</span>
                 @elseif($eventStatusKey === 'cancelled')
-                    <span class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">Cancelled</span>
+                    <span class="inline-flex shrink-0 items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">Cancelled</span>
+                @elseif($eventStatusKey === 'completed')
+                    <button
+                        type="button"
+                        class="inline-flex shrink-0 cursor-pointer items-center rounded-full border border-[#351c42]/15 bg-[#f6f3e9] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/80 transition hover:bg-[#351c42]/10"
+                        data-open-event-status
+                        data-event-title="{{ $event->title }}"
+                        data-event-status="completed"
+                    >
+                        Completed
+                    </button>
                 @elseif($eventStatusKey !== '')
-                    <span class="inline-flex items-center rounded-full border border-[#351c42]/15 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/75">{{ strtoupper((string) $event->status) }}</span>
+                    <span class="inline-flex shrink-0 items-center rounded-full border border-[#351c42]/15 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#351c42]/75">{{ strtoupper((string) $event->status) }}</span>
                 @endif
             </div>
-            @if($eventStatusKey !== 'live')
-                <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#351c42]/70">
-                    <span>{{ $primaryDate }}</span>
-                    @if($extraDatesCount > 0)
-                        <span class="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 cursor-help"
-                              title="{{ $moreDatesTooltip }}">
-                            +{{ $extraDatesCount }} more
-                        </span>
-                    @endif
-                </div>
-            @endif
-            <h3 class="mt-1 text-base font-bold text-[#351c42] break-words sm:text-lg">{{ $event->title }}</h3>
             @if($hasDesc)
                 <div class="mt-2" data-desc-wrap>
                     <p
@@ -157,7 +154,7 @@
                     </p>
                     <button
                         type="button"
-                        class="mt-2 hidden cursor-pointer items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
+                        class="mt-2 mb-5 hidden cursor-pointer items-center text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                         data-desc-toggle
                         aria-expanded="false"
                         title="Read full description"
@@ -212,7 +209,7 @@
             <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                 @php $certReady = ! empty($event->template_pdf_path); @endphp
                 <div class="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-                    <span class="text-sm font-extrabold text-[#351c42]/85">Attended</span>
+                    <span class="text-sm font-extrabold text-[#351c42]/85">You attended this event</span>
                     @if($certReady)
                         <a href="{{ route('member.events.certificate', $event) }}" class="inline-flex w-full items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-bold text-[#fddc6a] transition hover:brightness-105 sm:w-auto">Download certificate</a>
                     @else
@@ -237,7 +234,7 @@
                         type="submit"
                         class="inline-flex w-full min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 sm:w-auto"
                     >
-                        Confirm attendance
+                        Confirm participation
                     </button>
                 </form>
             </div>
@@ -246,7 +243,7 @@
                 @include('member.partials.member-event-interested-stack', ['event' => $event])
                 <div class="min-w-0 shrink-0 text-right sm:ml-auto">
                     <p class="text-sm font-extrabold text-[#fddc6a]">Interest registered</p>
-                    <p class="mt-0.5 text-xs text-white/70">We’ll update when your attendance is confirmed.</p>
+                    <p class="mt-0.5 text-xs text-white/70">We’ll update when the office confirms your participation.</p>
                 </div>
                 <button
                     type="button"
@@ -255,7 +252,7 @@
                     data-qr-title="{{ $event->title }}"
                     data-qr-value="{{ $attendanceQrUrl }}"
                 >
-                    Show Entry QR
+                    Show QR Code
                 </button>
             </div>
         @endif
@@ -269,7 +266,7 @@
                 <div class="border-t border-[#351c42]/10 bg-[#f6f3e9] px-4 py-3 sm:px-6">
                     @php $certReadyList = ! empty($event->template_pdf_path); @endphp
                     <div class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
-                        <span class="text-sm font-extrabold text-[#351c42]/85">Attended</span>
+                        <span class="text-sm font-extrabold text-[#351c42]/85">You attended this event</span>
                         @if($certReadyList)
                             <a href="{{ route('member.events.certificate', $event) }}" class="text-sm font-bold text-[#965995] underline-offset-2 hover:text-[#351c42] hover:underline">Download certificate</a>
                         @else
@@ -287,7 +284,7 @@
                     <p class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">You’re invited</p>
                     <form method="POST" action="{{ route('member.events.interest', $event) }}" class="shrink-0 w-full sm:w-auto" onsubmit="this.querySelector('button[type=submit]')?.setAttribute('disabled','disabled')">
                         @csrf
-                        <button type="submit" class="inline-flex w-full min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 sm:w-auto">Confirm attendance</button>
+                        <button type="submit" class="inline-flex w-full min-h-[2.1rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold text-[#351c42] shadow-sm transition hover:brightness-105 sm:w-auto">Confirm participation</button>
                     </form>
                 </div>
             @else
@@ -303,9 +300,9 @@
             </div>
         @else
             @php
-                $memberAttendLabel = match ($event->status ?? '') {
-                    'live' => 'Attend now',
-                    'upcoming' => 'Attend',
+                $memberRegisterLabel = match ($event->status ?? '') {
+                    'live' => 'Register now',
+                    'upcoming' => 'Register interest',
                     default => 'Register',
                 };
             @endphp
@@ -317,7 +314,7 @@
                         type="submit"
                         class="inline-flex min-h-[2.1rem] min-w-[6.75rem] cursor-pointer items-center justify-center rounded-full border border-[#fddc6a]/55 bg-gradient-to-r from-[#fddc6a] to-[#f6cf61] px-4 py-1.5 text-xs font-extrabold tracking-wide text-[#351c42] shadow-sm transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#351c42] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {{ $memberAttendLabel }}
+                        {{ $memberRegisterLabel }}
                     </button>
                 </form>
             </div>

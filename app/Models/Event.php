@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EventScheduleStatusService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -63,22 +64,36 @@ class Event extends Model
         return $this->belongsTo(Admin::class, 'created_by_admin_id');
     }
 
+    /**
+     * Organizer label on the public site and member portal (not the admin account name).
+     */
+    public function publicOrganizerName(): string
+    {
+        if (filled($this->created_by_admin_id)) {
+            return (string) config('homepage.event_organizer_name', 'GNAT Association');
+        }
+
+        return $this->creator?->name
+            ?: (string) config('homepage.event_organizer_name', 'GNAT Association');
+    }
+
+    /**
+     * Upcoming / live / completed derived from event dates (same rules as auto status sync).
+     */
+    public function resolvedScheduleStatus(): ?string
+    {
+        $this->loadMissing('dates');
+
+        return app(EventScheduleStatusService::class)->resolveStatusFromSchedule($this);
+    }
+
     public function isPastRegistrationDeadline(): bool
     {
-        if ($this->status === 'completed') {
+        if ($this->status === 'cancelled') {
             return true;
         }
 
-        $this->loadMissing('dates');
-        $lastDate = $this->dates->sortBy('event_date')->last();
-        if (! $lastDate?->event_date) {
-            return false;
-        }
-
-        $endTime = $lastDate->end_time ?: '23:59';
-        $endAt = Carbon::parse($lastDate->event_date->format('Y-m-d').' '.$endTime);
-
-        return now()->greaterThan($endAt);
+        return $this->resolvedScheduleStatus() === 'completed';
     }
 
     /**
@@ -86,11 +101,11 @@ class Event extends Model
      */
     public function acceptsPublicAttendance(): bool
     {
-        if (in_array($this->status, ['cancelled', 'completed'], true)) {
+        if (! $this->is_active || $this->status === 'cancelled') {
             return false;
         }
 
-        return ! $this->isPastRegistrationDeadline();
+        return in_array($this->resolvedScheduleStatus(), ['upcoming', 'live'], true);
     }
 
     public function isAtSeatLimit(): bool

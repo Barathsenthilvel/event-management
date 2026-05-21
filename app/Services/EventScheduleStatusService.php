@@ -34,6 +34,36 @@ class EventScheduleStatusService
         return $updated;
     }
 
+    /**
+     * Derive upcoming / live / completed from event dates (does not persist).
+     */
+    public function resolveStatusFromSchedule(Event $event, ?Carbon $now = null): ?string
+    {
+        $now = $now ?? now();
+
+        if ($event->status === 'cancelled') {
+            return 'cancelled';
+        }
+
+        $scheduleWindows = $this->buildScheduleWindows($event);
+        if ($scheduleWindows->isEmpty()) {
+            return null;
+        }
+
+        $start = $scheduleWindows->min('start');
+        $end = $scheduleWindows->max('end');
+
+        if ($now->greaterThan($end)) {
+            return 'completed';
+        }
+
+        if ($now->greaterThanOrEqualTo($start)) {
+            return 'live';
+        }
+
+        return 'upcoming';
+    }
+
     public function syncOne(Event $event, ?Carbon $now = null): bool
     {
         $now = $now ?? now();
@@ -42,7 +72,26 @@ class EventScheduleStatusService
             return false;
         }
 
-        $scheduleWindows = $event->dates
+        $newStatus = $this->resolveStatusFromSchedule($event, $now);
+        if ($newStatus === null || $newStatus === 'cancelled') {
+            return false;
+        }
+
+        if ($event->status === $newStatus) {
+            return false;
+        }
+
+        $event->update(['status' => $newStatus]);
+
+        return true;
+    }
+
+    /**
+     * @return Collection<int, array{start: Carbon, end: Carbon}>
+     */
+    private function buildScheduleWindows(Event $event): Collection
+    {
+        return $event->dates
             ->filter(fn ($row) => ! empty($row->event_date))
             ->map(function ($row) {
                 $eventDay = Carbon::parse($row->event_date)->startOfDay();
@@ -62,28 +111,5 @@ class EventScheduleStatusService
                 ];
             })
             ->values();
-
-        if ($scheduleWindows->isEmpty()) {
-            return false;
-        }
-
-        $start = $scheduleWindows->min('start');
-        $end = $scheduleWindows->max('end');
-
-        if ($now->greaterThan($end)) {
-            $newStatus = 'completed';
-        } elseif ($now->greaterThanOrEqualTo($start)) {
-            $newStatus = 'live';
-        } else {
-            $newStatus = 'upcoming';
-        }
-
-        if ($event->status === $newStatus) {
-            return false;
-        }
-
-        $event->update(['status' => $newStatus]);
-
-        return true;
     }
 }

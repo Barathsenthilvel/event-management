@@ -3,6 +3,9 @@
 return [
     'title' => 'GNAT Association — Give Hope, Support Communities',
 
+    /** Shown as event organizer on the public site and member portal (not the admin login name). */
+    'event_organizer_name' => env('EVENT_ORGANIZER_NAME', 'GNAT Association'),
+
     'logo' => [
         'src' => 'images/logo.png',
         'alt' => 'GNAT Association',

@@ -181,12 +181,8 @@
                                                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership &amp; payments</p>
                                                 @php($activeSub = $m->activeSubscription)
                                                 @if($activeSub)
-                                                    @php
-                                                        $billingEnd = $activeSub->start_date
-                                                            ? \App\Support\MembershipPeriod::billingEndDate($activeSub->start_date, $activeSub->payment_type)
-                                                            : null;
-                                                        $graceDays = (int) ($activeSub->plan?->grace_period ?? 0);
-                                                    @endphp
+                                                    @php($billingEnd = $activeSub->start_date ? \App\Support\MembershipPeriod::billingEndDate($activeSub->start_date, $activeSub->payment_type) : null)
+                                                    @php($graceDays = (int) ($activeSub->plan?->grace_period ?? 0))
                                                     <div class="rounded-xl bg-emerald-50/80 px-3 py-2 text-[11px] font-bold text-emerald-950">
                                                         <p class="text-[10px] font-black uppercase tracking-widest text-emerald-800/80">Active subscription</p>
                                                         <p class="mt-1">{{ $activeSub->plan?->subscription_type ?? 'Plan' }} · {{ ucfirst(str_replace('_', ' ', (string) $activeSub->payment_type)) }}</p>

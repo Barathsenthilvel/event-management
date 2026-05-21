@@ -30,10 +30,6 @@
                 </ul>
             </div>
         @endif
-        @if(session('success'))
-            <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-900" x-init="showToast(@js(session('success')))"></div>
-        @endif
-
         <!-- Header -->
         <div class="flex items-center justify-between mb-2">
             <div>
@@ -86,7 +82,7 @@
 
                 <!-- LIST VIEW -->
                 <table x-show="viewType === 'list'" class="w-full text-left island-row">
-                    <thead class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 bg-white z-10">
+                    <thead class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 z-[1] bg-white shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                         <tr>
                             <th class="px-6 py-4">Subscription Type</th>
                             <th class="px-6 py-4">Payment Type</th>
@@ -331,43 +327,64 @@
         </form>
     </div>
 
-    <!-- ── DELETE CONFIRM MODAL ── -->
-    <div x-show="showDeleteModal" x-cloak
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-100 flex items-center justify-center p-4"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div class="bg-white rounded-[32px] p-8 max-w-sm w-full text-center shadow-2xl"
-            @click.away="showDeleteModal = false"
-            x-transition:enter="transition cubic-bezier(0.34, 1.56, 0.64, 1) duration-500"
-            x-transition:enter-start="scale-50 opacity-0" x-transition:enter-end="scale-100 opacity-100">
-            <div class="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-red-100">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Delete Setting?</h3>
-            <p class="text-slate-500 text-sm mb-6 leading-relaxed">
-                This will permanently delete the <strong x-text="itemToDelete?.subscription_type"></strong> membership setting. This cannot be undone.
-            </p>
-            <div class="flex gap-3">
-                <button @click="showDeleteModal = false"
-                    class="flex-1 py-3 bg-slate-50 hover:bg-slate-100 rounded-2xl font-bold text-slate-600 text-sm transition-colors">
-                    Cancel
-                </button>
-                <form :action="itemToDelete?.delete_url" method="POST" class="flex-1">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                        class="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-200 transition-all">
-                        Delete
+    <!-- ── DELETE CONFIRM MODAL (teleported so sticky table header cannot stack above it) ── -->
+    <template x-teleport="body">
+        <div
+            x-show="showDeleteModal"
+            x-cloak
+            class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="membership-delete-modal-title"
+            @keydown.escape.window="showDeleteModal = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        >
+            <div
+                class="relative z-[201] w-full max-w-sm rounded-[32px] bg-white p-8 text-center shadow-2xl"
+                @click.outside="showDeleteModal = false"
+                x-transition:enter="transition cubic-bezier(0.34, 1.56, 0.64, 1) duration-500"
+                x-transition:enter-start="scale-50 opacity-0"
+                x-transition:enter-end="scale-100 opacity-100"
+            >
+                <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500 shadow-lg shadow-red-100">
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <h3 id="membership-delete-modal-title" class="mb-2 text-xl font-bold text-slate-900">Delete Setting?</h3>
+                <p class="mb-6 text-sm leading-relaxed text-slate-500">
+                    This will permanently delete the <strong x-text="itemToDelete?.subscription_type"></strong> membership setting. This cannot be undone.
+                </p>
+                <div class="flex gap-3">
+                    <button
+                        type="button"
+                        @click="showDeleteModal = false"
+                        class="flex-1 rounded-2xl bg-slate-50 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100"
+                    >
+                        Cancel
                     </button>
-                </form>
+                    <form :action="itemToDelete?.delete_url" method="POST" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button
+                            type="submit"
+                            class="w-full rounded-2xl bg-red-500 py-3 text-sm font-bold text-white shadow-lg shadow-red-200 transition-all hover:bg-red-600"
+                        >
+                            Delete
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </template>
 
     <!-- ── TOAST NOTIFICATIONS ── -->
-    <div class="fixed bottom-10 right-10 z-300 space-y-3 pointer-events-none">
+    <div class="fixed bottom-10 right-10 z-[210] space-y-3 pointer-events-none">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-5"
@@ -396,6 +413,15 @@
 <script>
 function membershipPage() {
     return {
+        init() {
+            const flashSuccess = @json(session('success'));
+            if (flashSuccess) {
+                this.showToast(flashSuccess);
+            }
+            this.$watch('showDeleteModal', (open) => {
+                document.body.classList.toggle('overflow-hidden', open);
+            });
+        },
         viewType: 'grid',
         showPanel: false,
         showDeleteModal: false,

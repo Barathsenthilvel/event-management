@@ -1521,6 +1521,9 @@
             if (!trigger) return;
             closeItem(item);
             trigger.addEventListener("click", (e) => {
+                if (e.target.closest("[data-open-home-event-status]")) {
+                    return;
+                }
                 e.preventDefault();
                 if (openItem === item) {
                     return;

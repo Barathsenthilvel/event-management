@@ -18,15 +18,27 @@
         'myEventInvites' => $myEventInvites,
     ])
 
-    <div id="member-attendance-qr-modal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-[#351c42]/70 p-4 backdrop-blur-[2px]" aria-hidden="true">
+    <div id="member-attendance-qr-modal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-[#351c42]/70 p-4 backdrop-blur-[2px]" aria-hidden="true" role="dialog" aria-labelledby="member-attendance-qr-title">
         <div class="absolute inset-0" data-close-attendance-qr></div>
         <div class="relative w-full max-w-sm rounded-2xl border border-white/25 bg-white p-5 shadow-2xl">
             <div class="mb-3 flex items-center justify-between gap-2">
-                <h3 id="member-attendance-qr-title" class="text-sm font-extrabold text-[#351c42]">Event entry QR</h3>
-                <button type="button" data-close-attendance-qr class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">✕</button>
+                <h3 id="member-attendance-qr-title" class="text-sm font-extrabold text-[#351c42]">QR Code</h3>
+                <button type="button" data-close-attendance-qr class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
             </div>
-            <p class="mb-3 text-xs font-semibold text-[#351c42]/65">Show this QR at event desk for attendance scan.</p>
+            <p class="mb-3 text-xs font-semibold text-[#351c42]/65">Show this QR code at the event desk for check-in.</p>
             <div id="member-attendance-qr-code" class="mx-auto flex min-h-[240px] w-[240px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50"></div>
+        </div>
+    </div>
+
+    <div id="member-event-status-modal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-[#351c42]/70 p-4 backdrop-blur-[2px]" aria-hidden="true" role="dialog" aria-labelledby="member-event-status-title">
+        <div class="absolute inset-0" data-close-event-status></div>
+        <div class="relative w-full max-w-sm rounded-2xl border border-white/25 bg-white p-5 shadow-2xl">
+            <div class="mb-3 flex items-center justify-between gap-2">
+                <h3 id="member-event-status-title" class="text-sm font-extrabold text-[#351c42]">Event status</h3>
+                <button type="button" data-close-event-status class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+            </div>
+            <p id="member-event-status-body" class="text-sm font-semibold leading-relaxed text-[#351c42]/75"></p>
+            <button type="button" data-close-event-status class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#351c42] px-4 py-2.5 text-sm font-bold text-[#fddc6a] transition hover:brightness-105">Got it</button>
         </div>
     </div>
 @endsection
@@ -50,10 +62,10 @@
         document.querySelectorAll("[data-open-attendance-qr]").forEach((btn) => {
             btn.addEventListener("click", () => {
                 const value = btn.getAttribute("data-qr-value") || "";
-                const title = btn.getAttribute("data-qr-title") || "Event entry QR";
+                const title = btn.getAttribute("data-qr-title") || "Event";
                 if (!value) return;
 
-                titleEl.textContent = title + " — Entry QR";
+                titleEl.textContent = title + " — QR Code";
                 qrBox.innerHTML = "";
                 new QRCode(qrBox, {
                     text: value,
@@ -73,6 +85,42 @@
                 setOpen(false);
             }
         });
+
+        const statusModal = document.getElementById("member-event-status-modal");
+        const statusTitle = document.getElementById("member-event-status-title");
+        const statusBody = document.getElementById("member-event-status-body");
+        if (statusModal && statusTitle && statusBody) {
+            const setStatusOpen = (open) => {
+                statusModal.classList.toggle("hidden", !open);
+                statusModal.classList.toggle("flex", open);
+                statusModal.setAttribute("aria-hidden", open ? "false" : "true");
+                document.body.style.overflow = open ? "hidden" : "";
+            };
+
+            const statusCopy = {
+                completed: "This event has ended. You can review details here, but new registrations are closed.",
+            };
+
+            document.querySelectorAll("[data-open-event-status]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const key = btn.getAttribute("data-event-status") || "completed";
+                    const eventTitle = btn.getAttribute("data-event-title") || "Event";
+                    statusTitle.textContent = eventTitle + " — Completed";
+                    statusBody.textContent = statusCopy[key] || statusCopy.completed;
+                    setStatusOpen(true);
+                });
+            });
+
+            statusModal.querySelectorAll("[data-close-event-status]").forEach((el) => {
+                el.addEventListener("click", () => setStatusOpen(false));
+            });
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && !statusModal.classList.contains("hidden")) {
+                    setStatusOpen(false);
+                }
+            });
+        }
     })();
 </script>
 @endpush
