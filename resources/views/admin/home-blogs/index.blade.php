@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="h-full flex flex-col p-6 gap-4">
+<div class="flex-1 min-h-0 overflow-y-auto custom-scroll p-6 space-y-4">
     <div>
         <h1 class="text-xl font-bold text-slate-900">Homepage Blogs</h1>
         <p class="text-xs text-slate-500 mt-1">Manage blog section content and homepage blog cards.</p>
@@ -67,7 +67,8 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scroll">
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto custom-scroll">
         <table class="min-w-full text-left text-xs">
             <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
                 <tr>
@@ -150,7 +151,8 @@
             @endforelse
             </tbody>
         </table>
-        <div class="mt-4">
+        </div>
+        <div class="px-6 py-4 border-t border-slate-100">
             {{ $posts->links() }}
         </div>
     </div>

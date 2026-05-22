@@ -37,44 +37,9 @@
                 <p class="text-sm font-bold text-[#351c42]/80">No blog posts found.</p>
             </section>
         @else
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 justify-items-start">
                 @foreach($posts as $post)
-                    <article class="rounded-2xl bg-white border border-[#351c42]/10 overflow-hidden shadow-sm">
-                        <div class="relative h-56">
-                            <img src="{{ asset('storage/' . ltrim((string) $post->image_path, '/')) }}" alt="Blog post image" class="h-full w-full object-cover"/>
-                            <span class="absolute left-4 top-4 rounded-full bg-white/75 backdrop-blur px-3 py-1 text-xs font-semibold text-[#351c42]">{{ $post->tag ?: 'Blog' }}</span>
-                            @if($post->published_at)
-                                <div class="absolute right-0 bottom-0 rounded-tl-2xl bg-[#351c42] text-[#fddc6a] text-center px-4 py-2">
-                                    <div class="text-4xl font-extrabold leading-none">{{ $post->published_at->format('d') }}</div>
-                                    <div class="text-lg font-semibold leading-none mt-1 text-white">{{ $post->published_at->format('M') }}</div>
-                                    <div class="mt-1 text-[10px] tracking-[0.35em] font-bold bg-[#fddc6a] text-[#351c42] rounded px-2 py-0.5">{{ $post->published_at->format('Y') }}</div>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="p-5">
-                            <h2 class="text-2xl font-extrabold text-[#351c42]">{{ $post->title }}</h2>
-                            <p class="mt-2 text-[#351c42]/65 leading-6">{{ $post->excerpt }}</p>
-                            <div class="mt-4 flex items-center justify-between">
-                                <a href="{{ $post->read_more_url ?: '#' }}" class="click-btn click-btn--sm btn-style506">
-                                    <span class="click-btn__icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
-                                            <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </span>
-                                    <span class="click-btn__label">Read More</span>
-                                </a>
-                                <span class="text-sm font-semibold text-[#351c42]/70 inline-flex items-center gap-1.5">
-                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M18 8L20 10L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M6 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M6 16L4 14L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M4 14H18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    {{ $post->comments_count }}
-                                </span>
-                            </div>
-                        </div>
-                    </article>
+                    @include('home.partials.blog-card', ['post' => $post, 'heading' => 'h2'])
                 @endforeach
             </div>
 

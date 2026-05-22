@@ -74,11 +74,29 @@
             <div class="border border-slate-200 rounded-2xl px-5 py-4">
                 <p class="text-sm font-semibold text-slate-800 mb-3">Blog Image</p>
 
-                @if($imageUrl)
-                    <div class="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <img src="{{ $imageUrl }}" alt="" class="h-28 w-full rounded-lg object-cover border border-slate-100">
+                <div id="home_blog_image_preview"
+                     class="{{ $imageUrl ? '' : 'hidden' }} mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p id="home_blog_image_preview_label" class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">
+                        {{ $isEdit && $imageUrl ? 'Current image' : 'Selected image' }}
+                    </p>
+                    <div class="flex items-start gap-3">
+                        <img id="home_blog_image_preview_img"
+                             src="{{ $imageUrl }}"
+                             alt="Blog image preview"
+                             class="h-36 w-full max-w-sm rounded-lg object-cover border border-slate-100">
+                        <a id="home_blog_image_view_link"
+                           href="{{ $imageUrl ?: '#' }}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           title="View full image"
+                           class="{{ $imageUrl ? '' : 'hidden' }} shrink-0 w-9 h-9 rounded-lg border border-slate-200 text-slate-700 hover:bg-white inline-flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8-10-8-10-8z" />
+                            </svg>
+                        </a>
                     </div>
-                @endif
+                </div>
 
                 <label class="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-8 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
                     <div class="text-slate-400">
@@ -88,11 +106,12 @@
                         </svg>
                     </div>
                     <span class="text-xs font-medium text-slate-700">
-                        Upload Image
+                        {{ $isEdit && $imageUrl ? 'Replace image' : 'Upload Image' }}
                         @if(!$isEdit)@include('admin.partials.required-mark')@endif
                     </span>
-                    <input type="file" name="image" class="hidden" accept="image/*" @if(!$isEdit) required @endif>
+                    <input id="home_blog_image_input" type="file" name="image" class="hidden" accept="image/*" @if(!$isEdit) required @endif>
                 </label>
+                <p id="home_blog_image_filename" class="hidden mt-2 text-xs font-semibold text-indigo-600 truncate"></p>
                 @error('image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
@@ -114,3 +133,40 @@
         </button>
     </div>
 </form>
+
+@push('scripts')
+<script>
+    (function () {
+        const input = document.getElementById('home_blog_image_input');
+        const wrap = document.getElementById('home_blog_image_preview');
+        const imgEl = document.getElementById('home_blog_image_preview_img');
+        const viewLink = document.getElementById('home_blog_image_view_link');
+        const labelEl = document.getElementById('home_blog_image_preview_label');
+        const filenameEl = document.getElementById('home_blog_image_filename');
+        const isEdit = @json($isEdit);
+        let objectUrl = null;
+
+        if (!input) return;
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            objectUrl = URL.createObjectURL(file);
+
+            if (wrap) wrap.classList.remove('hidden');
+            if (imgEl) imgEl.src = objectUrl;
+            if (labelEl) labelEl.textContent = isEdit ? 'New image (not saved yet)' : 'Selected image';
+            if (filenameEl) {
+                filenameEl.textContent = file.name;
+                filenameEl.classList.remove('hidden');
+            }
+            if (viewLink) {
+                viewLink.href = objectUrl;
+                viewLink.classList.remove('hidden');
+            }
+        });
+    })();
+</script>
+@endpush
