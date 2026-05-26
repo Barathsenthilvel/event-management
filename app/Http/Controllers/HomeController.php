@@ -198,6 +198,17 @@ class HomeController extends Controller
         );
     }
 
+    public function activities()
+    {
+        $activities = config('homepage.activities', []);
+        $items = $activities['items'] ?? [];
+
+        return view(
+            'home.activities',
+            array_merge(config('homepage', []), compact('activities', 'items'))
+        );
+    }
+
     public function about()
     {
         return view('home.about', config('homepage', []));

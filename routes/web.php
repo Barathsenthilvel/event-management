@@ -41,9 +41,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 /** Homepage sections (avoid hash URLs like /#events — use these paths + ?section= for scroll). */
 Route::redirect('/home', '/?section=home', 302)->name('home.landing');
-Route::get('/activity', function () {
-    return redirect()->route('home', ['section' => 'association-activity']);
-})->name('activity');
+Route::get('/activity', [HomeController::class, 'activities'])->name('activity');
 Route::redirect('/campaign', '/?section=events', 302)->name('home.campaign');
 Route::redirect('/stories', '/?section=blog', 302)->name('home.stories');
 Route::redirect('/photos', '/?section=gallery', 302)->name('home.photos');

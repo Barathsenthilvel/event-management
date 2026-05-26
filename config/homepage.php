@@ -222,13 +222,71 @@ return [
         ],
     ],
 
+    'activities' => [
+        'badge' => 'Activity',
+        'title' => 'Programs & pathways',
+        'subtitle' => 'Community education and outreach',
+        'intro' => 'GNAT Association brings together fundraising, education, health support, and career pathways so members and partners can serve Chennai communities with clear impact and trusted delivery.',
+        'items' => [
+            [
+                'num' => '01',
+                'slug' => 'quick-fundraising',
+                'label' => 'Quick Fundraising',
+                'description' => 'Quick Fundraising lets supporters start or join GNAT campaigns online so gifts reach schools, health programs, and community outreach in Aminjikarai without delay.',
+                'route' => 'donations.index',
+                'button' => 'View campaigns',
+            ],
+            [
+                'num' => '02',
+                'slug' => 'school-education',
+                'label' => 'School & Education Support',
+                'description' => 'School & Education Support provides books, safe classrooms, and meals so children in our communities can stay in school and learn with dignity.',
+                'route' => 'contact',
+                'button' => 'Get in touch',
+            ],
+            [
+                'num' => '03',
+                'slug' => 'medical-treatment',
+                'label' => 'Medical Treatment',
+                'description' => 'Medical Treatment connects donors to health camps and treatment help for families who cannot afford care, so support reaches verified needs when it matters most.',
+                'route' => 'donations.index',
+                'button' => 'Support health programs',
+            ],
+            [
+                'num' => '04',
+                'slug' => 'careers',
+                'label' => 'Careers & opportunities',
+                'description' => 'Careers & opportunities help members build skills, volunteer, and grow through meaningful association work that serves Chennai communities.',
+                'route' => 'home.careers',
+                'button' => 'Explore careers',
+            ],
+            [
+                'num' => '05',
+                'slug' => 'job-openings',
+                'label' => 'Job openings & applications',
+                'description' => 'Job openings & applications share current roles from GNAT and partners so members can apply online and find work that fits their skills.',
+                'route' => 'home.careers',
+                'button' => 'View job openings',
+            ],
+            [
+                'num' => '06',
+                'slug' => 'fundraising-goals',
+                'label' => 'Fundraising Goals',
+                'description' => 'Fundraising Goals showcase featured donation drives on the site so every gift supports transparent programs from classrooms to health outreach across our communities.',
+                'route' => 'home.give',
+                'button' => 'Donate now',
+            ],
+        ],
+    ],
+
+    /** @deprecated Use activities.items — kept for backward compatibility */
     'services' => [
-        ['num' => '01', 'label' => 'Quick Fundraising'],
-        ['num' => '02', 'label' => 'School & Education Support'],
-        ['num' => '03', 'label' => 'Medical Treatment'],
-        ['num' => '04', 'label' => 'Careers & opportunities', 'href' => '/careers'],
-        ['num' => '05', 'label' => 'Job openings & applications', 'href' => '/careers'],
-        ['num' => '06', 'label' => 'Fundraising Goals', 'href' => '/give'],
+        ['num' => '01', 'label' => 'Quick Fundraising', 'slug' => 'quick-fundraising', 'route' => 'donations.index'],
+        ['num' => '02', 'label' => 'School & Education Support', 'slug' => 'school-education', 'route' => 'contact'],
+        ['num' => '03', 'label' => 'Medical Treatment', 'slug' => 'medical-treatment', 'route' => 'donations.index'],
+        ['num' => '04', 'label' => 'Careers & opportunities', 'slug' => 'careers', 'route' => 'home.careers'],
+        ['num' => '05', 'label' => 'Job openings & applications', 'slug' => 'job-openings', 'route' => 'home.careers'],
+        ['num' => '06', 'label' => 'Fundraising Goals', 'slug' => 'fundraising-goals', 'route' => 'home.give'],
     ],
 
     'blog' => [
