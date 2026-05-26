@@ -13,6 +13,7 @@ class HomeGalleryItem extends Model
     protected $fillable = [
         'created_by_admin_id',
         'category_key',
+        'is_category_primary',
         'layout_type',
         'image_path',
         'alt_text',
@@ -27,6 +28,7 @@ class HomeGalleryItem extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_category_primary' => 'boolean',
         ];
     }
 

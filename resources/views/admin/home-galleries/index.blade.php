@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="h-full flex flex-col p-6 gap-4">
+<div class="flex-1 min-h-0 overflow-y-auto custom-scroll p-6 space-y-4">
     <div>
         <h1 class="text-xl font-bold text-slate-900">Homepage Galleries</h1>
         <p class="text-xs text-slate-500 mt-1">Manage gallery section content and gallery cards.</p>
@@ -16,20 +16,20 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-2">Section badge</label>
-                <input type="text" name="section_badge" value="{{ old('section_badge', $section->section_badge ?? 'Impact in pictures') }}"
+                <input type="text" name="section_badge" value="{{ old('section_badge', $section?->section_badge ?? 'Impact in pictures') }}"
                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
                 @error('section_badge')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-2">Section title</label>
-                <input type="text" name="section_title" value="{{ old('section_title', $section->section_title ?? 'Our gallery') }}"
+                <input type="text" name="section_title" value="{{ old('section_title', $section?->section_title ?? 'Our gallery') }}"
                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
                 @error('section_title')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
             <div class="lg:col-span-2">
                 <label class="block text-[11px] font-bold text-slate-700 mb-2">Section description</label>
                 <textarea name="section_description" rows="3"
-                          class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">{{ old('section_description', $section->section_description ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.') }}</textarea>
+                          class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">{{ old('section_description', $section?->section_description ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.') }}</textarea>
                 @error('section_description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
         </div>
@@ -61,7 +61,8 @@
         </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scroll">
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto custom-scroll">
         <table class="min-w-full text-left text-xs">
             <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
                 <tr>
@@ -88,6 +89,9 @@
                     <td class="px-6 py-4 align-middle">
                         <p class="text-[11px] font-semibold text-slate-700">Category: {{ ucfirst($item->category_key) }}</p>
                         <p class="text-[11px] font-semibold text-slate-700">Layout: {{ ucfirst($item->layout_type) }}</p>
+                        @if($item->is_category_primary)
+                            <span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Category main (homepage)</span>
+                        @endif
                     </td>
                     <td class="px-6 py-4 align-middle text-center font-bold text-indigo-600">{{ $item->sort_order }}</td>
                     <td class="px-6 py-4 align-middle">
@@ -141,7 +145,8 @@
             @endforelse
             </tbody>
         </table>
-        <div class="mt-4">
+        </div>
+        <div class="px-6 py-4 border-t border-slate-100">
             {{ $items->links() }}
         </div>
     </div>

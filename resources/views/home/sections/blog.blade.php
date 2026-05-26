@@ -26,17 +26,26 @@
             </div>
 
             <div>
-                <div class="overflow-hidden" data-blog-viewport>
-                    <div class="flex flex-nowrap gap-4 will-change-transform transition-transform duration-500 ease-out" data-blog-track>
-                        @foreach ($blog['posts'] as $post)
-                            @include('home.partials.blog-card', ['post' => $post, 'carousel' => true])
-                        @endforeach
+                @if(collect($blog['posts'] ?? [])->isNotEmpty())
+                    <div class="overflow-hidden" data-blog-viewport>
+                        <div class="flex flex-nowrap gap-4 will-change-transform transition-transform duration-500 ease-out" data-blog-track>
+                            @foreach ($blog['posts'] as $post)
+                                @include('home.partials.blog-card', ['post' => $post, 'carousel' => true])
+                            @endforeach
+                        </div>
                     </div>
-                </div>
 
-                <div class="mt-5 h-1.5 bg-[#351c42]/15 rounded-full overflow-hidden">
-                    <div class="h-full bg-[#351c42] rounded-full transition-all duration-500" style="width: 25%;" data-blog-progress></div>
-                </div>
+                    <div class="mt-5 h-1.5 bg-[#351c42]/15 rounded-full overflow-hidden">
+                        <div class="h-full bg-[#351c42] rounded-full transition-all duration-500" style="width: 25%;" data-blog-progress></div>
+                    </div>
+                @else
+                    <div class="rounded-2xl border border-dashed border-[#351c42]/20 bg-white px-6 py-12 text-center">
+                        <p class="text-sm font-semibold text-[#351c42]/80">No blog posts to show yet.</p>
+                        <a href="{{ route('blogs.index') }}" class="mt-4 inline-flex text-sm font-bold text-[#965995] hover:text-[#351c42] underline-offset-4 hover:underline">
+                            View blogs page
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

@@ -17,9 +17,9 @@
         <section class="rounded-3xl border border-[#351c42]/10 bg-white/85 backdrop-blur p-5 md:p-6 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div class="min-w-0">
-                    <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#965995]">Blogs</p>
-                    <h1 class="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#351c42]">Explore All Posts</h1>
-                    <p class="mt-1 text-sm text-[#351c42]/65">Posts added in admin will be listed here.</p>
+                    <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#965995]">{{ $section?->section_badge ?? 'Blogs' }}</p>
+                    <h1 class="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#351c42]">{{ $section?->section_title ?? 'Explore All Posts' }}</h1>
+                    <p class="mt-1 text-sm text-[#351c42]/65">{{ $section?->section_description ?? 'Stay informed with the latest news, stories, and updates from GNAT Association.' }}</p>
                 </div>
             </div>
 

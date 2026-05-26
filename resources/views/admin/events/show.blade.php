@@ -79,6 +79,21 @@
                 @error('photos.*')<p class="text-[11px] text-red-600">{{ $message }}</p>@enderror
                 <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-extrabold">Upload to Gallery</button>
             </form>
+            @if($event->photos->isNotEmpty())
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500 mb-3">Gallery preview ({{ $event->photos->count() }})</p>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        @foreach($event->photos->take(10) as $photo)
+                            <a href="{{ asset('storage/' . ltrim((string) $photo->photo_path, '/')) }}" target="_blank" rel="noopener noreferrer" class="block rounded-lg overflow-hidden border border-slate-200">
+                                <img src="{{ asset('storage/' . ltrim((string) $photo->photo_path, '/')) }}" alt="" class="h-16 w-full object-cover">
+                            </a>
+                        @endforeach
+                    </div>
+                    @if($event->photos->count() > 10)
+                        <p class="mt-2 text-xs text-slate-500">+ {{ $event->photos->count() - 10 }} more in the full album.</p>
+                    @endif
+                </div>
+            @endif
         </div>
 
         @php

@@ -59,6 +59,30 @@ class Event extends Model
         return $this->hasMany(EventPhoto::class);
     }
 
+    /**
+     * Ensure cover and banner images appear in the event album gallery.
+     */
+    public function syncMediaToAlbum(): void
+    {
+        foreach (['cover_image_path', 'banner_image_path'] as $column) {
+            $path = ltrim((string) $this->{$column}, '/');
+            if ($path === '') {
+                continue;
+            }
+
+            $this->photos()->firstOrCreate(['photo_path' => $path]);
+        }
+    }
+
+    public function photoPathInUseAsEventMedia(string $path): bool
+    {
+        $normalized = ltrim($path, '/');
+
+        return $normalized !== ''
+            && ($normalized === ltrim((string) $this->cover_image_path, '/')
+                || $normalized === ltrim((string) $this->banner_image_path, '/'));
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by_admin_id');

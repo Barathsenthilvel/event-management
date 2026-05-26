@@ -61,55 +61,22 @@
                 </form>
             </div>
 
-            @if($items->isEmpty())
+            @php
+                $hasGalleryItems = $items->isNotEmpty() || (isset($eventGalleryItems) && $eventGalleryItems->isNotEmpty());
+            @endphp
+            @if(!$hasGalleryItems)
                 <section class="mt-8 rounded-2xl border border-dashed border-[#351c42]/20 bg-white p-10 text-center">
                     <p class="text-sm font-bold text-[#351c42]/80">No gallery items found.</p>
                 </section>
             @else
-                <div class="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]">
+                <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+                    @if(in_array($category, ['all', 'events'], true) && isset($eventGalleryItems))
+                        @foreach($eventGalleryItems as $item)
+                            @include('home.partials.gallery-item', ['item' => $item, 'uniformGrid' => true])
+                        @endforeach
+                    @endif
                     @foreach($items as $item)
-                        @php
-                            $layout = $item->layout_type;
-                        @endphp
-                        @if($layout === 'hero')
-                            <article class="group relative col-span-2 row-span-2 min-h-[260px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-[#351c42]/5 shadow-lg ring-1 ring-black/5 sm:min-h-[320px] lg:min-h-0">
-                                <img src="{{ asset('storage/' . ltrim((string) $item->image_path, '/')) }}" alt="{{ $item->alt_text ?: $item->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" width="800" height="600" loading="lazy" />
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#351c42] via-[#351c42]/35 to-transparent opacity-95 transition duration-500 group-hover:via-[#351c42]/45"></div>
-                                <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#fddc6a] sm:text-xs">{{ $item->eyebrow ?: ucfirst($item->category_key) }}</p>
-                                    <h3 class="mt-1 text-xl font-extrabold text-white sm:text-2xl">{{ $item->title }}</h3>
-                                    <p class="mt-2 max-w-md text-sm text-white/80">{{ $item->description_text ?: '' }}</p>
-                                </div>
-                            </article>
-                        @elseif($layout === 'wide')
-                            <article class="group relative col-span-2 min-h-[140px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 sm:min-h-[156px] lg:col-span-2 lg:min-h-0">
-                                <img src="{{ asset('storage/' . ltrim((string) $item->image_path, '/')) }}" alt="{{ $item->alt_text ?: $item->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" width="800" height="500" loading="lazy" />
-                                <div class="absolute inset-0 bg-gradient-to-r from-[#351c42]/85 to-transparent"></div>
-                                <div class="absolute bottom-0 left-0 top-0 flex w-[70%] flex-col justify-end p-4 sm:p-5">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#fddc6a]">{{ $item->eyebrow ?: ucfirst($item->category_key) }}</p>
-                                    <h3 class="mt-0.5 text-lg font-extrabold text-white">{{ $item->title }}</h3>
-                                </div>
-                            </article>
-                        @elseif($layout === 'banner')
-                            <article class="group relative col-span-2 min-h-[160px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-[#351c42] shadow-md ring-1 ring-black/5 sm:min-h-[180px] lg:col-span-2 lg:min-h-0">
-                                <img src="{{ asset('storage/' . ltrim((string) $item->image_path, '/')) }}" alt="{{ $item->alt_text ?: $item->title }}" class="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay transition duration-700 group-hover:scale-105 group-hover:opacity-70" width="900" height="500" loading="lazy" />
-                                <div class="absolute inset-0 bg-gradient-to-br from-[#965995]/40 to-[#351c42]"></div>
-                                <div class="relative flex h-full flex-col justify-center p-5 sm:p-6">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#fddc6a]">{{ $item->eyebrow ?: ucfirst($item->category_key) }}</p>
-                                    <h3 class="mt-1 text-xl font-extrabold text-white sm:text-2xl">{{ $item->title }}</h3>
-                                    <p class="mt-2 max-w-lg text-sm text-white/85">{{ $item->description_text ?: '' }}</p>
-                                </div>
-                            </article>
-                        @else
-                            <article class="group relative min-h-[140px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 sm:min-h-[156px] lg:min-h-0">
-                                <img src="{{ asset('storage/' . ltrim((string) $item->image_path, '/')) }}" alt="{{ $item->alt_text ?: $item->title }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" width="600" height="600" loading="lazy" />
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#351c42]/90 to-transparent opacity-90"></div>
-                                <div class="absolute inset-x-0 bottom-0 p-4">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#fddc6a]">{{ $item->eyebrow ?: ucfirst($item->category_key) }}</p>
-                                    <h3 class="text-base font-extrabold text-white">{{ $item->title }}</h3>
-                                </div>
-                            </article>
-                        @endif
+                        @include('home.partials.gallery-item', ['item' => $item, 'uniformGrid' => true])
                     @endforeach
                 </div>
 

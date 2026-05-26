@@ -8,20 +8,23 @@ use App\Models\EventInterest;
 use App\Models\EventInvite;
 use App\Models\HomeBanner;
 use App\Models\HomeBlogPost;
+use App\Models\HomeBlogSection;
 use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
 use App\Services\EventScheduleStatusService;
 use App\Services\GnatMailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
     /**
      * Public marketing homepage (GNAT Donation).
-     * Content is static via config('homepage') until wired to the database.
+     * Banners, blog, and gallery sections load from the database when available; other blocks may still use config('homepage') fallbacks.
      */
     public function index()
     {
@@ -69,9 +72,12 @@ class HomeController extends Controller
             ->limit(12)
             ->get();
 
+        $blog = $this->resolveHomepageBlog();
+        $gallery = $this->resolveHomepageGallery();
+
         return view(
             'home.index',
-            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations', 'banners'))
+            array_merge($config, compact('homeEvents', 'interestedEventIds', 'guestInterestedEventIds', 'homeDonations', 'banners', 'blog', 'gallery'))
         );
     }
 
@@ -93,9 +99,11 @@ class HomeController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        $section = HomeBlogSection::query()->first();
+
         return view(
             'home.blogs',
-            array_merge(config('homepage', []), compact('posts', 'q'))
+            array_merge(config('homepage', []), compact('posts', 'q', 'section'))
         );
     }
 
@@ -124,11 +132,16 @@ class HomeController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $eventGalleryItems = collect();
+        if (Schema::hasTable('events') && in_array($category, ['all', 'events'], true)) {
+            $eventGalleryItems = $this->buildEventGalleryItems($q);
+        }
+
         $section = HomeGallerySection::query()->first();
 
         return view(
             'home.gallery',
-            array_merge(config('homepage', []), compact('items', 'q', 'category', 'section'))
+            array_merge(config('homepage', []), compact('items', 'eventGalleryItems', 'q', 'category', 'section'))
         );
     }
 
@@ -228,6 +241,253 @@ class HomeController extends Controller
     public function cancellationRefundPolicy()
     {
         return view('home.legal.cancellation-refund', $this->legalPageData(showEffectiveDate: false));
+    }
+
+    /**
+     * @return array{section_badge: string, section_title: string, section_description: string, filters: list<array{key: string, label: string}>, items: \Illuminate\Support\Collection<int, HomeGalleryItem>|\Illuminate\Support\Collection<int, array<string, mixed>>}
+     */
+    private function resolveHomepageGallery(): array
+    {
+        $defaults = config('homepage.gallery', []);
+        $section = HomeGallerySection::query()->first();
+
+        $this->ensureGalleryCategoryPrimaries();
+
+        $dbItems = HomeGalleryItem::query()
+            ->where('is_active', true)
+            ->orderByDesc('is_category_primary')
+            ->orderBy('sort_order')
+            ->latest('id')
+            ->get();
+
+        $items = $dbItems->isNotEmpty()
+            ? $dbItems
+            : collect($defaults['items'] ?? []);
+
+        $items = $items->concat($this->buildEventGalleryItems());
+        $items = $this->limitHomepageGalleryItems($items, 4);
+
+        return [
+            'section_badge' => $section?->section_badge ?? 'Impact in pictures',
+            'section_title' => $section?->section_title ?? 'Our gallery',
+            'section_description' => $section?->section_description ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.',
+            'filters' => $defaults['filters'] ?? [
+                ['key' => 'all', 'label' => 'All'],
+                ['key' => 'programs', 'label' => 'Programs'],
+                ['key' => 'events', 'label' => 'Events'],
+                ['key' => 'community', 'label' => 'Community'],
+            ],
+            'items' => $items,
+        ];
+    }
+
+    private function ensureGalleryCategoryPrimaries(): void
+    {
+        if (! Schema::hasTable('home_gallery_items') || ! Schema::hasColumn('home_gallery_items', 'is_category_primary')) {
+            return;
+        }
+
+        foreach (['programs', 'events', 'community'] as $categoryKey) {
+            $hasPrimary = HomeGalleryItem::query()
+                ->where('category_key', $categoryKey)
+                ->where('is_active', true)
+                ->where('is_category_primary', true)
+                ->exists();
+
+            if ($hasPrimary) {
+                continue;
+            }
+
+            $first = HomeGalleryItem::query()
+                ->where('category_key', $categoryKey)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+
+            if ($first) {
+                $first->update(['is_category_primary' => true]);
+            }
+        }
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function buildEventGalleryItems(string $search = ''): Collection
+    {
+        if (! Schema::hasTable('events')) {
+            return collect();
+        }
+
+        $events = Event::query()
+            ->where('is_active', true)
+            ->whereIn('status', ['upcoming', 'live', 'completed'])
+            ->with(['photos' => fn ($q) => $q->orderBy('id')])
+            ->orderByDesc('promote_front')
+            ->latest('id')
+            ->get();
+
+        $items = collect();
+        $search = trim($search);
+
+        foreach ($events as $event) {
+            $paths = collect();
+
+            if (filled($event->cover_image_path)) {
+                $paths->push(ltrim((string) $event->cover_image_path, '/'));
+            }
+            if (filled($event->banner_image_path)) {
+                $paths->push(ltrim((string) $event->banner_image_path, '/'));
+            }
+            foreach ($event->photos as $photo) {
+                if (filled($photo->photo_path)) {
+                    $paths->push(ltrim((string) $photo->photo_path, '/'));
+                }
+            }
+
+            $paths = $paths->filter()->unique()->values();
+            $description = Str::limit(strip_tags((string) ($event->description ?? '')), 120);
+
+            foreach ($paths as $index => $path) {
+                $title = $event->title;
+
+                if ($search !== '' && ! str_contains(strtolower($title), strtolower($search)) && ! str_contains(strtolower($description), strtolower($search))) {
+                    continue;
+                }
+
+                $items->push([
+                    'cat' => 'events',
+                    'layout' => $index === 0 ? 'wide' : 'cell',
+                    'image' => 'storage/'.$path,
+                    'alt' => $event->title,
+                    'eyebrow' => 'Events',
+                    'title' => $title,
+                    'text' => $index === 0 ? $description : null,
+                    'is_category_primary' => false,
+                    'from_event' => true,
+                    'sort_order' => 900000 + ((int) $event->id * 100) + $index,
+                ]);
+            }
+        }
+
+        return $items->values();
+    }
+
+    /**
+     * Homepage gallery: max 4 images per category with fixed card layouts.
+     *
+     * @param  Collection<int, HomeGalleryItem|array<string, mixed>>  $items
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function limitHomepageGalleryItems(Collection $items, int $perCategory = 4): Collection
+    {
+        $layouts = ['hero', 'wide', 'cell', 'cell'];
+        $result = collect();
+
+        foreach (['programs', 'events', 'community'] as $categoryKey) {
+            $group = $items
+                ->filter(function ($item) use ($categoryKey) {
+                    return $this->galleryItemCategory($item) === $categoryKey;
+                })
+                ->sortBy(function ($item) {
+                    $isPrimary = $this->galleryItemIsPrimary($item);
+
+                    return [
+                        $isPrimary ? 0 : 1,
+                        $this->galleryItemSortOrder($item),
+                    ];
+                })
+                ->values()
+                ->take($perCategory)
+                ->values()
+                ->map(fn ($item, $index) => $this->normalizeHomepageGalleryItem($item, $layouts[$index] ?? 'cell'));
+
+            $result = $result->concat($group);
+        }
+
+        return $result->values();
+    }
+
+    private function galleryItemCategory(mixed $item): string
+    {
+        if (is_object($item) && method_exists($item, 'getAttribute')) {
+            return (string) $item->category_key;
+        }
+
+        return (string) ($item['cat'] ?? 'programs');
+    }
+
+    private function galleryItemIsPrimary(mixed $item): bool
+    {
+        if (is_object($item) && method_exists($item, 'getAttribute')) {
+            return (bool) $item->is_category_primary;
+        }
+
+        return (bool) ($item['is_category_primary'] ?? false);
+    }
+
+    private function galleryItemSortOrder(mixed $item): int
+    {
+        if (is_object($item) && method_exists($item, 'getAttribute')) {
+            return (int) $item->sort_order;
+        }
+
+        return (int) ($item['sort_order'] ?? 0);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function normalizeHomepageGalleryItem(mixed $item, string $layout): array
+    {
+        if (is_object($item) && method_exists($item, 'getAttribute')) {
+            return [
+                'cat' => $item->category_key,
+                'layout' => $layout,
+                'image' => 'storage/'.ltrim((string) $item->image_path, '/'),
+                'alt' => $item->alt_text ?: $item->title,
+                'eyebrow' => $item->eyebrow ?: ucfirst((string) $item->category_key),
+                'title' => $item->title,
+                'text' => $item->description_text,
+                'is_category_primary' => (bool) $item->is_category_primary,
+                'from_event' => false,
+                'sort_order' => (int) $item->sort_order,
+            ];
+        }
+
+        $normalized = $item;
+        $normalized['layout'] = $layout;
+
+        return $normalized;
+    }
+
+    /**
+     * @return array{section_badge: string, section_title: string, section_description: string, section_button_text: string, posts: \Illuminate\Support\Collection<int, HomeBlogPost>|\Illuminate\Support\Collection<int, array<string, mixed>>}
+     */
+    private function resolveHomepageBlog(): array
+    {
+        $defaults = config('homepage.blog', []);
+        $section = HomeBlogSection::query()->first();
+
+        $dbPosts = HomeBlogPost::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest('id')
+            ->limit(12)
+            ->get();
+
+        $posts = $dbPosts->isNotEmpty()
+            ? $dbPosts
+            : collect($defaults['posts'] ?? []);
+
+        return [
+            'section_badge' => $section?->section_badge ?? 'Our blog',
+            'section_title' => $section?->section_title ?? 'Insights & Updates',
+            'section_description' => $section?->section_description ?? 'Stay informed with the latest news, stories, and updates from GNAT Association. Explore ideas and initiatives shaping our communities.',
+            'section_button_text' => $section?->section_button_text ?? 'Explore All Posts',
+            'posts' => $posts,
+        ];
     }
 
     /**

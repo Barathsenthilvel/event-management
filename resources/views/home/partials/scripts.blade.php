@@ -1204,14 +1204,46 @@
         if (!root) return;
         const buttons = root.querySelectorAll("[data-gallery-filter]");
         const items = root.querySelectorAll("[data-gallery-item]");
+        const viewMore = root.querySelector("[data-gallery-view-more]");
+        const limitNote = root.querySelector("[data-gallery-limit-note]");
+        const galleryBaseUrl = @json(route('gallery.index'));
+
+        function buildGalleryUrl(filter) {
+            if (!filter || filter === "all") {
+                return galleryBaseUrl;
+            }
+            const joiner = galleryBaseUrl.includes("?") ? "&" : "?";
+            return galleryBaseUrl + joiner + "category=" + encodeURIComponent(filter);
+        }
+
+        function updateViewMore(filter) {
+            if (!viewMore) return;
+            viewMore.href = buildGalleryUrl(filter);
+            const label = filter === "all" ? "all gallery photos" : filter + " photos";
+            viewMore.setAttribute("aria-label", "View more " + label);
+            if (limitNote) {
+                const names = { programs: "Programs", events: "Events", community: "Community" };
+                const label = names[filter] || filter;
+                limitNote.innerHTML = filter === "all"
+                    ? 'Showing up to <strong class="text-[#351c42]/80">4 images per category</strong> on the homepage. Use <strong class="text-[#351c42]/80">View more</strong> to see all photos.'
+                    : 'Showing up to <strong class="text-[#351c42]/80">4 ' + label + ' images</strong> here. Use <strong class="text-[#351c42]/80">View more</strong> to see all ' + label + ' photos.';
+            }
+        }
+
         function applyFilter(btn) {
             const f = btn.getAttribute("data-gallery-filter") || "all";
             buttons.forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
             items.forEach((el) => {
                 const cat = el.getAttribute("data-cat") || "";
-                el.classList.toggle("hidden", f !== "all" && cat !== f);
+                if (f === "all") {
+                    el.classList.remove("hidden");
+                    return;
+                }
+                el.classList.toggle("hidden", cat !== f);
             });
+            updateViewMore(f);
         }
+
         buttons.forEach((btn) => btn.addEventListener("click", () => applyFilter(btn)));
         const allBtn = root.querySelector('[data-gallery-filter="all"]');
         if (allBtn) applyFilter(allBtn);

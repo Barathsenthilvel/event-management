@@ -121,6 +121,11 @@ class EventController extends Controller
             }
         });
 
+        if ($event) {
+            $event->refresh();
+            $event->syncMediaToAlbum();
+        }
+
         $successMessage = 'Event created successfully. Invite approved members now.';
         if ($event) {
             $successMessage = $this->appendScheduleStatusNotice($event, $validated['status'], $successMessage);
@@ -135,11 +140,13 @@ class EventController extends Controller
     {
         $this->refreshEventStatusFromSchedule($event);
 
+        $event->syncMediaToAlbum();
         $event->load([
             'dates',
             'creator:id,name',
             'invites.user:id,name,email,mobile',
             'interests' => fn ($q) => $q->orderBy('created_at'),
+            'photos' => fn ($q) => $q->latest('id'),
         ]);
 
         $interestType = trim((string) $request->query('interest_type', 'all'));
@@ -232,9 +239,11 @@ class EventController extends Controller
             }
         });
 
+        $event->refresh();
+        $event->syncMediaToAlbum();
+
         $successMessage = 'Event updated successfully. Invite or re-notify approved members below.';
         $successMessage = $this->appendScheduleStatusNotice($event, $validated['status'], $successMessage);
-        $event->refresh();
 
         return redirect()
             ->route('admin.events.invite', $event)
@@ -727,6 +736,7 @@ class EventController extends Controller
 
     public function album(Event $event)
     {
+        $event->syncMediaToAlbum();
         $event->load(['photos' => fn ($q) => $q->latest('id')]);
 
         return view('admin.events.album', compact('event'));
@@ -741,7 +751,7 @@ class EventController extends Controller
 
         foreach ($validated['photos'] as $photo) {
             $path = $photo->store('events/albums', 'public');
-            $event->photos()->create(['photo_path' => $path]);
+            $event->photos()->firstOrCreate(['photo_path' => $path]);
         }
 
         return back()->with('success', 'Event album updated successfully.');
@@ -753,10 +763,12 @@ class EventController extends Controller
             abort(404);
         }
 
-        if (! empty($photo->photo_path) && Storage::disk('public')->exists($photo->photo_path)) {
-            Storage::disk('public')->delete($photo->photo_path);
-        }
+        $path = ltrim((string) $photo->photo_path, '/');
         $photo->delete();
+
+        if ($path !== '' && ! $event->photoPathInUseAsEventMedia($path) && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
 
         return back()->with('success', 'Photo removed from album.');
     }
