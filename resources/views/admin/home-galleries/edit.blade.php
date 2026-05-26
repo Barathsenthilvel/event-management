@@ -8,7 +8,7 @@
     </div>
 
     <div class="flex-1 min-h-0 overflow-y-auto custom-scroll px-6 pb-6">
-        @include('admin.home-galleries._form', ['item' => $item])
+        @include('admin.home-galleries._form', ['item' => $item, 'batchItems' => $batchItems])
     </div>
 </div>
 @endsection

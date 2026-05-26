@@ -12,6 +12,7 @@ class HomeGalleryItem extends Model
 
     protected $fillable = [
         'created_by_admin_id',
+        'upload_batch_id',
         'category_key',
         'is_category_primary',
         'layout_type',

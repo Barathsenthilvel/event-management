@@ -254,7 +254,7 @@ class HomeController extends Controller
             : collect($defaults['items'] ?? []);
 
         $items = $items->concat($this->buildEventGalleryItems());
-        $items = $this->limitHomepageGalleryItems($items, 4);
+        $items = $this->limitHomepageGalleryItems($items);
 
         return [
             'section_badge' => $section?->section_badge ?? 'Impact in pictures',
@@ -394,33 +394,35 @@ class HomeController extends Controller
     }
 
     /**
-     * Homepage gallery: max 4 images per category with fixed card layouts.
+     * Homepage gallery preview limits: Programs 2, Events 1, Community 1 (4 total on ALL).
      *
      * @param  Collection<int, HomeGalleryItem|array<string, mixed>>  $items
      * @return Collection<int, array<string, mixed>>
      */
-    private function limitHomepageGalleryItems(Collection $items, int $perCategory = 4): Collection
+    private function limitHomepageGalleryItems(Collection $items): Collection
     {
-        $layouts = ['hero', 'wide', 'cell', 'cell'];
+        $categoryConfig = [
+            'programs' => ['limit' => 2, 'layouts' => ['hero', 'cell']],
+            'events' => ['limit' => 1, 'layouts' => ['wide']],
+            'community' => ['limit' => 1, 'layouts' => ['cell']],
+        ];
+
         $result = collect();
 
-        foreach (['programs', 'events', 'community'] as $categoryKey) {
+        foreach ($categoryConfig as $categoryKey => $config) {
             $group = $items
-                ->filter(function ($item) use ($categoryKey) {
-                    return $this->galleryItemCategory($item) === $categoryKey;
-                })
-                ->sortBy(function ($item) {
-                    $isPrimary = $this->galleryItemIsPrimary($item);
-
-                    return [
-                        $isPrimary ? 0 : 1,
-                        $this->galleryItemSortOrder($item),
-                    ];
-                })
+                ->filter(fn ($item) => $this->galleryItemCategory($item) === $categoryKey)
+                ->sortBy(fn ($item) => [
+                    $this->galleryItemIsPrimary($item) ? 0 : 1,
+                    $this->galleryItemSortOrder($item),
+                ])
                 ->values()
-                ->take($perCategory)
+                ->take($config['limit'])
                 ->values()
-                ->map(fn ($item, $index) => $this->normalizeHomepageGalleryItem($item, $layouts[$index] ?? 'cell'));
+                ->map(fn ($item, $index) => $this->normalizeHomepageGalleryItem(
+                    $item,
+                    $config['layouts'][$index] ?? 'cell'
+                ));
 
             $result = $result->concat($group);
         }

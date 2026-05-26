@@ -63,11 +63,11 @@
 
     <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto custom-scroll">
-        <table class="min-w-full text-left text-xs">
+        <table class="min-w-full table-fixed text-left text-xs">
             <thead class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
                 <tr>
-                    <th class="px-6 py-4">Preview</th>
-                    <th class="px-6 py-4">Title</th>
+                    <th class="px-6 py-4 w-[7rem]">Preview</th>
+                    <th class="px-6 py-4 w-[32%] min-w-[10rem]">Title</th>
                     <th class="px-6 py-4">Type</th>
                     <th class="px-6 py-4 text-center">Sort</th>
                     <th class="px-6 py-4">Updated</th>
@@ -76,34 +76,55 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
-            @forelse($items as $item)
+            @forelse($items as $group)
+                @php
+                    $primary = $group->primary;
+                    $groupItems = $group->items;
+                @endphp
                 <tr>
                     <td class="px-6 py-4 align-middle">
-                        <img src="{{ asset('storage/' . ltrim((string) $item->image_path, '/')) }}"
-                             alt="" class="h-14 w-24 rounded-lg border border-slate-200 object-cover">
+                        @if($group->count > 1)
+                            <div class="flex flex-wrap gap-1.5 max-w-[10rem]">
+                                @foreach($groupItems->take(4) as $thumb)
+                                    <img src="{{ asset('storage/' . ltrim((string) $thumb->image_path, '/')) }}"
+                                         alt="" class="h-12 w-12 rounded-lg border border-slate-200 object-cover">
+                                @endforeach
+                                @if($group->count > 4)
+                                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-[10px] font-bold text-slate-500">+{{ $group->count - 4 }}</span>
+                                @endif
+                            </div>
+                        @else
+                            <img src="{{ asset('storage/' . ltrim((string) $primary->image_path, '/')) }}"
+                                 alt="" class="h-14 w-24 rounded-lg border border-slate-200 object-cover">
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 align-middle max-w-0">
+                        <p class="text-[11px] font-semibold text-slate-900 line-clamp-2 break-words">{{ $primary->title }}</p>
+                        @if($group->count > 1)
+                            <p class="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">{{ $group->count }} images in one upload</p>
+                        @endif
+                        @if(filled($primary->description_text))
+                            <p class="admin-gallery-desc text-[10px] text-slate-500 mt-1 leading-snug">{{ $primary->description_text }}</p>
+                        @endif
                     </td>
                     <td class="px-6 py-4 align-middle">
-                        <p class="text-[11px] font-semibold text-slate-900">{{ $item->title }}</p>
-                        <p class="text-[10px] text-slate-500 mt-1 line-clamp-2">{{ $item->description_text }}</p>
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <p class="text-[11px] font-semibold text-slate-700">Category: {{ ucfirst($item->category_key) }}</p>
-                        <p class="text-[11px] font-semibold text-slate-700">Layout: {{ ucfirst($item->layout_type) }}</p>
-                        @if($item->is_category_primary)
+                        <p class="text-[11px] font-semibold text-slate-700">Category: {{ ucfirst($primary->category_key) }}</p>
+                        <p class="text-[11px] font-semibold text-slate-700">Layout: {{ ucfirst($primary->layout_type) }}</p>
+                        @if($primary->is_category_primary)
                             <span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Category main (homepage)</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 align-middle text-center font-bold text-indigo-600">{{ $item->sort_order }}</td>
+                    <td class="px-6 py-4 align-middle text-center font-bold text-indigo-600">{{ $primary->sort_order }}</td>
                     <td class="px-6 py-4 align-middle">
-                        <p class="text-[11px] font-bold text-slate-500">{{ $item->updated_at?->format('d M Y') }}</p>
-                        <p class="font-semibold text-[11px] text-slate-700">{{ $item->creator->name ?? 'Admin' }}</p>
+                        <p class="text-[11px] font-bold text-slate-500">{{ $primary->updated_at?->format('d M Y') }}</p>
+                        <p class="font-semibold text-[11px] text-slate-700">{{ $primary->creator->name ?? 'Admin' }}</p>
                     </td>
                     <td class="px-6 py-4 text-center align-middle">
-                        <form method="POST" action="{{ route('admin.home-galleries.toggle-status', $item->id) }}" class="inline-flex">
+                        <form method="POST" action="{{ route('admin.home-galleries.toggle-status', $primary->id) }}" class="inline-flex">
                             @csrf
                             <button type="submit" class="inline-flex items-center cursor-pointer" title="Toggle Display Status">
-                                <span class="w-10 h-5 {{ $item->is_active ? 'bg-emerald-400/60' : 'bg-slate-300/70' }} rounded-full relative shadow-inner">
-                                    <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform {{ $item->is_active ? 'translate-x-5' : '' }}"></span>
+                                <span class="w-10 h-5 {{ $primary->is_active ? 'bg-emerald-400/60' : 'bg-slate-300/70' }} rounded-full relative shadow-inner">
+                                    <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform {{ $primary->is_active ? 'translate-x-5' : '' }}"></span>
                                 </span>
                             </button>
                         </form>
@@ -111,19 +132,19 @@
                     <td class="px-6 py-4 text-right align-middle">
                         <x-admin.row-actions>
                             <x-slot:primary>
-                                <a href="{{ route('admin.home-galleries.edit', $item->id) }}" title="Edit"
+                                <a href="{{ route('admin.home-galleries.edit', $primary->id) }}" title="Edit"
                                     class="w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-6 3h12M6 9l1 10h10l1-10M9 9V7a3 3 0 016 0v2" />
                                     </svg>
                                 </a>
-                                <form id="admin-delete-home-gallery-{{ $item->id }}" method="POST" action="{{ route('admin.home-galleries.destroy', $item->id) }}" class="inline-flex">
+                                <form id="admin-delete-home-gallery-{{ $primary->id }}" method="POST" action="{{ route('admin.home-galleries.destroy', $primary->id) }}" class="inline-flex">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button"
-                                        data-delete-form="admin-delete-home-gallery-{{ $item->id }}"
-                                        data-delete-title="Delete this gallery item?"
-                                        data-delete-message="This will permanently remove the gallery card and image from storage."
+                                        data-delete-form="admin-delete-home-gallery-{{ $primary->id }}"
+                                        data-delete-title="{{ $group->count > 1 ? 'Delete this upload (' . $group->count . ' images)?' : 'Delete this gallery item?' }}"
+                                        data-delete-message="{{ $group->count > 1 ? 'All ' . $group->count . ' images from this upload will be removed from the website and storage.' : 'This will permanently remove the gallery card and image from storage.' }}"
                                         onclick="adminOpenDeleteModalFromEl(this)"
                                         class="w-8 h-8 rounded-lg bg-rose-600 text-white hover:bg-rose-700 inline-flex items-center justify-center"
                                         title="Delete">
@@ -151,4 +172,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    .admin-gallery-desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        word-break: break-all;
+        overflow-wrap: anywhere;
+    }
+</style>
 @endsection

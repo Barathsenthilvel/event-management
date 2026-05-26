@@ -6,8 +6,11 @@ use App\Models\HomeGalleryItem;
 use App\Models\HomeGallerySection;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AdminHomeGalleryController extends Controller
@@ -20,7 +23,9 @@ class AdminHomeGalleryController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $items = HomeGalleryItem::query()
+        $this->backfillUploadBatchIds();
+
+        $allItems = HomeGalleryItem::query()
             ->with('creator:id,name')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -29,10 +34,34 @@ class AdminHomeGalleryController extends Controller
                         ->orWhere('category_key', 'like', '%'.$q.'%');
                 });
             })
+            ->orderByDesc('created_at')
             ->orderBy('sort_order')
-            ->latest('id')
-            ->paginate(12)
-            ->withQueryString();
+            ->get();
+
+        $groups = $allItems
+            ->groupBy(fn (HomeGalleryItem $item) => $this->galleryGroupKey($item))
+            ->map(function ($group) {
+                $sorted = $group->sortBy('sort_order')->values();
+                $primary = $sorted->firstWhere('is_category_primary', true) ?? $sorted->first();
+
+                return (object) [
+                    'items' => $sorted,
+                    'primary' => $primary,
+                    'count' => $sorted->count(),
+                ];
+            })
+            ->sortByDesc(fn ($group) => $group->primary->created_at)
+            ->values();
+
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = 10;
+        $items = new LengthAwarePaginator(
+            $groups->forPage($page, $perPage)->values(),
+            $groups->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         $section = HomeGallerySection::query()->first();
 
@@ -48,43 +77,47 @@ class AdminHomeGalleryController extends Controller
     {
         $files = $this->normalizeUploadedImages($request);
 
-        if ($files !== []) {
-            $request->files->set('images', $files);
-
-            return $this->storeBulk($request, $files);
+        if ($files === []) {
+            return back()
+                ->withErrors(['images' => 'Please select at least one image to upload.'])
+                ->withInput();
         }
 
-        if ($request->hasFile('image')) {
-            $validated = $request->validate($this->singleImageRules(true));
-            $payload = $this->buildPayload($request, $validated, true);
-
-            if ($request->boolean('is_category_primary')) {
-                $this->clearCategoryPrimary($payload['category_key']);
-                $payload['is_category_primary'] = true;
-            } else {
-                $payload['is_category_primary'] = ! HomeGalleryItem::query()
-                    ->where('category_key', $payload['category_key'])
-                    ->where('is_category_primary', true)
-                    ->exists();
-            }
-
-            HomeGalleryItem::create($payload);
-
-            return redirect()->route('admin.home-galleries.index')->with('success', 'Home gallery item created successfully.');
+        if (count($files) > 20) {
+            return back()
+                ->withErrors(['images' => 'You can upload up to 20 images at a time.'])
+                ->withInput();
         }
 
-        return back()
-            ->withErrors(['images' => 'Please select at least one image to upload.'])
-            ->withInput();
+        $this->validateImageFiles($files);
+
+        return $this->storeBulk($request, $files);
     }
 
     public function edit(HomeGalleryItem $homeGallery)
     {
-        return view('admin.home-galleries.edit', ['item' => $homeGallery]);
+        $batchItems = $this->batchItemsFor($homeGallery);
+
+        return view('admin.home-galleries.edit', [
+            'item' => $homeGallery,
+            'batchItems' => $batchItems,
+        ]);
     }
 
     public function update(Request $request, HomeGalleryItem $homeGallery)
     {
+        $additionalFiles = $this->normalizeUploadedImages($request);
+
+        if (count($additionalFiles) > 20) {
+            return back()
+                ->withErrors(['images' => 'You can upload up to 20 additional images at a time.'])
+                ->withInput();
+        }
+
+        if ($additionalFiles !== []) {
+            $this->validateImageFiles($additionalFiles);
+        }
+
         $validated = $request->validate($this->singleImageRules(false));
         $payload = $this->buildPayload($request, $validated, false, $homeGallery);
 
@@ -97,25 +130,46 @@ class AdminHomeGalleryController extends Controller
 
         $homeGallery->update($payload);
 
-        return redirect()->route('admin.home-galleries.index')->with('success', 'Home gallery item updated successfully.');
+        $added = 0;
+        if ($additionalFiles !== []) {
+            $added = $this->appendGalleryImages($request, $validated, $additionalFiles, $homeGallery);
+        }
+
+        $message = 'Home gallery item updated successfully.';
+        if ($added > 0) {
+            $message .= " {$added} additional image(s) were added for ".ucfirst($validated['category_key']).'.';
+        }
+
+        return redirect()->route('admin.home-galleries.index')->with('success', $message);
     }
 
     public function destroy(HomeGalleryItem $homeGallery)
     {
-        if ($homeGallery->image_path && Storage::disk('public')->exists($homeGallery->image_path)) {
-            Storage::disk('public')->delete($homeGallery->image_path);
-        }
+        $batchId = $homeGallery->upload_batch_id;
+        $toDelete = filled($batchId)
+            ? HomeGalleryItem::query()->where('upload_batch_id', $batchId)->get()
+            : collect([$homeGallery]);
 
         $wasPrimary = $homeGallery->is_category_primary;
         $categoryKey = $homeGallery->category_key;
+        $deletedCount = $toDelete->count();
 
-        $homeGallery->delete();
+        foreach ($toDelete as $item) {
+            if ($item->image_path && Storage::disk('public')->exists($item->image_path)) {
+                Storage::disk('public')->delete($item->image_path);
+            }
+            $item->delete();
+        }
 
         if ($wasPrimary) {
             $this->promoteFirstInCategory($categoryKey);
         }
 
-        return redirect()->route('admin.home-galleries.index')->with('success', 'Home gallery item deleted successfully.');
+        $message = $deletedCount > 1
+            ? "{$deletedCount} images from this upload were deleted."
+            : 'Home gallery item deleted successfully.';
+
+        return redirect()->route('admin.home-galleries.index')->with('success', $message);
     }
 
     public function toggleStatus(HomeGalleryItem $homeGallery)
@@ -149,7 +203,7 @@ class AdminHomeGalleryController extends Controller
 
     private function storeBulk(Request $request, array $files)
     {
-        $validated = $request->validate($this->bulkImageRules());
+        $validated = $request->validate($this->bulkMetaRules());
 
         $categoryKey = $validated['category_key'];
         $baseSort = (int) ($validated['sort_order'] ?? 0);
@@ -161,12 +215,14 @@ class AdminHomeGalleryController extends Controller
 
         $this->clearCategoryPrimary($categoryKey);
 
+        $batchId = (string) Str::uuid();
         $created = 0;
         foreach ($files as $index => $file) {
             $path = $file->store('home/gallery', 'public');
 
             HomeGalleryItem::create([
                 'created_by_admin_id' => Auth::guard('admin')->id(),
+                'upload_batch_id' => $batchId,
                 'category_key' => $categoryKey,
                 'is_category_primary' => $index === 0,
                 'layout_type' => $index === 0 ? $layoutFirst : 'cell',
@@ -185,7 +241,65 @@ class AdminHomeGalleryController extends Controller
 
         return redirect()
             ->route('admin.home-galleries.index')
-            ->with('success', "{$created} gallery image(s) added for {$categoryLabel}. The first uploaded image is shown when visitors filter by {$categoryLabel} on the homepage.");
+            ->with('success', "One gallery entry saved with {$created} image(s) for {$categoryLabel}. The first image is the main one on the homepage.");
+    }
+
+    /**
+     * @param  list<UploadedFile>  $files
+     */
+    private function appendGalleryImages(Request $request, array $validated, array $files, HomeGalleryItem $homeGallery): int
+    {
+        $categoryKey = $validated['category_key'];
+        $title = $validated['title'];
+        $eyebrow = $validated['eyebrow'] ?? ucfirst($categoryKey);
+        $altText = $validated['alt_text'] ?? $title;
+        $isActive = $request->boolean('is_active', true);
+        $baseSort = (int) (HomeGalleryItem::query()
+            ->where('category_key', $categoryKey)
+            ->max('sort_order') ?? 0);
+
+        $batchId = $homeGallery->upload_batch_id ?: (string) Str::uuid();
+        if (! filled($homeGallery->upload_batch_id)) {
+            $homeGallery->update(['upload_batch_id' => $batchId]);
+        }
+
+        $created = 0;
+        foreach ($files as $index => $file) {
+            $path = $file->store('home/gallery', 'public');
+
+            HomeGalleryItem::create([
+                'created_by_admin_id' => Auth::guard('admin')->id(),
+                'upload_batch_id' => $batchId,
+                'category_key' => $categoryKey,
+                'is_category_primary' => false,
+                'layout_type' => 'cell',
+                'image_path' => $path,
+                'alt_text' => $altText,
+                'eyebrow' => $eyebrow,
+                'title' => $title,
+                'description_text' => null,
+                'sort_order' => $baseSort + $index + 1,
+                'is_active' => $isActive,
+            ]);
+            $created++;
+        }
+
+        return $created;
+    }
+
+    /**
+     * @param  list<UploadedFile>  $files
+     */
+    private function validateImageFiles(array $files): void
+    {
+        foreach ($files as $index => $file) {
+            validator(
+                ['image' => $file],
+                ['image' => ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120']],
+                [],
+                ['image' => 'image '.($index + 1)]
+            )->validate();
+        }
     }
 
     /**
@@ -193,12 +307,16 @@ class AdminHomeGalleryController extends Controller
      */
     private function normalizeUploadedImages(Request $request): array
     {
-        $raw = $request->file('images');
+        $raw = $request->allFiles()['images'] ?? null;
 
-        if ($raw === null) {
-            $raw = $request->file('images[]');
-        }
+        return $this->flattenUploadedFiles($raw);
+    }
 
+    /**
+     * @return list<UploadedFile>
+     */
+    private function flattenUploadedFiles(mixed $raw): array
+    {
         if ($raw instanceof UploadedFile) {
             return $raw->isValid() ? [$raw] : [];
         }
@@ -207,13 +325,17 @@ class AdminHomeGalleryController extends Controller
             return [];
         }
 
-        return array_values(array_filter(
-            $raw,
-            fn ($file) => $file instanceof UploadedFile && $file->isValid()
-        ));
+        $files = [];
+        foreach ($raw as $entry) {
+            foreach ($this->flattenUploadedFiles($entry) as $file) {
+                $files[] = $file;
+            }
+        }
+
+        return $files;
     }
 
-    private function bulkImageRules(): array
+    private function bulkMetaRules(): array
     {
         return [
             'category_key' => ['required', Rule::in(self::CATEGORY_OPTIONS)],
@@ -224,8 +346,6 @@ class AdminHomeGalleryController extends Controller
             'description_text' => ['nullable', 'string', 'max:1000'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
-            'images' => ['required', 'array', 'min:1', 'max:20'],
-            'images.*' => ['image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
         ];
     }
 
@@ -297,5 +417,65 @@ class AdminHomeGalleryController extends Controller
             $this->clearCategoryPrimary($categoryKey);
             $next->update(['is_category_primary' => true]);
         }
+    }
+
+    private function galleryGroupKey(HomeGalleryItem $item): string
+    {
+        if (filled($item->upload_batch_id)) {
+            return 'batch:'.$item->upload_batch_id;
+        }
+
+        return 'single:'.$item->id;
+    }
+
+    private function backfillUploadBatchIds(): void
+    {
+        if (! Schema::hasTable('home_gallery_items') || ! Schema::hasColumn('home_gallery_items', 'upload_batch_id')) {
+            return;
+        }
+
+        $withoutBatch = HomeGalleryItem::query()
+            ->whereNull('upload_batch_id')
+            ->orderBy('created_at')
+            ->get();
+
+        $withoutBatch
+            ->groupBy(fn (HomeGalleryItem $item) => $this->legacyUploadGroupSignature($item))
+            ->filter(fn ($group) => $group->count() > 1)
+            ->each(function ($group) {
+                $batchId = (string) Str::uuid();
+                HomeGalleryItem::query()
+                    ->whereIn('id', $group->pluck('id'))
+                    ->update(['upload_batch_id' => $batchId]);
+            });
+    }
+
+    private function legacyUploadGroupSignature(HomeGalleryItem $item): string
+    {
+        $minute = $item->created_at?->format('Y-m-d H:i') ?? '';
+        $title = mb_strtolower(trim((string) $item->title));
+
+        return implode('|', [
+            $item->category_key,
+            $title,
+            $minute,
+            (string) ($item->created_by_admin_id ?? ''),
+        ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, HomeGalleryItem>
+     */
+    private function batchItemsFor(HomeGalleryItem $item)
+    {
+        if (filled($item->upload_batch_id)) {
+            return HomeGalleryItem::query()
+                ->where('upload_batch_id', $item->upload_batch_id)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+        }
+
+        return collect([$item]);
     }
 }

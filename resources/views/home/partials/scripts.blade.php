@@ -1205,7 +1205,6 @@
         const buttons = root.querySelectorAll("[data-gallery-filter]");
         const items = root.querySelectorAll("[data-gallery-item]");
         const viewMore = root.querySelector("[data-gallery-view-more]");
-        const limitNote = root.querySelector("[data-gallery-limit-note]");
         const galleryBaseUrl = @json(route('gallery.index'));
 
         function buildGalleryUrl(filter) {
@@ -1221,13 +1220,6 @@
             viewMore.href = buildGalleryUrl(filter);
             const label = filter === "all" ? "all gallery photos" : filter + " photos";
             viewMore.setAttribute("aria-label", "View more " + label);
-            if (limitNote) {
-                const names = { programs: "Programs", events: "Events", community: "Community" };
-                const label = names[filter] || filter;
-                limitNote.innerHTML = filter === "all"
-                    ? 'Showing up to <strong class="text-[#351c42]/80">4 images per category</strong> on the homepage. Use <strong class="text-[#351c42]/80">View more</strong> to see all photos.'
-                    : 'Showing up to <strong class="text-[#351c42]/80">4 ' + label + ' images</strong> here. Use <strong class="text-[#351c42]/80">View more</strong> to see all ' + label + ' photos.';
-            }
         }
 
         function applyFilter(btn) {

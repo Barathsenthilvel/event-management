@@ -31,7 +31,7 @@
                 </a>
             </div>
             <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <p class="max-w-xl text-sm leading-relaxed text-[#351c42]/70 sm:text-base">
+                <p class="max-w-xl text-sm leading-relaxed text-[#351c42]/70 sm:text-base line-clamp-2">
                     {{ $gallery['section_description'] ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.' }}
                 </p>
                 <div class="flex flex-wrap items-center gap-2 lg:justify-end lg:shrink-0" role="group" aria-label="Filter gallery by category">
@@ -47,10 +47,7 @@
         </div>
 
         @if(collect($gallery['items'] ?? [])->isNotEmpty())
-            <p class="mt-8 text-sm text-[#351c42]/60" data-gallery-limit-note>
-                Showing up to <strong class="text-[#351c42]/80">4 images per category</strong> on the homepage. Use <strong class="text-[#351c42]/80">View more</strong> to see all photos.
-            </p>
-            <div class="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]" data-gallery-grid>
+            <div class="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]" data-gallery-grid>
                 @foreach ($gallery['items'] as $item)
                     @include('home.partials.gallery-item', ['item' => $item, 'filterable' => true])
                 @endforeach

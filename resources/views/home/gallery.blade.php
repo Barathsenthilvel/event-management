@@ -23,7 +23,7 @@
                     <div class="min-w-0">
                         <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#965995]">{{ $section->section_badge ?? 'Impact in pictures' }}</p>
                         <h1 class="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#351c42]">{{ $section->section_title ?? 'Our gallery' }}</h1>
-                        <p class="mt-1 text-sm text-[#351c42]/65">{{ $section->section_description ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.' }}</p>
+                        <p class="mt-1 text-sm text-[#351c42]/65 leading-relaxed line-clamp-2">{{ $section->section_description ?? 'Field moments from Aminjikarai and across our programs—outreach, learning spaces, and celebrations with the communities we serve.' }}</p>
                     </div>
                 </div>
 
@@ -66,14 +66,147 @@
                     <p class="text-sm font-bold text-[#351c42]/80">No gallery items found.</p>
                 </section>
             @else
+                @php
+                    $lightboxImages = $galleryItems->map(function ($item) {
+                        $isModel = is_object($item) && method_exists($item, 'getAttribute');
+                        return [
+                            'src'   => $isModel
+                                ? asset('storage/' . ltrim((string) $item->image_path, '/'))
+                                : asset($item['image']),
+                            'title' => $isModel ? $item->title : ($item['title'] ?? ''),
+                            'cat'   => $isModel ? ucfirst($item->category_key) : ucfirst($item['cat'] ?? ''),
+                        ];
+                    })->values()->all();
+                @endphp
+
                 <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                    @foreach($galleryItems as $item)
-                        @include('home.partials.gallery-item', ['item' => $item, 'uniformGrid' => true])
+                    @foreach($galleryItems as $index => $item)
+                        @php
+                            $isModel = is_object($item) && method_exists($item, 'getAttribute');
+                            $imgSrc  = $isModel
+                                ? asset('storage/' . ltrim((string) $item->image_path, '/'))
+                                : asset($item['image']);
+                            $imgAlt  = $isModel ? ($item->alt_text ?: $item->title) : ($item['alt'] ?? ($item['title'] ?? 'Gallery image'));
+                            $imgTitle = $isModel ? $item->title : ($item['title'] ?? '');
+                            $imgCat  = $isModel ? ucfirst($item->category_key) : ucfirst($item['cat'] ?? '');
+                        @endphp
+                        <div class="relative group aspect-[4/3] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 cursor-pointer"
+                             data-lightbox-index="{{ $index }}"
+                             onclick="openGalleryLightbox({{ $index }})">
+                            <img src="{{ $imgSrc }}" alt="{{ $imgAlt }}"
+                                 class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                                 loading="lazy" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#351c42]/80 via-[#351c42]/20 to-transparent opacity-90"></div>
+                            <div class="absolute inset-x-0 bottom-0 p-3">
+                                <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-[#fddc6a]">{{ $imgCat }}</p>
+                                <p class="text-sm font-extrabold text-white leading-tight line-clamp-2">{{ $imgTitle }}</p>
+                            </div>
+                            <span class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white backdrop-blur-sm shadow-sm transition-all duration-200 hover:bg-[#fddc6a] hover:text-[#351c42]" aria-hidden="true">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                                </svg>
+                            </span>
+                        </div>
                     @endforeach
                 </div>
             @endif
         </div>
     </section>
+
+    {{-- Lightbox --}}
+    <div id="gallery-lightbox"
+         class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+         style="display:none!important"
+         role="dialog" aria-modal="true" aria-label="Image viewer">
+
+        {{-- Close --}}
+        <button onclick="closeGalleryLightbox()"
+                class="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/30 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+
+        {{-- Prev --}}
+        <button id="lb-prev"
+                onclick="stepGalleryLightbox(-1)"
+                class="absolute left-3 top-1/2 -translate-y-1/2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/30 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        {{-- Next --}}
+        <button id="lb-next"
+                onclick="stepGalleryLightbox(1)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/30 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        {{-- Image --}}
+        <div class="relative flex flex-col items-center justify-center w-full h-full px-16 py-14">
+            <img id="lb-img" src="" alt=""
+                 class="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl transition-opacity duration-200" />
+            <div class="mt-4 text-center">
+                <p id="lb-cat" class="text-[10px] font-bold uppercase tracking-[0.22em] text-[#fddc6a]"></p>
+                <p id="lb-title" class="mt-1 text-base font-extrabold text-white"></p>
+                <p id="lb-counter" class="mt-1 text-xs text-white/50"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const images = @json($lightboxImages ?? []);
+        let current = 0;
+        const lb = document.getElementById('gallery-lightbox');
+        const lbImg = document.getElementById('lb-img');
+        const lbTitle = document.getElementById('lb-title');
+        const lbCat = document.getElementById('lb-cat');
+        const lbCounter = document.getElementById('lb-counter');
+
+        window.openGalleryLightbox = function (index) {
+            current = index;
+            render();
+            lb.style.cssText = '';
+            lb.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeGalleryLightbox = function () {
+            lb.style.display = 'none';
+            document.body.style.overflow = '';
+        };
+
+        window.stepGalleryLightbox = function (dir) {
+            current = (current + dir + images.length) % images.length;
+            render();
+        };
+
+        function render() {
+            if (!images.length) return;
+            const img = images[current];
+            lbImg.style.opacity = '0';
+            setTimeout(() => {
+                lbImg.src = img.src;
+                lbImg.alt = img.title || '';
+                if (lbTitle) lbTitle.textContent = img.title || '';
+                if (lbCat)   lbCat.textContent   = img.cat   || '';
+                if (lbCounter) lbCounter.textContent = (current + 1) + ' / ' + images.length;
+                document.getElementById('lb-prev').style.display = images.length <= 1 ? 'none' : '';
+                document.getElementById('lb-next').style.display = images.length <= 1 ? 'none' : '';
+                lbImg.style.opacity = '1';
+            }, 100);
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (lb.style.display === 'none') return;
+            if (e.key === 'Escape')      closeGalleryLightbox();
+            if (e.key === 'ArrowLeft')   stepGalleryLightbox(-1);
+            if (e.key === 'ArrowRight')  stepGalleryLightbox(1);
+        });
+
+        lb.addEventListener('click', function (e) {
+            if (e.target === lb) closeGalleryLightbox();
+        });
+    })();
+    </script>
 
     @include('home.partials.footer')
     @include('home.partials.floating')
