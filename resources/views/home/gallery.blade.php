@@ -61,28 +61,16 @@
                 </form>
             </div>
 
-            @php
-                $hasGalleryItems = $items->isNotEmpty() || (isset($eventGalleryItems) && $eventGalleryItems->isNotEmpty());
-            @endphp
-            @if(!$hasGalleryItems)
+            @if($galleryItems->isEmpty())
                 <section class="mt-8 rounded-2xl border border-dashed border-[#351c42]/20 bg-white p-10 text-center">
                     <p class="text-sm font-bold text-[#351c42]/80">No gallery items found.</p>
                 </section>
             @else
                 <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                    @if(in_array($category, ['all', 'events'], true) && isset($eventGalleryItems))
-                        @foreach($eventGalleryItems as $item)
-                            @include('home.partials.gallery-item', ['item' => $item, 'uniformGrid' => true])
-                        @endforeach
-                    @endif
-                    @foreach($items as $item)
+                    @foreach($galleryItems as $item)
                         @include('home.partials.gallery-item', ['item' => $item, 'uniformGrid' => true])
                     @endforeach
                 </div>
-
-                <section class="mt-6 rounded-2xl border border-[#351c42]/10 bg-white p-4">
-                    {{ $items->links() }}
-                </section>
             @endif
         </div>
     </section>

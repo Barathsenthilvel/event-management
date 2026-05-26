@@ -26,7 +26,7 @@
                         @endif
                     </h2>
                 </div>
-                <a href="{{ route('gallery.index') }}" data-gallery-view-more class="shrink-0 self-start text-sm font-semibold text-[#965995] underline-offset-4 hover:text-[#351c42] hover:underline transition-colors min-[520px]:pt-8 sm:pt-10">
+                <a href="{{ route('gallery.index') }}" data-gallery-view-more class="shrink-0 self-start text-sm font-semibold text-[#965995] underline-offset-4 hover:text-[#351c42] hover:underline transition-colors min-[520px]:pt-8 sm:pt-10" aria-label="View more all gallery photos">
                     View more
                 </a>
             </div>
@@ -47,7 +47,10 @@
         </div>
 
         @if(collect($gallery['items'] ?? [])->isNotEmpty())
-            <div class="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]" data-gallery-grid>
+            <p class="mt-8 text-sm text-[#351c42]/60" data-gallery-limit-note>
+                Showing up to <strong class="text-[#351c42]/80">4 images per category</strong> on the homepage. Use <strong class="text-[#351c42]/80">View more</strong> to see all photos.
+            </p>
+            <div class="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]" data-gallery-grid>
                 @foreach ($gallery['items'] as $item)
                     @include('home.partials.gallery-item', ['item' => $item, 'filterable' => true])
                 @endforeach

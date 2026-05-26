@@ -99,7 +99,9 @@ class HomeController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $section = HomeBlogSection::query()->first();
+        $section = Schema::hasTable('home_blog_sections')
+            ? HomeBlogSection::query()->first()
+            : null;
 
         return view(
             'home.blogs',
@@ -117,31 +119,14 @@ class HomeController extends Controller
             $category = 'all';
         }
 
-        $items = HomeGalleryItem::query()
-            ->where('is_active', true)
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('title', 'like', '%'.$q.'%')
-                        ->orWhere('eyebrow', 'like', '%'.$q.'%')
-                        ->orWhere('description_text', 'like', '%'.$q.'%');
-                });
-            })
-            ->when($category !== 'all', fn ($query) => $query->where('category_key', $category))
-            ->orderBy('sort_order')
-            ->latest('id')
-            ->paginate(20)
-            ->withQueryString();
-
-        $eventGalleryItems = collect();
-        if (Schema::hasTable('events') && in_array($category, ['all', 'events'], true)) {
-            $eventGalleryItems = $this->buildEventGalleryItems($q);
-        }
-
-        $section = HomeGallerySection::query()->first();
+        $galleryItems = $this->resolveGalleryPageItems($category, $q);
+        $section = Schema::hasTable('home_gallery_sections')
+            ? HomeGallerySection::query()->first()
+            : null;
 
         return view(
             'home.gallery',
-            array_merge(config('homepage', []), compact('items', 'eventGalleryItems', 'q', 'category', 'section'))
+            array_merge(config('homepage', []), compact('galleryItems', 'q', 'category', 'section'))
         );
     }
 
@@ -249,18 +234,22 @@ class HomeController extends Controller
     private function resolveHomepageGallery(): array
     {
         $defaults = config('homepage.gallery', []);
-        $section = HomeGallerySection::query()->first();
+        $section = Schema::hasTable('home_gallery_sections')
+            ? HomeGallerySection::query()->first()
+            : null;
 
         $this->ensureGalleryCategoryPrimaries();
 
-        $dbItems = HomeGalleryItem::query()
-            ->where('is_active', true)
-            ->orderByDesc('is_category_primary')
-            ->orderBy('sort_order')
-            ->latest('id')
-            ->get();
+        $dbItems = Schema::hasTable('home_gallery_items')
+            ? HomeGalleryItem::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_category_primary')
+                ->orderBy('sort_order')
+                ->latest('id')
+                ->get()
+            : collect();
 
-        $items = $dbItems->isNotEmpty()
+        $items = Schema::hasTable('home_gallery_items')
             ? $dbItems
             : collect($defaults['items'] ?? []);
 
@@ -375,6 +364,36 @@ class HomeController extends Controller
     }
 
     /**
+     * All gallery items for the dedicated gallery page (no per-category homepage cap).
+     *
+     * @return Collection<int, HomeGalleryItem|array<string, mixed>>
+     */
+    private function resolveGalleryPageItems(string $category, string $search = ''): Collection
+    {
+        $items = Schema::hasTable('home_gallery_items')
+            ? HomeGalleryItem::query()
+                ->where('is_active', true)
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($sub) use ($search) {
+                        $sub->where('title', 'like', '%'.$search.'%')
+                            ->orWhere('eyebrow', 'like', '%'.$search.'%')
+                            ->orWhere('description_text', 'like', '%'.$search.'%');
+                    });
+                })
+                ->when($category !== 'all', fn ($query) => $query->where('category_key', $category))
+                ->orderBy('sort_order')
+                ->latest('id')
+                ->get()
+            : collect();
+
+        if (in_array($category, ['all', 'events'], true)) {
+            $items = $items->concat($this->buildEventGalleryItems($search));
+        }
+
+        return $items->values();
+    }
+
+    /**
      * Homepage gallery: max 4 images per category with fixed card layouts.
      *
      * @param  Collection<int, HomeGalleryItem|array<string, mixed>>  $items
@@ -468,17 +487,17 @@ class HomeController extends Controller
     private function resolveHomepageBlog(): array
     {
         $defaults = config('homepage.blog', []);
-        $section = HomeBlogSection::query()->first();
+        $section = Schema::hasTable('home_blog_sections')
+            ? HomeBlogSection::query()->first()
+            : null;
 
-        $dbPosts = HomeBlogPost::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->latest('id')
-            ->limit(12)
-            ->get();
-
-        $posts = $dbPosts->isNotEmpty()
-            ? $dbPosts
+        $posts = Schema::hasTable('home_blog_posts')
+            ? HomeBlogPost::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->latest('id')
+                ->limit(12)
+                ->get()
             : collect($defaults['posts'] ?? []);
 
         return [
