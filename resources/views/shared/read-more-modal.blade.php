@@ -50,7 +50,7 @@
                             <path d="M12 5v10m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                         </svg>
                     </span>
-                    <span>Download file</span>
+                    <span data-read-more-document-label>Download file</span>
                 </a>
                 <button
                     type="button"

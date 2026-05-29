@@ -37,7 +37,7 @@
                 <p class="text-sm font-bold text-[#351c42]/80">No blog posts found.</p>
             </section>
         @else
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 justify-items-start">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                 @foreach($posts as $post)
                     @include('home.partials.blog-card', ['post' => $post, 'heading' => 'h2'])
                 @endforeach
@@ -53,6 +53,7 @@
     @include('home.partials.floating')
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
+    @include('shared.read-more-modal')
     @include('home.partials.scripts')
 </body>
 </html>

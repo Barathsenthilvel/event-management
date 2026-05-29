@@ -1561,7 +1561,12 @@
         viewport.addEventListener("mouseleave", () => { if (!isDragging) start(); });
         window.addEventListener("resize", () => { pos = 0; render(); });
 
+        function isInteractiveBlogTarget(target) {
+            return !!target.closest("button, a, input, textarea, select, label, [data-read-more]");
+        }
+
         viewport.addEventListener("pointerdown", (e) => {
+            if (isInteractiveBlogTarget(e.target)) return;
             isDragging = true;
             dragStartX = e.clientX;
             dragStartPos = pos;
@@ -1703,6 +1708,7 @@
             const content = readMoreParseBody(btn.getAttribute("data-read-more-content"));
             const metaRaw = btn.getAttribute("data-read-more-meta") || "";
             const documentUrl = btn.getAttribute("data-read-more-document-url") || "";
+            const documentLabel = btn.getAttribute("data-read-more-document-label") || "Download file";
             const donationId = btn.getAttribute("data-read-more-donation-id") || "";
             let meta = [];
             if (metaRaw) {
@@ -1762,6 +1768,8 @@
                 if (documentUrl) {
                     documentLinkEl.href = documentUrl;
                     documentLinkEl.classList.remove("hidden");
+                    const documentLabelEl = documentLinkEl.querySelector("[data-read-more-document-label]");
+                    if (documentLabelEl) documentLabelEl.textContent = documentLabel;
                     hasAction = true;
                 } else {
                     documentLinkEl.href = "#";
@@ -1809,12 +1817,24 @@
             (closeEls[0] || modal).focus?.({ preventScroll: true });
         }
 
+        window.__openReadMoreFromTrigger = openFromTrigger;
+
+        const blogTrack = document.querySelector("[data-blog-track]");
+        blogTrack?.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-read-more]");
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            openFromTrigger(btn);
+        });
+
         function close() { setOpen(false); }
 
         document.addEventListener("click", (e) => {
             const btn = e.target.closest("[data-read-more]");
             if (btn) {
                 e.preventDefault();
+                if (btn.closest("[data-blog-track]")) e.stopPropagation();
                 openFromTrigger(btn);
                 return;
             }

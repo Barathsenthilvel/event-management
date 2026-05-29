@@ -1,5 +1,8 @@
 @php
     $isModel = is_object($post) && method_exists($post, 'getAttribute');
+    $day = null;
+    $month = null;
+    $year = null;
 
     if ($isModel) {
         $imageUrl = asset('storage/' . ltrim((string) $post->image_path, '/'));
@@ -25,11 +28,27 @@
     }
 
     $headingTag = ($heading ?? 'h3') === 'h2' ? 'h2' : 'h3';
+
+    $readMoreContent = trim((string) ($excerpt ?? ''));
+    $publishedLabel = $isModel && $publishedAt
+        ? $publishedAt->format('d M Y')
+        : (($day || $month || $year) ? trim(implode(' ', array_filter([$day, $month, $year]))) : '');
+    $readMoreMeta = array_values(array_filter([
+        ['label' => 'Tag', 'value' => $tag ?? ''],
+        ['label' => 'Published', 'value' => $publishedLabel],
+        ['label' => 'Comments', 'value' => isset($commentsCount) ? (string) $commentsCount : ''],
+    ], fn ($item) => ($item['value'] ?? '') !== ''));
+    $readMorePopupContent = $readMoreContent !== ''
+        ? $readMoreContent
+        : 'Full details for this post will be available soon.';
+    $externalReadMoreUrl = trim((string) ($readMoreUrl ?? ''));
+    $hasExternalReadMoreUrl = $externalReadMoreUrl !== '' && $externalReadMoreUrl !== '#';
 @endphp
 
 <article @class([
-    'w-[320px] shrink-0 rounded-2xl bg-white border border-[#351c42]/10 overflow-hidden shadow-md',
-    'min-w-[320px] max-w-[320px]' => $carousel ?? false,
+    'rounded-2xl bg-white border border-[#351c42]/10 overflow-hidden shadow-md',
+    'w-[320px] shrink-0 min-w-[320px] max-w-[320px]' => $carousel ?? false,
+    'w-full' => ! ($carousel ?? false),
 ])>
     <div class="relative h-56">
         <img src="{{ $imageUrl }}" alt="{{ $title }}" class="h-full w-full object-cover" loading="lazy" />
@@ -56,14 +75,26 @@
         @endif
         <p class="mt-2 text-sm text-[#351c42]/65 leading-6 line-clamp-3">{{ $excerpt }}</p>
         <div class="mt-4 flex items-center justify-between gap-3">
-            <a href="{{ $readMoreUrl }}" class="click-btn click-btn--sm btn-style506 shrink-0">
+            <button
+                type="button"
+                data-read-more
+                data-read-more-title="{{ e($title) }}"
+                data-read-more-content='@json($readMorePopupContent)'
+                data-read-more-meta='@json($readMoreMeta)'
+                @if($hasExternalReadMoreUrl)
+                    data-read-more-document-url="{{ e($externalReadMoreUrl) }}"
+                    data-read-more-document-label="Open article"
+                @endif
+                class="click-btn click-btn--sm btn-style506 shrink-0"
+                title="Read more"
+            >
                 <span class="click-btn__icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
                         <path d="M8 8l3 4-3 4M13 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </span>
                 <span class="click-btn__label">Read More</span>
-            </a>
+            </button>
             <span class="text-sm font-semibold text-[#351c42]/70 inline-flex items-center gap-1.5 shrink-0">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 8L20 10L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
