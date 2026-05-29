@@ -28,9 +28,9 @@
                 <div class="divide-y divide-[#351c42]/10">
                     @foreach (array_slice($activityItems, 0, 3) as $item)
                         @php
-                            $activityUrl = ! empty($item['route'])
-                                ? route($item['route'])
-                                : (! empty($item['href']) ? url($item['href']) : route('contact'));
+                            $activityUrl = ! empty($item['slug'])
+                                ? route('activity.show', $item['slug'])
+                                : route('activity');
                         @endphp
                         <a href="{{ $activityUrl }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995]" aria-label="{{ $item['label'] }}">
                             <div class="flex items-center gap-6 min-w-0">
@@ -47,9 +47,9 @@
                 <div class="divide-y divide-[#351c42]/10 md:border-l md:border-[#351c42]/10">
                     @foreach (array_slice($activityItems, 3, 3) as $item)
                         @php
-                            $activityUrl = ! empty($item['route'])
-                                ? route($item['route'])
-                                : (! empty($item['href']) ? url($item['href']) : route('contact'));
+                            $activityUrl = ! empty($item['slug'])
+                                ? route('activity.show', $item['slug'])
+                                : route('activity');
                         @endphp
                         <a href="{{ $activityUrl }}" class="group flex items-center justify-between gap-4 py-6 px-2 md:px-6 rounded-xl -mx-1 md:-mx-2 no-underline text-inherit transition-all duration-300 ease-out hover:bg-[#351c42]/[0.05] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#965995] md:pl-8" aria-label="{{ $item['label'] }}">
                             <div class="flex items-center gap-6 min-w-0">

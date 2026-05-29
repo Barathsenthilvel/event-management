@@ -209,6 +209,42 @@ class HomeController extends Controller
         );
     }
 
+    public function activityShow(string $slug)
+    {
+        $item = $this->resolveActivityItem($slug);
+
+        if ($item === null) {
+            abort(404);
+        }
+
+        $activities = config('homepage.activities', []);
+        $items = collect($activities['items'] ?? [])->values();
+        $index = $items->search(fn (array $row) => ($row['slug'] ?? '') === $slug);
+        $prev = $index !== false && $index > 0 ? $items[$index - 1] : null;
+        $next = $index !== false && $index < $items->count() - 1 ? $items[$index + 1] : null;
+
+        return view(
+            'home.activity-show',
+            array_merge(config('homepage', []), compact('activities', 'item', 'prev', 'next'))
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveActivityItem(string $slug): ?array
+    {
+        $items = config('homepage.activities.items', []);
+
+        foreach ($items as $item) {
+            if (($item['slug'] ?? '') === $slug) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
     public function about()
     {
         return view('home.about', config('homepage', []));

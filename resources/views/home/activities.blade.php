@@ -29,30 +29,25 @@
             @foreach($items as $index => $item)
                 @php
                     $isPurple = ((int) floor($index / 2) + ($index % 2)) % 2 === 1;
+                    $pageUrl = route('activity.show', $item['slug']);
                 @endphp
 
                 @if($isPurple)
-                    <article
-                        id="activity-{{ $item['slug'] }}"
-                        class="relative overflow-hidden rounded-3xl border border-[#351c42]/10 bg-gradient-to-br from-[#351c42] to-[#4d2a5c] p-6 md:p-8 text-white shadow-md"
-                    >
+                    <a href="{{ $pageUrl }}" class="group relative block overflow-hidden rounded-3xl border border-[#351c42]/10 bg-gradient-to-br from-[#351c42] to-[#4d2a5c] p-6 md:p-8 text-white shadow-md no-underline transition hover:shadow-lg hover:brightness-105">
                         <div class="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10" aria-hidden="true"></div>
                         <div class="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-[#965995]/40" aria-hidden="true"></div>
                         <div class="relative">
                             <p class="text-sm font-bold text-white/40 tabular-nums">{{ $item['num'] }}</p>
-                            <h2 class="mt-2 text-xl md:text-2xl font-extrabold leading-snug">{{ $item['label'] }}</h2>
+                            <h2 class="mt-2 text-xl md:text-2xl font-extrabold leading-snug group-hover:text-[#fddc6a] transition-colors">{{ $item['label'] }}</h2>
                             <p class="mt-4 text-sm md:text-base leading-relaxed text-white/85">{{ $item['description'] }}</p>
                         </div>
-                    </article>
+                    </a>
                 @else
-                    <article
-                        id="activity-{{ $item['slug'] }}"
-                        class="rounded-3xl border border-[#351c42]/10 bg-white p-6 md:p-8 shadow-sm"
-                    >
+                    <a href="{{ $pageUrl }}" class="group block rounded-3xl border border-[#351c42]/10 bg-white p-6 md:p-8 shadow-sm no-underline text-inherit transition hover:shadow-md hover:border-[#965995]/25">
                         <p class="text-sm font-bold text-[#351c42]/25 tabular-nums">{{ $item['num'] }}</p>
-                        <h2 class="mt-2 text-xl md:text-2xl font-extrabold text-[#351c42]">{{ $item['label'] }}</h2>
+                        <h2 class="mt-2 text-xl md:text-2xl font-extrabold text-[#351c42] group-hover:text-[#965995] transition-colors">{{ $item['label'] }}</h2>
                         <p class="mt-4 text-sm md:text-base leading-relaxed text-[#351c42]/70">{{ $item['description'] }}</p>
-                    </article>
+                    </a>
                 @endif
             @endforeach
         </div>

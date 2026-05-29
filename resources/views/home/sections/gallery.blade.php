@@ -49,9 +49,10 @@
         @if(collect($gallery['items'] ?? [])->isNotEmpty())
             <div class="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 lg:auto-rows-[minmax(11rem,1fr)]" data-gallery-grid>
                 @foreach ($gallery['items'] as $item)
-                    @include('home.partials.gallery-item', ['item' => $item, 'filterable' => true])
+                    @include('home.partials.gallery-item', ['item' => $item, 'filterable' => true, 'enableLightbox' => true])
                 @endforeach
             </div>
+            @include('home.partials.gallery-lightbox')
         @else
             <div class="mt-12 rounded-2xl border border-dashed border-[#351c42]/20 bg-white px-6 py-12 text-center">
                 <p class="text-sm font-semibold text-[#351c42]/80">No gallery items to show yet.</p>

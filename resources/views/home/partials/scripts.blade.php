@@ -1244,6 +1244,99 @@
 
 <script>
     (() => {
+        const lb = document.getElementById("gallery-lightbox");
+        if (!lb) return;
+
+        const lbImg = document.getElementById("gallery-lb-img");
+        const lbTitle = document.getElementById("gallery-lb-title");
+        const lbCat = document.getElementById("gallery-lb-cat");
+        const lbCounter = document.getElementById("gallery-lb-counter");
+        const lbPrev = document.getElementById("gallery-lb-prev");
+        const lbNext = document.getElementById("gallery-lb-next");
+        const closeBtn = lb.querySelector("[data-gallery-lightbox-close]");
+
+        let visibleItems = [];
+        let current = 0;
+
+        function collectVisible() {
+            return [...document.querySelectorAll("[data-gallery-lightbox-item]:not(.hidden)")].map((el) => ({
+                src: el.getAttribute("data-lightbox-src") || "",
+                title: el.getAttribute("data-lightbox-title") || "",
+                cat: el.getAttribute("data-lightbox-cat") || "",
+            }));
+        }
+
+        function render() {
+            if (!visibleItems.length || !lbImg) return;
+            const img = visibleItems[current];
+            lbImg.style.opacity = "0";
+            window.setTimeout(() => {
+                lbImg.src = img.src;
+                lbImg.alt = img.title || "";
+                if (lbTitle) lbTitle.textContent = img.title || "";
+                if (lbCat) lbCat.textContent = img.cat || "";
+                if (lbCounter) lbCounter.textContent = (current + 1) + " / " + visibleItems.length;
+                const hideNav = visibleItems.length <= 1;
+                if (lbPrev) lbPrev.style.display = hideNav ? "none" : "";
+                if (lbNext) lbNext.style.display = hideNav ? "none" : "";
+                lbImg.style.opacity = "1";
+            }, 80);
+        }
+
+        function openAt(index) {
+            visibleItems = collectVisible();
+            if (!visibleItems.length) return;
+            current = Math.max(0, Math.min(index, visibleItems.length - 1));
+            render();
+            lb.classList.remove("hidden");
+            lb.classList.add("flex");
+            document.body.style.overflow = "hidden";
+            closeBtn?.focus();
+        }
+
+        function close() {
+            lb.classList.add("hidden");
+            lb.classList.remove("flex");
+            document.body.style.overflow = "";
+            if (lbImg) {
+                lbImg.src = "";
+                lbImg.alt = "";
+            }
+        }
+
+        function step(dir) {
+            if (visibleItems.length <= 1) return;
+            current = (current + dir + visibleItems.length) % visibleItems.length;
+            render();
+        }
+
+        document.addEventListener("click", (e) => {
+            const item = e.target.closest("[data-gallery-lightbox-item]");
+            if (!item || item.classList.contains("hidden")) return;
+            if (e.target.closest("[data-gallery-filter]")) return;
+
+            const visible = collectVisible();
+            const idx = visible.findIndex((v) => v.src === item.getAttribute("data-lightbox-src"));
+            openAt(idx >= 0 ? idx : 0);
+        });
+
+        closeBtn?.addEventListener("click", close);
+        lbPrev?.addEventListener("click", () => step(-1));
+        lbNext?.addEventListener("click", () => step(1));
+        lb.addEventListener("click", (e) => {
+            if (e.target === lb) close();
+        });
+        document.addEventListener("keydown", (e) => {
+            if (lb.classList.contains("hidden")) return;
+            if (e.key === "Escape") close();
+            if (e.key === "ArrowLeft") step(-1);
+            if (e.key === "ArrowRight") step(1);
+        });
+    })();
+</script>
+
+<script>
+    (() => {
         const STORAGE_KEY = "gnat-home-welcome-dismissed";
         const el = document.getElementById("welcome-bottom-card");
         const dismissBtn = el?.querySelector("[data-welcome-dismiss]");
