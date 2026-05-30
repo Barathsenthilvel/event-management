@@ -127,7 +127,13 @@
 @case('m15_event_participation')
 <p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
 <p>Thank you for attending the GNAT Association event and being part of the program.</p>
-<p>Your participation has been recorded successfully. If applicable, your participation certificate is now available for download through the GNAT portal.</p>
+<p>Your participation has been recorded successfully.
+@if(!empty($certificateAttached))
+ Your participation certificate is attached to this email.
+@elseif(!empty($showPortalCta))
+ If applicable, your participation certificate is now available for download through the GNAT portal.
+@endif
+</p>
 <p>We appreciate your continued engagement with GNAT activities.</p>
 <p>Warm Regards,<br><strong>GNAT Association</strong></p>
 @break

@@ -14,7 +14,7 @@
     @include('home.partials.header')
 
     <main class="mx-auto max-w-7xl px-4 py-8 lg:py-12 space-y-10">
-        <header class="relative overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white/90 backdrop-blur p-6 md:p-10 shadow-sm text-center lg:text-left max-w-3xl">
+        <header class="relative overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white/90 backdrop-blur p-6 md:p-10 shadow-sm text-center lg:text-left w-full">
             <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#965995]">{{ $activities['badge'] ?? 'Activity' }}</p>
             <h1 class="mt-2 text-2xl md:text-4xl font-extrabold tracking-tight text-[#351c42]">{{ $activities['title'] ?? 'Programs & pathways' }}</h1>
             @if(!empty($activities['subtitle']))

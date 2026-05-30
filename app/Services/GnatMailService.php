@@ -23,8 +23,10 @@ use App\Models\Polling;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class GnatMailService
 {
@@ -135,8 +137,9 @@ class GnatMailService
 
     /**
      * @param  array<string, mixed>  $viewData
+     * @param  list<Attachment>  $attachments
      */
-    public function sendMember(?string $email, string $templateKey, array $viewData = []): void
+    public function sendMember(?string $email, string $templateKey, array $viewData = [], array $attachments = []): void
     {
         if ($email === null || trim($email) === '') {
             return;
@@ -145,8 +148,8 @@ class GnatMailService
         $subject = self::MEMBER_SUBJECTS[$templateKey] ?? 'GNAT Association';
         $viewData['portalUrl'] = $viewData['portalUrl'] ?? $this->memberPortalUrl();
 
-        $this->safeSend(function () use ($email, $templateKey, $subject, $viewData) {
-            Mail::to($email)->send(new GnatMemberNotification($templateKey, $subject, $viewData));
+        $this->safeSend(function () use ($email, $templateKey, $subject, $viewData, $attachments) {
+            Mail::to($email)->send(new GnatMemberNotification($templateKey, $subject, $viewData, $attachments));
         });
     }
 
@@ -927,6 +930,29 @@ class GnatMailService
         $this->sms()->jobApplicationSubmitted($user->mobile, $name);
     }
 
+    public function sendNeedJobRequestSubmitted(MemberJobRequest $row): void
+    {
+        $name = trim((string) ($row->name ?? '')) ?: 'Member';
+        $jobCode = trim((string) ($row->position_looking_for ?? '')) ?: ('NJR-'.$row->id);
+
+        $this->sendMember($row->email, 'm22_job_application_confirmation', [
+            'memberName' => $name,
+            'jobCode' => $jobCode,
+            'heroHeadline' => 'GNAT Job Application Confirmation',
+            'heroSubtext' => 'Request: '.$jobCode,
+            'showPortalCta' => true,
+        ]);
+
+        $this->sendAdmin('a12_job_application', [
+            'memberName' => $name,
+            'jobTitle' => $jobCode,
+            'companyName' => 'Need Job Request',
+            'applicationDate' => now()->format('d M Y, h:i A'),
+        ]);
+
+        $this->sms()->jobApplicationSubmitted($row->mobile, $name);
+    }
+
     public function sendJobApplicationStatusToMember(User $user, AdminJobApplication $application): void
     {
         $name = $this->memberDisplayName($user);
@@ -1049,17 +1075,37 @@ class GnatMailService
     public function sendEventParticipationConfirmationByEmail(string $email, string $attendeeName, Event $event, ?string $phone = null): void
     {
         $email = trim($email);
+        $displayName = $attendeeName !== '' ? $attendeeName : 'Guest';
+        $attachments = [];
+        $certificateAttached = false;
+
+        if (
+            ! empty($event->template_pdf_path)
+            && Storage::disk('public')->exists($event->template_pdf_path)
+        ) {
+            $guestName = preg_replace('/[^A-Za-z0-9\-]+/', '-', $displayName);
+            $eventTitle = preg_replace('/[^A-Za-z0-9\-]+/', '-', (string) $event->title);
+            $fileName = trim("{$eventTitle}-{$guestName}-certificate.pdf", '-');
+
+            $attachments[] = Attachment::fromPath(Storage::disk('public')->path($event->template_pdf_path))
+                ->as($fileName)
+                ->withMime('application/pdf');
+            $certificateAttached = true;
+        }
+
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->sendMember($email, 'm15_event_participation', [
-                'memberName' => $attendeeName !== '' ? $attendeeName : 'Member',
+                'memberName' => $displayName,
                 'heroHeadline' => 'Participation Recorded',
-                'showPortalCta' => true,
-            ]);
+                'heroSubtext' => $event->title,
+                'showPortalCta' => false,
+                'certificateAttached' => $certificateAttached,
+            ], $attachments);
         }
 
         $this->sms()->eventParticipationRecorded(
             $phone,
-            $attendeeName !== '' ? $attendeeName : 'Member'
+            $displayName
         );
     }
 

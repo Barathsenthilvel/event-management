@@ -1283,6 +1283,17 @@
             }, 80);
         }
 
+        function openAlbum(images, startIndex = 0) {
+            visibleItems = images.filter((img) => img && img.src);
+            if (!visibleItems.length || !lbImg) return;
+            current = Math.max(0, Math.min(startIndex, visibleItems.length - 1));
+            render();
+            lb.classList.remove("hidden");
+            lb.classList.add("flex");
+            document.body.style.overflow = "hidden";
+            closeBtn?.focus();
+        }
+
         function openAt(index) {
             visibleItems = collectVisible();
             if (!visibleItems.length) return;
@@ -1314,6 +1325,17 @@
             const item = e.target.closest("[data-gallery-lightbox-item]");
             if (!item || item.classList.contains("hidden")) return;
             if (e.target.closest("[data-gallery-filter]")) return;
+
+            const albumJson = item.getAttribute("data-lightbox-album");
+            if (albumJson) {
+                try {
+                    const album = JSON.parse(albumJson);
+                    if (Array.isArray(album) && album.length) {
+                        openAlbum(album, 0);
+                        return;
+                    }
+                } catch (_) {}
+            }
 
             const visible = collectVisible();
             const idx = visible.findIndex((v) => v.src === item.getAttribute("data-lightbox-src"));

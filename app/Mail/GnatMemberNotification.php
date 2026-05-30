@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -14,11 +15,13 @@ class GnatMemberNotification extends Mailable
 
     /**
      * @param  array<string, mixed>  $payload  Template variables (not named $viewData — reserved on {@see Mailable})
+     * @param  list<Attachment>  $fileAttachments
      */
     public function __construct(
         public string $templateKey,
         public string $mailSubject,
         public array $payload = [],
+        public array $fileAttachments = [],
     ) {}
 
     public function envelope(): Envelope
@@ -46,10 +49,10 @@ class GnatMemberNotification extends Mailable
     }
 
     /**
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {
-        return [];
+        return $this->fileAttachments;
     }
 }

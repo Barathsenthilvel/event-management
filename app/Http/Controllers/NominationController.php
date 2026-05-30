@@ -509,8 +509,9 @@ class NominationController extends Controller
                 continue;
             }
 
-            if ($now->lt($start) && $nomination->status !== 'draft') {
-                $nomination->update(['status' => 'draft']);
+            // Keep the admin-selected status before start time.
+            if ($nomination->status === 'active' && ! $nomination->is_active) {
+                $nomination->update(['is_active' => true]);
             }
         }
     }

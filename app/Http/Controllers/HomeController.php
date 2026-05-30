@@ -56,6 +56,7 @@ class HomeController extends Controller
             ->with(['dates:id,event_id,event_date,start_time,end_time', 'creator:id,name'])
             ->withCount('invites')
             ->where('is_active', true)
+            ->where('promote_front', true)
             ->whereIn('status', ['upcoming', 'live', 'completed'])
             ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
             ->latest('id')
@@ -297,10 +298,10 @@ class HomeController extends Controller
             : collect();
 
         $items = Schema::hasTable('home_gallery_items')
-            ? $dbItems
+            ? $this->groupDbGalleryItemsIntoAlbums($dbItems)
             : collect($defaults['items'] ?? []);
 
-        $items = $items->concat($this->buildEventGalleryItems());
+        $items = $items->concat($this->buildEventGalleryAlbums());
         $items = $this->limitHomepageGalleryItems($items);
 
         return [
@@ -350,7 +351,7 @@ class HomeController extends Controller
     /**
      * @return Collection<int, array<string, mixed>>
      */
-    private function buildEventGalleryItems(string $search = ''): Collection
+    private function buildEventGalleryAlbums(string $search = ''): Collection
     {
         if (! Schema::hasTable('events')) {
             return collect();
@@ -364,7 +365,7 @@ class HomeController extends Controller
             ->latest('id')
             ->get();
 
-        $items = collect();
+        $albums = collect();
         $search = trim($search);
 
         foreach ($events as $event) {
@@ -383,67 +384,159 @@ class HomeController extends Controller
             }
 
             $paths = $paths->filter()->unique()->values();
-            $description = Str::limit(strip_tags((string) ($event->description ?? '')), 120);
-
-            foreach ($paths as $index => $path) {
-                $title = $event->title;
-
-                if ($search !== '' && ! str_contains(strtolower($title), strtolower($search)) && ! str_contains(strtolower($description), strtolower($search))) {
-                    continue;
-                }
-
-                $items->push([
-                    'cat' => 'events',
-                    'layout' => $index === 0 ? 'wide' : 'cell',
-                    'image' => 'storage/'.$path,
-                    'alt' => $event->title,
-                    'eyebrow' => 'Events',
-                    'title' => $title,
-                    'text' => $index === 0 ? $description : null,
-                    'is_category_primary' => false,
-                    'from_event' => true,
-                    'sort_order' => 900000 + ((int) $event->id * 100) + $index,
-                ]);
+            if ($paths->isEmpty()) {
+                continue;
             }
+
+            $description = Str::limit(strip_tags((string) ($event->description ?? '')), 120);
+            $title = (string) $event->title;
+
+            if ($search !== '' && ! str_contains(strtolower($title), strtolower($search)) && ! str_contains(strtolower($description), strtolower($search))) {
+                continue;
+            }
+
+            $albumImages = $paths->map(fn (string $path) => [
+                'src' => asset('storage/'.$path),
+                'title' => $title,
+                'cat' => 'Events',
+            ])->values()->all();
+
+            $coverPath = $paths->first();
+
+            $albums->push([
+                'cat' => 'events',
+                'layout' => 'wide',
+                'image' => 'storage/'.$coverPath,
+                'alt' => $title,
+                'eyebrow' => 'Events',
+                'title' => $title,
+                'text' => $description,
+                'is_category_primary' => false,
+                'from_event' => true,
+                'sort_order' => 900000 + (int) $event->id,
+                'photo_count' => count($albumImages),
+                'album_images' => $albumImages,
+            ]);
         }
 
-        return $items->values();
+        return $albums->values();
     }
 
     /**
-     * All gallery items for the dedicated gallery page (no per-category homepage cap).
+     * All gallery albums for the dedicated gallery page (grouped by upload batch / album).
      *
-     * @return Collection<int, HomeGalleryItem|array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
     private function resolveGalleryPageItems(string $category, string $search = ''): Collection
     {
-        $items = Schema::hasTable('home_gallery_items')
+        $dbItems = Schema::hasTable('home_gallery_items')
             ? HomeGalleryItem::query()
                 ->where('is_active', true)
-                ->when($search !== '', function ($query) use ($search) {
-                    $query->where(function ($sub) use ($search) {
-                        $sub->where('title', 'like', '%'.$search.'%')
-                            ->orWhere('eyebrow', 'like', '%'.$search.'%')
-                            ->orWhere('description_text', 'like', '%'.$search.'%');
-                    });
-                })
-                ->when($category !== 'all', fn ($query) => $query->where('category_key', $category))
+                ->orderByDesc('is_category_primary')
                 ->orderBy('sort_order')
                 ->latest('id')
                 ->get()
             : collect();
 
+        $albums = $this->groupDbGalleryItemsIntoAlbums($dbItems);
+
         if (in_array($category, ['all', 'events'], true)) {
-            $items = $items->concat($this->buildEventGalleryItems($search));
+            $albums = $albums->concat($this->buildEventGalleryAlbums($search));
         }
 
-        return $items->values();
+        $search = trim($search);
+
+        return $albums
+            ->filter(function (array $album) use ($category, $search) {
+                if ($category !== 'all' && ($album['cat'] ?? '') !== $category) {
+                    return false;
+                }
+
+                if ($search === '') {
+                    return true;
+                }
+
+                $haystack = strtolower(implode(' ', array_filter([
+                    $album['title'] ?? '',
+                    $album['text'] ?? '',
+                    $album['eyebrow'] ?? '',
+                ])));
+
+                return str_contains($haystack, strtolower($search));
+            })
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, HomeGalleryItem>  $items
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function groupDbGalleryItemsIntoAlbums(Collection $items): Collection
+    {
+        return $items
+            ->groupBy(fn (HomeGalleryItem $item) => $this->galleryAlbumGroupKey($item))
+            ->map(function (Collection $group) {
+                $sorted = $group->sortBy([
+                    fn (HomeGalleryItem $item) => $item->is_category_primary ? 0 : 1,
+                    fn (HomeGalleryItem $item) => $item->sort_order,
+                    fn (HomeGalleryItem $item) => $item->id,
+                ])->values();
+
+                /** @var HomeGalleryItem $cover */
+                $cover = $sorted->first();
+                $title = $this->normalizeGalleryAlbumTitle((string) $cover->title);
+
+                $albumImages = $sorted->map(fn (HomeGalleryItem $item) => [
+                    'src' => asset('storage/'.ltrim((string) $item->image_path, '/')),
+                    'title' => $this->normalizeGalleryAlbumTitle((string) $item->title),
+                    'cat' => $item->eyebrow ?: ucfirst((string) $item->category_key),
+                ])->values()->all();
+
+                return [
+                    'cat' => $cover->category_key,
+                    'layout' => 'cell',
+                    'image' => 'storage/'.ltrim((string) $cover->image_path, '/'),
+                    'alt' => $cover->alt_text ?: $title,
+                    'eyebrow' => $cover->eyebrow ?: ucfirst((string) $cover->category_key),
+                    'title' => $title,
+                    'text' => $cover->description_text,
+                    'is_category_primary' => (bool) $cover->is_category_primary,
+                    'from_event' => false,
+                    'sort_order' => (int) $cover->sort_order,
+                    'photo_count' => $sorted->count(),
+                    'album_images' => $albumImages,
+                ];
+            })
+            ->sortBy(fn (array $album) => [
+                $album['is_category_primary'] ? 0 : 1,
+                $album['sort_order'],
+            ])
+            ->values();
+    }
+
+    private function galleryAlbumGroupKey(HomeGalleryItem $item): string
+    {
+        if (Schema::hasColumn('home_gallery_items', 'upload_batch_id') && filled($item->upload_batch_id)) {
+            return 'batch:'.$item->upload_batch_id;
+        }
+
+        $title = mb_strtolower(trim($this->normalizeGalleryAlbumTitle((string) $item->title)));
+        $minute = $item->created_at?->format('Y-m-d H:i') ?? '';
+
+        return 'legacy:'.$item->category_key.'|'.$title.'|'.$minute;
+    }
+
+    private function normalizeGalleryAlbumTitle(string $title): string
+    {
+        $normalized = preg_replace('/\s\(\d+\)$/', '', trim($title));
+
+        return $normalized !== '' ? $normalized : $title;
     }
 
     /**
      * Homepage gallery preview limits: Programs 2, Events 1, Community 1 (4 total on ALL).
      *
-     * @param  Collection<int, HomeGalleryItem|array<string, mixed>>  $items
+     * @param  Collection<int, array<string, mixed>>  $items
      * @return Collection<int, array<string, mixed>>
      */
     private function limitHomepageGalleryItems(Collection $items): Collection
@@ -509,22 +602,37 @@ class HomeController extends Controller
      */
     private function normalizeHomepageGalleryItem(mixed $item, string $layout): array
     {
+        if (is_array($item)) {
+            $normalized = $item;
+            $normalized['layout'] = $layout;
+
+            return $normalized;
+        }
+
         if (is_object($item) && method_exists($item, 'getAttribute')) {
+            $title = $this->normalizeGalleryAlbumTitle((string) $item->title);
+
             return [
                 'cat' => $item->category_key,
                 'layout' => $layout,
                 'image' => 'storage/'.ltrim((string) $item->image_path, '/'),
-                'alt' => $item->alt_text ?: $item->title,
+                'alt' => $item->alt_text ?: $title,
                 'eyebrow' => $item->eyebrow ?: ucfirst((string) $item->category_key),
-                'title' => $item->title,
+                'title' => $title,
                 'text' => $item->description_text,
                 'is_category_primary' => (bool) $item->is_category_primary,
                 'from_event' => false,
                 'sort_order' => (int) $item->sort_order,
+                'photo_count' => 1,
+                'album_images' => [[
+                    'src' => asset('storage/'.ltrim((string) $item->image_path, '/')),
+                    'title' => $title,
+                    'cat' => $item->eyebrow ?: ucfirst((string) $item->category_key),
+                ]],
             ];
         }
 
-        $normalized = $item;
+        $normalized = (array) $item;
         $normalized['layout'] = $layout;
 
         return $normalized;

@@ -545,7 +545,7 @@ class MemberDashboardController extends Controller
             $resumePath = $request->file('resume')->store('member-job-requests/resumes', 'public');
         }
 
-        MemberJobRequest::query()->create([
+        $row = MemberJobRequest::query()->create([
             'user_id' => $user->id,
             'name' => $validated['name'],
             'mobile' => $validated['mobile'] ?? null,
@@ -557,6 +557,8 @@ class MemberDashboardController extends Controller
             'resume_path' => $resumePath,
             'status' => 'new',
         ]);
+
+        app(GnatMailService::class)->sendNeedJobRequestSubmitted($row);
 
         return redirect()
             ->route('member.jobs.index', ['tab' => 'need-job'])
