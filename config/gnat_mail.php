@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Comma-separated list of addresses that receive GNAT admin templates.
-    | Falls back to homepage contact inbox or MAIL_FROM_ADDRESS.
+    | Falls back to CONTACT_FORM_TO, then MAIL_FROM_ADDRESS, then homepage contact email.
     |
     */
 

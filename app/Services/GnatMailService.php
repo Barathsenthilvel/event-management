@@ -101,14 +101,22 @@ class GnatMailService
             return $configured;
         }
 
-        $fallback = config('homepage.contact_form_to') ?: config('homepage.contact.email');
-        if ($fallback) {
-            return [trim((string) $fallback)];
+        $contactFormTo = config('homepage.contact_form_to');
+        if ($contactFormTo) {
+            return [trim((string) $contactFormTo)];
         }
 
         $from = config('mail.from.address');
+        if ($from) {
+            return [trim((string) $from)];
+        }
 
-        return $from ? [trim((string) $from)] : [];
+        $publicContact = config('homepage.contact.email');
+        if ($publicContact) {
+            return [trim((string) $publicContact)];
+        }
+
+        return [];
     }
 
     public function memberDisplayName(?User $user): string
@@ -150,6 +158,11 @@ class GnatMailService
     {
         $recipients = $this->adminRecipients();
         if ($recipients === []) {
+            Log::warning('GNAT admin mail skipped — no recipients configured', [
+                'template' => $templateKey,
+                'hint' => 'Set GNAT_ADMIN_MAIL or MAIL_FROM_ADDRESS in .env',
+            ]);
+
             return;
         }
 
@@ -158,7 +171,7 @@ class GnatMailService
         foreach ($recipients as $address) {
             $this->safeSend(function () use ($address, $templateKey, $subject, $viewData, $replyTo) {
                 Mail::to($address)->send(new GnatAdminNotification($templateKey, $subject, $viewData, $replyTo));
-            });
+            }, $templateKey, $address);
         }
     }
 
@@ -1308,12 +1321,21 @@ class GnatMailService
         GnatNotificationDeliveryLog::recordChannelResults($broadcastBatchId, $userId, $channels);
     }
 
-    private function safeSend(callable $callback): void
+    private function safeSend(callable $callback, ?string $templateKey = null, ?string $recipient = null): void
     {
         try {
             $callback();
+
+            if ($templateKey !== null && $recipient !== null) {
+                Log::info('GNAT mail sent', [
+                    'template' => $templateKey,
+                    'recipient' => $recipient,
+                ]);
+            }
         } catch (\Throwable $e) {
             Log::warning('GNAT mail send failed', [
+                'template' => $templateKey,
+                'recipient' => $recipient,
                 'message' => $e->getMessage(),
             ]);
         }
