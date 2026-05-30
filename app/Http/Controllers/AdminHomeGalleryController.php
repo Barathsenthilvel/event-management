@@ -121,6 +121,13 @@ class AdminHomeGalleryController extends Controller
         $validated = $request->validate($this->singleImageRules(false));
         $payload = $this->buildPayload($request, $validated, false, $homeGallery);
 
+        if ($validated['category_key'] !== $homeGallery->category_key) {
+            $slotError = $this->homepageSlotValidationError($validated['category_key'], $homeGallery->upload_batch_id);
+            if ($slotError !== null) {
+                return back()->withErrors(['category_key' => $slotError])->withInput();
+            }
+        }
+
         if ($request->boolean('is_category_primary')) {
             $this->clearCategoryPrimary($payload['category_key'], $homeGallery->id);
             $payload['is_category_primary'] = true;
@@ -204,6 +211,11 @@ class AdminHomeGalleryController extends Controller
     private function storeBulk(Request $request, array $files)
     {
         $validated = $request->validate($this->bulkMetaRules());
+
+        $slotError = $this->homepageSlotValidationError($validated['category_key']);
+        if ($slotError !== null) {
+            return back()->withErrors(['category_key' => $slotError])->withInput();
+        }
 
         $categoryKey = $validated['category_key'];
         $baseSort = (int) ($validated['sort_order'] ?? 0);
@@ -417,6 +429,48 @@ class AdminHomeGalleryController extends Controller
             $this->clearCategoryPrimary($categoryKey);
             $next->update(['is_category_primary' => true]);
         }
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function homepageSlotLimits(): array
+    {
+        return [
+            'programs' => 2,
+            'events' => 1,
+            'community' => 1,
+        ];
+    }
+
+    private function countActiveHomepageAlbums(string $categoryKey, ?string $excludeBatchId = null): int
+    {
+        return HomeGalleryItem::query()
+            ->where('category_key', $categoryKey)
+            ->where('is_active', true)
+            ->when(filled($excludeBatchId), fn ($query) => $query->where('upload_batch_id', '!=', $excludeBatchId))
+            ->get()
+            ->groupBy(fn (HomeGalleryItem $item) => filled($item->upload_batch_id)
+                ? 'batch:'.$item->upload_batch_id
+                : 'single:'.$item->id)
+            ->count();
+    }
+
+    private function homepageSlotValidationError(string $categoryKey, ?string $excludeBatchId = null): ?string
+    {
+        $limit = $this->homepageSlotLimits()[$categoryKey] ?? null;
+        if ($limit === null) {
+            return null;
+        }
+
+        if ($this->countActiveHomepageAlbums($categoryKey, $excludeBatchId) >= $limit) {
+            $label = ucfirst($categoryKey);
+            $slotLabel = $limit === 1 ? 'slot is' : 'slots are';
+
+            return "The {$label} homepage {$slotLabel} already filled (max {$limit}). Please delete or edit the existing gallery item before adding a new one.";
+        }
+
+        return null;
     }
 
     private function galleryGroupKey(HomeGalleryItem $item): string

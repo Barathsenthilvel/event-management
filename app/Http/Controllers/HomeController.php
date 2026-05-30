@@ -414,6 +414,7 @@ class HomeController extends Controller
                 'is_category_primary' => false,
                 'from_event' => true,
                 'sort_order' => 900000 + (int) $event->id,
+                'uploaded_at' => (int) ($event->created_at?->timestamp ?? $event->id),
                 'photo_count' => count($albumImages),
                 'album_images' => $albumImages,
             ]);
@@ -503,6 +504,7 @@ class HomeController extends Controller
                     'is_category_primary' => (bool) $cover->is_category_primary,
                     'from_event' => false,
                     'sort_order' => (int) $cover->sort_order,
+                    'uploaded_at' => (int) $sorted->max(fn (HomeGalleryItem $item) => $item->created_at?->timestamp ?? $item->id),
                     'photo_count' => $sorted->count(),
                     'album_images' => $albumImages,
                 ];
@@ -542,15 +544,15 @@ class HomeController extends Controller
     private function limitHomepageGalleryItems(Collection $items): Collection
     {
         $categoryConfig = [
-            'programs' => ['limit' => 2, 'layouts' => ['hero', 'cell']],
-            'events' => ['limit' => 1, 'layouts' => ['wide']],
-            'community' => ['limit' => 1, 'layouts' => ['cell']],
+            'programs' => ['limit' => 2, 'layouts' => ['hero', 'cell'], 'slots' => ['hero', 'programs-cell']],
+            'events' => ['limit' => 1, 'layouts' => ['wide'], 'slots' => ['events-wide']],
+            'community' => ['limit' => 1, 'layouts' => ['cell'], 'slots' => ['community-cell']],
         ];
 
-        $result = collect();
+        $byCategory = [];
 
         foreach ($categoryConfig as $categoryKey => $config) {
-            $group = $items
+            $byCategory[$categoryKey] = $items
                 ->filter(fn ($item) => $this->galleryItemCategory($item) === $categoryKey)
                 ->sortBy(fn ($item) => [
                     $this->galleryItemIsPrimary($item) ? 0 : 1,
@@ -561,13 +563,17 @@ class HomeController extends Controller
                 ->values()
                 ->map(fn ($item, $index) => $this->normalizeHomepageGalleryItem(
                     $item,
-                    $config['layouts'][$index] ?? 'cell'
+                    $config['layouts'][$index] ?? 'cell',
+                    $config['slots'][$index] ?? null
                 ));
-
-            $result = $result->concat($group);
         }
 
-        return $result->values();
+        return collect([
+            $byCategory['programs'][0] ?? null,
+            $byCategory['programs'][1] ?? null,
+            $byCategory['community'][0] ?? null,
+            $byCategory['events'][0] ?? null,
+        ])->filter()->values();
     }
 
     private function galleryItemCategory(mixed $item): string
@@ -597,14 +603,30 @@ class HomeController extends Controller
         return (int) ($item['sort_order'] ?? 0);
     }
 
+    private function galleryItemUploadedAt(mixed $item): int
+    {
+        if (is_array($item)) {
+            return (int) ($item['uploaded_at'] ?? $item['sort_order'] ?? 0);
+        }
+
+        if (is_object($item) && method_exists($item, 'getAttribute')) {
+            return (int) ($item->created_at?->timestamp ?? $item->id);
+        }
+
+        return 0;
+    }
+
     /**
      * @return array<string, mixed>
      */
-    private function normalizeHomepageGalleryItem(mixed $item, string $layout): array
+    private function normalizeHomepageGalleryItem(mixed $item, string $layout, ?string $gridSlot = null): array
     {
         if (is_array($item)) {
             $normalized = $item;
             $normalized['layout'] = $layout;
+            if ($gridSlot !== null) {
+                $normalized['grid_slot'] = $gridSlot;
+            }
 
             return $normalized;
         }
@@ -615,6 +637,7 @@ class HomeController extends Controller
             return [
                 'cat' => $item->category_key,
                 'layout' => $layout,
+                'grid_slot' => $gridSlot,
                 'image' => 'storage/'.ltrim((string) $item->image_path, '/'),
                 'alt' => $item->alt_text ?: $title,
                 'eyebrow' => $item->eyebrow ?: ucfirst((string) $item->category_key),
@@ -623,6 +646,7 @@ class HomeController extends Controller
                 'is_category_primary' => (bool) $item->is_category_primary,
                 'from_event' => false,
                 'sort_order' => (int) $item->sort_order,
+                'uploaded_at' => (int) ($item->created_at?->timestamp ?? $item->id),
                 'photo_count' => 1,
                 'album_images' => [[
                     'src' => asset('storage/'.ltrim((string) $item->image_path, '/')),
@@ -634,6 +658,9 @@ class HomeController extends Controller
 
         $normalized = (array) $item;
         $normalized['layout'] = $layout;
+        if ($gridSlot !== null) {
+            $normalized['grid_slot'] = $gridSlot;
+        }
 
         return $normalized;
     }

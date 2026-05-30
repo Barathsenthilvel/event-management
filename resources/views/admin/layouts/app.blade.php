@@ -10,6 +10,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    @stack('styles')
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -616,7 +617,7 @@
             </header>
 
             <!-- Main Content -->
-            <div class="bg-white flex-1 min-h-0 rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+            <div class="{{ request()->routeIs('admin.dashboard') ? 'bg-[#0b0f19] border-slate-800/40' : 'bg-white border-white' }} flex-1 min-h-0 rounded-[24px] shadow-sm border flex flex-col overflow-hidden relative">
                 <!-- Global Loader Overlay -->
                 <div x-show="refreshing" x-cloak
                     class="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex items-center justify-center rounded-[24px]"

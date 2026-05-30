@@ -44,8 +44,11 @@
         : (bool) ($item['is_category_primary'] ?? false);
     $fromEvent = $isModel ? false : (bool) ($item['from_event'] ?? false);
     $sortOrder = $isModel ? (int) $item->sort_order : (int) ($item['sort_order'] ?? 0);
+    $uploadedAt = $isModel
+        ? (int) ($item->created_at?->timestamp ?? $item->id)
+        : (int) ($item['uploaded_at'] ?? $sortOrder);
     $filterAttrs = $filterable
-        ? ' data-gallery-item data-cat="' . e($cat) . '" data-category-primary="' . ($isCategoryPrimary ? '1' : '0') . '" data-from-event="' . ($fromEvent ? '1' : '0') . '" data-sort-order="' . $sortOrder . '"'
+        ? ' data-gallery-item data-cat="' . e($cat) . '" data-category-primary="' . ($isCategoryPrimary ? '1' : '0') . '" data-from-event="' . ($fromEvent ? '1' : '0') . '" data-sort-order="' . $sortOrder . '" data-uploaded-at="' . $uploadedAt . '"'
         : '';
     $lightboxAttrs = $enableLightbox
         ? ' data-gallery-lightbox-item data-lightbox-src="' . e($imageUrl) . '" data-lightbox-title="' . e($title) . '" data-lightbox-cat="' . e($eyebrow) . '" data-lightbox-album="' . e(json_encode($albumImages)) . '"'
@@ -54,10 +57,18 @@
     $photoCountBadge = $photoCount > 1
         ? '<span class="absolute right-3 top-3 z-10 inline-flex items-center rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">' . $photoCount . ' photos</span>'
         : '';
+    $gridSlot = $isModel ? null : ($item['grid_slot'] ?? null);
+    $gridPlacementClass = match ($gridSlot) {
+        'hero' => 'lg:col-start-1 lg:row-start-1',
+        'programs-cell' => 'lg:col-start-3 lg:row-start-1',
+        'community-cell' => 'lg:col-start-4 lg:row-start-1',
+        'events-wide' => 'lg:col-start-3 lg:row-start-2',
+        default => '',
+    };
 @endphp
 
 @if ($layout === 'hero')
-    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative col-span-2 row-span-2 min-h-[260px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-[#351c42]/5 shadow-lg ring-1 ring-black/5 sm:min-h-[320px] lg:min-h-0{{ $clickableClass }}">
+    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative col-span-2 row-span-2 min-h-[260px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-[#351c42]/5 shadow-lg ring-1 ring-black/5 sm:min-h-[320px] lg:min-h-[22rem] {{ $gridPlacementClass }}{{ $clickableClass }}">
         {!! $photoCountBadge !!}
         <img src="{{ $imageUrl }}" alt="{{ $alt }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105 pointer-events-none" width="800" height="600" loading="lazy" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#351c42] via-[#351c42]/35 to-transparent opacity-95 transition duration-500 group-hover:via-[#351c42]/45 pointer-events-none"></div>
@@ -73,7 +84,7 @@
         @endif
     </article>
 @elseif ($layout === 'wide')
-    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative col-span-2 min-h-[140px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 sm:min-h-[156px] lg:col-span-2 lg:min-h-0{{ $clickableClass }}">
+    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative col-span-2 min-h-[140px] overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 sm:min-h-[156px] lg:col-span-2 lg:min-h-[11rem] {{ $gridPlacementClass }}{{ $clickableClass }}">
         {!! $photoCountBadge !!}
         <img src="{{ $imageUrl }}" alt="{{ $alt }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105 pointer-events-none" width="800" height="500" loading="lazy" />
         <div class="absolute inset-0 bg-gradient-to-r from-[#351c42]/85 to-transparent pointer-events-none"></div>
@@ -102,7 +113,7 @@
         @endif
     </article>
 @else
-    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 {{ $uniformGrid ? 'aspect-[4/3] min-h-[140px]' : 'min-h-[140px] sm:min-h-[156px] lg:min-h-0' }}{{ $enableLightbox ? ' cursor-pointer' : '' }}">
+    <article{!! $filterAttrs !!}{!! $lightboxAttrs !!} class="group relative overflow-hidden rounded-3xl border border-[#351c42]/10 bg-white shadow-md ring-1 ring-black/5 {{ $uniformGrid ? 'aspect-[4/3] min-h-[140px]' : 'min-h-[140px] sm:min-h-[156px] lg:min-h-[11rem]' }} {{ $gridPlacementClass }}{{ $enableLightbox ? ' cursor-pointer' : '' }}">
         {!! $photoCountBadge !!}
         <img src="{{ $imageUrl }}" alt="{{ $alt }}" class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105 pointer-events-none" width="600" height="600" loading="lazy" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#351c42]/90 to-transparent opacity-90 pointer-events-none"></div>

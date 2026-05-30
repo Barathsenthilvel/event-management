@@ -12,6 +12,12 @@
         @method('PUT')
     @endif
 
+    @if($errors->has('category_key'))
+        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+            {{ $errors->first('category_key') }}
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div class="space-y-5">
             <div>
