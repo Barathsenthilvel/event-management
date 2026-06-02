@@ -301,8 +301,21 @@
                     <!-- Route -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Route Name @include('admin.partials.required-mark')</label>
-                        <input type="text" x-model="menuForm.route" name="route_name" placeholder="e.g. admin.menus.index" required
+                        <input type="text" x-model="menuForm.route" name="route_name" list="admin-menu-routes" placeholder="e.g. admin.dashboard" required
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                        <datalist id="admin-menu-routes">
+                            @foreach($menuRoutes as $routeOption)
+                                <option value="{{ $routeOption['name'] }}">{{ $routeOption['label'] }}</option>
+                            @endforeach
+                        </datalist>
+                        <details class="mt-2">
+                            <summary class="text-[10px] font-bold text-indigo-600 cursor-pointer uppercase tracking-wide">All available menu routes</summary>
+                            <ul class="mt-2 max-h-40 overflow-y-auto custom-scroll rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1 text-[10px] text-slate-600">
+                                @foreach($menuRoutes as $routeOption)
+                                    <li><code class="text-indigo-700">{{ $routeOption['name'] }}</code> — {{ $routeOption['label'] }}</li>
+                                @endforeach
+                            </ul>
+                        </details>
                     </div>
 
                     <!-- Description -->

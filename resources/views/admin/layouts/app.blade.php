@@ -205,13 +205,9 @@
             >GNAT</span>
         </a>
 
-        <!-- Navigation: fixed links + dynamic menus from Menu Management -->
+        <!-- Navigation: dynamic menus from Menu Management + Settings (default only) -->
         @php
             $admin = Auth::guard('admin')->user();
-            $pendingApprovalsCount = \App\Models\User::query()
-                ->where('profile_completed', true)
-                ->where('is_approved', false)
-                ->count();
             $jobApplicationsPendingCount = \App\Models\AdminJobApplication::query()
                 ->where('application_status', 'pending')
                 ->count();
@@ -220,27 +216,7 @@
                 ->count();
         @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
-            {{-- 1. Dashboard (first) --}}
-            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.dashboard') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
-            </a>
-
-            <a href="{{ route('admin.notification-batches.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.notification-batches.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.notification-batches.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Notification logs</span>
-            </a>
-
-            {{-- 2. Dynamic menus from database (created in Menu Management) --}}
+            {{-- Dynamic menus from database (created in Menu Management) --}}
             @foreach($sidebarMenus ?? [] as $menu)
                 @php
                     $url = $menu->route_name && \Illuminate\Support\Facades\Route::has($menu->route_name)
@@ -350,122 +326,7 @@
                 @endif
             @endforeach
 
-            {{-- 3. Legacy static admin links (super-admin only).
-                 Non-super-admin sidebar is fully role-menu-permission driven (dynamic menus above). --}}
-            @if($admin && $admin->is_super_admin)
-            @if($admin && $admin->hasPermission('user.view'))
-            <a href="{{ route('admin.admins.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.admins.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.admins.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Users</span>
-            </a>
-            @endif
-
-            <a href="{{ route('admin.events.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.events.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.events.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Events</span>
-            </a>
-
-            <a href="{{ route('admin.home-banners.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-banners.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-banners.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 7h18M3 12h18M3 17h18" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Home Banners</span>
-            </a>
-
-            <a href="{{ route('admin.home-blogs.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-blogs.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-blogs.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Home Blogs</span>
-            </a>
-
-            <a href="{{ route('admin.home-galleries.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.home-galleries.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.home-galleries.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Home Galleries</span>
-            </a>
-
-            <a href="{{ route('admin.members.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.index') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.members.index') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Members</span>
-            </a>
-
-            <a href="{{ route('admin.members.pending-approvals.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.members.pending-approvals.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zm9 10v-2a4 4 0 00-3-3.87" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Member Approvals</span>
-                @if($pendingApprovalsCount > 0)
-                    <span x-show="sidebarOpen"
-                        class="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black tabular-nums"
-                        title="Pending member approvals">
-                        {{ (int) $pendingApprovalsCount > 99 ? '99+' : (int) $pendingApprovalsCount }}
-                    </span>
-                @endif
-            </a>
-
-            <a href="{{ route('admin.designations.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.designations.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.designations.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Designations</span>
-            </a>
-
-            @if($admin && $admin->hasPermission('role.view'))
-            <a href="{{ route('admin.roles.index') }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.roles.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.roles.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Roles & Permissions</span>
-            </a>
-            @endif
-
-            @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
-            <a href="{{ \Illuminate\Support\Facades\Route::has('admin.menus.index') ? route('admin.menus.index') : '#' }}"
-                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
-                <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h10" />
-                </svg>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Menu Management</span>
-            </a>
-            @endif
-
+            {{-- Settings (Default Settings only — always static, not managed via Menu Management) --}}
             @if(\Illuminate\Support\Facades\Route::has('admin.settings.default-settings'))
             @php
                 $settingsActive = request()->routeIs('admin.settings.*');
@@ -503,7 +364,6 @@
                     </a>
                 </div>
             </div>
-            @endif
             @endif
         </nav>
 

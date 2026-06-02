@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 
 class MenuController extends Controller
@@ -12,8 +13,9 @@ class MenuController extends Controller
     {
         $menus = Menu::with('parent')->orderBy('parent_id')->orderBy('order')->get();
         $parents = Menu::whereNull('parent_id')->orderBy('order')->get();
+        $menuRoutes = $this->adminMenuRoutes();
 
-        return view('admin.menus.index', compact('menus', 'parents'));
+        return view('admin.menus.index', compact('menus', 'parents', 'menuRoutes'));
     }
 
     public function store(Request $request)
@@ -83,6 +85,45 @@ class MenuController extends Controller
         unset($data['is_root_menu']);
 
         return $data;
+    }
+
+    /**
+     * Admin route names suitable for sidebar menu links (index/list pages).
+     *
+     * @return array<int, array{name: string, label: string}>
+     */
+    private function adminMenuRoutes(): array
+    {
+        $labels = [
+            'admin.dashboard' => 'Dashboard',
+            'admin.notification-batches.index' => 'Notification Logs',
+            'admin.admins.index' => 'Users (Admins)',
+            'admin.roles.index' => 'Roles & Permissions',
+            'admin.menus.index' => 'Menu Management',
+            'admin.home-banners.index' => 'Home Banners',
+            'admin.home-blogs.index' => 'Home Blogs',
+            'admin.home-galleries.index' => 'Home Galleries',
+            'admin.ebooks.index' => 'E-Books',
+            'admin.memberships.index' => 'Membership Plans',
+            'admin.members.pending-approvals.index' => 'Member Approvals',
+            'admin.members.index' => 'Members',
+            'admin.designations.index' => 'Designations',
+            'admin.subscriptions.index' => 'Subscriptions',
+            'admin.events.index' => 'Events',
+            'admin.donations.index' => 'Donations',
+            'admin.donations.payments.index' => 'Donation Payments',
+            'admin.meetings.index' => 'Meetings',
+            'admin.jobs.index' => 'Jobs',
+            'admin.jobs.need-job.requests' => 'Need Job Requests',
+            'admin.nominations.index' => 'Nominations',
+            'admin.pollings.index' => 'Pollings',
+        ];
+
+        return collect($labels)
+            ->filter(fn (string $label, string $name) => Route::has($name))
+            ->map(fn (string $label, string $name) => ['name' => $name, 'label' => $label])
+            ->values()
+            ->all();
     }
 }
 
