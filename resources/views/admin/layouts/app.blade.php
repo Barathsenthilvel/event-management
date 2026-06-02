@@ -184,17 +184,26 @@
     <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
         class="bg-[#0f172a] rounded-[24px] flex flex-col transition-all-300 shadow-2xl z-20">
         <!-- Logo Area -->
-        <div class="p-6 flex items-center gap-3 shrink-0">
-            <div
-                class="w-8 h-8 bg-indigo-500 rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
+        @php
+            $adminSidebarLogo = config('homepage.logo', ['src' => 'images/logo.png', 'alt' => 'GNAT Association']);
+        @endphp
+        <a href="{{ route('admin.dashboard') }}" class="p-5 flex items-center gap-3 shrink-0 min-h-[72px]" title="{{ $adminSidebarLogo['alt'] ?? 'GNAT' }}">
+            <div class="w-10 h-10 bg-[#351c42] rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-black/25 overflow-hidden p-1.5">
+                <img
+                    src="{{ asset($adminSidebarLogo['src'] ?? 'images/logo.png') }}"
+                    alt="{{ $adminSidebarLogo['alt'] ?? 'GNAT' }}"
+                    class="h-7 w-auto max-w-full object-contain"
+                    width="28"
+                    height="28"
+                />
             </div>
-            <span x-show="sidebarOpen"
+            <span
+                x-show="sidebarOpen"
+                x-cloak
                 class="font-bold text-lg tracking-tight text-white transition-opacity duration-300"
-                x-transition>GNAT</span>
-        </div>
+                x-transition
+            >GNAT</span>
+        </a>
 
         <!-- Navigation: fixed links + dynamic menus from Menu Management -->
         @php
