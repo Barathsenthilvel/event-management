@@ -326,7 +326,20 @@
                 @endif
             @endforeach
 
-            {{-- Settings (Default Settings only — always static, not managed via Menu Management) --}}
+            {{-- Default static sidebar items (not managed via Menu Management) --}}
+            @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
+            <a href="{{ route('admin.menus.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.menus.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 10h16M4 14h10" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Menu Management</span>
+            </a>
+            @endif
+
+            {{-- Settings (Default Settings only) --}}
             @if(\Illuminate\Support\Facades\Route::has('admin.settings.default-settings'))
             @php
                 $settingsActive = request()->routeIs('admin.settings.*');
