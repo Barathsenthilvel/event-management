@@ -647,6 +647,13 @@
             var title = el.getAttribute('data-delete-title') || '';
             adminOpenDeleteModal(formId, message, title || undefined);
         };
+        window.adminShowToast = function (msg, type) {
+            if (!msg || !window.Alpine || typeof Alpine.$data !== 'function') return false;
+            var root = Alpine.$data(document.querySelector('body'));
+            if (!root || typeof root.addToast !== 'function') return false;
+            root.addToast(msg, type === 'error' ? 'error' : 'success');
+            return true;
+        };
     </script>
 
     <script>
@@ -662,7 +669,7 @@
                 @elseif(session('error'))
                 root.addToast(@json(session('error')), 'error');
                 @elseif($errors->any())
-                root.addToast(@json($errors->first()), 'error');
+                root.addToast(@json($errors->first('image') ?? $errors->first()), 'error');
                 @endif
                 return true;
             }

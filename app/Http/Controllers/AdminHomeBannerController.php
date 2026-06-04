@@ -6,6 +6,7 @@ use App\Models\HomeBanner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class AdminHomeBannerController extends Controller
 {
@@ -37,7 +38,8 @@ class AdminHomeBannerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules(true));
+        $this->assertImageUploadWithinLimit($request);
+        $validated = $request->validate($this->rules(true), $this->validationMessages());
 
         $payload = $this->buildPayload($request, $validated, true);
         HomeBanner::create($payload);
@@ -52,7 +54,8 @@ class AdminHomeBannerController extends Controller
 
     public function update(Request $request, HomeBanner $homeBanner)
     {
-        $validated = $request->validate($this->rules(false));
+        $this->assertImageUploadWithinLimit($request);
+        $validated = $request->validate($this->rules(false), $this->validationMessages());
         $payload = $this->buildPayload($request, $validated, false, $homeBanner);
         $homeBanner->update($payload);
 
@@ -89,9 +92,42 @@ class AdminHomeBannerController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'image' => $creating
-                ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120']
-                : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
+                ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:1024']
+                : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:1024'],
         ];
+    }
+
+    private function validationMessages(): array
+    {
+        return [
+            'image.required' => 'Please upload a banner image.',
+            'image.image' => 'The file must be an image (JPEG, PNG, GIF, or WebP).',
+            'image.mimes' => 'Allowed formats: JPEG, PNG, GIF, or WebP.',
+            'image.max' => 'The banner image must not be larger than 1 MB.',
+        ];
+    }
+
+    private function assertImageUploadWithinLimit(Request $request): void
+    {
+        $uploadError = $_FILES['image']['error'] ?? null;
+
+        if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+            throw ValidationException::withMessages([
+                'image' => 'The banner image must not be larger than 1 MB.',
+            ]);
+        }
+
+        if (! $request->hasFile('image')) {
+            return;
+        }
+
+        $file = $request->file('image');
+
+        if (! $file->isValid()) {
+            throw ValidationException::withMessages([
+                'image' => 'The banner image must not be larger than 1 MB.',
+            ]);
+        }
     }
 
     private function buildPayload(Request $request, array $validated, bool $creating, ?HomeBanner $banner = null): array

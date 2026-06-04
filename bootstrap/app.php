@@ -62,6 +62,32 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect('/')->with('error', 'Your session expired. Please try again.');
         });
 
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'The uploaded file is too large. Maximum size is 1 MB.'], 413);
+            }
+
+            if ($request->is('admin/home-banners') && $request->isMethod('POST')) {
+                return redirect()->route('admin.home-banners.create', ['upload_error' => 1]);
+            }
+
+            if ($request->is('admin/home-banners/*') && in_array($request->method(), ['PUT', 'PATCH'], true)) {
+                $id = $request->route('home_banner');
+
+                if ($id) {
+                    return redirect()->route('admin.home-banners.edit', ['home_banner' => $id, 'upload_error' => 1]);
+                }
+            }
+
+            $referer = $request->headers->get('referer');
+
+            if ($referer) {
+                return redirect()->to($referer . (str_contains($referer, '?') ? '&' : '?') . 'upload_error=1');
+            }
+
+            return redirect()->route('admin.home-banners.index')->with('error', 'The uploaded file is too large. Maximum size is 1 MB.');
+        });
+
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             // Redirect admin routes to admin login when session expires
             if ($request->is('admin/*')) {
