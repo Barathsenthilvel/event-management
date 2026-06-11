@@ -394,7 +394,7 @@ class GnatMailService
 
             $smsCombined = null;
             if ($wantSms || $wantWhatsApp) {
-                $smsCombined = $this->sms()->trySendScenario('s11_meeting_scheduled', $user->mobile, [$name, $parts['date'], $parts['time']]);
+                $smsCombined = $this->sms()->trySendScenario('s29_meeting_reminder', $user->mobile, [$name, $parts['date'], $parts['time']]);
             }
 
             if ($wantSms) {
@@ -417,9 +417,7 @@ class GnatMailService
         }
     }
 
-    /**
-     * Send event invite notifications (email / SMS). WhatsApp uses the same SMS template until a dedicated channel exists.
-     */
+   
     public function sendEventInvites(Event $event, iterable $userIds, ?int $broadcastBatchId = null): void
     {
         $event->loadMissing('dates');
@@ -544,7 +542,7 @@ class GnatMailService
 
             $smsCombined = null;
             if ($wantSms || $wantWhatsApp) {
-                $smsCombined = $this->sms()->trySendScenario('s14_new_event', $user->mobile, [$name]);
+                $smsCombined = $this->sms()->trySendScenario('s31_event_reminder', $user->mobile, [$name]);
             }
 
             if ($wantSms) {

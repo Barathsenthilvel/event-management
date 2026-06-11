@@ -3,45 +3,13 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * GNAT transactional SMS — templates align with association copy; MSG91 Flow API.
+ * GNAT transactional SMS — MSG91 Flow API (flow_id + var1/var2 from config).
  */
 class GnatSmsService
 {
-    /** @var array<string, string> */
-    private const TEMPLATES = [
-        's01_registration_complete' => 'Dear {#var#}, your GNAT registration is completed successfully. Kindly complete pending profile details to proceed further. Team GNAT',
-        's02_profile_submitted' => 'Dear {#var#}, your profile submission has been received successfully and is under verification. Updates will be shared after review completion. Team GNAT',
-        's03_profile_verified' => 'Dear {#var#}, your profile verification is completed successfully. Kindly complete membership subscription to activate account access. Team GNAT',
-        's04_profile_rejected' => 'Dear {#var#}, your profile verification could not be completed due to incomplete or invalid details. Kindly contact GNAT support. Team GNAT',
-        's05_membership_payment_received' => 'Dear {#var#}, your membership payment has been received successfully and your account is now active. Team GNAT',
-        's06_membership_expiry_reminder' => 'Dear {#var#}, your GNAT membership validity is nearing expiry on {#var#}. Kindly renew before the due date to continue account access. Team GNAT',
-        's07_membership_expired' => 'Dear {#var#}, your GNAT membership validity has expired on {#var#}. Kindly renew your membership to continue account access. Team GNAT',
-        's08_account_inactive_90_days' => 'Dear {#var#}, your GNAT account is inactive due to pending membership subscription for the last 90 days. Kindly contact GNAT support for assistance. Team GNAT',
-        's09_membership_cancellation' => 'Dear {#var#}, your GNAT membership cancellation request has been processed successfully. Contact support for further assistance. Team GNAT',
-        's11_meeting_scheduled' => 'Dear {#var#}, a GNAT meeting is scheduled on {#var#} at {#var#}. Kindly login to the GNAT portal for details. Team GNAT',
-        's12_meeting_attendance_confirmed' => 'Dear {#var#}, your attendance confirmation for the GNAT meeting on {#var#} has been submitted successfully. Team GNAT',
-        's13_meeting_non_attendance' => 'Dear {#var#}, your non-attendance response for the GNAT meeting on {#var#} has been submitted successfully. Team GNAT',
-        's14_new_event' => 'Dear {#var#}, a new event update is available in GNAT Association. Kindly login to the GNAT portal for details. Team GNAT',
-        's15_event_interest' => 'Dear {#var#}, your interest for the GNAT event has been recorded successfully. Event updates will be shared through the portal. Team GNAT',
-        's16_event_participation' => 'Dear {#var#}, thank you for attending the GNAT event. Your participation has been recorded successfully. Kindly download your participation certificate from the GNAT portal, if applicable. Team GNAT',
-        's17_nomination_live' => 'Dear {#var#}, nomination activity is currently available in GNAT Association. Kindly login to the portal to participate. Team GNAT',
-        's18_nomination_submitted' => 'Dear {#var#}, your nomination submission has been received successfully in GNAT Association. Team GNAT',
-        's19_polling_live' => 'Dear {#var#}, polling activity is currently available in GNAT Association. Kindly submit your response through the portal. Team GNAT',
-        's20_polling_results' => 'Dear {#var#}, polling results are now available in GNAT Association. Kindly login to the GNAT portal to view details. Team GNAT',
-        's21_polling_response' => 'Dear {#var#}, your polling response has been submitted successfully in GNAT Association. Team GNAT',
-        's22_job_posting' => 'Dear {#var#}, a new job posting is available in GNAT Association. Kindly login to the portal to view details. Team GNAT',
-        's23_job_application_submitted' => 'Dear {#var#}, your job application has been submitted successfully. Further updates will be shared after review completion. Team GNAT',
-        's24_job_request_reviewed' => 'Dear {#var#}, your submitted job request has been reviewed successfully. Further updates will be shared shortly. Team GNAT',
-        's25_job_request_status_updated' => 'Dear {#var#}, your job request status has been updated successfully. Further instructions will be shared shortly. Team GNAT',
-        's26_job_request_communication' => 'Dear {#var#}, communication has been initiated regarding your submitted job request. Kindly check your registered contact details. Team GNAT',
-        's27_donation_received' => 'Dear {#var#}, your donation payment has been received successfully. Thank you for your contribution to GNAT Association. Team GNAT',
-        's28_support_request' => 'Dear {#var#}, your support request has been received successfully. Our support team will contact you shortly. Team GNAT',
-    ];
-
     public function registrationComplete(?string $mobile, string $memberName): void
     {
         $this->sendScenario('s01_registration_complete', $mobile, [$memberName]);
@@ -92,6 +60,16 @@ class GnatSmsService
         $this->sendScenario('s11_meeting_scheduled', $mobile, [$memberName, $date, $time]);
     }
 
+    public function meetingReminder(?string $mobile, string $memberName, string $date, string $time): void
+    {
+        $this->sendScenario('s29_meeting_reminder', $mobile, [$memberName, $date, $time]);
+    }
+
+    public function meetingCancelled(?string $mobile, string $memberName, string $meetingDate): void
+    {
+        $this->sendScenario('s30_meeting_cancelled', $mobile, [$memberName, $meetingDate]);
+    }
+
     public function meetingAttendanceConfirmed(?string $mobile, string $memberName, string $meetingDate): void
     {
         $this->sendScenario('s12_meeting_attendance_confirmed', $mobile, [$memberName, $meetingDate]);
@@ -105,6 +83,11 @@ class GnatSmsService
     public function newEventUpdate(?string $mobile, string $memberName): void
     {
         $this->sendScenario('s14_new_event', $mobile, [$memberName]);
+    }
+
+    public function eventReminder(?string $mobile, string $memberName): void
+    {
+        $this->sendScenario('s31_event_reminder', $mobile, [$memberName]);
     }
 
     public function eventInterestRecorded(?string $mobile, string $memberName): void
@@ -122,6 +105,11 @@ class GnatSmsService
         $this->sendScenario('s17_nomination_live', $mobile, [$memberName]);
     }
 
+    public function nominationReminder(?string $mobile, string $memberName): void
+    {
+        $this->sendScenario('s32_nomination_reminder', $mobile, [$memberName]);
+    }
+
     public function nominationSubmitted(?string $mobile, string $memberName): void
     {
         $this->sendScenario('s18_nomination_submitted', $mobile, [$memberName]);
@@ -130,6 +118,11 @@ class GnatSmsService
     public function pollingLive(?string $mobile, string $memberName): void
     {
         $this->sendScenario('s19_polling_live', $mobile, [$memberName]);
+    }
+
+    public function pollingReminder(?string $mobile, string $memberName): void
+    {
+        $this->sendScenario('s33_polling_reminder', $mobile, [$memberName]);
     }
 
     public function pollingResults(?string $mobile, string $memberName): void
@@ -199,16 +192,25 @@ class GnatSmsService
 
     /**
      * @param  list<string>  $values
+     * @return array<string, mixed>
      */
-    public function renderBody(string $scenarioKey, array $values): string
+    private function buildMsg91Payload(string $flowId, string $normalizedMobile, array $values): array
     {
-        $template = self::TEMPLATES[$scenarioKey] ?? '';
-        $out = $template;
-        foreach ($values as $v) {
-            $out = preg_replace('/\{#var#}/', (string) $v, (string) $out, 1) ?? $out;
+        $payload = [
+            'flow_id' => $flowId,
+            'mobiles' => $normalizedMobile,
+        ];
+
+        foreach (array_values($values) as $i => $val) {
+            $payload['var'.($i + 1)] = (string) $val;
         }
 
-        return $out;
+        $sender = trim((string) config('gnat_sms.sender', ''));
+        if ($sender !== '') {
+            $payload['sender'] = $sender;
+        }
+
+        return $payload;
     }
 
     /**
@@ -221,7 +223,7 @@ class GnatSmsService
 
     /**
      * @param  list<string>  $values
-     * @return array{status: string, error: ?string} status: success|failed|skipped
+     * @return array{status: string, error: string|null}
      */
     public function trySendScenario(string $scenarioKey, ?string $mobile, array $values): array
     {
@@ -231,30 +233,35 @@ class GnatSmsService
         }
 
         $driver = strtolower((string) config('gnat_sms.driver', 'off'));
-        if ($driver === 'off' || $driver === '' || $driver === 'false') {
+        if (in_array($driver, ['off', '', 'false'], true)) {
             return ['status' => 'skipped', 'error' => 'SMS driver disabled'];
         }
 
-        $body = $this->renderBody($scenarioKey, $values);
+        $flowId = $this->resolveFlowId($scenarioKey);
+        $payload = ($flowId !== '')
+            ? $this->buildMsg91Payload($flowId, $normalized, $values)
+            : null;
 
         try {
             if ($driver === 'log') {
                 Log::info('GNAT SMS (log driver)', [
                     'scenario' => $scenarioKey,
+                    'template_key' => config('gnat_sms.scenario_template_keys.'.$scenarioKey),
+                    'flow_id' => $flowId !== '' ? $flowId : null,
                     'mobile' => $normalized,
-                    'body' => $body,
+                    'payload' => $payload,
                 ]);
 
                 return ['status' => 'success', 'error' => null];
             }
 
             if ($driver === 'msg91') {
-                $err = $this->sendViaMsg91Flow($scenarioKey, $normalized, $values, $body);
-                if ($err === null) {
+                $error = $this->sendViaMsg91Flow($scenarioKey, $normalized, $values);
+                if ($error === null) {
                     return ['status' => 'success', 'error' => null];
                 }
 
-                return ['status' => 'failed', 'error' => $err];
+                return ['status' => 'failed', 'error' => $error];
             }
 
             Log::warning('GNAT SMS unknown driver', ['driver' => $driver]);
@@ -270,11 +277,52 @@ class GnatSmsService
         }
     }
 
+    private function resolveFlowId(string $scenarioKey): string
+    {
+        $templateKey = config('gnat_sms.scenario_template_keys.'.$scenarioKey);
+        if (is_string($templateKey) && $templateKey !== '') {
+            $flowId = config('gnat_sms.template_keys.'.$templateKey);
+            if ($flowId !== null && $flowId !== '') {
+                return trim((string) $flowId);
+            }
+        }
+
+        return '';
+    }
+
     /**
+     * MSG91 Flow API — same curl pattern as GNAT server backup (curl.php).
+     *
+     * @param  array<string, mixed>  $payload  e.g. flow_id, mobiles, var1, var2...
+     */
+    public function sendTextSms(array $payload): mixed
+    {
+        $jsonData = json_encode($payload);
+        $url = rtrim((string) config('gnat_sms.flow_url', 'https://control.msg91.com/api/v5/flow'), '/');
+        $authkey = trim((string) config('gnat_sms.authkey', ''));
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'authkey: '.$authkey,
+        ]);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        return json_decode((string) $response);
+    }
+
+    /**
+     * Build MSG91 payload and send — flow_id + mobiles + var1/var2/... dynamically.
+     *
      * @param  list<string>  $values
      * @return ?string Error message or null on success
      */
-    private function sendViaMsg91Flow(string $scenarioKey, string $normalizedMobile, array $values, string $renderedBody): ?string
+    private function sendViaMsg91Flow(string $scenarioKey, string $normalizedMobile, array $values): ?string
     {
         $authkey = trim((string) config('gnat_sms.authkey', ''));
         if ($authkey === '') {
@@ -283,51 +331,38 @@ class GnatSmsService
             return 'MSG91 authkey missing';
         }
 
-        $flowId = config('gnat_sms.flow_ids.'.$scenarioKey);
-        $flowId = $flowId !== null && $flowId !== '' ? trim((string) $flowId) : '';
-
+        $flowId = $this->resolveFlowId($scenarioKey);
         if ($flowId === '') {
             Log::debug('GNAT SMS MSG91 flow id not configured for scenario; skipping API call', [
                 'scenario' => $scenarioKey,
-                'preview' => $renderedBody,
+                'template_key' => config('gnat_sms.scenario_template_keys.'.$scenarioKey),
             ]);
 
             return 'MSG91 flow id not configured for scenario';
         }
 
-        $sender = trim((string) config('gnat_sms.sender', ''));
-        $url = rtrim((string) config('gnat_sms.flow_url', 'https://api.msg91.com/api/v5/flow/'), '/').'/';
+        $payload = $this->buildMsg91Payload($flowId, $normalizedMobile, $values);
+        $result = $this->sendTextSms($payload);
 
-        $recipient = ['mobiles' => $normalizedMobile];
-        foreach (array_values($values) as $i => $val) {
-            $recipient['VAR'.($i + 1)] = (string) $val;
-        }
+        if (is_object($result) && isset($result->type) && strtolower((string) $result->type) === 'error') {
+            $message = (string) ($result->message ?? 'MSG91 returned error');
 
-        $payload = [
-            'flow_id' => $flowId,
-            'recipients' => [$recipient],
-        ];
-        if ($sender !== '') {
-            $payload['sender'] = $sender;
-        }
-
-        $response = Http::timeout(20)
-            ->withHeaders([
-                'authkey' => $authkey,
-                'Content-Type' => 'application/json',
-                'accept' => 'application/json',
-            ])
-            ->post($url, $payload);
-
-        if (! $response->successful()) {
-            Log::warning('GNAT SMS MSG91 HTTP error', [
+            Log::warning('GNAT SMS MSG91 API error', [
                 'scenario' => $scenarioKey,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'flow_id' => $flowId,
+                'payload' => $payload,
+                'response' => $result,
             ]);
 
-            return 'HTTP '.$response->status().': '.mb_substr($response->body(), 0, 500);
+            return $message;
         }
+
+        Log::info('GNAT SMS sent via MSG91', [
+            'scenario' => $scenarioKey,
+            'flow_id' => $flowId,
+            'mobiles' => $normalizedMobile,
+            'response' => $result,
+        ]);
 
         return null;
     }

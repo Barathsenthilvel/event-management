@@ -75,6 +75,8 @@ Route::prefix('admin')->group(function () {
 
     Route::middleware('auth:admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::post('/dashboard/renewals/{subscription}/notify', [DashboardController::class, 'sendRenewalReminder'])
+            ->name('admin.dashboard.renewals.notify');
 
         Route::get('/notification-batches', [GnatNotificationBatchController::class, 'index'])->name('admin.notification-batches.index');
         Route::get('/notification-batches/{id}', [GnatNotificationBatchController::class, 'show'])
@@ -196,7 +198,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/members/pending-approvals', [AdminMemberApprovalController::class, 'index'])
             ->name('admin.members.pending-approvals.index');
         Route::get('/members/pending-approvals/{user}', [AdminMemberApprovalController::class, 'show'])
-            ->name('admin.members.pending-approvals.show');
         Route::post('/members/{user}/approve', [AdminMemberApprovalController::class, 'approve'])
             ->name('admin.members.pending-approvals.approve');
         Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])

@@ -7,10 +7,9 @@ return [
     | GNAT SMS (MSG91)
     |--------------------------------------------------------------------------
     |
-    | Set GNAT_SMS_DRIVER=msg91 after you register DLT templates in MSG91 and
-    | map each scenario to a Flow ID from the MSG91 dashboard. Variables are
-    | sent as VAR1, VAR2, VAR3 in the same order as the {#var#} placeholders
-    | in your approved template text.
+    | Set GNAT_SMS_DRIVER=msg91 after templates are registered in MSG91.
+    | Variables are sent as var1, var2, var3 in the same order as {#var#}
+    | placeholders in your approved MSG91 template text.
     |
     | Drivers: off | log | msg91
     |
@@ -18,48 +17,95 @@ return [
 
     'driver' => env('GNAT_SMS_DRIVER', 'off'),
 
-    'authkey' => env('GNAT_MSG91_AUTHKEY', ''),
+    'authkey' => env('GNAT_MSG91_AUTHKEY', '514733A1dYnzpcHcfn6a299440P1'),
 
-    'sender' => env('GNAT_MSG91_SENDER_ID', ''),
+    'sender' => env('GNAT_MSG91_SENDER_ID', env('MSG91_SENDER_ID', 'GNATIN')),
 
     'default_country_code' => env('GNAT_SMS_DEFAULT_COUNTRY', '91'),
 
-    'flow_url' => env('GNAT_MSG91_FLOW_URL', 'https://api.msg91.com/api/v5/flow/'),
+    'flow_url' => env('GNAT_MSG91_FLOW_URL', 'https://control.msg91.com/api/v5/flow'),
 
     /**
-     * MSG91 Flow ID per scenario (same wording as GNAT SMS templates).
-     * Leave null until templates are approved in MSG91.
+     * MSG91 Flow ID per template key (from MSG91 dashboard).
+     * Leave empty until approved — SMS for that scenario is skipped.
      *
      * @var array<string, string|null>
      */
-    'flow_ids' => [
-        's01_registration_complete' => env('GNAT_SMS_FLOW_S01'),
-        's02_profile_submitted' => env('GNAT_SMS_FLOW_S02'),
-        's03_profile_verified' => env('GNAT_SMS_FLOW_S03'),
-        's04_profile_rejected' => env('GNAT_SMS_FLOW_S04'),
-        's05_membership_payment_received' => env('GNAT_SMS_FLOW_S05'),
-        's06_membership_expiry_reminder' => env('GNAT_SMS_FLOW_S06'),
-        's07_membership_expired' => env('GNAT_SMS_FLOW_S07'),
-        's08_account_inactive_90_days' => env('GNAT_SMS_FLOW_S08'),
-        's09_membership_cancellation' => env('GNAT_SMS_FLOW_S09'),
-        's11_meeting_scheduled' => env('GNAT_SMS_FLOW_S11'),
-        's12_meeting_attendance_confirmed' => env('GNAT_SMS_FLOW_S12'),
-        's13_meeting_non_attendance' => env('GNAT_SMS_FLOW_S13'),
-        's14_new_event' => env('GNAT_SMS_FLOW_S14'),
-        's15_event_interest' => env('GNAT_SMS_FLOW_S15'),
-        's16_event_participation' => env('GNAT_SMS_FLOW_S16'),
-        's17_nomination_live' => env('GNAT_SMS_FLOW_S17'),
-        's18_nomination_submitted' => env('GNAT_SMS_FLOW_S18'),
-        's19_polling_live' => env('GNAT_SMS_FLOW_S19'),
-        's20_polling_results' => env('GNAT_SMS_FLOW_S20'),
-        's21_polling_response' => env('GNAT_SMS_FLOW_S21'),
-        's22_job_posting' => env('GNAT_SMS_FLOW_S22'),
-        's23_job_application_submitted' => env('GNAT_SMS_FLOW_S23'),
-        's24_job_request_reviewed' => env('GNAT_SMS_FLOW_S24'),
-        's25_job_request_status_updated' => env('GNAT_SMS_FLOW_S25'),
-        's26_job_request_communication' => env('GNAT_SMS_FLOW_S26'),
-        's27_donation_received' => env('GNAT_SMS_FLOW_S27'),
-        's28_support_request' => env('GNAT_SMS_FLOW_S28'),
+    'template_keys' => [
+        'profilesubmission' => env('GNAT_SMS_TEMPLATE_PROFILESUBMISSION', '6a242c255f874bf1ba0adb72'),
+        'contactsubmitted' => env('GNAT_SMS_TEMPLATE_CONTACTSUBMITTED', '6a242c6cf8dfd6a3160b83b3'),
+        'pollresult' => env('GNAT_SMS_TEMPLATE_POLLRESULT', '6a264e4db6ba505dd005a422'),
+        'nominationsubmitted' => env('GNAT_SMS_TEMPLATE_NOMINATIONSUBMITTED', '6a2651b5a61ad9670d0f0ff3'),
+        'pollinglive' => env('GNAT_SMS_TEMPLATE_POLLINGLIVE', '6a265230842a20065a03f4d3'),
+        'membershipcancellation' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPCANCELLATION', '6a2652cb2f4c5df346069c52'),
+        'meetingdeclined' => env('GNAT_SMS_TEMPLATE_MEETINGDECLINED', '6a265303c53813614905a602'),
+        'jobstatusupdate' => env('GNAT_SMS_TEMPLATE_JOBSTATUSUPDATE', '6a2654c6c919153c0b0f4543'),
+        'jobsubmitted' => env('GNAT_SMS_TEMPLATE_JOBSUBMITTED', '6a2654f0e8517be9bb037865'),
+        'eventattended' => env('GNAT_SMS_TEMPLATE_EVENTATTENDED', '6a265576b9c624f7f60b2cd9'),
+        'meetingreminder' => env('GNAT_SMS_TEMPLATE_MEETINGREMINDER', '6a2655cf0d0d0034b206493c'),
+        'meetingalert' => env('GNAT_SMS_TEMPLATE_MEETINGALERT', '6a2656370ab3277ca6056c14'),
+        'pollingsubmission' => env('GNAT_SMS_TEMPLATE_POLLINGSUBMISSION', '6a265673f12903530a09aa2a'),
+        'profiledeclined' => env('GNAT_SMS_TEMPLATE_PROFILEDECLINED', '6a2656ac4f0828d7b70ade62'),
+        'meetingconfirmation' => env('GNAT_SMS_TEMPLATE_MEETINGCONFIRMATION', '6a265703c4a8d27e6c002922'),
+        'jobstatusreviewed' => env('GNAT_SMS_TEMPLATE_JOBSTATUSREVIEWED', '6a2657a3784b5b116708b622'),
+        'eventalert' => env('GNAT_SMS_TEMPLATE_EVENTALERT', '6a265ab557a23f90af07fce2'),
+        'meetingcancelled' => env('GNAT_SMS_TEMPLATE_MEETINGCANCELLED', '6a265b0f011e7cfe0b0d8ca2'),
+        'eventreminder' => env('GNAT_SMS_TEMPLATE_EVENTREMINDER', '6a265b51a07d63a90e0a7d22'),
+        'nominationreminder' => env('GNAT_SMS_TEMPLATE_NOMINATIONREMINDER', '6a265ba896320491490147e2'),
+        'pollingreminder' => env('GNAT_SMS_TEMPLATE_POLLINGREMINDER', '6a265c144f0828d7b70ade64'),
+        'paymentconfirmation' => env('GNAT_SMS_TEMPLATE_PAYMENTCONFIRMATION', '6a265c5c2a8b5067f5061132'),
+        'donationpaid' => env('GNAT_SMS_TEMPLATE_DONATIONPAID', '6a265cdf4dcd760d5c019732'),
+        'nominationalert' => env('GNAT_SMS_TEMPLATE_NOMINATIONALERT', '6a265d4eb29995d89509f95b'),
+        'membershipinactive' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPINACTIVE', '6a265da69606c3a57a002eb3'),
+        'eventinterestsubmitted' => env('GNAT_SMS_TEMPLATE_EVENTINTERESTSUBMITTED', '6a265e072b9ac316d408a072'),
+        'jobalert' => env('GNAT_SMS_TEMPLATE_JOBALERT', '6a265e451b823bc326066f64'),
+
+        // No MSG91 template provided yet — leave empty
+        'registrationcomplete' => env('GNAT_SMS_TEMPLATE_REGISTRATIONCOMPLETE', ''),
+        'profileverified' => env('GNAT_SMS_TEMPLATE_PROFILEVERIFIED', ''),
+        'membershiprenewalreminder' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPRENEWALREMINDER', ''),
+        'membershipexpired' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPEXPIRED', ''),
+        'jobcommunication' => env('GNAT_SMS_TEMPLATE_JOBCOMMUNICATION', ''),
+    ],
+
+    /**
+     * Maps internal scenario keys (used in code) to template_keys above.
+     *
+     * @var array<string, string|null>
+     */
+    'scenario_template_keys' => [
+        's01_registration_complete' => 'registrationcomplete',
+        's02_profile_submitted' => 'profilesubmission',
+        's03_profile_verified' => 'profileverified',
+        's04_profile_rejected' => 'profiledeclined',
+        's05_membership_payment_received' => 'paymentconfirmation',
+        's06_membership_expiry_reminder' => 'membershiprenewalreminder',
+        's07_membership_expired' => 'membershipexpired',
+        's08_account_inactive_90_days' => 'membershipinactive',
+        's09_membership_cancellation' => 'membershipcancellation',
+        's11_meeting_scheduled' => 'meetingalert',
+        's12_meeting_attendance_confirmed' => 'meetingconfirmation',
+        's13_meeting_non_attendance' => 'meetingdeclined',
+        's14_new_event' => 'eventalert',
+        's15_event_interest' => 'eventinterestsubmitted',
+        's16_event_participation' => 'eventattended',
+        's17_nomination_live' => 'nominationalert',
+        's18_nomination_submitted' => 'nominationsubmitted',
+        's19_polling_live' => 'pollinglive',
+        's20_polling_results' => 'pollresult',
+        's21_polling_response' => 'pollingsubmission',
+        's22_job_posting' => 'jobalert',
+        's23_job_application_submitted' => 'jobsubmitted',
+        's24_job_request_reviewed' => 'jobstatusreviewed',
+        's25_job_request_status_updated' => 'jobstatusupdate',
+        's26_job_request_communication' => 'jobcommunication',
+        's27_donation_received' => 'donationpaid',
+        's28_support_request' => 'contactsubmitted',
+        's29_meeting_reminder' => 'meetingreminder',
+        's30_meeting_cancelled' => 'meetingcancelled',
+        's31_event_reminder' => 'eventreminder',
+        's32_nomination_reminder' => 'nominationreminder',
+        's33_polling_reminder' => 'pollingreminder',
     ],
 
 ];
