@@ -198,6 +198,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/members/pending-approvals', [AdminMemberApprovalController::class, 'index'])
             ->name('admin.members.pending-approvals.index');
         Route::get('/members/pending-approvals/{user}', [AdminMemberApprovalController::class, 'show'])
+            ->name('admin.members.pending-approvals.show');
         Route::post('/members/{user}/approve', [AdminMemberApprovalController::class, 'approve'])
             ->name('admin.members.pending-approvals.approve');
         Route::post('/members/{user}/reject', [AdminMemberApprovalController::class, 'reject'])
