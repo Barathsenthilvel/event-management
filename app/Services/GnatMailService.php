@@ -178,6 +178,28 @@ class GnatMailService
         }
     }
 
+    public function sendLoginOtp(?User $user, string $otp): void
+    {
+        if ($user === null || trim((string) $user->email) === '') {
+            return;
+        }
+
+        $name = $this->memberDisplayName($user);
+        $email = trim((string) $user->email);
+
+        $this->safeSend(function () use ($email, $name, $otp) {
+            Mail::raw(
+                "Dear {$name},\n\n"
+                ."Your GNAT Association verification code is {$otp}.\n"
+                ."It is valid for 5 minutes. Do not share this code with anyone.\n\n"
+                ."— GNAT Association",
+                function ($message) use ($email) {
+                    $message->to($email)->subject('GNAT Association — Verification Code');
+                }
+            );
+        }, 'login_otp', $email);
+    }
+
     public function sendRegistrationSuccessful(User $user): void
     {
         $name = $this->memberDisplayName($user);

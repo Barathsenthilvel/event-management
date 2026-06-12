@@ -207,8 +207,7 @@ Route::prefix('admin')->group(function () {
         // Members list (all / active / inactive)
         Route::get('/members', [AdminMemberController::class, 'index'])->name('admin.members.index');
         Route::get('/members/{user}/details', [AdminMemberController::class, 'show'])->name('admin.members.show');
-        Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation'])
-            ->name('admin.members.designation.update');
+        Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation']) ->name('admin.members.designation.update');
         Route::patch('/members/{user}/membership-status', [AdminMemberController::class, 'updateMembershipStatus'])
             ->name('admin.members.membership-status.update');
 

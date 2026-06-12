@@ -25,6 +25,17 @@ return [
 
     'flow_url' => env('GNAT_MSG91_FLOW_URL', 'https://control.msg91.com/api/v5/flow'),
 
+    'otp_url' => env('GNAT_MSG91_OTP_URL', 'https://control.msg91.com/api/v5/otp'),
+
+    /**
+     * DLT-approved MSG91 Flow ID for login/registration OTP (var1 = 4-digit code).
+     * Preferred over the OTP API for India — set after creating the template in MSG91.
+     */
+    'otp_flow_id' => env('GNAT_SMS_OTP_FLOW_ID', ''),
+
+    /** Optional MSG91 OTP template ID for custom SMS body; omit to use MSG91 default OTP message. */
+    'otp_template_id' => env('GNAT_SMS_OTP_TEMPLATE_ID', ''),
+
     /**
      * MSG91 Flow ID per template key (from MSG91 dashboard).
      * Leave empty until approved — SMS for that scenario is skipped.

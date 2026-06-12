@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\GnatMailService;
+use App\Services\GnatSmsService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -135,6 +137,7 @@ class MemberAuthController extends Controller
 
         return view('member.auth.otp', [
             'maskedMobile' => $this->maskedMobile($request),
+            'maskedEmail' => $this->maskedEmail($request),
             'generatedOtp' => app()->isProduction()
                 ? ''
                 : (string) $request->session()->get(self::OTP_SESSION_KEY, ''),
@@ -236,7 +239,7 @@ class MemberAuthController extends Controller
 
         $this->issueOtp($request, $userId);
 
-        return back()->with('success', 'OTP resent successfully.');
+        return back()->with('success', 'Verification code resent to your mobile and email.');
     }
 
     public function logout(Request $request)
@@ -257,7 +260,38 @@ class MemberAuthController extends Controller
         $request->session()->put(self::OTP_SESSION_KEY, $otp);
         $request->session()->put(self::OTP_EXPIRES_SESSION_KEY, time() + (5 * 60));
 
-        // For now: OTP is auto-generated. Later you can send via SMS/email provider.
+        $user = User::find($userId);
+        $result = app(GnatSmsService::class)->sendLoginOtp($user?->mobile, $otp);
+        app(GnatMailService::class)->sendLoginOtp($user, $otp);
+
+        if ($result['status'] !== 'success') {
+            Log::warning('Member login OTP SMS not sent', [
+                'user_id' => $userId,
+                'mobile' => $user?->mobile,
+                'status' => $result['status'],
+                'error' => $result['error'],
+            ]);
+        }
+    }
+
+    private function maskedEmail(Request $request): string
+    {
+        $userId = (int) $request->session()->get(self::OTP_USER_SESSION_KEY);
+        if (!$userId) {
+            return '';
+        }
+
+        $email = trim((string) optional(User::find($userId))->email);
+        if ($email === '' || !str_contains($email, '@')) {
+            return '';
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+        if (strlen($local) <= 2) {
+            return str_repeat('*', strlen($local)) . '@' . $domain;
+        }
+
+        return substr($local, 0, 1) . str_repeat('*', max(1, strlen($local) - 2)) . substr($local, -1) . '@' . $domain;
     }
 
     private function maskedMobile(Request $request): string
