@@ -349,21 +349,32 @@ class GnatSmsService
         }
 
         $flowId = trim((string) config('gnat_sms.otp_flow_id', ''));
+        if ($flowId === '') {
+            $flowId = trim((string) config('gnat_sms.template_keys.otpauthentication', ''));
+        }
         if ($flowId !== '') {
             return $this->sendLoginOtpViaMsg91Flow($flowId, $normalizedMobile, $otp);
         }
 
-        $payload = [
+        $templateId = trim((string) config('gnat_sms.otp_template_id', ''));
+        if ($templateId === '') {
+            $templateId = trim((string) config('gnat_sms.template_keys.otpauthentication', ''));
+        }
+        if ($templateId === '') {
+            return 'MSG91 OTP template not configured';
+        }
+
+        $baseUrl = rtrim((string) config('gnat_sms.otp_url', 'https://control.msg91.com/api/v5/otp'), '/');
+        $url = $baseUrl.'?'.http_build_query([
+            'template_id' => $templateId,
             'mobile' => $normalizedMobile,
+        ]);
+
+        $payload = [
             'otp' => $otp,
             'otp_length' => strlen($otp),
             'otp_expiry' => 5,
         ];
-
-        $templateId = trim((string) config('gnat_sms.otp_template_id', ''));
-        if ($templateId !== '') {
-            $payload['template_id'] = $templateId;
-        }
 
         $sender = trim((string) config('gnat_sms.sender', ''));
         if ($sender !== '') {
@@ -371,7 +382,6 @@ class GnatSmsService
         }
 
         $jsonData = json_encode($payload);
-        $url = rtrim((string) config('gnat_sms.otp_url', 'https://control.msg91.com/api/v5/otp'), '/');
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -391,6 +401,7 @@ class GnatSmsService
 
             Log::warning('GNAT SMS MSG91 OTP API error', [
                 'mobile' => $normalizedMobile,
+                'template_id' => $templateId,
                 'response' => $result,
             ]);
 
@@ -399,8 +410,8 @@ class GnatSmsService
 
         Log::info('GNAT SMS login OTP sent via MSG91 OTP API', [
             'mobile' => $normalizedMobile,
+            'template_id' => $templateId,
             'response' => $result,
-            'note' => 'For India delivery, set GNAT_SMS_OTP_FLOW_ID to a DLT-approved Flow template.',
         ]);
 
         return null;

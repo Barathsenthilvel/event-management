@@ -28,13 +28,12 @@ return [
     'otp_url' => env('GNAT_MSG91_OTP_URL', 'https://control.msg91.com/api/v5/otp'),
 
     /**
-     * DLT-approved MSG91 Flow ID for login/registration OTP (var1 = 4-digit code).
-     * Preferred over the OTP API for India — set after creating the template in MSG91.
+     * Optional separate MSG91 Flow ID for OTP (var1 = code). Leave empty to use OTP API below.
      */
     'otp_flow_id' => env('GNAT_SMS_OTP_FLOW_ID', ''),
 
-    /** Optional MSG91 OTP template ID for custom SMS body; omit to use MSG91 default OTP message. */
-    'otp_template_id' => env('GNAT_SMS_OTP_TEMPLATE_ID', ''),
+    /** MSG91 OTP API template_id (otpauthentication) */
+    'otp_template_id' => env('GNAT_SMS_OTP_TEMPLATE_ID', '6a2c081b62dba7561a086de2'),
 
     /**
      * MSG91 Flow ID per template key (from MSG91 dashboard).
@@ -70,12 +69,13 @@ return [
         'membershipinactive' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPINACTIVE', '6a265da69606c3a57a002eb3'),
         'eventinterestsubmitted' => env('GNAT_SMS_TEMPLATE_EVENTINTERESTSUBMITTED', '6a265e072b9ac316d408a072'),
         'jobalert' => env('GNAT_SMS_TEMPLATE_JOBALERT', '6a265e451b823bc326066f64'),
+        'otpauthentication' => env('GNAT_SMS_TEMPLATE_OTPAUTHENTICATION', '6a2c081b62dba7561a086de2'),
+        'renewalalert' => env('GNAT_SMS_TEMPLATE_RENEWALALERT', '6a2c07b3f7291dd3fb0f41a2'),
+        'expiryalert' => env('GNAT_SMS_TEMPLATE_EXPIRYALERT', '6a2c0745005cb1fd52082052'),
 
         // No MSG91 template provided yet — leave empty
         'registrationcomplete' => env('GNAT_SMS_TEMPLATE_REGISTRATIONCOMPLETE', ''),
         'profileverified' => env('GNAT_SMS_TEMPLATE_PROFILEVERIFIED', ''),
-        'membershiprenewalreminder' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPRENEWALREMINDER', ''),
-        'membershipexpired' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPEXPIRED', ''),
         'jobcommunication' => env('GNAT_SMS_TEMPLATE_JOBCOMMUNICATION', ''),
     ],
 
@@ -90,8 +90,8 @@ return [
         's03_profile_verified' => 'profileverified',
         's04_profile_rejected' => 'profiledeclined',
         's05_membership_payment_received' => 'paymentconfirmation',
-        's06_membership_expiry_reminder' => 'membershiprenewalreminder',
-        's07_membership_expired' => 'membershipexpired',
+        's06_membership_expiry_reminder' => 'renewalalert',
+        's07_membership_expired' => 'expiryalert',
         's08_account_inactive_90_days' => 'membershipinactive',
         's09_membership_cancellation' => 'membershipcancellation',
         's11_meeting_scheduled' => 'meetingalert',
