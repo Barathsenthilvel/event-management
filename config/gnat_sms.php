@@ -28,9 +28,10 @@ return [
     'otp_url' => env('GNAT_MSG91_OTP_URL', 'https://control.msg91.com/api/v5/otp'),
 
     /**
-     * Optional separate MSG91 Flow ID for OTP (var1 = code). Leave empty to use OTP API below.
+     * MSG91 Flow ID for signup/login OTP (otpauthentication).
+     * Template: var1 = member name, var2 = 4-digit OTP.
      */
-    'otp_flow_id' => env('GNAT_SMS_OTP_FLOW_ID', ''),
+    'otp_flow_id' => env('GNAT_SMS_OTP_FLOW_ID', '6a2c081b62dba7561a086de2'),
 
     /** MSG91 OTP API template_id (otpauthentication) */
     'otp_template_id' => env('GNAT_SMS_OTP_TEMPLATE_ID', '6a2c081b62dba7561a086de2'),

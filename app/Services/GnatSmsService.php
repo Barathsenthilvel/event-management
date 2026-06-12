@@ -13,12 +13,14 @@ class GnatSmsService
     /**
      * @return array{status: string, error: string|null}
      */
-    public function sendLoginOtp(?string $mobile, string $otp): array
+    public function sendLoginOtp(?string $mobile, string $otp, ?string $memberName = null): array
     {
         $normalized = $this->normalizeMobile($mobile);
         if ($normalized === null) {
             return ['status' => 'skipped', 'error' => 'No mobile number'];
         }
+
+        $name = trim((string) $memberName) !== '' ? trim((string) $memberName) : 'Member';
 
         $driver = strtolower((string) config('gnat_sms.driver', 'off'));
         if (in_array($driver, ['off', '', 'false'], true)) {
@@ -28,7 +30,8 @@ class GnatSmsService
         if ($driver === 'log') {
             Log::info('GNAT SMS login OTP (log driver)', [
                 'mobile' => $normalized,
-                'otp' => $otp,
+                'var1_name' => $name,
+                'var2_otp' => $otp,
             ]);
 
             return ['status' => 'success', 'error' => null];
@@ -39,7 +42,7 @@ class GnatSmsService
         }
 
         try {
-            $error = $this->sendLoginOtpViaMsg91($normalized, $otp);
+            $error = $this->sendLoginOtpViaMsg91($normalized, $name, $otp);
 
             return $error === null
                 ? ['status' => 'success', 'error' => null]
@@ -47,6 +50,7 @@ class GnatSmsService
         } catch (\Throwable $e) {
             Log::warning('GNAT SMS login OTP send failed', [
                 'mobile' => $normalized,
+                'var1_name' => $name,
                 'message' => $e->getMessage(),
             ]);
 
@@ -339,7 +343,7 @@ class GnatSmsService
      *
      * @param  array<string, mixed>  $payload  e.g. flow_id, mobiles, var1, var2...
      */
-    private function sendLoginOtpViaMsg91(string $normalizedMobile, string $otp): ?string
+    private function sendLoginOtpViaMsg91(string $normalizedMobile, string $memberName, string $otp): ?string
     {
         $authkey = trim((string) config('gnat_sms.authkey', ''));
         if ($authkey === '') {
@@ -348,18 +352,16 @@ class GnatSmsService
             return 'MSG91 authkey missing';
         }
 
+        // otpauthentication is a Flow template: var1 = name, var2 = OTP code
         $flowId = trim((string) config('gnat_sms.otp_flow_id', ''));
         if ($flowId === '') {
             $flowId = trim((string) config('gnat_sms.template_keys.otpauthentication', ''));
         }
         if ($flowId !== '') {
-            return $this->sendLoginOtpViaMsg91Flow($flowId, $normalizedMobile, $otp);
+            return $this->sendLoginOtpViaMsg91Flow($flowId, $normalizedMobile, $memberName, $otp);
         }
 
         $templateId = trim((string) config('gnat_sms.otp_template_id', ''));
-        if ($templateId === '') {
-            $templateId = trim((string) config('gnat_sms.template_keys.otpauthentication', ''));
-        }
         if ($templateId === '') {
             return 'MSG91 OTP template not configured';
         }
@@ -380,6 +382,12 @@ class GnatSmsService
         if ($sender !== '') {
             $payload['sender'] = $sender;
         }
+
+        Log::info('GNAT SMS login OTP MSG91 OTP API request', [
+            'url' => $url,
+            'payload' => $payload,
+            'note' => 'otpauthentication template uses Flow API (var1=name, var2=otp); set otp_flow_id or template_keys.otpauthentication',
+        ]);
 
         $jsonData = json_encode($payload);
 
@@ -402,6 +410,7 @@ class GnatSmsService
             Log::warning('GNAT SMS MSG91 OTP API error', [
                 'mobile' => $normalizedMobile,
                 'template_id' => $templateId,
+                'request_payload' => $payload,
                 'response' => $result,
             ]);
 
@@ -411,15 +420,23 @@ class GnatSmsService
         Log::info('GNAT SMS login OTP sent via MSG91 OTP API', [
             'mobile' => $normalizedMobile,
             'template_id' => $templateId,
+            'request_payload' => $payload,
             'response' => $result,
         ]);
 
         return null;
     }
 
-    private function sendLoginOtpViaMsg91Flow(string $flowId, string $normalizedMobile, string $otp): ?string
+    private function sendLoginOtpViaMsg91Flow(string $flowId, string $normalizedMobile, string $memberName, string $otp): ?string
     {
-        $payload = $this->buildMsg91Payload($flowId, $normalizedMobile, [$otp]);
+        $payload = $this->buildMsg91Payload($flowId, $normalizedMobile, [$memberName, $otp]);
+
+        Log::info('GNAT SMS login OTP MSG91 Flow request', [
+            'flow_id' => $flowId,
+            'payload' => $payload,
+            'mapping' => ['var1' => 'member_name', 'var2' => 'otp'],
+        ]);
+
         $result = $this->sendTextSms($payload);
 
         if (is_object($result) && isset($result->type) && strtolower((string) $result->type) === 'error') {
@@ -427,7 +444,7 @@ class GnatSmsService
 
             Log::warning('GNAT SMS MSG91 OTP flow error', [
                 'flow_id' => $flowId,
-                'mobile' => $normalizedMobile,
+                'request_payload' => $payload,
                 'response' => $result,
             ]);
 
@@ -436,7 +453,7 @@ class GnatSmsService
 
         Log::info('GNAT SMS login OTP sent via MSG91 Flow', [
             'flow_id' => $flowId,
-            'mobile' => $normalizedMobile,
+            'request_payload' => $payload,
             'response' => $result,
         ]);
 

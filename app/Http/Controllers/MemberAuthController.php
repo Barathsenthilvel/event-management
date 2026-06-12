@@ -261,7 +261,8 @@ class MemberAuthController extends Controller
         $request->session()->put(self::OTP_EXPIRES_SESSION_KEY, time() + (5 * 60));
 
         $user = User::find($userId);
-        $result = app(GnatSmsService::class)->sendLoginOtp($user?->mobile, $otp);
+        $sms = app(GnatSmsService::class);
+        $result = $sms->sendLoginOtp($user?->mobile, $otp, $sms->memberDisplayName($user));
         app(GnatMailService::class)->sendLoginOtp($user, $otp);
 
         if ($result['status'] !== 'success') {
