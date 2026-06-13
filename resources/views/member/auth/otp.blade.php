@@ -86,7 +86,8 @@
             </div>
             <h1 class="text-center text-xl font-bold tracking-tight text-[#351c42] sm:text-2xl">Verify your identity</h1>
             <p class="mx-auto mt-3 max-w-sm text-center text-sm leading-relaxed text-[#351c42]/65">
-                Enter the code sent to <span class="font-semibold text-[#351c42]">{{ $maskedMobile }}</span>
+            Enter the code sent to <span class="font-semibold text-[#351c42]">{{ $maskedMobile }}</span>@if(!empty($maskedEmail)) and <span class="font-semibold text-[#351c42]">{{ $maskedEmail }}</span>@endif
+                <!-- Enter the code sent to <span class="font-semibold text-[#351c42]">{{ $maskedMobile }}</span> -->
             </p>
 
             @if($generatedOtp)

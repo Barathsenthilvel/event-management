@@ -11,31 +11,57 @@ use App\Services\GnatMailService;
 
 class MemberProfileController extends Controller
 {
+    public const MAX_FILE_SIZE_KB = 5120;
+
     private const PENDING_SESSION_KEY = 'member_profile_pending_docs';
 
-    /** @var array<string, array{column: string, rules: list<string>}> */
+    private const DOCUMENT_MIMES = 'pdf,doc,docx,dot,dotx,xls,xlsx,xlt,xltx,ppt,pptx,pot,potx,odt,ods,odp,rtf,txt,csv,jpg,jpeg,png,webp,gif,bmp,tif,tiff,heic,heif';
+
+    private const PHOTO_MIMES = 'jpg,jpeg,png,webp,gif,bmp,heic,heif';
+
+    /** @var array<string, array{column: string, label: string, rules: list<string>}> */
     private const DOCUMENT_FIELDS = [
         'educational_certificate' => [
             'column' => 'educational_certificate_path',
-            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+            'label' => 'Educational certificate',
+            'rules' => ['file', 'max:5120', 'mimes:' . self::DOCUMENT_MIMES],
         ],
         'rnrm_certificate' => [
             'column' => 'rnrm_certificate_path',
-            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+            'label' => 'RNRM certificate copy',
+            'rules' => ['file', 'max:5120', 'mimes:' . self::DOCUMENT_MIMES],
         ],
         'student_id_card' => [
             'column' => 'student_id_card_path',
-            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+            'label' => 'Student ID (card)',
+            'rules' => ['file', 'max:5120', 'mimes:' . self::DOCUMENT_MIMES],
         ],
         'aadhar_card' => [
             'column' => 'aadhar_card_path',
-            'rules' => ['file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,webp'],
+            'label' => 'Aadhar card',
+            'rules' => ['file', 'max:5120', 'mimes:' . self::DOCUMENT_MIMES],
         ],
         'passport_photo' => [
             'column' => 'passport_photo_path',
-            'rules' => ['file', 'max:5120', 'image', 'mimes:jpg,jpeg,png,webp'],
+            'label' => 'Passport size photo',
+            'rules' => ['file', 'max:5120', 'image', 'mimes:' . self::PHOTO_MIMES],
         ],
     ];
+
+    public static function maxFileSizeLabel(): string
+    {
+        return '5 MB';
+    }
+
+    public static function maxFileSizeBytes(): int
+    {
+        return self::MAX_FILE_SIZE_KB * 1024;
+    }
+
+    public static function uploadTooLargeMessage(): string
+    {
+        return 'Each document must not be larger than ' . self::maxFileSizeLabel() . '. Please choose a smaller file or compress it before uploading.';
+    }
 
     public function edit()
     {
@@ -71,6 +97,9 @@ class MemberProfileController extends Controller
             'activeSubscription' => $activeSubscription,
             'pendingProfileDocs' => session(self::PENDING_SESSION_KEY, []),
             'referrers' => $referrers,
+            'profileUploadMaxBytes' => self::maxFileSizeBytes(),
+            'profileUploadMaxLabel' => self::maxFileSizeLabel(),
+            'profileUploadTooLarge' => request()->boolean('upload_error'),
         ]);
     }
 
@@ -224,12 +253,18 @@ class MemberProfileController extends Controller
         $dir = 'member-documents/' . $user->id . '/pending';
 
         foreach (self::DOCUMENT_FIELDS as $field => $spec) {
+            $this->assertDocumentUploadWithinLimit($request, $field, $spec['label']);
+
             if (!$request->hasFile($field)) {
                 continue;
             }
 
             $request->validate([
                 $field => $spec['rules'],
+            ], [
+                "{$field}.max" => self::uploadTooLargeMessage(),
+                "{$field}.mimes" => "{$spec['label']} must be a PDF, Office document, or image file.",
+                "{$field}.image" => "{$spec['label']} must be an image file.",
             ]);
 
             if (!empty($pending[$field])) {
@@ -242,6 +277,33 @@ class MemberProfileController extends Controller
         $request->session()->put($pendingKey, $pending);
 
         return $pending;
+    }
+
+    private function assertDocumentUploadWithinLimit(Request $request, string $field, string $label): void
+    {
+        $uploadError = $_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE;
+
+        if ($uploadError === UPLOAD_ERR_NO_FILE) {
+            return;
+        }
+
+        if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+            throw ValidationException::withMessages([
+                $field => self::uploadTooLargeMessage(),
+            ]);
+        }
+
+        if (! $request->hasFile($field)) {
+            return;
+        }
+
+        $file = $request->file($field);
+
+        if (! $file->isValid()) {
+            throw ValidationException::withMessages([
+                $field => "{$label} could not be uploaded. " . self::uploadTooLargeMessage(),
+            ]);
+        }
     }
 
     /**

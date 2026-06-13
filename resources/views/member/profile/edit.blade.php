@@ -122,6 +122,9 @@
         $isApproved = (bool) $user->is_approved;
         $profileLocked = (bool) $user->profile_completed || $isApproved;
         $pendingProfileDocs = $pendingProfileDocs ?? [];
+        $profileUploadMaxBytes = $profileUploadMaxBytes ?? \App\Http\Controllers\MemberProfileController::maxFileSizeBytes();
+        $profileUploadMaxLabel = $profileUploadMaxLabel ?? \App\Http\Controllers\MemberProfileController::maxFileSizeLabel();
+        $documentAccept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.txt,.csv,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.heic,.heif';
         $stateOptions = [
             'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
             'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
@@ -167,7 +170,9 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" @if($profileLocked) data-profile-locked @endif>
+                @include('member.partials.profile-upload-error-modal')
+
+                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" data-upload-max-bytes="{{ $profileUploadMaxBytes }}" data-upload-max-label="{{ $profileUploadMaxLabel }}" @if($profileLocked) data-profile-locked @endif>
                     @csrf
 
                     <div class="space-y-8">
@@ -334,7 +339,8 @@
                                             <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['educational_certificate']) }}">Preview</a>
                                         </p>
                                     @endif
-                                    <input type="file" name="educational_certificate" class="w-full text-sm" @disabled($profileLocked) />
+                                    <input type="file" name="educational_certificate" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
+                                    <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
                                     @error('educational_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4" data-profile-show="registered_nurse">
@@ -348,7 +354,8 @@
                                             <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['rnrm_certificate']) }}">Preview</a>
                                         </p>
                                     @endif
-                                    <input type="file" name="rnrm_certificate" class="w-full text-sm" @disabled($profileLocked) />
+                                    <input type="file" name="rnrm_certificate" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
+                                    <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
                                     @error('rnrm_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4" data-profile-show="student_nurse">
@@ -362,7 +369,8 @@
                                             <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['student_id_card']) }}">Preview</a>
                                         </p>
                                     @endif
-                                    <input type="file" name="student_id_card" class="w-full text-sm" @disabled($profileLocked) />
+                                    <input type="file" name="student_id_card" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
+                                    <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
                                     @error('student_id_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4">
@@ -376,7 +384,8 @@
                                             <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['aadhar_card']) }}">Preview</a>
                                         </p>
                                     @endif
-                                    <input type="file" name="aadhar_card" class="w-full text-sm" @disabled($profileLocked) />
+                                    <input type="file" name="aadhar_card" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
+                                    <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
                                     @error('aadhar_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="ml-upload-zone p-4">
@@ -390,7 +399,8 @@
                                             <a class="ml-1 text-[#965995] underline" target="_blank" href="{{ asset('storage/' . $pendingProfileDocs['passport_photo']) }}">Preview</a>
                                         </p>
                                     @endif
-                                    <input type="file" name="passport_photo" accept="image/*" class="w-full text-sm" @disabled($profileLocked) />
+                                    <input type="file" name="passport_photo" accept="image/*,.heic,.heif" class="w-full text-sm" @disabled($profileLocked) />
+                                    <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">Image files only. Maximum size: {{ $profileUploadMaxLabel }}.</p>
                                     @error('passport_photo')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                             </div>
@@ -506,11 +516,77 @@
                     paintValidation(field, message);
                     if (message) hasError = true;
                 });
+
+                const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
+                const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
+                const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+                for (const input of fileInputs) {
+                    const file = input.files?.[0];
+                    if (!file || !maxBytes) continue;
+                    if (file.size > maxBytes) {
+                        e.preventDefault();
+                        showProfileUploadClientError(
+                            `${input.closest(".ml-upload-zone")?.querySelector(".ml-label")?.textContent?.replace("*", "").trim() || "This file"} is too large. Each document must not be larger than ${maxLabel}.`
+                        );
+                        input.value = "";
+                        input.focus();
+                        return;
+                    }
+                }
+
                 if (hasError) {
                     e.preventDefault();
                     form.querySelector(".is-invalid")?.focus();
                 }
             });
+
+            const bindModal = (root, closeSelector) => {
+                if (!root) return;
+                const close = () => {
+                    root.classList.remove("is-open");
+                    root.setAttribute("aria-hidden", "true");
+                };
+                root.querySelector(closeSelector)?.addEventListener("click", close);
+                root.addEventListener("click", (event) => {
+                    if (event.target === root) close();
+                });
+                document.addEventListener("keydown", (event) => {
+                    if (event.key === "Escape" && root.classList.contains("is-open")) close();
+                });
+                return close;
+            };
+
+            const clientModal = document.getElementById("profile-upload-client-error-modal");
+            const clientMessage = document.getElementById("profile-upload-client-error-message");
+            const showProfileUploadClientError = (message) => {
+                if (!clientModal || !clientMessage) return;
+                clientMessage.textContent = message;
+                clientModal.classList.add("is-open");
+                clientModal.setAttribute("aria-hidden", "false");
+            };
+            window.showProfileUploadClientError = showProfileUploadClientError;
+
+            bindModal(document.getElementById("profile-upload-error-modal"), "[data-close-profile-upload-error-modal]");
+            bindModal(clientModal, "[data-close-profile-upload-client-error-modal]");
+
+            const profileFileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+            profileFileInputs.forEach((input) => {
+                input.addEventListener("change", () => {
+                    const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
+                    const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
+                    const file = input.files?.[0];
+                    if (!file || !maxBytes || file.size <= maxBytes) return;
+                    const label = input.closest(".ml-upload-zone")?.querySelector(".ml-label")?.textContent?.replace("*", "").trim() || "This file";
+                    showProfileUploadClientError(`${label} is too large. Each document must not be larger than ${maxLabel}.`);
+                    input.value = "";
+                });
+            });
+
+            if (new URLSearchParams(window.location.search).has("upload_error")) {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete("upload_error");
+                window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+            }
         })();
     </script>
 @endpush

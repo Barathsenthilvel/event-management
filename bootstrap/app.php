@@ -64,7 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'The uploaded file is too large. Maximum size is 1 MB.'], 413);
+                return response()->json(['message' => 'The uploaded file is too large.'], 413);
             }
 
             if ($request->is('admin/home-banners') && $request->isMethod('POST')) {
@@ -79,13 +79,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
             }
 
+            if ($request->is('member/profile') && $request->isMethod('POST')) {
+                return redirect()->route('member.profile.edit', ['upload_error' => 1]);
+            }
+
             $referer = $request->headers->get('referer');
 
             if ($referer) {
                 return redirect()->to($referer . (str_contains($referer, '?') ? '&' : '?') . 'upload_error=1');
             }
 
-            return redirect()->route('admin.home-banners.index')->with('error', 'The uploaded file is too large. Maximum size is 1 MB.');
+            return redirect()->route('admin.home-banners.index')->with('error', 'The uploaded file is too large.');
         });
 
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
