@@ -87,34 +87,8 @@
             font-size: 0.75rem;
             cursor: pointer;
         }
-
-        .choices__inner {
-            border-radius: 1rem !important;
-            border: 1px solid rgba(53, 28, 66, 0.1) !important;
-            background: rgba(255, 255, 255, 0.9) !important;
-            min-height: 48px !important;
-            font-size: 0.9375rem !important;
-            color: #351c42 !important;
-            padding: 0.38rem 0.8rem !important;
-        }
-        .choices.is-focused .choices__inner {
-            border-color: rgba(150, 89, 149, 0.55) !important;
-            box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14) !important;
-            background: #fff !important;
-        }
-        .choices[data-type*="select-one"] .choices__input {
-            background-color: transparent !important;
-            margin-bottom: 0 !important;
-            padding: 0.15rem 0 !important;
-        }
-        .choices__list--dropdown .choices__item--selectable {
-            font-size: 0.85rem !important;
-        }
-        .choices__list--dropdown .choices__item--selectable.is-highlighted {
-            background-color: rgba(150, 89, 149, 0.12) !important;
-        }
     </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+@include('member.partials.profile-searchable-select')
 @endpush
 
 @section('content')
@@ -205,12 +179,12 @@
                                 <div>
                                     <label class="ml-label">Gender <span class="text-red-500">*</span></label>
                                     @php($gender = old('gender', $user->gender))
-                                    <select name="gender" required class="ml-inp" @disabled($profileLocked)>
+                                    <x-member.profile-select-field name="gender" :required="true" :disabled="$profileLocked">
                                         <option value="">Select</option>
                                         <option value="Male" @selected($gender === 'Male')>Male</option>
                                         <option value="Female" @selected($gender === 'Female')>Female</option>
                                         <option value="Other" @selected($gender === 'Other')>Other</option>
-                                    </select>
+                                    </x-member.profile-select-field>
                                 </div>
                             </div>
                         </section>
@@ -223,27 +197,27 @@
                                 <div>
                                     <label class="ml-label">Type of profile <span class="text-red-500">*</span></label>
                                     @php($profileType = old('profile_type', $user->profile_type))
-                                    <select name="profile_type" required class="ml-inp" data-profile-type-select @disabled($profileLocked)>
+                                    <x-member.profile-select-field name="profile_type" :required="true" :disabled="$profileLocked" data-profile-type-select>
                                         <option value="">Select</option>
                                         <option value="registered_nurse" @selected($profileType === 'registered_nurse')>Registered Nurse</option>
                                         <option value="student_nurse" @selected($profileType === 'student_nurse')>Student Nurse</option>
                                         <option value="volunteer" @selected($profileType === 'volunteer')>Volunteer</option>
-                                    </select>
+                                    </x-member.profile-select-field>
                                 </div>
                                 <div>
                                     <label class="ml-label">Referred by</label>
                                     @php($refBy = old('referred_by_user_id', $user->referred_by_user_id))
-                                    <select name="referred_by_user_id" class="ml-inp" @disabled($profileLocked)>
+                                    <x-member.profile-select-field name="referred_by_user_id" :disabled="$profileLocked">
                                         <option value="">Select</option>
                                         @foreach(($referrers ?? []) as $r)
                                             <option value="{{ $r->id }}" @selected((string)$refBy === (string)$r->id)>{{ $r->name }}</option>
                                         @endforeach
-                                    </select>
+                                    </x-member.profile-select-field>
                                 </div>
                                 <div>
                                     <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
                                     @php($qualification = old('qualification', $user->qualification))
-                                    <select name="qualification" required class="ml-inp" @disabled($profileLocked)>
+                                    <x-member.profile-select-field name="qualification" :required="true" :disabled="$profileLocked">
                                         <option value="">Select</option>
                                         <option value="Diploma" @selected($qualification === 'Diploma')>Diploma</option>
                                         <option value="B.Sc" @selected($qualification === 'B.Sc')>B.Sc</option>
@@ -252,17 +226,17 @@
                                         <option value="M.Tech" @selected($qualification === 'M.Tech')>M.Tech</option>
                                         <option value="PhD" @selected($qualification === 'PhD')>PhD</option>
                                         <option value="Other" @selected($qualification === 'Other')>Other</option>
-                                    </select>
+                                    </x-member.profile-select-field>
                                 </div>
                                 <div>
                                     <label class="ml-label">Blood group <span class="text-red-500">*</span></label>
                                     @php($blood = old('blood_group', $user->blood_group))
-                                    <select name="blood_group" required class="ml-inp" @disabled($profileLocked)>
+                                    <x-member.profile-select-field name="blood_group" :required="true" :disabled="$profileLocked">
                                         <option value="">Select</option>
                                         @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
                                             <option value="{{ $bg }}" @selected($blood === $bg)>{{ $bg }}</option>
                                         @endforeach
-                                    </select>
+                                    </x-member.profile-select-field>
                                 </div>
                                 <div>
                                     <label class="ml-label">RNRM No <span class="text-red-500" data-profile-required="registered_nurse">*</span></label>
@@ -288,20 +262,18 @@
                                 <div>
                                     <label class="ml-label">State <span class="text-red-500">*</span></label>
                                     @php($selectedState = old('state', $user->state))
-                                    <select name="state" required class="ml-inp" data-validate="required" data-label="State" @disabled($profileLocked)>
-                                        <option value="">Select state</option>
+                                    <x-member.profile-select-field name="state" :required="true" :disabled="$profileLocked" data-validate="required" data-label="State">
+                                        <option value="">Select</option>
                                         @foreach($stateOptions as $state)
                                             <option value="{{ $state }}" @selected($selectedState === $state)>{{ $state }}</option>
                                         @endforeach
-                                    </select>
+                                    </x-member.profile-select-field>
                                     <p class="ml-help" data-error-for="state"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Country <span class="text-red-500">*</span></label>
                                     <input type="hidden" name="country" value="India" />
-                                    <select class="ml-inp" disabled>
-                                        <option value="India" selected>India</option>
-                                    </select>
+                                    <input value="India" disabled class="ml-inp bg-slate-100 text-slate-500" />
                                 </div>
                                 <div>
                                     <label class="ml-label">Pin code <span class="text-red-500">*</span></label>
@@ -310,7 +282,16 @@
                                 </div>
                                 <div>
                                     <label class="ml-label">Council state <span class="text-red-500">*</span></label>
-                                    <input name="council_state" value="{{ old('council_state', $user->council_state) }}" required class="ml-inp" data-validate="required|min:2" data-label="Council state" @disabled($profileLocked) />
+                                    @php($councilState = old('council_state', $user->council_state))
+                                    <x-member.profile-select-field name="council_state" :required="true" :disabled="$profileLocked" data-validate="required" data-label="Council state">
+                                        <option value="">Select</option>
+                                        @if($councilState && !in_array($councilState, $stateOptions, true))
+                                            <option value="{{ $councilState }}" selected>{{ $councilState }}</option>
+                                        @endif
+                                        @foreach($stateOptions as $state)
+                                            <option value="{{ $state }}" @selected($councilState === $state)>{{ $state }}</option>
+                                        @endforeach
+                                    </x-member.profile-select-field>
                                     <p class="ml-help" data-error-for="council_state"></p>
                                 </div>
                                 <div class="md:col-span-2 xl:col-span-3">
@@ -428,19 +409,63 @@
             if (!form) return;
             const isProfileLocked = form.hasAttribute("data-profile-locked");
 
-            // Make all editable profile dropdowns searchable.
-            form.querySelectorAll("select.ml-inp:not([disabled])").forEach((selectEl) => {
+            // Searchable dropdowns for all profile selects.
+            const resolveChoicesRoot = (selectEl, instance) => {
+                const outer = instance?.containerOuter;
+                if (outer?.element instanceof Element) {
+                    return outer.element;
+                }
+                if (outer instanceof Element) {
+                    return outer;
+                }
+                return selectEl.closest(".choices");
+            };
+
+            const wrapSelectSearchInput = (choicesRoot) => {
+                const rootEl = choicesRoot instanceof Element
+                    ? choicesRoot
+                    : choicesRoot?.element instanceof Element
+                        ? choicesRoot.element
+                        : null;
+                if (!rootEl) return;
+                const dropdown = rootEl.querySelector(".choices__list--dropdown");
+                if (!dropdown) return;
+                const searchInput = dropdown.querySelector(":scope > .choices__input, :scope > .choices__input--cloned");
+                if (!searchInput || searchInput.closest(".mp-select-search")) return;
+                const wrap = document.createElement("div");
+                wrap.className = "mp-select-search";
+                dropdown.insertBefore(wrap, searchInput);
+                wrap.appendChild(searchInput);
+            };
+
+            const getChoicesRoot = (selectEl) => selectEl.closest(".choices");
+
+            const syncChoicesValidation = (field, hasError) => {
+                const choicesRoot = getChoicesRoot(field);
+                if (choicesRoot) {
+                    choicesRoot.classList.toggle("mp-is-invalid", hasError);
+                }
+            };
+
+            form.querySelectorAll("select.mp-searchable-select").forEach((selectEl) => {
                 if (selectEl.dataset.searchableInit === "1") return;
                 if ((selectEl.options?.length || 0) <= 1) return;
                 selectEl.dataset.searchableInit = "1";
-                new Choices(selectEl, {
+                const instance = new Choices(selectEl, {
                     searchEnabled: true,
-                    searchPlaceholderValue: "Search...",
+                    searchFloor: 0,
+                    searchPlaceholderValue: "Search options…",
+                    searchResultLimit: 50,
                     shouldSort: false,
                     itemSelectText: "",
                     noResultsText: "No matching options",
                     noChoicesText: "No options",
+                    position: "auto",
+                    allowHTML: false,
                 });
+                const choicesRoot = resolveChoicesRoot(selectEl, instance);
+                wrapSelectSearchInput(choicesRoot);
+                selectEl.addEventListener("showDropdown", () => wrapSelectSearchInput(resolveChoicesRoot(selectEl, instance)));
             });
 
             const typeSelect = form.querySelector("[data-profile-type-select]");
@@ -492,8 +517,10 @@
 
             const paintValidation = (field, message) => {
                 const errorEl = getErrorEl(field.name);
-                field.classList.toggle("is-invalid", Boolean(message));
-                field.setAttribute("aria-invalid", message ? "true" : "false");
+                const hasError = Boolean(message);
+                field.classList.toggle("is-invalid", hasError);
+                field.setAttribute("aria-invalid", hasError ? "true" : "false");
+                syncChoicesValidation(field, hasError);
                 if (errorEl) errorEl.textContent = message;
             };
 

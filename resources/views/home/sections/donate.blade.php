@@ -188,13 +188,22 @@
                             <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42] font-bold text-base leading-none" aria-hidden="true">₹</span>
                             <input type="number" min="1" step="1" value="{{ $donate['default_amount'] }}" data-donate-input class="w-full min-w-0 border-0 bg-transparent text-[#351c42] text-lg font-bold outline-none focus:ring-0" />
                         </label>
-                        <button type="button" data-donate-submit class="click-btn btn-style506 shrink-0">
-                            <span class="click-btn__icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" fill="none" aria-hidden="true">
-                                    <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+                        <button type="button" data-donate-submit data-loading-text="Please wait…" class="click-btn btn-style506 shrink-0">
+                            <span class="gnat-submit-idle inline-flex w-full items-center justify-center">
+                                <span class="click-btn__icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" fill="none" aria-hidden="true">
+                                        <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <span class="click-btn__label">Donate Now</span>
                             </span>
-                            <span class="click-btn__label">Donate Now</span>
+                            <span class="gnat-submit-loading hidden w-full items-center justify-center gap-2">
+                                <svg class="gnat-btn-spinner h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Please wait…</span>
+                            </span>
                         </button>
                     </div>
                 </div>

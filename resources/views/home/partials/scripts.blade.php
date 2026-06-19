@@ -700,25 +700,25 @@
 
         const donateSuccessModal = document.getElementById("donate-payment-success-modal");
         const donateErrorModal = document.getElementById("donate-payment-error-modal");
+        const donateVerifyingModal = document.getElementById("donate-payment-verifying-modal");
+
+        function setDonatePaymentVerifying(open) {
+            if (!donateVerifyingModal) return;
+            donateVerifyingModal.classList.toggle("hidden", !open);
+            donateVerifyingModal.classList.toggle("flex", open);
+            donateVerifyingModal.setAttribute("aria-hidden", open ? "false" : "true");
+            syncDonateBodyScrollLock();
+        }
 
         function openDonatePaymentSuccess(payload) {
             if (!donateSuccessModal) return;
+            setDonatePaymentVerifying(false);
             const msgEl = document.getElementById("donate-payment-success-message");
-            const amtEl = document.getElementById("donate-payment-success-amount");
-            const payEl = document.getElementById("donate-payment-success-payment-id");
-            if (msgEl) msgEl.textContent = payload?.message || "Thank you for supporting GNAT Association!";
-            if (amtEl) amtEl.textContent = formatDonateInr(payload?.amount);
-            if (payEl) {
-                const pid = payload?.razorpay_payment_id;
-                if (pid) {
-                    payEl.textContent = "Payment ID: " + pid;
-                    payEl.classList.remove("hidden");
-                } else {
-                    payEl.textContent = "";
-                    payEl.classList.add("hidden");
-                }
+            if (msgEl) {
+                msgEl.textContent = payload?.message || "Thank you for supporting GNAT Association!";
             }
             donateSuccessModal.classList.remove("hidden");
+            donateSuccessModal.classList.add("flex");
             donateSuccessModal.setAttribute("aria-hidden", "false");
             syncDonateBodyScrollLock();
         }
@@ -726,12 +726,14 @@
         function closeDonatePaymentSuccess() {
             if (!donateSuccessModal) return;
             donateSuccessModal.classList.add("hidden");
+            donateSuccessModal.classList.remove("flex");
             donateSuccessModal.setAttribute("aria-hidden", "true");
             syncDonateBodyScrollLock();
         }
 
         function openDonatePaymentError(title, message, detail) {
             if (!donateErrorModal) return;
+            setDonatePaymentVerifying(false);
             const t = document.getElementById("donate-payment-error-title");
             const m = document.getElementById("donate-payment-error-message");
             const d = document.getElementById("donate-payment-error-detail");
@@ -742,6 +744,7 @@
                 d.classList.toggle("hidden", !detail);
             }
             donateErrorModal.classList.remove("hidden");
+            donateErrorModal.classList.add("flex");
             donateErrorModal.setAttribute("aria-hidden", "false");
             syncDonateBodyScrollLock();
         }
@@ -749,6 +752,7 @@
         function closeDonatePaymentError() {
             if (!donateErrorModal) return;
             donateErrorModal.classList.add("hidden");
+            donateErrorModal.classList.remove("flex");
             donateErrorModal.setAttribute("aria-hidden", "true");
             syncDonateBodyScrollLock();
         }
@@ -765,6 +769,7 @@
         function syncDonateBodyScrollLock() {
             const anyOpen =
                 (donateModal && !donateModal.classList.contains("hidden")) ||
+                (donateVerifyingModal && !donateVerifyingModal.classList.contains("hidden")) ||
                 (donateSuccessModal && !donateSuccessModal.classList.contains("hidden")) ||
                 (donateErrorModal && !donateErrorModal.classList.contains("hidden"));
             document.body.style.overflow = anyOpen ? "hidden" : "";
@@ -848,6 +853,29 @@
             };
         }
 
+        function resetAllDonateSubmitButtons() {
+            document.querySelectorAll("[data-donate-submit]").forEach((btn) => {
+                if (window.gnatSubmitLoading) {
+                    window.gnatSubmitLoading.reset(btn);
+                } else {
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        function setDonateSubmitLoading(btn, loading) {
+            if (!btn) return;
+            if (window.gnatSubmitLoading) {
+                if (loading) {
+                    window.gnatSubmitLoading.activate(btn, { label: "Please wait…" });
+                } else {
+                    window.gnatSubmitLoading.reset(btn);
+                }
+                return;
+            }
+            btn.disabled = !!loading;
+        }
+
         async function startDonationCheckout(amountInr) {
             if (typeof window.Razorpay === "undefined") {
                 openDonatePaymentError(
@@ -908,6 +936,9 @@
                     prefill: razorpayPrefillForPayload(orderPayload),
                     handler: async function (response) {
                         razorpayOutcome = "processing";
+                        resetAllDonateSubmitButtons();
+                        closeDonateModal();
+                        setDonatePaymentVerifying(true);
                         try {
                             const verifyRes = await fetch(DONATION_VERIFY_URL, {
                                 method: "POST",
@@ -935,7 +966,6 @@
                                 return;
                             }
                             razorpayOutcome = "success";
-                            closeDonateModal();
                             openDonatePaymentSuccess(payload);
                         } catch (err) {
                             console.error(err);
@@ -953,6 +983,7 @@
                             if (razorpayOutcome === "success" || razorpayOutcome === "processing" || razorpayOutcome === "failed") {
                                 return;
                             }
+                            setDonatePaymentVerifying(false);
                             openDonatePaymentError(
                                 "Payment not completed",
                                 "The payment window was closed before finishing.",
@@ -965,6 +996,9 @@
                 const rzp = new window.Razorpay(options);
                 rzp.on("payment.failed", function (resp) {
                     razorpayOutcome = "failed";
+                    resetAllDonateSubmitButtons();
+                    closeDonateModal();
+                    setDonatePaymentVerifying(false);
                     const err = resp?.error || {};
                     const desc = err.description || err.reason || "The payment was declined or failed.";
                     const code = err.code ? "Code: " + err.code : "";
@@ -972,8 +1006,10 @@
                     openDonatePaymentError("Payment failed", desc, [code, step].filter(Boolean).join("\n"));
                 });
                 rzp.open();
+                resetAllDonateSubmitButtons();
             } catch (e) {
                 console.error(e);
+                resetAllDonateSubmitButtons();
                 openDonatePaymentError(
                     "Unable to open payment",
                     "Please check your connection and try again.",
@@ -1048,11 +1084,11 @@
                     }
                     return;
                 }
-                submitBtn.disabled = true;
+                setDonateSubmitLoading(submitBtn, true);
                 try {
                     await startDonationCheckout(n);
                 } finally {
-                    submitBtn.disabled = false;
+                    resetAllDonateSubmitButtons();
                 }
             });
 
@@ -1105,6 +1141,9 @@
 
         document.addEventListener("keydown", (e) => {
             if (e.key !== "Escape") return;
+            if (donateVerifyingModal && !donateVerifyingModal.classList.contains("hidden")) {
+                return;
+            }
             if (donateSuccessModal && !donateSuccessModal.classList.contains("hidden")) {
                 closeDonatePaymentSuccess();
                 return;
