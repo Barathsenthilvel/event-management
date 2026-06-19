@@ -103,7 +103,7 @@
                     @enderror
                 </div>
 
-                <button type="submit" class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-slate-200 hover:shadow-indigo-200 transform active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                <button type="submit" data-loading-text="Signing in…" class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-slate-200 hover:shadow-indigo-200 transform active:scale-[0.98] transition-all flex items-center justify-center gap-3">
                     Continue to Dashboard
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </button>
@@ -114,6 +114,7 @@
             </div>
         </div>
     </div>
+    @include('partials.submit-button-loading')
 </body>
 </html>
 

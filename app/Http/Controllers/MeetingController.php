@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\GnatMailService;
 use App\Jobs\SendGnatBulkNotificationChunkJob;
 use App\Models\GnatNotificationBatch;
 use App\Models\Meeting;
@@ -119,7 +120,13 @@ class MeetingController extends Controller
     {
         $meeting->update(['status' => 'cancelled', 'is_active' => false]);
 
-        return redirect()->route('admin.meetings.index')->with('success', 'Meeting cancelled.');
+        try {
+            app(GnatMailService::class)->sendMeetingCancelled($meeting->fresh());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('admin.meetings.index')->with('success', 'Meeting cancelled and members notified.');
     }
 
     public function sendReminder(Request $request, Meeting $meeting)

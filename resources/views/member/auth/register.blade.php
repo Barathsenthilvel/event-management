@@ -134,6 +134,7 @@
             });
         });
     </script>
+    @include('partials.submit-button-loading')
 </body>
 </html>
 

@@ -67,6 +67,8 @@ class GnatMailService
         'm27_support_confirmation' => 'GNAT Support Request Confirmation',
         'm28_event_invite_reminder' => 'GNAT Event Reminder',
         'm29_meeting_invite_reminder' => 'GNAT Meeting Reminder',
+        'm30_meeting_cancelled' => 'GNAT Meeting Cancelled',
+        'm31_job_application_status' => 'GNAT Job Application Status Update',
     ];
 
     /** @var array<string, string> */
@@ -583,6 +585,33 @@ class GnatMailService
         }
     }
 
+    public function sendMeetingCancelled(Meeting $meeting): void
+    {
+        $meeting->loadMissing('invites.user');
+        $parts = $this->meetingScheduleParts($meeting);
+
+        foreach ($meeting->invites as $invite) {
+            $user = $invite->user;
+            if (! $user) {
+                continue;
+            }
+
+            $name = $this->memberDisplayName($user);
+
+            if ($user->email) {
+                $this->sendMember($user->email, 'm30_meeting_cancelled', [
+                    'memberName' => $name,
+                    'meetingDate' => $parts['date'],
+                    'heroHeadline' => 'Meeting Cancelled',
+                    'heroSubtext' => 'The meeting you were invited to has been cancelled.',
+                    'showPortalCta' => true,
+                ]);
+            }
+
+            $this->sms()->meetingCancelled($user->mobile, $name, $parts['date']);
+        }
+    }
+
     public function sendMeetingMemberResponse(User $user, Meeting $meeting, bool $attending): void
     {
         $parts = $this->meetingScheduleParts($meeting);
@@ -974,21 +1003,40 @@ class GnatMailService
         $name = $this->memberDisplayName($user);
         $status = (string) $application->application_status;
 
+        if ($status === 'pending') {
+            return;
+        }
+
         if ($status === 'selected') {
             $this->sendMember($user->email, 'm25_job_application_selected', [
                 'memberName' => $name,
-                'heroHeadline' => 'GNAT Job Communication Update',
-                'heroSubtext' => 'Your application status is now selected.',
+                'heroHeadline' => 'Application Selected',
+                'heroSubtext' => 'Your job application status is now selected.',
                 'showPortalCta' => true,
             ]);
-            $this->sms()->jobApplicationCommunication($user->mobile, $name);
+            $this->sms()->needJobRequestReviewed($user->mobile, $name);
 
             return;
         }
 
-        if (in_array($status, ['not_selected', 'joined', 'not_joined'], true)) {
-            $this->sms()->jobApplicationPortalStatusUpdated($user->mobile, $name);
+        if (! in_array($status, ['not_selected', 'joined', 'not_joined'], true)) {
+            return;
         }
+
+        $statusLabels = [
+            'not_selected' => 'Not Selected',
+            'joined' => 'Joined',
+            'not_joined' => 'Not Joined',
+        ];
+
+        $this->sendMember($user->email, 'm31_job_application_status', [
+            'memberName' => $name,
+            'applicationStatusLabel' => $statusLabels[$status] ?? ucfirst(str_replace('_', ' ', $status)),
+            'heroHeadline' => 'Application Status Updated',
+            'heroSubtext' => 'Your job application status has been updated.',
+            'showPortalCta' => true,
+        ]);
+        $this->sms()->jobApplicationPortalStatusUpdated($user->mobile, $name);
     }
 
     public function sendNeedJobRequestStatus(MemberJobRequest $row): void
@@ -1003,7 +1051,7 @@ class GnatMailService
                 'heroSubtext' => 'Your request has been reviewed.',
                 'showPortalCta' => true,
             ]);
-            $this->sms()->needJobRequestReviewed($row->mobile, $name);
+            $this->sms()->jobApplicationPortalStatusUpdated($row->mobile, $name);
         } elseif ($row->status === 'contacted') {
             $this->sendMember($email, 'm24_job_request_contact', [
                 'memberName' => $name,

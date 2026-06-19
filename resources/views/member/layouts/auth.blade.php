@@ -234,6 +234,7 @@
             });
         })();
     </script>
+    @include('partials.submit-button-loading')
     @stack('scripts')
 </body>
 </html>

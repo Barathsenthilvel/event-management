@@ -356,7 +356,7 @@ class AdminJobController extends Controller
             app(GnatMailService::class)->sendJobApplicationStatusToMember($application->user, $application);
         }
 
-        return back()->with('success', 'Application status updated and mail trigger marked.');
+        return back()->with('success', 'Application status updated. Member notified by email and SMS where applicable.');
     }
 
     public function needJobRequests(Request $request)

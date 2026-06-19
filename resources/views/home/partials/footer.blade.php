@@ -34,7 +34,7 @@
                             <circle cx="12" cy="10" r="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    <span>No. 36/76, Thiruveethi Amman Kovil 2nd Street,<br />Aminjikarai, Chennai&nbsp;600029</span>
+                    <span>{!! nl2br(e($contact['address'])) !!}</span>
                 </li>
                 <li class="flex gap-3">
                     <span class="mt-0.5 shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#fddc6a]/15 text-[#fddc6a]">

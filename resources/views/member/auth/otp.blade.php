@@ -118,12 +118,12 @@
                 @enderror
 
                 <div class="mt-8 text-center">
-                    <button type="submit" form="resend-form" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]">Resend code</button>
+                    <button type="submit" form="resend-form" data-loading-text="Resending…" class="text-sm font-semibold text-[#965995] transition hover:text-[#351c42]">Resend code</button>
                 </div>
 
                 <div class="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center sm:gap-4">
                     <a href="{{ route('member.login') }}" class="ml-btn-secondary w-full justify-center sm:w-auto">Cancel</a>
-                    <button type="submit" class="ml-btn-primary w-full min-w-[10rem] justify-center sm:w-auto">Verify</button>
+                    <button type="submit" data-loading-text="Verifying…" class="ml-btn-primary w-full min-w-[10rem] justify-center sm:w-auto">Verify</button>
                 </div>
             </form>
 
@@ -175,5 +175,6 @@
             otpInputs[0]?.focus();
         })();
     </script>
+    @include('partials.submit-button-loading')
 </body>
 </html>

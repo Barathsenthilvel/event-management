@@ -49,7 +49,7 @@ return [
         'nominationsubmitted' => env('GNAT_SMS_TEMPLATE_NOMINATIONSUBMITTED', '6a2651b5a61ad9670d0f0ff3'),
         'pollinglive' => env('GNAT_SMS_TEMPLATE_POLLINGLIVE', '6a265230842a20065a03f4d3'),
         'membershipcancellation' => env('GNAT_SMS_TEMPLATE_MEMBERSHIPCANCELLATION', '6a2652cb2f4c5df346069c52'),
-        'meetingdeclined' => env('GNAT_SMS_TEMPLATE_MEETINGDECLINED', '6a265303c53813614905a602'),
+        'meetingdeclined' => env('GNAT_SMS_TEMPLATE_MEETINGDECLINED', '6a265303c53813614905a602'), // member declined / non-attendance
         'jobstatusupdate' => env('GNAT_SMS_TEMPLATE_JOBSTATUSUPDATE', '6a2654c6c919153c0b0f4543'),
         'jobsubmitted' => env('GNAT_SMS_TEMPLATE_JOBSUBMITTED', '6a2654f0e8517be9bb037865'),
         'eventattended' => env('GNAT_SMS_TEMPLATE_EVENTATTENDED', '6a265576b9c624f7f60b2cd9'),
@@ -58,9 +58,9 @@ return [
         'pollingsubmission' => env('GNAT_SMS_TEMPLATE_POLLINGSUBMISSION', '6a265673f12903530a09aa2a'),
         'profiledeclined' => env('GNAT_SMS_TEMPLATE_PROFILEDECLINED', '6a2656ac4f0828d7b70ade62'),
         'meetingconfirmation' => env('GNAT_SMS_TEMPLATE_MEETINGCONFIRMATION', '6a265703c4a8d27e6c002922'),
-        'jobstatusreviewed' => env('GNAT_SMS_TEMPLATE_JOBSTATUSREVIEWED', '6a2657a3784b5b116708b622'),
+        'jobstatusreviewed' => env('GNAT_SMS_TEMPLATE_JOBSTATUSREVIEWED', '6a2657a3784b5b116708b622'), // manage job application: selected only
         'eventalert' => env('GNAT_SMS_TEMPLATE_EVENTALERT', '6a265ab557a23f90af07fce2'),
-        'meetingcancelled' => env('GNAT_SMS_TEMPLATE_MEETINGCANCELLED', '6a265b0f011e7cfe0b0d8ca2'),
+        'meetingcancelled' => env('GNAT_SMS_TEMPLATE_MEETINGCANCELLED', '6a265b0f011e7cfe0b0d8ca2'), // meeting cancellation SMS
         'eventreminder' => env('GNAT_SMS_TEMPLATE_EVENTREMINDER', '6a265b51a07d63a90e0a7d22'),
         'nominationreminder' => env('GNAT_SMS_TEMPLATE_NOMINATIONREMINDER', '6a265ba896320491490147e2'),
         'pollingreminder' => env('GNAT_SMS_TEMPLATE_POLLINGREMINDER', '6a265c144f0828d7b70ade64'),

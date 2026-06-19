@@ -361,7 +361,11 @@
             const action = this.getAttribute("action");
             if (!action) return;
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
-            submitBtn?.setAttribute("disabled", "disabled");
+            if (window.gnatSubmitLoading && submitBtn) {
+                window.gnatSubmitLoading.activate(submitBtn, { label: 'Submitting…' });
+            } else {
+                submitBtn?.setAttribute("disabled", "disabled");
+            }
             try {
                 const fd = new FormData(this);
                 const res = await fetch(action, {
@@ -387,6 +391,9 @@
                     return;
                 }
                 submitBtn?.removeAttribute("disabled");
+                if (window.gnatSubmitLoading && submitBtn) {
+                    window.gnatSubmitLoading.reset(submitBtn);
+                }
                 const errTitle = data.event_interest_error_title || "Event registration unavailable";
                 const errHtml =
                     data.event_interest_error_html ||
@@ -394,6 +401,9 @@
                 showInterestAjaxErrorModal(errTitle, errHtml);
             } catch {
                 submitBtn?.removeAttribute("disabled");
+                if (window.gnatSubmitLoading && submitBtn) {
+                    window.gnatSubmitLoading.reset(submitBtn);
+                }
                 showInterestAjaxErrorModal(
                     "Something went wrong",
                     "<p>Please check your connection and try again.</p>"

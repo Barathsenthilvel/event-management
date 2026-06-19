@@ -1418,7 +1418,16 @@
         }
 
         function setLoading(loading) {
-            if (submitBtn) submitBtn.disabled = !!loading;
+            if (!submitBtn) return;
+            if (window.gnatSubmitLoading) {
+                if (loading) {
+                    window.gnatSubmitLoading.activate(submitBtn, { label: 'Sending…' });
+                } else {
+                    window.gnatSubmitLoading.reset(submitBtn);
+                }
+                return;
+            }
+            submitBtn.disabled = !!loading;
             if (submitLabel) submitLabel.textContent = loading ? "Sending..." : "Send Message";
         }
 
@@ -1875,3 +1884,5 @@
         });
     })();
 </script>
+
+@include('partials.submit-button-loading')

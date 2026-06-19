@@ -27,7 +27,7 @@ return [
 
     'contact' => [
         'email' => 'info@gnatdonation.org',
-        'address' => 'No. 36/76, Thiruveethi Amman Kovil 2nd Street, Aminjikarai, Chennai 600029',
+        'address' => 'No. 36/76, Thiruveethi Amman Kovil 2nd Street, Aminjikarai, Chennai- 600029',
         'phones' => [
             ['tel' => '+918148510006', 'label' => '+91 81485 10006'],
             ['tel' => '+919629319978', 'label' => '+91 96293 19978'],

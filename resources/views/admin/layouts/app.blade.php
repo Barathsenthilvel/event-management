@@ -175,7 +175,17 @@
     confirmPendingDelete() {
         if (!this.pendingDeleteFormId) return;
         const form = document.getElementById(this.pendingDeleteFormId);
-        if (form) form.submit();
+        if (!form) return;
+        const confirmBtn = document.querySelector('[data-admin-delete-confirm]');
+        if (window.gnatSubmitLoading && confirmBtn) {
+            window.gnatSubmitLoading.activate(confirmBtn);
+        }
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            if (window.gnatSubmitLoading) window.gnatSubmitLoading.activateForm(form);
+            form.submit();
+        }
         this.closeDeleteModal();
     }
 }">
@@ -624,7 +634,7 @@
                     class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
                     Cancel
                 </button>
-                <button type="button" @click="confirmPendingDelete()"
+                <button type="button" @click="confirmPendingDelete()" data-admin-delete-confirm data-loading-text="Deleting…"
                     class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200/60 transition-all hover:shadow-xl">
                     Delete
                 </button>
@@ -683,6 +693,7 @@
         })();
     </script>
 
+    @include('partials.submit-button-loading')
     @stack('scripts')
 
 </body>

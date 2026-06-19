@@ -132,6 +132,20 @@
 <p>Warm Regards,<br><strong>GNAT Association</strong></p>
 @break
 
+@case('m30_meeting_cancelled')
+<p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
+<p>The GNAT meeting scheduled on <strong>{{ $meetingDate }}</strong> has been cancelled.</p>
+<p>Please sign in to the GNAT portal for any further updates from the association.</p>
+<p>Warm Regards,<br><strong>GNAT Association</strong></p>
+@break
+
+@case('m31_job_application_status')
+<p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
+<p>Your job application status has been updated to <strong>{{ $applicationStatusLabel }}</strong>.</p>
+<p>Kindly login to the GNAT portal for complete details and any next steps.</p>
+<p>Warm Regards,<br><strong>GNAT Association</strong></p>
+@break
+
 @case('m14_event_interest')
 <p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
 <p>Thank you for showing interest in the GNAT event.</p>
