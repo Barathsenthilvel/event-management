@@ -36,7 +36,7 @@ class GnatMemberNotification extends Mailable
         $defaults = [
             'templateKey' => $this->templateKey,
             'mailTitle' => $this->mailSubject,
-            'logoUrl' => config('gnat_mail.logo_url'),
+            'logoUrl' => config('gnat_mail.logo_url') ?: null,
             'heroHeadline' => null,
             'heroSubtext' => null,
             'showPortalCta' => false,

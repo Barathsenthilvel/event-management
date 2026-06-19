@@ -37,6 +37,7 @@ class GnatMailService
 
     /** @var array<string, string> */
     private const MEMBER_SUBJECTS = [
+        'm00_login_otp' => 'GNAT Association — Verification Code',
         'm01_registration_successful' => 'GNAT Registration Successful – Complete Your Profile',
         'm02_profile_verification_pending' => 'GNAT Profile Submission Under Verification',
         'm03_profile_approved_subscription' => 'GNAT Profile Approved – Membership Subscription Required',
@@ -185,19 +186,14 @@ class GnatMailService
         }
 
         $name = $this->memberDisplayName($user);
-        $email = trim((string) $user->email);
 
-        $this->safeSend(function () use ($email, $name, $otp) {
-            Mail::raw(
-                "Dear {$name},\n\n"
-                ."Your GNAT Association verification code is {$otp}.\n"
-                ."It is valid for 5 minutes. Do not share this code with anyone.\n\n"
-                ."— GNAT Association",
-                function ($message) use ($email) {
-                    $message->to($email)->subject('GNAT Association — Verification Code');
-                }
-            );
-        }, 'login_otp', $email);
+        $this->sendMember($user->email, 'm00_login_otp', [
+            'memberName' => $name,
+            'otpCode' => $otp,
+            'heroHeadline' => 'Verification Code',
+            'heroSubtext' => 'Enter this code to verify your identity and access the GNAT portal.',
+            'showPortalCta' => false,
+        ]);
     }
 
     public function sendRegistrationSuccessful(User $user): void

@@ -17,10 +17,8 @@ return [
         explode(',', (string) env('GNAT_ADMIN_MAIL', ''))
     ))),
 
-    'logo_url' => env(
-        'GNAT_MAIL_LOGO_URL',
-        'https://via.placeholder.com/140x60/fddc6a/311742?text=GNAT+LOGO'
-    ),
+    /** Optional absolute URL override. When empty, emails embed public/images/logo.png. */
+    'logo_url' => env('GNAT_MAIL_LOGO_URL'),
 
     'portal_member_url' => env('GNAT_MEMBER_PORTAL_URL', null),
 

@@ -18,10 +18,21 @@ style="border-radius:24px; overflow:hidden; box-shadow:0 12px 40px rgba(49,23,66
 <tr>
 <td bgcolor="#311742" align="center" style="padding:45px 30px 35px 30px; border-bottom: 5px solid #fddc6a;">
 
-<img src="{{ $logoUrl ?? config('gnat_mail.logo_url') }}"
-alt="GNAT Association"
+@php
+    $configuredLogo = trim((string) ($logoUrl ?? config('gnat_mail.logo_url', '')));
+    $logoPath = public_path(config('homepage.logo.src', 'images/logo.png'));
+    if ($configuredLogo !== '') {
+        $logoSrc = $configuredLogo;
+    } elseif (isset($message) && is_file($logoPath)) {
+        $logoSrc = $message->embed($logoPath);
+    } else {
+        $logoSrc = asset(config('homepage.logo.src', 'images/logo.png'));
+    }
+@endphp
+<img src="{{ $logoSrc }}"
+alt="{{ config('homepage.logo.alt', 'GNAT Association') }}"
 width="140"
-style="display:block; margin-bottom:18px;">
+style="display:block; margin:0 auto 18px auto; max-width:140px; height:auto;">
 
 <h1 style="margin:0; color:#fddc6a; font-size:28px; font-weight:bold; letter-spacing: 1px;">
 GNAT Association
@@ -82,17 +93,23 @@ OPEN GNAT PORTAL
 <tr>
 <td valign="top" style="font-size:13px; line-height:22px;">
 <strong style="color:#fddc6a; font-size:16px;">GNAT Association</strong><br>
-@if(!empty($footerAddress))
-{!! nl2br(e($footerAddress)) !!}<br><br>
-@else
-123 Business Avenue, Chennai<br>
-Tamil Nadu - 600001, India<br><br>
-@endif
 @php
-    $supportEmail = config('homepage.contact.email') ?: config('mail.from.address');
+    $contact = config('homepage.contact', []);
+    $resolvedFooterAddress = $footerAddress ?? ($contact['address'] ?? null);
+    $supportEmail = $contact['email'] ?? config('mail.from.address');
+    $contactPhones = $contact['phones'] ?? [];
 @endphp
-<span style="color:#fddc6a;">E:</span> {{ $supportEmail }}<br>
-<span style="color:#fddc6a;">P:</span> +91 98765 43210
+@if(!empty($resolvedFooterAddress))
+{!! nl2br(e($resolvedFooterAddress)) !!}<br><br>
+@endif
+@if($supportEmail)
+<span style="color:#fddc6a;">E:</span> <a href="mailto:{{ $supportEmail }}" style="color:#ffffff; text-decoration:none;">{{ $supportEmail }}</a><br>
+@endif
+@if(!empty($contactPhones))
+@foreach($contactPhones as $phone)
+<span style="color:#fddc6a;">P:</span> <a href="tel:{{ $phone['tel'] ?? '' }}" style="color:#ffffff; text-decoration:none;">{{ $phone['label'] ?? $phone['tel'] ?? '' }}</a>@if(!$loop->last)<br>@endif
+@endforeach
+@endif
 </td>
 </tr>
 </table>

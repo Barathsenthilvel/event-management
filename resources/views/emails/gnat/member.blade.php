@@ -3,6 +3,22 @@
 @section('content')
 @switch($templateKey)
 
+@case('m00_login_otp')
+<p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
+<p>Please use the verification code below to complete your sign in to the GNAT member portal.</p>
+<table border="0" cellspacing="0" cellpadding="0" align="center" style="margin:28px auto;">
+<tr>
+<td align="center" bgcolor="#f8f5fb" style="border:2px dashed #311742; border-radius:16px; padding:24px 40px;">
+<p style="margin:0 0 8px 0; font-size:12px; font-weight:bold; letter-spacing:2px; text-transform:uppercase; color:#965995;">Your code</p>
+<p style="margin:0; font-size:40px; font-weight:bold; letter-spacing:10px; color:#311742; font-family:'Courier New', Courier, monospace; line-height:1.2;">{{ $otpCode }}</p>
+</td>
+</tr>
+</table>
+<p style="margin:0 0 8px 0; color:#718096; font-size:14px; text-align:center;">This code is valid for <strong>5 minutes</strong>.</p>
+<p style="margin:0; color:#718096; font-size:14px; text-align:center;">Do not share this code with anyone. GNAT will never ask for it by phone or email.</p>
+<p style="margin-top:28px;">Warm Regards,<br><strong>GNAT Association</strong></p>
+@break
+
 @case('m01_registration_successful')
 <p style="margin-top:0;">Dear <strong>{{ $memberName }},</strong></p>
 <p>Welcome to GNAT Association.</p>
