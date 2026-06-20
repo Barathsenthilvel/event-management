@@ -88,6 +88,14 @@
     #member-profile-form .choices__list--single {
         padding: 0;
     }
+    #member-profile-form .choices__list--single .choices__item {
+        color: #351c42;
+        opacity: 1;
+    }
+    #member-profile-form .choices.is-disabled .choices__item {
+        color: rgba(53, 28, 66, 0.65);
+        opacity: 1;
+    }
     #member-profile-form .choices[data-type*="select-one"] .choices__inner .choices__input {
         display: block;
         width: 100%;

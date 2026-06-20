@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Menu;
 use App\Models\RoleMenuPermission;
+use App\Services\AdminSidebarMenuBadgeService;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
@@ -72,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $view->with('sidebarMenus', $sidebarMenus);
+            $view->with('sidebarMenuBadges', app(AdminSidebarMenuBadgeService::class));
         });
     }
 }

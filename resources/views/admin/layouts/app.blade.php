@@ -218,12 +218,6 @@
         <!-- Navigation: dynamic menus from Menu Management + Settings (default only) -->
         @php
             $admin = Auth::guard('admin')->user();
-            $jobApplicationsPendingCount = \App\Models\AdminJobApplication::query()
-                ->where('application_status', 'pending')
-                ->count();
-            $needJobRequestsNewCount = \App\Models\MemberJobRequest::query()
-                ->where('status', 'new')
-                ->count();
         @endphp
         <nav class="flex-1 px-3 space-y-1 overflow-y-auto custom-scroll">
             {{-- Dynamic menus from database (created in Menu Management) --}}
@@ -233,11 +227,7 @@
                         ? route($menu->route_name)
                         : '#';
                     $isActive = $menu->route_name && request()->routeIs(preg_replace('/\.(index|show|create|edit)$/', '.*', $menu->route_name));
-                    $menuIsJobs = ($menu->route_name && str_starts_with((string) $menu->route_name, 'admin.jobs'))
-                        || $menu->children->contains(function ($c) {
-                            return $c->route_name && str_starts_with((string) $c->route_name, 'admin.jobs');
-                        })
-                        || strcasecmp(trim((string) ($menu->title ?? '')), 'jobs') === 0;
+                    $menuBadges = $sidebarMenuBadges->badgesForMenu($menu);
                 @endphp
                 @if($menu->children->isEmpty())
                     <a href="{{ $url }}"
@@ -252,20 +242,7 @@
                             </svg>
                         @endif
                         <span x-show="sidebarOpen" class="min-w-0 flex-1 text-sm font-medium truncate">{{ $menu->title }}</span>
-                        @if($menuIsJobs && $jobApplicationsPendingCount > 0)
-                            <span x-show="sidebarOpen"
-                                class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-indigo-500 text-white text-[10px] font-black"
-                                title="Job applications still on Pending (set status to hide from this count)">
-                                {{ $jobApplicationsPendingCount > 99 ? '99+' : $jobApplicationsPendingCount }}
-                            </span>
-                        @endif
-                        @if($menuIsJobs && $needJobRequestsNewCount > 0)
-                            <span x-show="sidebarOpen"
-                                class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-amber-500 text-white text-[10px] font-black"
-                                title="Need Job requests (New)">
-                                {{ $needJobRequestsNewCount > 99 ? '99+' : $needJobRequestsNewCount }}
-                            </span>
-                        @endif
+                        @include('admin.partials.sidebar-menu-badges', ['badges' => $menuBadges])
                     </a>
                 @else
                     @php
@@ -288,20 +265,7 @@
                                     </svg>
                                 @endif
                                 <span x-show="sidebarOpen" class="min-w-0 flex-1 truncate text-sm font-medium">{{ $menu->title }}</span>
-                                @if($menuIsJobs && $jobApplicationsPendingCount > 0)
-                                    <span x-show="sidebarOpen"
-                                        class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-indigo-500 text-white text-[10px] font-black"
-                                        title="Job applications still on Pending (set status to hide from this count)">
-                                        {{ $jobApplicationsPendingCount > 99 ? '99+' : $jobApplicationsPendingCount }}
-                                    </span>
-                                @endif
-                                @if($menuIsJobs && $needJobRequestsNewCount > 0)
-                                    <span x-show="sidebarOpen"
-                                        class="inline-flex shrink-0 items-center justify-center min-w-6 h-6 px-2 rounded-xl bg-amber-500 text-white text-[10px] font-black"
-                                        title="Need Job requests (New)">
-                                        {{ $needJobRequestsNewCount > 99 ? '99+' : $needJobRequestsNewCount }}
-                                    </span>
-                                @endif
+                                @include('admin.partials.sidebar-menu-badges', ['badges' => $menuBadges])
                             </a>
                             <button type="button" x-show="sidebarOpen" @click.prevent="open = !open" class="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
                                 :aria-expanded="open">
@@ -326,10 +290,12 @@
                                         : '#';
                                     $childActive = $child->route_name && (request()->routeIs($child->route_name) || request()->routeIs(\Illuminate\Support\Str::beforeLast($child->route_name, '.') . '.*'));
                                 @endphp
-                                <a href="{{ $childUrl }}"
-                                    class="block py-2 {{ $childActive ? 'text-indigo-400 font-bold' : 'hover:text-white' }} transition-colors">
-                                    {{ $child->title }}
-                                </a>
+                                @include('admin.partials.sidebar-submenu-link', [
+                                    'href' => $childUrl,
+                                    'title' => $child->title,
+                                    'routeName' => $child->route_name,
+                                    'active' => $childActive,
+                                ])
                             @endforeach
                         </div>
                     </div>
