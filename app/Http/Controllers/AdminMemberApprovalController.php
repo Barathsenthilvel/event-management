@@ -69,11 +69,9 @@ class AdminMemberApprovalController extends Controller
         $user->save();
 
         try {
-            if (! empty($user->email)) {
-                app(GnatMailService::class)->sendProfileRejected($user);
-            }
+            app(GnatMailService::class)->sendProfileRejected($user);
         } catch (Throwable $e) {
-            //
+            // Rejection should succeed even if mail/SMS provider is unavailable.
         }
 
         return redirect()
