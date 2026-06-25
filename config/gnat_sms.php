@@ -73,11 +73,13 @@ return [
         'otpauthentication' => env('GNAT_SMS_TEMPLATE_OTPAUTHENTICATION', '6a2c081b62dba7561a086de2'),
         'renewalalert' => env('GNAT_SMS_TEMPLATE_RENEWALALERT', '6a2c07b3f7291dd3fb0f41a2'),
         'expiryalert' => env('GNAT_SMS_TEMPLATE_EXPIRYALERT', '6a2c0745005cb1fd52082052'),
+        'eventcancel' => env('GNAT_SMS_TEMPLATE_EVENTCANCEL', '6a3a1cbf2661e36fdd08c652'),
+        'jobcommunication' => env('GNAT_SMS_TEMPLATE_JOBCOMMUNICATION', '6a3a1c7edefa774ada0c0723'),
+
+        'registrationcomplete' => env('GNAT_SMS_TEMPLATE_REGISTRATIONCOMPLETE', '6a265335ef0b08ed9d053312'),
 
         // No MSG91 template provided yet — leave empty
-        'registrationcomplete' => env('GNAT_SMS_TEMPLATE_REGISTRATIONCOMPLETE', ''),
         'profileverified' => env('GNAT_SMS_TEMPLATE_PROFILEVERIFIED', ''),
-        'jobcommunication' => env('GNAT_SMS_TEMPLATE_JOBCOMMUNICATION', ''),
     ],
 
     /**
@@ -118,6 +120,7 @@ return [
         's31_event_reminder' => 'eventreminder',
         's32_nomination_reminder' => 'nominationreminder',
         's33_polling_reminder' => 'pollingreminder',
+        's34_event_cancelled' => 'eventcancel',
     ],
 
 ];

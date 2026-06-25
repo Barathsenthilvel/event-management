@@ -35,6 +35,45 @@ class GnatMailService
         return app(GnatSmsService::class);
     }
 
+    private function whatsapp(): GnatWhatsAppService
+    {
+        return app(GnatWhatsAppService::class);
+    }
+
+    /**
+     * @param  list<string>  $values
+     * @return array{sms: array{status: string, error: string|null}|null, whatsapp: array{status: string, error: string|null}|null}
+     */
+    private function tryScenarioChannels(
+        string $scenarioKey,
+        ?string $mobile,
+        array $values,
+        bool $wantSms,
+        bool $wantWhatsApp,
+    ): array {
+        return [
+            'sms' => $wantSms
+                ? $this->sms()->trySendScenario($scenarioKey, $mobile, $values)
+                : null,
+            'whatsapp' => $wantWhatsApp
+                ? $this->whatsapp()->trySendScenario($scenarioKey, $mobile, $values)
+                : null,
+        ];
+    }
+
+    /**
+     * @param  array{status: string, error: string|null}|null  $result
+     * @return array{status: string, error: string|null}
+     */
+    private function channelStatus(?array $result, string $notRequestedError = 'Not requested'): array
+    {
+        if ($result === null) {
+            return ['status' => 'skipped', 'error' => $notRequestedError];
+        }
+
+        return ['status' => $result['status'], 'error' => $result['error']];
+    }
+
     /** @var array<string, string> */
     private const MEMBER_SUBJECTS = [
         'm00_login_otp' => 'GNAT Association — Verification Code',
@@ -208,6 +247,7 @@ class GnatMailService
             'showPortalCta' => true,
         ]);
         $this->sms()->registrationComplete($user->mobile, $name);
+        $this->whatsapp()->registrationComplete($user->mobile, $name);
     }
 
     public function sendProfileSubmitted(User $user): void
@@ -226,6 +266,7 @@ class GnatMailService
         ]);
 
         $this->sms()->profileSubmitted($user->mobile, $this->memberDisplayName($user));
+        $this->whatsapp()->profileSubmitted($user->mobile, $this->memberDisplayName($user));
     }
 
     public function sendProfileApproved(User $user): void
@@ -238,6 +279,7 @@ class GnatMailService
             'showPortalCta' => true,
         ]);
         $this->sms()->profileVerified($user->mobile, $name);
+        $this->whatsapp()->profileVerified($user->mobile, $name);
     }
 
     public function sendProfileRejected(User $user): void
@@ -249,6 +291,7 @@ class GnatMailService
             'showPortalCta' => true,
         ]);
         $this->sms()->profileRejected($user->mobile, $name);
+        $this->whatsapp()->profileRejected($user->mobile, $name);
     }
 
     public function sendMembershipActivated(User $user, MemberSubscription $subscription, PaymentTransaction $transaction): void
@@ -274,6 +317,7 @@ class GnatMailService
         ]);
 
         $this->sms()->membershipPaymentReceived($user->mobile, $name);
+        $this->whatsapp()->membershipPaymentReceived($user->mobile, $name);
     }
 
     /**
@@ -335,26 +379,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($invite->notify_sms || $invite->notify_whatsapp) {
-                $smsCombined = $this->sms()->trySendScenario('s11_meeting_scheduled', $user->mobile, [$name, $parts['date'], $parts['time']]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's11_meeting_scheduled',
+                $user->mobile,
+                [$name, $parts['date'], $parts['time']],
+                (bool) $invite->notify_sms,
+                (bool) $invite->notify_whatsapp,
+            );
 
-            if ($invite->notify_sms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($invite->notify_whatsapp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -412,26 +446,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($wantSms || $wantWhatsApp) {
-                $smsCombined = $this->sms()->trySendScenario('s29_meeting_reminder', $user->mobile, [$name, $parts['date'], $parts['time']]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's29_meeting_reminder',
+                $user->mobile,
+                [$name, $parts['date'], $parts['time']],
+                $wantSms,
+                $wantWhatsApp,
+            );
 
-            if ($wantSms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($wantWhatsApp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -479,26 +503,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($invite->notify_sms || $invite->notify_whatsapp) {
-                $smsCombined = $this->sms()->trySendScenario('s14_new_event', $user->mobile, [$name]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's14_new_event',
+                $user->mobile,
+                [$name],
+                (bool) $invite->notify_sms,
+                (bool) $invite->notify_whatsapp,
+            );
 
-            if ($invite->notify_sms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($invite->notify_whatsapp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -560,26 +574,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($wantSms || $wantWhatsApp) {
-                $smsCombined = $this->sms()->trySendScenario('s31_event_reminder', $user->mobile, [$name]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's31_event_reminder',
+                $user->mobile,
+                [$name],
+                $wantSms,
+                $wantWhatsApp,
+            );
 
-            if ($wantSms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($wantWhatsApp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -609,6 +613,51 @@ class GnatMailService
             }
 
             $this->sms()->meetingCancelled($user->mobile, $name, $parts['date']);
+            $this->whatsapp()->meetingCancelled($user->mobile, $name, $parts['date']);
+        }
+    }
+
+    public function sendEventCancelled(Event $event): void
+    {
+        $event->loadMissing(['invites.user', 'interests.user']);
+        $notifiedMobiles = [];
+
+        foreach ($event->invites as $invite) {
+            $user = $invite->user;
+            if (! $user) {
+                continue;
+            }
+
+            $mobile = $this->sms()->normalizeMobile($user->mobile);
+            if ($mobile === null || isset($notifiedMobiles[$mobile])) {
+                continue;
+            }
+
+            $notifiedMobiles[$mobile] = true;
+            $this->sms()->eventCancelled($user->mobile, $this->memberDisplayName($user));
+            $this->whatsapp()->eventCancelled($user->mobile, $this->memberDisplayName($user));
+        }
+
+        foreach ($event->interests as $interest) {
+            $rawMobile = null;
+            $name = 'Member';
+
+            if ($interest->user) {
+                $rawMobile = $interest->user->mobile;
+                $name = $this->memberDisplayName($interest->user);
+            } elseif ($interest->phone) {
+                $rawMobile = $interest->phone;
+                $name = trim((string) ($interest->name ?? '')) !== '' ? trim((string) $interest->name) : 'Member';
+            }
+
+            $mobile = $this->sms()->normalizeMobile($rawMobile);
+            if ($mobile === null || isset($notifiedMobiles[$mobile])) {
+                continue;
+            }
+
+            $notifiedMobiles[$mobile] = true;
+            $this->sms()->eventCancelled($rawMobile, $name);
+            $this->whatsapp()->eventCancelled($rawMobile, $name);
         }
     }
 
@@ -632,6 +681,7 @@ class GnatMailService
             ]);
 
             $this->sms()->meetingAttendanceConfirmed($user->mobile, $name, $parts['date']);
+            $this->whatsapp()->meetingAttendanceConfirmed($user->mobile, $name, $parts['date']);
         } else {
             $this->sendMember($user->email, 'm12_meeting_non_attendance', [
                 'memberName' => $name,
@@ -647,6 +697,7 @@ class GnatMailService
             ]);
 
             $this->sms()->meetingNonAttendance($user->mobile, $name, $parts['date']);
+            $this->whatsapp()->meetingNonAttendance($user->mobile, $name, $parts['date']);
         }
     }
 
@@ -684,26 +735,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($alert->notify_sms || $alert->notify_whatsapp) {
-                $smsCombined = $this->sms()->trySendScenario('s17_nomination_live', $user->mobile, [$name]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's17_nomination_live',
+                $user->mobile,
+                [$name],
+                (bool) $alert->notify_sms,
+                (bool) $alert->notify_whatsapp,
+            );
 
-            if ($alert->notify_sms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($alert->notify_whatsapp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -728,6 +769,7 @@ class GnatMailService
         ]);
 
         $this->sms()->nominationSubmitted($user->mobile, $name);
+        $this->whatsapp()->nominationSubmitted($user->mobile, $name);
     }
 
     /**
@@ -759,26 +801,16 @@ class GnatMailService
             $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
         }
 
-        $smsCombined = null;
-        if ($notifySms || $notifyWhatsApp) {
-            $smsCombined = $this->sms()->trySendScenario('s19_polling_live', $user->mobile, [$name]);
-        }
+        $channelResults = $this->tryScenarioChannels(
+            's19_polling_live',
+            $user->mobile,
+            [$name],
+            $notifySms,
+            $notifyWhatsApp,
+        );
 
-        if ($notifySms) {
-            $channels['sms'] = $smsCombined !== null
-                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                : ['status' => 'skipped', 'error' => 'Not requested'];
-        } else {
-            $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-        }
-
-        if ($notifyWhatsApp) {
-            $channels['whatsapp'] = $smsCombined !== null
-                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                : ['status' => 'skipped', 'error' => 'Not requested'];
-        } else {
-            $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-        }
+        $channels['sms'] = $this->channelStatus($channelResults['sms']);
+        $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
         $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
     }
@@ -819,6 +851,7 @@ class GnatMailService
         ]);
 
         $this->sms()->pollingResponseRecorded($user->mobile, $name);
+        $this->whatsapp()->pollingResponseRecorded($user->mobile, $name);
     }
 
     /**
@@ -850,26 +883,16 @@ class GnatMailService
             $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
         }
 
-        $smsCombined = null;
-        if ($notifySms || $notifyWhatsApp) {
-            $smsCombined = $this->sms()->trySendScenario('s20_polling_results', $user->mobile, [$name]);
-        }
+        $channelResults = $this->tryScenarioChannels(
+            's20_polling_results',
+            $user->mobile,
+            [$name],
+            $notifySms,
+            $notifyWhatsApp,
+        );
 
-        if ($notifySms) {
-            $channels['sms'] = $smsCombined !== null
-                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                : ['status' => 'skipped', 'error' => 'Not requested'];
-        } else {
-            $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-        }
-
-        if ($notifyWhatsApp) {
-            $channels['whatsapp'] = $smsCombined !== null
-                ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                : ['status' => 'skipped', 'error' => 'Not requested'];
-        } else {
-            $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-        }
+        $channels['sms'] = $this->channelStatus($channelResults['sms']);
+        $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
         $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
     }
@@ -929,26 +952,16 @@ class GnatMailService
                 $channels['email'] = ['status' => 'skipped', 'error' => 'Not requested'];
             }
 
-            $smsCombined = null;
-            if ($alert->notify_sms || $alert->notify_whatsapp) {
-                $smsCombined = $this->sms()->trySendScenario('s22_job_posting', $user->mobile, [$name]);
-            }
+            $channelResults = $this->tryScenarioChannels(
+                's22_job_posting',
+                $user->mobile,
+                [$name],
+                (bool) $alert->notify_sms,
+                (bool) $alert->notify_whatsapp,
+            );
 
-            if ($alert->notify_sms) {
-                $channels['sms'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['sms'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
-
-            if ($alert->notify_whatsapp) {
-                $channels['whatsapp'] = $smsCombined !== null
-                    ? ['status' => $smsCombined['status'], 'error' => $smsCombined['error']]
-                    : ['status' => 'skipped', 'error' => 'Not requested'];
-            } else {
-                $channels['whatsapp'] = ['status' => 'skipped', 'error' => 'Not requested'];
-            }
+            $channels['sms'] = $this->channelStatus($channelResults['sms']);
+            $channels['whatsapp'] = $this->channelStatus($channelResults['whatsapp']);
 
             $this->recordBroadcastChannels($broadcastBatchId, (int) $user->id, $channels);
         }
@@ -973,6 +986,7 @@ class GnatMailService
         ]);
 
         $this->sms()->jobApplicationSubmitted($user->mobile, $name);
+        $this->whatsapp()->jobApplicationSubmitted($user->mobile, $name);
     }
 
     public function sendNeedJobRequestSubmitted(MemberJobRequest $row): void
@@ -996,6 +1010,7 @@ class GnatMailService
         ]);
 
         $this->sms()->jobApplicationSubmitted($row->mobile, $name);
+        $this->whatsapp()->jobApplicationSubmitted($row->mobile, $name);
     }
 
     public function sendJobApplicationStatusToMember(User $user, AdminJobApplication $application): void
@@ -1015,6 +1030,7 @@ class GnatMailService
                 'showPortalCta' => true,
             ]);
             $this->sms()->needJobRequestReviewed($user->mobile, $name);
+            $this->whatsapp()->needJobRequestReviewed($user->mobile, $name);
 
             return;
         }
@@ -1037,6 +1053,7 @@ class GnatMailService
             'showPortalCta' => true,
         ]);
         $this->sms()->jobApplicationPortalStatusUpdated($user->mobile, $name);
+        $this->whatsapp()->jobApplicationPortalStatusUpdated($user->mobile, $name);
     }
 
     public function sendNeedJobRequestStatus(MemberJobRequest $row): void
@@ -1052,6 +1069,7 @@ class GnatMailService
                 'showPortalCta' => true,
             ]);
             $this->sms()->jobApplicationPortalStatusUpdated($row->mobile, $name);
+            $this->whatsapp()->jobApplicationPortalStatusUpdated($row->mobile, $name);
         } elseif ($row->status === 'contacted') {
             $this->sendMember($email, 'm24_job_request_contact', [
                 'memberName' => $name,
@@ -1060,6 +1078,7 @@ class GnatMailService
                 'showPortalCta' => true,
             ]);
             $this->sms()->jobApplicationCommunication($row->mobile, $name);
+            $this->whatsapp()->jobApplicationCommunication($row->mobile, $name);
         }
     }
 
@@ -1093,6 +1112,7 @@ class GnatMailService
                         'showPortalCta' => true,
                     ]);
                     $this->sms()->newEventUpdate($user->mobile, $display);
+                    $this->whatsapp()->newEventUpdate($user->mobile, $display);
                 }
             });
 
@@ -1120,6 +1140,7 @@ class GnatMailService
         ]);
 
         $this->sms()->eventInterestRecorded($phone, $memberName);
+        $this->whatsapp()->eventInterestRecorded($phone, $memberName);
     }
 
     public function sendEventParticipationConfirmation(User $user, Event $event): void
@@ -1131,6 +1152,7 @@ class GnatMailService
             'showPortalCta' => true,
         ]);
         $this->sms()->eventParticipationRecorded($user->mobile, $name);
+        $this->whatsapp()->eventParticipationRecorded($user->mobile, $name);
     }
 
     /**
@@ -1171,6 +1193,10 @@ class GnatMailService
             $phone,
             $displayName
         );
+        $this->whatsapp()->eventParticipationRecorded(
+            $phone,
+            $displayName
+        );
     }
 
     public function sendDonationReceipt(DonationPayment $payment): void
@@ -1193,6 +1219,7 @@ class GnatMailService
         ]);
 
         $this->sms()->donationReceived($payment->donor_mobile, $name);
+        $this->whatsapp()->donationReceived($payment->donor_mobile, $name);
     }
 
     public function sendSupportConfirmation(string $email, string $memberName, ?string $phone = null): void
@@ -1203,6 +1230,7 @@ class GnatMailService
             'showPortalCta' => false,
         ]);
         $this->sms()->supportRequestReceived($phone, $memberName);
+        $this->whatsapp()->supportRequestReceived($phone, $memberName);
     }
 
     public function sendWebsiteContactAdmin(array $payload): void
@@ -1245,6 +1273,7 @@ class GnatMailService
         ]);
 
         $this->sms()->membershipExpiryReminder($user->mobile, $name, $expiry);
+        $this->whatsapp()->membershipExpiryReminder($user->mobile, $name, $expiry);
     }
 
     /**
@@ -1269,6 +1298,7 @@ class GnatMailService
         ]);
 
         $this->sms()->membershipExpired($user->mobile, $name, $expiry);
+        $this->whatsapp()->membershipExpired($user->mobile, $name, $expiry);
     }
 
     /**
@@ -1292,6 +1322,7 @@ class GnatMailService
         ]);
 
         $this->sms()->accountInactivePendingSubscription($user->mobile, $name);
+        $this->whatsapp()->accountInactivePendingSubscription($user->mobile, $name);
     }
 
     /**
@@ -1390,6 +1421,7 @@ class GnatMailService
         ]);
 
         $this->sms()->membershipCancellation($user->mobile, $name);
+        $this->whatsapp()->membershipCancellation($user->mobile, $name);
     }
 
     /**

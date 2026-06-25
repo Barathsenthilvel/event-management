@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\GnatMailService;
 use App\Services\GnatSmsService;
+use App\Services\GnatWhatsAppService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -262,7 +263,9 @@ class MemberAuthController extends Controller
 
         $user = User::find($userId);
         $sms = app(GnatSmsService::class);
+        $whatsapp = app(GnatWhatsAppService::class);
         $result = $sms->sendLoginOtp($user?->mobile, $otp, $sms->memberDisplayName($user));
+        $whatsappResult = $whatsapp->sendLoginOtp($user?->mobile, $otp, $whatsapp->memberDisplayName($user));
         app(GnatMailService::class)->sendLoginOtp($user, $otp);
 
         if ($result['status'] !== 'success') {
@@ -271,6 +274,15 @@ class MemberAuthController extends Controller
                 'mobile' => $user?->mobile,
                 'status' => $result['status'],
                 'error' => $result['error'],
+            ]);
+        }
+
+        if ($whatsappResult['status'] !== 'success' && $whatsappResult['status'] !== 'skipped') {
+            Log::warning('Member login OTP WhatsApp not sent', [
+                'user_id' => $userId,
+                'mobile' => $user?->mobile,
+                'status' => $whatsappResult['status'],
+                'error' => $whatsappResult['error'],
             ]);
         }
     }

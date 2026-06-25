@@ -138,6 +138,11 @@ class GnatSmsService
         $this->sendScenario('s31_event_reminder', $mobile, [$memberName]);
     }
 
+    public function eventCancelled(?string $mobile, string $memberName): void
+    {
+        $this->sendScenario('s34_event_cancelled', $mobile, [$memberName]);
+    }
+
     public function eventInterestRecorded(?string $mobile, string $memberName): void
     {
         $this->sendScenario('s15_event_interest', $mobile, [$memberName]);

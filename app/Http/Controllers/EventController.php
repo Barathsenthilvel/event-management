@@ -261,7 +261,13 @@ class EventController extends Controller
     {
         $event->update(['status' => 'cancelled', 'is_active' => false]);
 
-        return redirect()->route('admin.events.index')->with('success', 'Event cancelled.');
+        try {
+            app(GnatMailService::class)->sendEventCancelled($event->fresh());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('admin.events.index')->with('success', 'Event cancelled and members notified.');
     }
 
     public function togglePromote(Event $event)
