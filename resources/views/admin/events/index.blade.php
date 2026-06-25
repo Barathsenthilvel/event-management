@@ -226,7 +226,8 @@
         @endif
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4 space-y-4">
+<!-- hidden -->
+    <!-- <div class=" d-none bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-4 space-y-4">
         <div>
             <h2 class="text-sm font-extrabold text-slate-900">Event Interested Lists</h2>
             <p class="text-xs font-bold text-slate-500 mt-1">Filter interested records by member type.</p>
@@ -300,6 +301,6 @@
                 {{ $interestRows->links() }}
             </div>
         @endif
-    </div>
+    </div> -->
 </div>
 @endsection
