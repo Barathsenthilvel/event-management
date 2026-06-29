@@ -29,7 +29,7 @@
         <button type="button" data-md-sidebar-toggle aria-expanded="false" aria-controls="md-sidebar" class="text-xs font-bold text-[#965995] hover:text-[#351c42]">Menu</button>
     </div>
 
-    <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 lg:flex-row lg:gap-8 lg:py-10">
+    <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 pb-8 pt-4 lg:flex-row lg:gap-8 lg:pb-10 lg:pt-5">
         @include('member.partials.member-portal-sidebar', ['showFullMemberMenu' => $showFullMemberMenu, 'canSeeMembership' => $canSeeMembership])
 
         <main class="min-w-0 flex-1 space-y-10 lg:space-y-12" id="@yield('portal_main_id', 'member-portal-main')">

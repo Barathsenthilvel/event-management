@@ -406,7 +406,7 @@
                     @endif
                 </div>
                 <h3 class="mt-4 text-center text-lg font-extrabold text-[#351c42]">
-                    {{ $jobApplyModalType === 'success' ? 'Application submitted successfully.' : 'Application failed' }}
+                    {{ $jobApplyModalType === 'success' ? $jobApplyModalMessage : 'Application failed' }}
                 </h3>
                 @if($jobApplyModalType !== 'success')
                     <p class="mt-2 text-center text-sm font-semibold text-[#351c42]/80">
