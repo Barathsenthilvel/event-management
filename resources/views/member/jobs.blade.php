@@ -405,12 +405,14 @@
                         </svg>
                     @endif
                 </div>
+                <h3 class="mt-4 text-center text-lg font-extrabold text-[#351c42]">
+                    {{ $jobApplyModalType === 'success' ? 'Application submitted successfully.' : 'Application failed' }}
+                </h3>
                 @if($jobApplyModalType !== 'success')
-                    <h3 class="mt-4 text-center text-lg font-extrabold text-[#351c42]">Application failed</h3>
+                    <p class="mt-2 text-center text-sm font-semibold text-[#351c42]/80">
+                        {{ $jobApplyModalMessage }}
+                    </p>
                 @endif
-                <p class="{{ $jobApplyModalType === 'success' ? 'mt-4' : 'mt-2' }} text-center text-sm font-semibold text-[#351c42]/80">
-                    {{ $jobApplyModalMessage }}
-                </p>
                 <div class="mt-5 flex justify-center">
                     <button type="button" id="job-apply-modal-ok" class="rounded-xl bg-[#351c42] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#291331]">
                         OK
