@@ -81,7 +81,7 @@ return [
         // No MSG91 template provided yet — leave empty
         // Fallback to the registration-complete template until a dedicated
         // "profile approved" DLT template is provided (var1 = member name).
-        'profileverified' => env('GNAT_SMS_TEMPLATE_PROFILEVERIFIED', '6a265335ef0b08ed9d053312'),
+        'profileverified' => env('GNAT_SMS_TEMPLATE_PROFILEVERIFIED', ''),
     ],
 
     /**
