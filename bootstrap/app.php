@@ -41,7 +41,22 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+        // Where to send a user whose page/session expired (419) — back to the relevant login.
+        $expiredRedirect = function ($request) {
+            $message = 'Your session expired. Please log in again.';
+
+            if ($request->is('admin', 'admin/*')) {
+                return redirect()->guest(route('admin.login'))->with('error', $message);
+            }
+
+            if ($request->is('member', 'member/*')) {
+                return redirect()->guest(route('member.login'))->with('error', $message);
+            }
+
+            return redirect()->route('member.login')->with('error', $message);
+        };
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) use ($expiredRedirect) {
             if ($e->getStatusCode() !== 419) {
                 return null;
             }
@@ -50,16 +65,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Page expired.'], 419);
             }
 
-            return redirect('/')->with('error', 'Your session expired. Please try again.');
+            return $expiredRedirect($request);
         });
 
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) use ($expiredRedirect) {
             // "Page Expired" (419) due to CSRF/session timeout
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Page expired.'], 419);
             }
 
-            return redirect('/')->with('error', 'Your session expired. Please try again.');
+            return $expiredRedirect($request);
         });
 
         $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
