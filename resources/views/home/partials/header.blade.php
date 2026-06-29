@@ -1,6 +1,6 @@
 <header class="sticky top-0 z-40">
     <div class="site-header-main">
-        <div class="mx-auto max-w-7xl px-4 py-3 lg:py-3.5 flex items-center gap-3 lg:gap-6">
+        <div class="mx-auto max-w-7xl px-4 py-1.5 lg:py-2 flex items-center gap-3 lg:gap-6">
             <button
                 type="button"
                 class="shrink-0 p-2 rounded-lg hover:bg-[#351c42]/5 transition-colors -ml-2"
