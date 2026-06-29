@@ -208,6 +208,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/members', [AdminMemberController::class, 'index'])->name('admin.members.index');
         Route::get('/members/removed', [AdminMemberController::class, 'removed'])->name('admin.members.removed');
         Route::post('/members/{id}/restore', [AdminMemberController::class, 'restore'])->name('admin.members.restore');
+        Route::delete('/members/{id}/force-delete', [AdminMemberController::class, 'forceDelete'])->name('admin.members.force-delete');
         Route::get('/members/{user}/details', [AdminMemberController::class, 'show'])->name('admin.members.show');
         Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation']) ->name('admin.members.designation.update');
         Route::patch('/members/{user}/membership-status', [AdminMemberController::class, 'updateMembershipStatus'])

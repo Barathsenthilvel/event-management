@@ -171,6 +171,17 @@ class AdminMemberController extends Controller
             ->with('success', 'Member restored successfully.');
     }
 
+    public function forceDelete(int $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $name = $user->name;
+        $user->forceDelete();
+
+        return redirect()
+            ->route('admin.members.removed')
+            ->with('success', $name.' has been permanently deleted.');
+    }
+
     public function updateMembershipStatus(Request $request, User $user)
     {
         $validated = $request->validate([
