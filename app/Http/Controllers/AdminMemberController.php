@@ -32,7 +32,7 @@ class AdminMemberController extends Controller
                 'activeSubscription.plan',
                 'paymentTransactions' => fn ($q) => $q->orderByDesc('id')->limit(5),
             ]),
-            'showApprovalActions' => false,
+            'showApprovalActions' => ! $user->is_approved,
             'backUrl' => route('admin.members.index', $query),
             'backLabel' => 'Back to members list',
             'inactiveTypeOptions' => MembershipLifecycleService::inactiveTypeOptions(),

@@ -206,6 +206,7 @@
                 <div
                     id="job-apply-choice-modal"
                     class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/45 p-4"
+                    style="z-index:1001;margin-top:0;"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="job-apply-choice-title"
@@ -392,7 +393,7 @@
         $jobApplyModalType = session('job_apply_success') ? 'success' : (session('job_apply_error') ? 'error' : null);
     @endphp
     @if($jobApplyModalMessage)
-        <div id="job-apply-modal" class="fixed inset-0 z-[140] flex items-center justify-center bg-black/45 p-4">
+        <div id="job-apply-modal" class="fixed inset-0 z-[140] flex items-center justify-center bg-black/45 p-4" style="z-index:1000;margin-top:0;">
             <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
                 <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full {{ $jobApplyModalType === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
                     @if($jobApplyModalType === 'success')
