@@ -129,6 +129,48 @@ class AdminMemberController extends Controller
             ->with('success', 'Member designation updated.');
     }
 
+    public function removed(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $members = User::onlyTrashed()
+            ->with(['designation'])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%")
+                        ->orWhere('mobile', 'like', "%{$q}%");
+                });
+            })
+            ->orderByDesc('deleted_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.members.removed', [
+            'members' => $members,
+            'q' => $q,
+        ]);
+    }
+
+    public function destroy(User $user)
+    {
+        $user->delete();
+
+        return redirect()
+            ->route('admin.members.index')
+            ->with('success', 'Member removed. You can restore them from the Removed Members list.');
+    }
+
+    public function restore(int $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()
+            ->route('admin.members.removed')
+            ->with('success', 'Member restored successfully.');
+    }
+
     public function updateMembershipStatus(Request $request, User $user)
     {
         $validated = $request->validate([

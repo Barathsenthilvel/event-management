@@ -24,6 +24,11 @@
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                 Designations
             </a>
+            <a href="{{ route('admin.members.removed') }}"
+               class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-extrabold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Removed Members
+            </a>
             <form method="GET" class="flex gap-2">
                 <input type="hidden" name="tab" value="{{ $tab }}">
                 <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search name/email/mobile..."
@@ -153,11 +158,23 @@
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 text-right align-middle">
-                                        <a href="{{ route('admin.members.show', ['user' => $m->id, 'tab' => $tab, 'q' => $q]) }}"
-                                            class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:border-[#965995]/40 hover:text-[#351c42]">
-                                            View
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                        </a>
+                                        <div class="inline-flex items-center gap-2">
+                                            <a href="{{ route('admin.members.show', ['user' => $m->id, 'tab' => $tab, 'q' => $q]) }}"
+                                                class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700 shadow-sm transition hover:border-[#965995]/40 hover:text-[#351c42]">
+                                                View
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.members.destroy', $m->id) }}"
+                                                  onsubmit="return confirm('Remove {{ addslashes($m->name) }}? They will be moved to the Removed Members list and can be restored later.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-2.5 py-2 text-rose-600 shadow-sm transition hover:bg-rose-50 hover:border-rose-300"
+                                                    title="Remove member" aria-label="Remove {{ $m->name }}">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr id="member-detail-{{ $m->id }}" class="hidden bg-slate-50/90">

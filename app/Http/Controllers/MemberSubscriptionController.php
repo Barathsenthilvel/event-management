@@ -38,6 +38,11 @@ class MemberSubscriptionController extends Controller
         $filterType = !empty($activeSubscription) ? 'Renewal' : 'New';
         $query->where('subscription_type', $filterType);
 
+        // New registrations are only offered the yearly pass by default.
+        if ($filterType === 'New') {
+            $query->where('payment_type', 'yearly');
+        }
+
         // Block renewal during paid period only; grace period allows renewal.
         if (
             $filterType === 'Renewal'
