@@ -3,17 +3,32 @@
 @section('content')
 <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
     @php
+        // Voters are keyed by "positionId:candidateId" so each candidate button
+        // opens only the voters cast in that specific position. A single member can be
+        // a candidate for multiple positions; without the position in the key, voters
+        // from other positions leak in and look like duplicate entries.
         $candidateVotersMap = [];
         foreach ($positionStats as $block) {
+            $positionId = (int) ($block['position']->id ?? 0);
+            $seenPerBucket = [];
             foreach (($block['voters'] ?? []) as $voter) {
                 $candidateUserId = (int) ($voter['candidate_user_id'] ?? 0);
-                if ($candidateUserId <= 0) {
+                if ($candidateUserId <= 0 || $positionId <= 0) {
                     continue;
                 }
-                if (!isset($candidateVotersMap[$candidateUserId])) {
-                    $candidateVotersMap[$candidateUserId] = [];
+                $bucketKey = $positionId.':'.$candidateUserId;
+                $voterUserId = (int) ($voter['voter_user_id'] ?? 0);
+                $dupeKey = $voterUserId > 0
+                    ? 'u:'.$voterUserId
+                    : 'x:'.md5(($voter['email'] ?? '').'|'.($voter['mobile'] ?? '').'|'.($voter['name'] ?? ''));
+                if (isset($seenPerBucket[$bucketKey][$dupeKey])) {
+                    continue;
                 }
-                $candidateVotersMap[$candidateUserId][] = [
+                $seenPerBucket[$bucketKey][$dupeKey] = true;
+                if (!isset($candidateVotersMap[$bucketKey])) {
+                    $candidateVotersMap[$bucketKey] = [];
+                }
+                $candidateVotersMap[$bucketKey][] = [
                     'name' => $voter['name'] ?? '-',
                     'email' => $voter['email'] ?? '-',
                     'mobile' => $voter['mobile'] ?? '-',
@@ -154,9 +169,11 @@
                                         type="button"
                                         class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#351c42]/20 bg-white/80 text-[#351c42] transition hover:border-[#965995]/50 hover:bg-[#965995]/10"
                                         data-open-candidate-voters
+                                        data-position-id="{{ $block['position']->id }}"
+                                        data-position-name="{{ $block['position']->position }}"
                                         data-candidate-id="{{ $candidate['id'] }}"
                                         data-candidate-name="{{ $candidate['name'] }}"
-                                        aria-label="View voters for {{ $candidate['name'] }}"
+                                        aria-label="View voters for {{ $candidate['name'] }} ({{ $block['position']->position }})"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -313,9 +330,13 @@
             btn.addEventListener('click', () => {
                 const candidateId = btn.getAttribute('data-candidate-id') || '';
                 const candidateName = btn.getAttribute('data-candidate-name') || 'Candidate';
-                rows = Array.isArray(dataMap[candidateId]) ? dataMap[candidateId] : [];
+                const positionId = btn.getAttribute('data-position-id') || '';
+                const positionName = btn.getAttribute('data-position-name') || '';
+                const key = positionId + ':' + candidateId;
+                rows = Array.isArray(dataMap[key]) ? dataMap[key] : [];
                 currentPage = 1;
-                subtitle.textContent = `${candidateName} • ${rows.length} vote(s)`;
+                const suffix = positionName ? ` — ${positionName}` : '';
+                subtitle.textContent = `${candidateName}${suffix} • ${rows.length} vote(s)`;
                 render();
                 setOpen(true);
             });

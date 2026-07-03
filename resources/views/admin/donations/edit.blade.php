@@ -7,7 +7,12 @@
         <p class="text-xs text-slate-500">Donations / <span class="font-semibold text-indigo-600">Edit</span></p>
     </div>
 
-    <div class="flex-1 min-h-0 overflow-y-auto custom-scroll px-6 pb-6">
+    <div class="flex-1 min-h-0 overflow-y-auto custom-scroll px-6 pb-6 space-y-4">
+        @if(session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+                {{ session('success') }}
+            </div>
+        @endif
         @include('admin.donations._form', ['donation' => $donation])
     </div>
 </div>

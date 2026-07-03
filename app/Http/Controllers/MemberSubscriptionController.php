@@ -8,6 +8,7 @@ use App\Models\PaymentTransaction;
 use App\Services\GnatMailService;
 use App\Services\MembershipLifecycleService;
 use App\Support\MembershipPeriod;
+use App\Support\RazorpayPaymentMode;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -257,11 +258,19 @@ class MemberSubscriptionController extends Controller
             ]);
         }
 
+        $mode = RazorpayPaymentMode::fetch($data['razorpay_payment_id']);
+        $payload = $data;
+        if ($mode['method']) {
+            $payload['method'] = $mode['method'];
+            $payload['payment_mode_details'] = $mode['details'];
+        }
+
         $transaction->razorpay_payment_id = $data['razorpay_payment_id'];
         $transaction->razorpay_signature = $data['razorpay_signature'];
+        $transaction->payment_method = $mode['method'];
         $transaction->status = 'successful';
         $transaction->paid_at = now();
-        $transaction->raw_payload = $data;
+        $transaction->raw_payload = $payload;
         $transaction->save();
 
         $user = Auth::user();

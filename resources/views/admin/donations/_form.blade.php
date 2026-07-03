@@ -223,15 +223,29 @@
 
             <div class="border border-slate-200 rounded-2xl px-6 py-5">
                 <p class="text-sm font-semibold text-slate-800 mb-3">Optional Document (PDF or ZIP)</p>
-                @if($isEdit && !empty($donation->document_pdf_path))
-                    <a href="{{ asset('storage/' . $donation->document_pdf_path) }}" target="_blank"
-                       class="inline-flex items-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
-                        View current file
-                    </a>
-                @endif
-                <label class="mt-3 flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
-                    <span class="text-xs font-semibold text-slate-700">Upload PDF/ZIP (single file)</span>
-                    <input type="file" name="document_pdf" class="hidden" accept=".pdf,.zip,application/pdf,application/zip">
+                @php
+                    $documentPath = $isEdit ? ($donation->document_pdf_path ?? null) : null;
+                    $documentUrl = $documentPath ? asset('storage/' . ltrim($documentPath, '/')) : '';
+                    $documentName = $documentPath ? basename($documentPath) : '';
+                @endphp
+                <div id="donation_document_current"
+                     class="{{ $documentUrl ? '' : 'hidden' }} mb-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+                    <p class="text-[10px] font-black uppercase tracking-wide text-emerald-700">Uploaded document</p>
+                    <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+                        <p id="donation_document_current_name" class="text-xs font-bold text-slate-800 break-all">{{ $documentName }}</p>
+                        <a id="donation_document_view_link"
+                           href="{{ $documentUrl ?: '#' }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-extrabold text-emerald-800 hover:bg-emerald-50">
+                            View / Download
+                        </a>
+                    </div>
+                </div>
+                <label class="mt-1 flex flex-col items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl py-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
+                    <span class="text-xs font-semibold text-slate-700">{{ $documentUrl ? 'Replace PDF/ZIP' : 'Upload PDF/ZIP (single file)' }}</span>
+                    <span id="donation_document_selected_name" class="text-[11px] font-bold text-indigo-700 hidden"></span>
+                    <input id="donation_document_input" type="file" name="document_pdf" class="hidden" accept=".pdf,.zip,application/pdf,application/zip">
                 </label>
                 @error('document_pdf')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
@@ -358,5 +372,20 @@
             'donation_banner_view_link',
             'donation_banner_zoom_btn'
         );
+
+        const documentInput = document.getElementById('donation_document_input');
+        const documentSelectedName = document.getElementById('donation_document_selected_name');
+        if (documentInput && documentSelectedName) {
+            documentInput.addEventListener('change', function () {
+                const file = documentInput.files && documentInput.files[0];
+                if (!file) {
+                    documentSelectedName.textContent = '';
+                    documentSelectedName.classList.add('hidden');
+                    return;
+                }
+                documentSelectedName.textContent = 'Selected: ' + file.name;
+                documentSelectedName.classList.remove('hidden');
+            });
+        }
     })();
 </script>

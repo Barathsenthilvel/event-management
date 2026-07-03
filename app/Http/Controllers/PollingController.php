@@ -296,10 +296,15 @@ class PollingController extends Controller
                 'winner_name' => optional($position->winner)->name,
                 'voters' => $votesForPosition
                     ->sortByDesc('voted_at')
+                    // Defensive: even though (polling_id, position_id, voter_user_id) has
+                    // a unique index, guard against any stale duplicate rows so the modal
+                    // never shows the same voter twice for one position.
+                    ->unique(fn ($vote) => (int) ($vote->voter_user_id ?? 0).':'.(int) ($vote->candidate_user_id ?? 0))
                     ->map(function ($vote) use ($position) {
                         $candidateName = optional($position->candidates->firstWhere('id', (int) ($vote->candidate_user_id ?? 0)))->name;
 
                         return [
+                            'voter_user_id' => (int) ($vote->voter_user_id ?? 0),
                             'candidate_user_id' => (int) ($vote->candidate_user_id ?? 0),
                             'candidate_name' => $candidateName ?: '-',
                             'name' => $vote->voter->name ?? '-',

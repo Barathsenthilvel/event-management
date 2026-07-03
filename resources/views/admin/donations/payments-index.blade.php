@@ -84,7 +84,9 @@
                             <p class="font-bold text-slate-500">Amount</p>
                             <p class="text-right font-extrabold text-slate-900">{{ $p->currency }} {{ number_format((float) $p->amount, 2) }}</p>
                             <p class="font-bold text-slate-500">Date</p>
-                            <p class="text-right font-bold text-slate-800">{{ $p->created_at?->format('d M Y h:i A') }}</p>
+                            <p class="text-right font-bold text-slate-800">{{ ($p->paid_at ?? $p->created_at)?->format('d M Y h:i A') }}</p>
+                            <p class="font-bold text-slate-500">Mode of Payment</p>
+                            <p class="text-right font-bold text-slate-800">{{ $p->paymentModeLabel() }}</p>
                         </div>
                     </article>
                 @endforeach
@@ -98,6 +100,7 @@
                             <th class="px-6 py-4">Donor</th>
                             <th class="px-6 py-4">Paid Type</th>
                             <th class="px-6 py-4">Campaign</th>
+                            <th class="px-6 py-4">Mode of Payment</th>
                             <th class="px-6 py-4 text-right">Amount</th>
                             <th class="px-6 py-4 text-center">Status</th>
                         </tr>
@@ -106,8 +109,9 @@
                         @foreach($payments as $p)
                             <tr>
                                 <td class="px-6 py-4">
-                                    <p class="text-xs font-bold text-slate-800">{{ $p->created_at?->format('d M Y') }}</p>
-                                    <p class="text-[10px] font-bold text-slate-400 mt-0.5">{{ $p->created_at?->format('H:i') }}</p>
+                                    @php $paidAt = $p->paid_at ?? $p->created_at; @endphp
+                                    <p class="text-xs font-bold text-slate-800">{{ $paidAt?->format('d M Y') }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 mt-0.5">{{ $paidAt?->format('H:i') }}</p>
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm font-extrabold text-slate-900">
@@ -137,6 +141,9 @@
                                             {{ $p->payment_id }}
                                         </p>
                                     @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-xs font-extrabold text-slate-800">{{ $p->paymentModeLabel() }}</p>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <p class="text-sm font-extrabold text-slate-900">

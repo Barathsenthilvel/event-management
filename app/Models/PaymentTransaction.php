@@ -12,6 +12,7 @@ class PaymentTransaction extends Model
         'razorpay_payment_id',
         'razorpay_order_id',
         'razorpay_signature',
+        'payment_method',
         'amount',
         'status',
         'type',
@@ -26,6 +27,22 @@ class PaymentTransaction extends Model
             'paid_at' => 'datetime',
             'raw_payload' => 'array',
         ];
+    }
+
+    public function paymentModeLabel(): string
+    {
+        $stored = $this->payment_method;
+        if (filled($stored)) {
+            return \App\Support\RazorpayPaymentMode::labelFromStored($stored);
+        }
+
+        $payloadMethod = data_get($this->raw_payload, 'method')
+            ?? data_get($this->raw_payload, 'razorpay_method');
+        if (filled($payloadMethod)) {
+            return \App\Support\RazorpayPaymentMode::labelFromStored((string) $payloadMethod);
+        }
+
+        return '—';
     }
 
     public function user()

@@ -6,6 +6,7 @@ use App\Models\Donation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -50,13 +51,14 @@ class DonationController extends Controller
         $validated = $request->validate($this->rules($request));
         $this->assertCustomPillTagsFilled($validated);
 
-        DB::transaction(function () use ($request, $validated) {
-            Donation::create($this->buildPayload($request, $validated, true));
+        $donation = null;
+        DB::transaction(function () use ($request, $validated, &$donation) {
+            $donation = Donation::create($this->buildPayload($request, $validated, true));
         });
 
         return redirect()
-            ->route('admin.donations.index')
-            ->with('success', 'Donation created successfully.');
+            ->route('admin.donations.edit', $donation)
+            ->with('success', 'Donation created successfully.'.($donation?->document_pdf_path ? ' Document is available below.' : ''));
     }
 
     public function edit(Donation $donation)
@@ -73,8 +75,8 @@ class DonationController extends Controller
         $donation->update($payload);
 
         return redirect()
-            ->route('admin.donations.index')
-            ->with('success', 'Donation updated successfully.');
+            ->route('admin.donations.edit', $donation)
+            ->with('success', 'Donation updated successfully.'.($donation->document_pdf_path ? ' Document is available below.' : ''));
     }
 
     public function destroy(Donation $donation)
@@ -115,7 +117,7 @@ class DonationController extends Controller
             'description' => ['required', 'string', 'max:65535'],
             'cover_image' => $coverRules,
             'banner_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
-            'document_pdf' => ['nullable', 'file', 'mimes:pdf,zip', 'max:20480'],
+            'document_pdf' => ['nullable', 'file', 'extensions:pdf,zip', 'max:20480'],
             'promote_front' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'pill_tag_1_source' => ['required', 'string', $pillIn],
@@ -176,6 +178,9 @@ class DonationController extends Controller
         }
 
         if ($request->hasFile('document_pdf')) {
+            if ($donation?->document_pdf_path) {
+                Storage::disk('public')->delete($donation->document_pdf_path);
+            }
             $payload['document_pdf_path'] = $request->file('document_pdf')->store('donations/documents', 'public');
         } elseif ($donation) {
             $payload['document_pdf_path'] = $donation->document_pdf_path;

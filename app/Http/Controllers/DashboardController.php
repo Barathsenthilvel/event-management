@@ -73,22 +73,44 @@ class DashboardController extends Controller
 
     public function sendRenewalReminder(Request $request, MemberSubscription $subscription): JsonResponse|RedirectResponse
     {
+        $wantsJson = $request->expectsJson()
+            || $request->ajax()
+            || $request->wantsJson()
+            || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
         $subscription->loadMissing('user');
         $user = $subscription->user;
 
         if (! $user) {
-            if ($request->expectsJson()) {
+            if ($wantsJson) {
                 return response()->json(['ok' => false, 'message' => 'Member not found.'], 404);
             }
 
             return back()->with('error', 'Member not found.');
         }
 
-        $this->gnatMail->sendRenewalReminder($user, $subscription);
-        $subscription->forceFill(['renewal_reminder_sent_at' => now()])->save();
+        try {
+            $this->gnatMail->sendRenewalReminder($user, $subscription);
+            // Track last send time only — does not block future manual reminders.
+            $subscription->forceFill(['renewal_reminder_sent_at' => now()])->save();
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($request->expectsJson()) {
-            return response()->json(['ok' => true, 'message' => 'Renewal reminder sent successfully.']);
+            if ($wantsJson) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not send renewal reminder. Please try again.',
+                ], 500);
+            }
+
+            return back()->with('error', 'Could not send renewal reminder. Please try again.');
+        }
+
+        if ($wantsJson) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Renewal reminder sent successfully.',
+            ]);
         }
 
         return back()->with('success', 'Renewal reminder sent to '.$user->name.'.');
@@ -143,18 +165,24 @@ class DashboardController extends Controller
     private function buildDonationChartByYear(array $years): array
     {
         $result = $this->emptyChartYears($years);
+        $minYear = min($years);
 
+        // Use paid_at when present so completed payments land in the month they
+        // actually succeeded (not only when the pending order row was created).
         $rows = DonationPayment::query()
             ->where('status', 'successful')
-            ->whereYear('created_at', '>=', min($years))
-            ->selectRaw('YEAR(created_at) as chart_year, MONTH(created_at) as chart_month, SUM(amount) as total')
-            ->groupBy('chart_year', 'chart_month')
+            ->whereRaw('YEAR(COALESCE(paid_at, updated_at, created_at)) >= ?', [$minYear])
+            ->selectRaw('YEAR(COALESCE(paid_at, updated_at, created_at)) as chart_year')
+            ->selectRaw('MONTH(COALESCE(paid_at, updated_at, created_at)) as chart_month')
+            ->selectRaw('SUM(amount) as total')
+            ->groupByRaw('YEAR(COALESCE(paid_at, updated_at, created_at)), MONTH(COALESCE(paid_at, updated_at, created_at))')
             ->get();
 
         foreach ($rows as $row) {
             $yearKey = (string) $row->chart_year;
-            if (isset($result[$yearKey])) {
-                $result[$yearKey][(int) $row->chart_month - 1] = (float) $row->total;
+            $monthIndex = (int) $row->chart_month - 1;
+            if (isset($result[$yearKey]) && $monthIndex >= 0 && $monthIndex < 12) {
+                $result[$yearKey][$monthIndex] = (float) $row->total;
             }
         }
 
@@ -285,7 +313,7 @@ class DashboardController extends Controller
         $donationPayments = DonationPayment::query()
             ->with(['donation:id,purpose', 'user:id,name'])
             ->where('status', 'successful')
-            ->latest('created_at')
+            ->orderByDesc(DB::raw('COALESCE(paid_at, updated_at, created_at)'))
             ->limit(10)
             ->get()
             ->map(function (DonationPayment $payment) {
@@ -296,7 +324,7 @@ class DashboardController extends Controller
                     'description' => $payment->donation?->purpose ?? 'Voluntary contribution',
                     'amount' => (float) $payment->amount,
                     'currency' => $payment->currency ?: 'INR',
-                    'paid_at' => $payment->created_at,
+                    'paid_at' => $payment->paid_at ?? $payment->updated_at ?? $payment->created_at,
                 ];
             });
 

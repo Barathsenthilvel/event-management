@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DonationPayment;
 use App\Services\GnatMailService;
+use App\Support\RazorpayPaymentMode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
@@ -148,9 +149,19 @@ class DonationPaymentController extends Controller
         $meta = $payment->meta ?? [];
         $meta['verified_at'] = now()->toIso8601String();
 
+        $mode = RazorpayPaymentMode::fetch($data['razorpay_payment_id']);
+        if ($mode['method']) {
+            $meta['razorpay'] = array_filter([
+                'method' => $mode['method'],
+                'details' => $mode['details'],
+            ]);
+        }
+
         $payment->update([
             'status' => 'successful',
             'payment_id' => $data['razorpay_payment_id'],
+            'payment_method' => $mode['method'],
+            'paid_at' => now(),
             'meta' => $meta,
         ]);
 

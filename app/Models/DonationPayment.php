@@ -19,9 +19,11 @@ class DonationPayment extends Model
         'amount',
         'currency',
         'payment_gateway',
+        'payment_method',
         'payment_id',
         'order_id',
         'status',
+        'paid_at',
         'meta',
     ];
 
@@ -29,7 +31,23 @@ class DonationPayment extends Model
     {
         return [
             'meta' => 'array',
+            'paid_at' => 'datetime',
         ];
+    }
+
+    public function paymentModeLabel(): string
+    {
+        $stored = $this->payment_method;
+        if (filled($stored)) {
+            return \App\Support\RazorpayPaymentMode::labelFromStored($stored);
+        }
+
+        $metaMethod = data_get($this->meta, 'razorpay.method');
+        if (filled($metaMethod)) {
+            return \App\Support\RazorpayPaymentMode::labelFromStored((string) $metaMethod);
+        }
+
+        return '—';
     }
 
     public function donation(): BelongsTo

@@ -304,10 +304,12 @@
                             <td class="py-3.5 px-3 text-right">
                                 <button type="button"
                                     data-notify-url="{{ route('admin.dashboard.renewals.notify', $row['subscription']) }}"
+                                    data-idle-label="Send Renewal Reminder"
+                                    data-idle-class="{{ $row['is_expired'] ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200' : 'bg-indigo-600 hover:bg-indigo-700 text-white' }}"
                                     onclick="triggerNotification(this)"
                                     class="cursor-pointer inline-flex items-center gap-1 {{ $row['is_expired'] ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200' : 'bg-indigo-600 hover:bg-indigo-700 text-white' }} font-medium px-3 py-1.5 rounded-lg text-[11px] shadow-sm active:scale-95 transition-all">
                                     <i class="fa-regular fa-paper-plane text-[10px]"></i>
-                                    {{ $row['is_expired'] ? 'Send Urgent Alert' : 'Send Notification' }}
+                                    Send Renewal Reminder
                                 </button>
                             </td>
                         </tr>
@@ -432,42 +434,67 @@
 
     function triggerNotification(buttonElement) {
         const notifyUrl = buttonElement.dataset.notifyUrl;
-        if (!notifyUrl) {
+        if (!notifyUrl || buttonElement.disabled) {
             return;
         }
 
-        const structuralBackup = buttonElement.innerHTML;
+        const idleLabel = buttonElement.dataset.idleLabel || 'Send Renewal Reminder';
+        const idleClass = buttonElement.dataset.idleClass || 'bg-indigo-600 hover:bg-indigo-700 text-white';
+        const statusClasses = [
+            'bg-indigo-600', 'hover:bg-indigo-700', 'text-white',
+            'bg-rose-50', 'hover:bg-rose-600', 'text-rose-700', 'hover:text-white', 'border-rose-200',
+            'bg-emerald-50', 'text-emerald-700', 'border-emerald-200',
+            'bg-rose-100', 'border-rose-200', 'opacity-60', 'border',
+        ];
+
         buttonElement.disabled = true;
-        buttonElement.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Dispatched...';
-        buttonElement.classList.add('opacity-60');
+        buttonElement.classList.add('opacity-60', 'cursor-wait');
+        buttonElement.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Sending...';
 
         fetch(notifyUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
+            credentials: 'same-origin',
         })
-        .then(response => response.json().then(data => ({ ok: response.ok, data })))
-        .then(({ ok, data }) => {
-            if (!ok) {
-                throw new Error(data.message || 'Failed to send notification.');
+        .then(async (response) => {
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = { message: response.ok ? 'Renewal reminder sent successfully.' : 'Failed to send renewal reminder.' };
             }
-            buttonElement.innerHTML = '<i class="fa-solid fa-check-double"></i> Alerted!';
-            buttonElement.classList.remove('bg-indigo-600', 'bg-rose-50', 'text-rose-700', 'hover:bg-rose-600', 'hover:text-white');
-            buttonElement.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+            if (!response.ok || data.ok === false) {
+                throw new Error(data.message || 'Failed to send renewal reminder.');
+            }
+            return data;
         })
-        .catch(() => {
-            buttonElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+        .then((data) => {
+            buttonElement.classList.remove(...statusClasses);
+            buttonElement.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+            buttonElement.innerHTML = '<i class="fa-solid fa-check-double"></i> Sent';
+            if (data.message) {
+                buttonElement.title = data.message;
+            }
+        })
+        .catch((error) => {
+            buttonElement.classList.remove(...statusClasses);
             buttonElement.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
+            buttonElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+            buttonElement.title = error?.message || 'Failed to send renewal reminder.';
         })
         .finally(() => {
+            // Re-enable so reminders can be sent again whenever needed.
             setTimeout(() => {
-                buttonElement.innerHTML = structuralBackup;
                 buttonElement.disabled = false;
-                buttonElement.classList.remove('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200', 'opacity-60', 'bg-rose-50', 'text-rose-700', 'border-rose-200');
-            }, 2000);
+                buttonElement.classList.remove(...statusClasses, 'cursor-wait');
+                idleClass.split(/\s+/).filter(Boolean).forEach((cls) => buttonElement.classList.add(cls));
+                buttonElement.innerHTML = '<i class="fa-regular fa-paper-plane text-[10px]"></i> ' + idleLabel;
+            }, 1800);
         });
     }
 </script>

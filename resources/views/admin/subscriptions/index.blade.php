@@ -63,6 +63,7 @@
                             <th class="px-5 py-4">Order / Payment Ref</th>
                             <th class="px-5 py-4">Subscription Type</th>
                             <th class="px-5 py-4">Amount</th>
+                            <th class="px-5 py-4">Mode of Payment</th>
                             <th class="px-5 py-4">Payment Status</th>
                             <th class="px-5 py-4">Subscription Status</th>
                             <th class="px-5 py-4">Paid At</th>
@@ -92,6 +93,9 @@
                                 </td>
                                 <td class="px-5 py-4">
                                     <p class="text-[11px] font-extrabold text-slate-800">INR {{ number_format((float) $tx->amount, 2) }}</p>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <p class="text-[11px] font-extrabold text-slate-800">{{ $tx->paymentModeLabel() }}</p>
                                 </td>
                                 <td class="px-5 py-4">
                                     <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase
@@ -168,6 +172,11 @@
                                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Paid At</p>
                                         <p class="text-[11px] font-bold text-slate-700">{{ $tx->paid_at?->format('d M Y h:i A') ?? '-' }}</p>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mode of Payment</p>
+                                    <p class="text-[11px] font-extrabold text-slate-800">{{ $tx->paymentModeLabel() }}</p>
                                 </div>
 
                                 <div>

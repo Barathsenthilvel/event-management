@@ -8,6 +8,12 @@
         <p class="text-xs text-slate-500 mt-1">Create and manage donation listings.</p>
     </div>
 
+    @if(session('success'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <!-- Search (left) + Add (right) -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <form method="GET" class="flex items-center gap-2 w-full sm:max-w-md min-w-0">
@@ -42,6 +48,7 @@
                 <tr>
                     <th class="px-6 py-4">Purpose</th>
                     <th class="px-6 py-4">Short Description</th>
+                    <th class="px-6 py-4">Document</th>
                     <th class="px-6 py-4 text-right">Cumulative Amount</th>
                     <th class="px-6 py-4 text-center">Promote Front</th>
                     <th class="px-6 py-4">Created On / By</th>
@@ -60,6 +67,22 @@
                     </td>
                     <td class="px-6 py-4 align-middle">
                         <p class="font-semibold">{{ $donation->short_description ?: '-' }}</p>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        @if(!empty($donation->document_pdf_path))
+                            <a href="{{ asset('storage/' . ltrim($donation->document_pdf_path, '/')) }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-800 hover:bg-emerald-100"
+                               title="{{ basename($donation->document_pdf_path) }}">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                View
+                            </a>
+                        @else
+                            <span class="text-[11px] font-bold text-slate-400">—</span>
+                        @endif
                     </td>
                     <td class="px-6 py-4 text-right align-middle">
                         <p class="text-sm font-extrabold text-slate-900">
@@ -144,7 +167,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-10 text-center text-slate-500 font-semibold">
+                    <td colspan="9" class="px-6 py-10 text-center text-slate-500 font-semibold">
                         No donations found.
                     </td>
                 </tr>
