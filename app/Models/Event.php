@@ -172,4 +172,16 @@ class Event extends Model
             'interested_count' => $registeredInviteCount + $extraInterests,
         ]);
     }
+
+    /**
+     * Newest events first: latest schedule date, then newest record id.
+     */
+    public function scopeOrderByLatestSchedule($query)
+    {
+        return $query
+            ->orderByRaw('(
+                SELECT MAX(event_date) FROM event_dates WHERE event_dates.event_id = events.id
+            ) DESC')
+            ->orderByDesc('events.id');
+    }
 }

@@ -37,7 +37,12 @@ class EventInterestController extends Controller
 
         if (Auth::check()) {
             if (EventInterest::query()->where('event_id', $event->id)->where('user_id', Auth::id())->exists()) {
-                return back()->with('info', 'You have already registered interest in this event.');
+                $message = 'You have already registered interest in this event.';
+                if ($request->expectsJson()) {
+                    return response()->json(['ok' => false, 'message' => $message], 422);
+                }
+
+                return back()->with('info', $message);
             }
             $request->merge(['email' => Auth::user()->email]);
         }
@@ -86,13 +91,17 @@ class EventInterestController extends Controller
                 ->withInput();
         }
 
+        $guestIds = collect($request->session()->get('guest_event_interests', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0);
+        if (! $guestIds->contains((int) $event->id)) {
+            $request->session()->put(
+                'guest_event_interests',
+                $guestIds->push((int) $event->id)->unique()->values()->all()
+            );
+        }
         if (! Auth::check()) {
-            $guestIds = collect($request->session()->get('guest_event_interests', []))
-                ->map(fn ($id) => (int) $id)
-                ->filter(fn ($id) => $id > 0);
-            if (! $guestIds->contains((int) $event->id)) {
-                $request->session()->push('guest_event_interests', (int) $event->id);
-            }
+            $request->session()->put('guest_event_interest_email', $email);
         }
 
         app(GnatMailService::class)->sendEventInterestConfirmation(
@@ -102,8 +111,16 @@ class EventInterestController extends Controller
             $data['phone'] ?? null
         );
 
+        $message = 'Thank you. Your event interest has been recorded.';
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $message,
+            ]);
+        }
+
         return back()
-            ->with('event_interest_success', 'Thank you. Your event interest has been recorded.')
+            ->with('event_interest_success', $message)
             ->with('event_interest_success_modal', true);
     }
 }

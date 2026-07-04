@@ -411,6 +411,62 @@
             }
         });
 
+        form?.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const action = this.getAttribute("action");
+            if (!action) return;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+            if (window.gnatSubmitLoading && submitBtn) {
+                window.gnatSubmitLoading.activate(submitBtn, { label: 'Submitting…' });
+            } else {
+                submitBtn?.setAttribute("disabled", "disabled");
+            }
+            try {
+                const fd = new FormData(this);
+                const res = await fetch(action, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        ...(token ? { "X-CSRF-TOKEN": token } : {}),
+                    },
+                    body: fd,
+                });
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch {
+                    data = {};
+                }
+                if (res.ok && data.ok) {
+                    closeModal();
+                    showInterestAjaxSuccessModal(data.message);
+                    return;
+                }
+                submitBtn?.removeAttribute("disabled");
+                if (window.gnatSubmitLoading && submitBtn) {
+                    window.gnatSubmitLoading.reset(submitBtn);
+                }
+                const errTitle = data.event_interest_error_title || "Event registration unavailable";
+                const errHtml =
+                    data.event_interest_error_html ||
+                    "<p>" + (data.message || "Unable to submit your interest.") + "</p>";
+                showInterestAjaxErrorModal(errTitle, errHtml);
+            } catch {
+                submitBtn?.removeAttribute("disabled");
+                if (window.gnatSubmitLoading && submitBtn) {
+                    window.gnatSubmitLoading.reset(submitBtn);
+                }
+                showInterestAjaxErrorModal(
+                    "Something went wrong",
+                    "<p>Please check your connection and try again.</p>"
+                );
+            }
+        });
+
         modal.querySelectorAll("[data-interest-modal-close], [data-interest-modal-backdrop]").forEach((el) => {
             el.addEventListener("click", closeModal);
         });

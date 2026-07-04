@@ -31,6 +31,7 @@
                 root.classList.add("hidden");
                 root.setAttribute("aria-hidden", "true");
                 document.body.classList.remove("overflow-hidden");
+                window.location.reload();
             }
             document.body.classList.add("overflow-hidden");
             root.querySelector("[data-close-home-event-interest-success-modal]")?.addEventListener("click", close);

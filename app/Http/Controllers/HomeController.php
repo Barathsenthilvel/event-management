@@ -58,8 +58,7 @@ class HomeController extends Controller
             ->where('is_active', true)
             ->where('promote_front', true)
             ->whereIn('status', ['upcoming', 'live', 'completed'])
-            ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
-            ->latest('id')
+            ->orderByLatestSchedule()
             ->limit(8)
             ->get();
 
@@ -157,8 +156,7 @@ class HomeController extends Controller
                 });
             })
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
-            ->orderByRaw("CASE status WHEN 'live' THEN 0 WHEN 'upcoming' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END")
-            ->latest('id')
+            ->orderByLatestSchedule()
             ->paginate(24)
             ->withQueryString();
 
@@ -708,17 +706,22 @@ class HomeController extends Controller
             return [];
         }
 
-        return EventInvite::query()
+        $inviteIds = EventInvite::query()
             ->where('user_id', Auth::id())
             ->whereIn('event_id', $ids)
-            ->where('has_confirmed_interest', true)
-            ->pluck('event_id')
-            ->merge(
-                EventInterest::query()
-                    ->where('user_id', Auth::id())
-                    ->whereIn('event_id', $ids)
-                    ->pluck('event_id')
-            )
+            ->where(function ($query) {
+                $query->where('has_confirmed_interest', true)
+                    ->orWhereIn('participation_status', ['interested', 'participated']);
+            })
+            ->pluck('event_id');
+
+        $interestIds = EventInterest::query()
+            ->where('user_id', Auth::id())
+            ->whereIn('event_id', $ids)
+            ->pluck('event_id');
+
+        return $inviteIds
+            ->merge($interestIds)
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
@@ -730,7 +733,21 @@ class HomeController extends Controller
      */
     private function resolveGuestInterestedEventIds(): array
     {
-        return collect(session('guest_event_interests', []))
+        $ids = collect(session('guest_event_interests', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0);
+
+        $email = strtolower(trim((string) session('guest_event_interest_email', '')));
+        if ($email !== '' && Schema::hasTable('event_interests')) {
+            $ids = $ids->merge(
+                EventInterest::query()
+                    ->whereNull('user_id')
+                    ->where('email', $email)
+                    ->pluck('event_id')
+            );
+        }
+
+        return $ids
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
