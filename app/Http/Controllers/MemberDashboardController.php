@@ -1212,11 +1212,18 @@ class MemberDashboardController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        if ($invite && $invite->has_confirmed_interest) {
-            return $this->interestSubmitErrorResponse($request, [
-                'event_interest_error_title' => 'Event registration unavailable',
-                'event_interest_error' => 'You have already submitted interest for this event.',
-            ]);
+        if ($invite && ($invite->has_confirmed_interest || in_array($invite->participation_status, ['interested', 'participated'], true))) {
+            return $this->interestSubmitSuccessResponse(
+                $request,
+                'You have already registered for this event.'
+            );
+        }
+
+        if (EventInterest::query()->where('event_id', $event->id)->where('user_id', $user->id)->exists()) {
+            return $this->interestSubmitSuccessResponse(
+                $request,
+                'You have already registered for this event.'
+            );
         }
 
         $pendingInvite = $invite && ! $invite->has_confirmed_interest;
@@ -1259,10 +1266,10 @@ class MemberDashboardController extends Controller
         } catch (\RuntimeException $e) {
             return $this->interestSubmitErrorResponse($request, EventInterestErrorFlash::fromException($e));
         } catch (QueryException $e) {
-            return $this->interestSubmitErrorResponse($request, [
-                'event_interest_error_title' => 'Event registration unavailable',
-                'event_interest_error' => 'You have already submitted interest for this event.',
-            ]);
+            return $this->interestSubmitSuccessResponse(
+                $request,
+                'You have already registered for this event.'
+            );
         }
 
         $mail = app(GnatMailService::class);
@@ -1298,9 +1305,9 @@ class MemberDashboardController extends Controller
             ->with('event_interest_error_modal', true);
     }
 
-    private function interestSubmitSuccessResponse(Request $request): RedirectResponse|JsonResponse
+    private function interestSubmitSuccessResponse(Request $request, ?string $message = null): RedirectResponse|JsonResponse
     {
-        $message = 'Thank you. Your event interest has been recorded.';
+        $message = $message ?: 'Thank you. Your event interest has been recorded.';
 
         if ($request->expectsJson()) {
             return response()->json([

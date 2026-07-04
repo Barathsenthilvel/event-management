@@ -692,7 +692,7 @@ class HomeController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Event>|iterable<int, Event>  $events
+     * @param  \Illuminate\Contracts\Pagination\Paginator|\Illuminate\Support\Collection<int, Event>|iterable<int, Event>  $events
      * @return list<int>
      */
     private function resolveInterestedEventIdsForHome(iterable $events): array
@@ -701,14 +701,11 @@ class HomeController extends Controller
             return [];
         }
 
-        $ids = collect($events)->pluck('id')->map(fn ($id) => (int) $id)->filter()->values();
-        if ($ids->isEmpty()) {
-            return [];
-        }
+        $userId = Auth::id();
+        $email = strtolower(trim((string) (Auth::user()->email ?? '')));
 
         $inviteIds = EventInvite::query()
-            ->where('user_id', Auth::id())
-            ->whereIn('event_id', $ids)
+            ->where('user_id', $userId)
             ->where(function ($query) {
                 $query->where('has_confirmed_interest', true)
                     ->orWhereIn('participation_status', ['interested', 'participated']);
@@ -716,13 +713,21 @@ class HomeController extends Controller
             ->pluck('event_id');
 
         $interestIds = EventInterest::query()
-            ->where('user_id', Auth::id())
-            ->whereIn('event_id', $ids)
+            ->where('user_id', $userId)
             ->pluck('event_id');
+
+        if ($email !== '') {
+            $interestIds = $interestIds->merge(
+                EventInterest::query()
+                    ->where('email', $email)
+                    ->pluck('event_id')
+            );
+        }
 
         return $inviteIds
             ->merge($interestIds)
             ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values()
             ->all();
@@ -738,10 +743,12 @@ class HomeController extends Controller
             ->filter(fn ($id) => $id > 0);
 
         $email = strtolower(trim((string) session('guest_event_interest_email', '')));
+        if ($email === '' && Auth::check()) {
+            $email = strtolower(trim((string) (Auth::user()->email ?? '')));
+        }
         if ($email !== '' && Schema::hasTable('event_interests')) {
             $ids = $ids->merge(
                 EventInterest::query()
-                    ->whereNull('user_id')
                     ->where('email', $email)
                     ->pluck('event_id')
             );

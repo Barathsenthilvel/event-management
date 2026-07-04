@@ -67,7 +67,7 @@
                 default => 'Register',
             };
         @endphp
-        <div class="rounded-2xl bg-white border border-[#351c42]/10 overflow-x-hidden overflow-y-visible" data-events-accordion-item @if($expandAll) data-events-open="true" @endif>
+        <div class="rounded-2xl bg-white border border-[#351c42]/10 overflow-x-hidden overflow-y-visible" data-events-accordion-item data-event-id="{{ $event->id }}" data-is-admin-event="{{ $isAdminEvent ? '1' : '0' }}" @if($expandAll) data-events-open="true" @endif>
             @if($hasDesc)
                 <div class="hidden" data-readmore-source="{{ $event->id }}" aria-hidden="true">
                     <div data-readmore-title>{{ $event->title }}</div>

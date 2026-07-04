@@ -37,14 +37,28 @@ class EventInterestController extends Controller
 
         if (Auth::check()) {
             if (EventInterest::query()->where('event_id', $event->id)->where('user_id', Auth::id())->exists()) {
-                $message = 'You have already registered interest in this event.';
+                $message = 'You have already registered for this event.';
                 if ($request->expectsJson()) {
-                    return response()->json(['ok' => false, 'message' => $message], 422);
+                    return response()->json(['ok' => true, 'message' => $message]);
                 }
 
-                return back()->with('info', $message);
+                return back()
+                    ->with('event_interest_success', $message)
+                    ->with('event_interest_success_modal', true);
             }
             $request->merge(['email' => Auth::user()->email]);
+        } else {
+            $guestEmail = strtolower(trim((string) $request->input('email', '')));
+            if ($guestEmail !== '' && EventInterest::query()->where('event_id', $event->id)->where('email', $guestEmail)->exists()) {
+                $message = 'You have already registered for this event.';
+                if ($request->expectsJson()) {
+                    return response()->json(['ok' => true, 'message' => $message]);
+                }
+
+                return back()
+                    ->with('event_interest_success', $message)
+                    ->with('event_interest_success_modal', true);
+            }
         }
 
         $emailRules = ['required', 'email', 'max:255'];

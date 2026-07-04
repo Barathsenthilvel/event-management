@@ -112,6 +112,26 @@
 
         let pendingMemberInterestUrl = "";
         let pendingConfirmTarget = null;
+        let pendingInterestBtn = null;
+
+        function markEventInterestRegistered(btn) {
+            if (!btn) return;
+            const item = btn.closest("[data-events-accordion-item]");
+            const footer = item?.querySelector("[data-readmore-footer]");
+            if (!footer) return;
+
+            const isAdmin = item.getAttribute("data-is-admin-event") === "1";
+            if (isAdmin) {
+                const btnWrap = btn.closest(".flex") || btn.parentElement;
+                if (btnWrap) {
+                    btnWrap.outerHTML =
+                        '<span class="min-w-0 shrink-0 text-sm font-extrabold text-[#fddc6a] sm:ml-auto">Interest registered</span>';
+                }
+            } else {
+                footer.innerHTML =
+                    '<span class="inline-flex w-full items-center justify-center rounded-2xl border border-[#351c42]/20 bg-[#f6f3e9] px-5 py-3 text-sm font-extrabold text-[#351c42]/80 cursor-default">Interest registered</span>';
+            }
+        }
 
         const nameEl = document.getElementById("interest-name");
         const emailEl = document.getElementById("interest-email");
@@ -142,6 +162,7 @@
             modal.setAttribute("aria-hidden", "true");
             document.body.classList.remove("overflow-hidden");
             pendingConfirmTarget = null;
+            pendingInterestBtn = null;
             showSteps(null);
             if (emailEl) {
                 emailEl.readOnly = false;
@@ -161,6 +182,7 @@
 
         function openInterestModalFromButton(btn) {
             if (!btn) return;
+            pendingInterestBtn = btn;
             pendingMemberInterestUrl = btn.getAttribute("data-member-interest-url") || "";
             const url = btn.getAttribute("data-interest-url");
             if (url) form.setAttribute("action", url);
@@ -386,6 +408,7 @@
                     data = {};
                 }
                 if (res.ok && data.ok) {
+                    markEventInterestRegistered(pendingInterestBtn);
                     closeModal();
                     showInterestAjaxSuccessModal(data.message);
                     return;
@@ -442,6 +465,7 @@
                     data = {};
                 }
                 if (res.ok && data.ok) {
+                    markEventInterestRegistered(pendingInterestBtn);
                     closeModal();
                     showInterestAjaxSuccessModal(data.message);
                     return;
