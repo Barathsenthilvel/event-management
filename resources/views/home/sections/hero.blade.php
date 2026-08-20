@@ -11,9 +11,9 @@
                     {{ $hero['headline_line2'] }}
                 </h2>
 
-                <p class="mt-5 max-w-md text-sm leading-6 text-white/90">
+                <div class="mt-5 max-w-md text-sm leading-7 text-white/90 space-y-0.5">
                     {!! $hero['description_html'] !!}
-                </p>
+                </div>
 
                 <div class="mt-7 flex items-center gap-4" aria-label="{{ number_format($hero['registered_count']) }} members registered with GNAT Association">
                     <div class="flex shrink-0 items-center">

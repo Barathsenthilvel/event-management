@@ -154,6 +154,26 @@
             </div>
 
             <div class="rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-sm">
+                <h3 class="text-sm font-extrabold tracking-tight">Phone</h3>
+                <ul class="mt-3 space-y-2">
+                    @foreach ($contact['phones'] as $phone)
+                        <li>
+                            <a href="tel:{{ $phone['tel'] }}" class="text-sm font-semibold text-[#351c42]/80 hover:text-[#965995] transition-colors">
+                                {{ $phone['label'] ?? $phone['tel'] }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <div class="rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-sm">
+                <h3 class="text-sm font-extrabold tracking-tight">Email</h3>
+                <a href="mailto:{{ $contact['email'] }}" class="mt-2 inline-block text-sm font-semibold text-[#351c42]/80 hover:text-[#965995] transition-colors break-all">
+                    {{ $contact['email'] }}
+                </a>
+            </div>
+
+            <div class="rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-sm">
                 <h3 class="text-sm font-extrabold tracking-tight">Quick links</h3>
                 <div class="mt-4 grid grid-cols-1 gap-2">
                     <a href="{{ route('events.index') }}" class="rounded-2xl border border-[#351c42]/10 px-4 py-3 text-sm font-bold hover:bg-[#351c42]/5">View Events</a>

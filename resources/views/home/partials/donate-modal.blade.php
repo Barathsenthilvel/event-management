@@ -19,9 +19,29 @@
             </svg>
         </button>
         <div class="pr-10">
-            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">GNAT Growth &amp; Welfare</p>
-            <h2 id="donate-modal-title" class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Support GNAT Growth &amp; Welfare</h2>
-            <p class="mt-2 text-sm text-white/65 leading-relaxed">Your contribution supports welfare initiatives, member development, and community outreach programs.</p>
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#fddc6a]/90">Support GNAT Growth &amp; Welfare </p>
+            <h2 id="donate-modal-title" class="mt-1 text-xl sm:text-2xl font-extrabold text-white tracking-tight">Your contribution directly supports:</h2>
+            <ul class="mt-3 space-y-2.5 text-sm text-white/80 leading-relaxed">
+                <li class="flex gap-3">
+                    <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fddc6a]/20 text-xs font-black text-[#fddc6a]">1</span>
+                    <span>Welfare initiatives for nurses and their families</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fddc6a]/20 text-xs font-black text-[#fddc6a]">2</span>
+                    <span>Member development programs and skill building</span>
+                </li>
+                <li class="flex gap-3">
+                    <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fddc6a]/20 text-xs font-black text-[#fddc6a]">3</span>
+                    <span>Community outreach programs across Tamil Nadu</span>
+                </li>
+            </ul>
+            <p class="mt-4 text-sm text-white/65 leading-relaxed">Together, let’s build a stronger nursing community.</p>
+            <div class="mt-3 space-y-1 border-l-2 border-[#fddc6a]/40 pl-4">
+                <p class="text-sm font-extrabold text-[#fddc6a]">For the Nurses.</p>
+                <p class="text-sm font-extrabold text-[#fddc6a]">By the Nurses.</p>
+                <p class="text-sm font-extrabold text-[#fddc6a]">Of the Nurses.</p>
+            </div>
+            <p class="mt-3 text-xs font-semibold text-white/50">— Graduate Nurses Association of Tamil Nadu</p>
         </div>
 
         <input type="hidden" id="donate-context-donation-id" value="" autocomplete="off" />

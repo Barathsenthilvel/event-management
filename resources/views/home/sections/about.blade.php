@@ -41,9 +41,31 @@
                     {{ $about['title_lines'][2] }}
                 </h2>
 
-                <p class="mt-6 max-w-xl text-sm md:text-base leading-7 text-white/80">
-                    {{ $about['text'] }}
-                </p>
+                <div class="mt-6 max-w-xl space-y-4 text-sm md:text-base leading-7 text-white/80">
+                    @foreach ($about['intro_lines'] ?? [] as $line)
+                        <p>{{ $line }}</p>
+                    @endforeach
+
+                    @if(!empty($about['impact_line']))
+                        <p class="font-semibold text-[#fddc6a]">{{ $about['impact_line'] }}</p>
+                    @endif
+
+                    @if(!empty($about['principles_heading']))
+                        <p class="text-white font-extrabold tracking-tight">{{ $about['principles_heading'] }}</p>
+                    @endif
+
+                    @if(!empty($about['principles']))
+                        <ul class="space-y-2 border-l-2 border-[#fddc6a]/35 pl-4">
+                            @foreach ($about['principles'] as $principle)
+                                <li class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                    <span class="font-extrabold text-[#fddc6a]">{{ $principle['label'] }}</span>
+                                    <span class="text-white/50">=</span>
+                                    <span class="text-white/90">{{ $principle['meaning'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
 
                 <div class="mt-8 flex flex-wrap items-center gap-5">
                     <a href="{{ route('about') }}" class="click-btn btn-style506">

@@ -26,11 +26,13 @@ return [
     ],
 
     'contact' => [
-        'email' => 'info@gnatdonation.org',
+        'email' => 'gnat9715@gmail.com',
         'address' => 'No. 36/76, Thiruveethi Amman Kovil 2nd Street, Aminjikarai, Chennai- 600029',
         'phones' => [
-            ['tel' => '+918148510006', 'label' => '+91 81485 10006'],
-            ['tel' => '+919629319978', 'label' => '+91 96293 19978'],
+            ['tel' => '+919585144633', 'label' => '+91 95851 44633'],
+            ['tel' => '+919585144833', 'label' => '+91 95851 44833'],
+            ['tel' => '+919585144933', 'label' => '+91 95851 44933'],
+            ['tel' => '+919488357270', 'label' => '+91 94883 57270'],
         ],
         'maps_query' => 'No+36%2F76+Thiruveethi+Amman+Kovil+2nd+Street+Aminjikarai+Chennai+600029',
     ],
@@ -47,10 +49,11 @@ return [
     ],
 
     'hero' => [
-        'badge' => 'GNAT ASSOCIATION',
-        'headline_line1' => 'Give Hope.',
+        'badge' => 'Graduate Nurses Association of Tamil Nadu - GNAT',
+        'headline_line1' => 'Giving Hope. Building Community. Creating Impact.',
         'headline_line2' => 'Grow Stronger Communities',
-        'description_html' => '<strong class="text-white">GNAT Association</strong> brings people together to create meaningful impact across communities.',
+        'description_html' => '<strong class="text-white block mb-2">Built on 3 Core Principles:</strong><span class="block text-white/90">For the Nurses.</span><span class="block text-white/90">By the Nurses.</span><span class="block text-white/90">Of the Nurses.</span>',
+        // 'description_html' => '<strong class="text-white">GNAT Association</strong> brings people together to create meaningful impact across communities.',
         'registered_count' => 2603,
         'registered_label' => 'Members Registered',
         'avatar_image' => 'images/testimonials-images/thumb-10.2.webp',
@@ -153,10 +156,20 @@ return [
     'about' => [
         'main_image' => 'images/events/event-1-2.jpg',
         'accent_image' => 'images/events/event-1-1.jpg',
-        'eyebrow' => 'ABOUT GNAT ASSOCIATION',
+        'eyebrow' => 'JOIN GNAT TODAY',
         'title_lines' => ['Worldwide, Our', 'Community', 'One Mission'],
         'title_highlight' => 'Adopted',
-        'text' => 'GNAT Association helps organizations run stronger CSR, grantmaking, and volunteer programs—so support reaches the people who need it most.',
+        'intro_lines' => [
+            'Be a part of Tamil Nadu\'s leading voice for Graduate Nurses.',
+            'Get support. Get growth. Give back to the community.',
+        ],
+        'impact_line' => 'Together, we give Hope and create Impact.',
+        'principles_heading' => 'GNAT — For the Nurses, By the Nurses, Of the Nurses',
+        'principles' => [
+            ['label' => 'For the Nurses', 'meaning' => 'Our Mission'],
+            ['label' => 'By the Nurses', 'meaning' => 'Our Leadership'],
+            ['label' => 'Of the Nurses', 'meaning' => 'Our Identity'],
+        ],
     ],
 
     'events' => [

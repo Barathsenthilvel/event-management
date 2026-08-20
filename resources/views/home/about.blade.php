@@ -22,25 +22,24 @@
             <div class="min-w-0">
                 <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#965995]">About</p>
                 <h1 class="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-[#351c42]">
-                    Building impact through transparency, community and action.
+                Graduate Nurses Association of tamilnadu believe that qualified nurses are the backbone of health care delivery system; they function as the orbit of the caring process by shouldering the major care needs of the patients and families in the hospital and community.
                 </h1>
                 <p class="mt-4 text-[#351c42]/70 leading-7">
-                    GNAT Association connects generous supporters with trusted programs in education, health, and
-                    community support—so every contribution creates lasting impact.
+                We strongly believe that the skilful hands of the nurses can make magical miracles not only when caring the patients but also in the empowerment of themselves and the nursing profession. We believe that fidelity, assertiveness, commitment and teamwork(FACT) would achieve the objectives of our association. GNAT was established on 2015. In April 30, 2015 the thought of having a professional organization for graduate nurses in Tamilnadu was brought up by few graduate nurses. The birth of such an organization was eagerly anticipated and welcomed by many nurses who are given the stress of work overload, paid less and mistreated even well educated and hands on skills. Do you feel they need help?? For that reason we stepped forward on September 28, 2014 the first meeting of GNAT was held at children’s park Guindy, Chennai. We elected the board of directors and committee members. We raised call for the interested nurses who are looking for the great change in nursing profession. We registered the association under society act 27, of 1975 on April 30,2015. Today the association has grown with hundreds of members.
                 </p>
 
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="rounded-2xl border border-[#351c42]/10 bg-white p-4">
-                        <p class="text-xs font-black tracking-wide text-[#965995] uppercase">Mission</p>
-                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Make support reachable and measurable.</p>
+                        <p class="text-xs font-black tracking-wide text-[#965995] uppercase">Our Mission</p>
+                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">The mission of the Graduate Nurses Association of Tamil Nadu is to empower nurses toprovide moral & permissible support to the nursing fraternity for regulated professional & ethical benefits and rights.</p>
                     </div>
                     <div class="rounded-2xl border border-[#351c42]/10 bg-white p-4">
-                        <p class="text-xs font-black tracking-wide text-[#965995] uppercase">Vision</p>
-                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Stronger communities, built together.</p>
+                        <p class="text-xs font-black tracking-wide text-[#965995] uppercase">Our Vision</p>
+                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Graduate nurses work in a nurtured and cultured environment enjoying unbiased monetary benefits that promote focused holistic service to stakeholders and community .</p>
                     </div>
                     <div class="rounded-2xl border border-[#351c42]/10 bg-white p-4">
                         <p class="text-xs font-black tracking-wide text-[#965995] uppercase">Values</p>
-                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Trust, clarity and accountability.</p>
+                        <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Graduate Nurses Association of tamilnadu believe that function as the orbit of the caring process by shouldering the major care needs of the patients and families in the hospital and community.</p>
                     </div>
                 </div>
 
@@ -88,8 +87,24 @@
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <h2 class="mt-4 text-lg font-extrabold tracking-tight">Transparent by design</h2>
-            <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Clear initiatives, clear updates, and measurable impact reporting.</p>
+            <p class="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#965995]">For the Nurses</p>
+            <h2 class="mt-1 text-lg font-extrabold tracking-tight text-[#351c42]">Purpose: Service &amp; Welfare</h2>
+            <p class="mt-3 text-sm text-[#351c42]/70 leading-6">Everything GNAT does is centered on the well-being of nurses.</p>
+            <ul class="mt-4 space-y-2.5 text-sm text-[#351c42]/75 leading-6">
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Welfare support during need</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Career development and training</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Protecting rights, dignity and growth of the nursing profession</span>
+                </li>
+            </ul>
+            <p class="mt-4 text-sm font-extrabold text-[#351c42]">GNAT exists to serve nurses first.</p>
         </div>
         <div class="rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-sm">
             <div class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#965995]/15 text-[#351c42]">
@@ -100,19 +115,52 @@
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <h2 class="mt-4 text-lg font-extrabold tracking-tight">Community-first</h2>
-            <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Built around the real needs of people and local programs.</p>
+            <p class="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#965995]">By the Nurses</p>
+            <h2 class="mt-1 text-lg font-extrabold tracking-tight text-[#351c42]">Purpose: Leadership &amp; Ownership</h2>
+            <p class="mt-3 text-sm text-[#351c42]/70 leading-6">The association is run, led, and driven by nurses themselves.</p>
+            <ul class="mt-4 space-y-2.5 text-sm text-[#351c42]/75 leading-6">
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Decisions are made by nurses who understand ground realities</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Programs are designed by people from the profession</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Your voice directly shapes GNAT’s actions</span>
+                </li>
+            </ul>
+            <p class="mt-4 text-sm font-extrabold text-[#351c42]">It’s our association, run by us.</p>
         </div>
         <div class="rounded-3xl border border-[#351c42]/10 bg-white p-6 shadow-sm">
             <div class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#351c42]/10 text-[#351c42]">
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M12 20V10" stroke-linecap="round"/>
-                    <path d="M18 20V4" stroke-linecap="round"/>
-                    <path d="M6 20v-6" stroke-linecap="round"/>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <h2 class="mt-4 text-lg font-extrabold tracking-tight">Progress you can track</h2>
-            <p class="mt-2 text-sm text-[#351c42]/70 leading-6">Structured initiatives with outcomes that improve over time.</p>
+            <p class="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#965995]">Of the Nurses</p>
+            <h2 class="mt-1 text-lg font-extrabold tracking-tight text-[#351c42]">Purpose: Community &amp; Belonging</h2>
+            <p class="mt-3 text-sm text-[#351c42]/70 leading-6">GNAT belongs to every member. It represents the collective strength of the nursing community.</p>
+            <ul class="mt-4 space-y-2.5 text-sm text-[#351c42]/75 leading-6">
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>It’s built from the nurses, for the nurses</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Every member is a stakeholder and part of the GNAT family</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#965995]"></span>
+                    <span>Together we create impact across Tamil Nadu</span>
+                </li>
+            </ul>
+            <p class="mt-4 text-sm font-extrabold text-[#351c42]">GNAT is us. We are GNAT.</p>
         </div>
     </section>
 </main>
