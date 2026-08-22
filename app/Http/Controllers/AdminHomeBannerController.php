@@ -92,8 +92,8 @@ class AdminHomeBannerController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'image' => $creating
-                ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:1024']
-                : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:1024'],
+                ? ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120']
+                : ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
         ];
     }
 
@@ -103,7 +103,7 @@ class AdminHomeBannerController extends Controller
             'image.required' => 'Please upload a banner image.',
             'image.image' => 'The file must be an image (JPEG, PNG, GIF, or WebP).',
             'image.mimes' => 'Allowed formats: JPEG, PNG, GIF, or WebP.',
-            'image.max' => 'The banner image must not be larger than 1 MB.',
+            'image.max' => 'The banner image must not be larger than 5 MB.',
         ];
     }
 
@@ -113,7 +113,7 @@ class AdminHomeBannerController extends Controller
 
         if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
             throw ValidationException::withMessages([
-                'image' => 'The banner image must not be larger than 1 MB.',
+                'image' => 'The banner image must not be larger than 5 MB.',
             ]);
         }
 
@@ -125,7 +125,7 @@ class AdminHomeBannerController extends Controller
 
         if (! $file->isValid()) {
             throw ValidationException::withMessages([
-                'image' => 'The banner image must not be larger than 1 MB.',
+                'image' => 'The banner image must not be larger than 5 MB.',
             ]);
         }
     }

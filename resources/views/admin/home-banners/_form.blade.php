@@ -5,8 +5,8 @@
 @endphp
 
 @php
-    $bannerImageMaxBytes = 1024 * 1024;
-    $bannerUploadTooLarge = request('upload_error') ? 'The banner image must not be larger than 1 MB.' : null;
+    $bannerImageMaxBytes = 5 * 1024 * 1024;
+    $bannerUploadTooLarge = request('upload_error') ? 'The banner image must not be larger than 5 MB.' : null;
 @endphp
 
 <form id="home-banner-form" action="{{ $action }}" method="POST" enctype="multipart/form-data"
@@ -105,7 +105,7 @@
                           class="{{ $imageUrl ? '' : 'hidden' }} text-[10px] font-medium text-indigo-600">Click to change image</span>
                     <input type="file" id="home-banner-image" name="image" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp" @if(!$isEdit) required @endif>
                 </label>
-                <p class="mt-2 text-[11px] font-medium text-slate-500">JPEG, PNG, GIF, or WebP. Maximum size: 1&nbsp;MB.</p>
+                <p class="mt-2 text-[11px] font-medium text-slate-500">JPEG, PNG, GIF, or WebP. Maximum size: 5&nbsp;MB.</p>
                 @error('image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
@@ -132,7 +132,7 @@
 <script>
 (function () {
     var MAX_BYTES = {{ $bannerImageMaxBytes }};
-    var TOO_LARGE_MSG = 'The banner image must not be larger than 1 MB.';
+    var TOO_LARGE_MSG = 'The banner image must not be larger than 5 MB.';
     var serverMessage = @json($bannerUploadTooLarge);
 
     function showImageError(msg) {
