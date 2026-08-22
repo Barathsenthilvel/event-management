@@ -130,27 +130,57 @@ return [
     ],
 
     'testimonials_intro' => [
-        'eyebrow' => 'What People Say',
-        'title' => 'Trusted Voices & Stories That Matter',
-        'text' => 'Hear from our partners and community members about the difference GNAT Association is making. Their experiences reflect real impact across communities.',
+        'eyebrow' => 'What Members Say',
+        'title' => 'Member Stories & Real Support',
+        'text' => 'Hear directly from Graduate Nurses across Tamil Nadu about how GNAT Association stepped forward to support their career, rights, and professional dignity.',
     ],
 
     'testimonials' => [
-        ['name' => 'Penelope Miller', 'role' => 'Sr. Volunteer', 'text' => 'GNAT Association made giving simple and transparent. We trusted every step and loved the impact updates.', 'stars' => 5],
-        ['name' => 'David Johnson', 'role' => 'Volunteer', 'text' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'stars' => 5],
-        ['name' => 'Sophia Brown', 'role' => 'Volunteer', 'text' => 'The team showed real expertise and delivered measurable improvements quickly.', 'stars' => 5],
-        ['name' => 'Emma Wilson', 'role' => 'Volunteer', 'text' => 'From planning to delivery, everything was handled professionally and on time.', 'stars' => 5],
-        ['name' => 'Michael Adams', 'role' => 'Client', 'text' => 'Reliable support and excellent results. The experience was easy and stress-free.', 'stars' => 4],
-        ['name' => 'Olivia King', 'role' => 'Client', 'text' => 'Highly responsive, thoughtful, and proactive. We loved the final outcome.', 'stars' => 5],
+        [
+            'name' => 'Rajesh',
+            'role' => 'GNAT Member',
+            'text' => 'When I joined a private hospital, I submitted my original certificates. Later, they refused to return them unless I paid. A friend suggested GNAT. One of the Executive Leaders immediately intervened, spoke to management, and helped me get my original certificates back. I sincerely thank GNAT for the timely support!',
+            'stars' => 5,
+        ],
+        [
+            'name' => 'Siva Sankari',
+            'role' => 'GNAT Member',
+            'text' => 'I was finding it very hard to get a good job with the right salary. I reached out to a GNAT leader. They supported me and helped me find a good job with good payment. Now I am working well and also continuing my education. Thank you GNAT for real support!',
+            'stars' => 5,
+        ],
+        [
+            'name' => 'Rajesh',
+            'role' => 'GNAT Member',
+            'text' => 'I strongly recommend every nurse to become a member of GNAT. It is a place where you get real support and guidance, even beyond your job. Thank you, GNAT.',
+            'stars' => 5,
+        ],
+        [
+            'name' => 'Siva Sankari',
+            'role' => 'GNAT Member',
+            'text' => 'I reached out to a GNAT leader. They supported me and helped me find a good job with good payment. Now I am working well & continuing education. Strongly recommend joining GNAT!',
+            'stars' => 5,
+        ],
     ],
 
     'testimonial_profile_image' => 'images/testimonials-images/thumb-10.2.webp',
 
     'testimonial_stack_cards' => [
-        ['image' => 'images/testimonials-images/thumb-10.2.webp', 'quote' => 'GNAT Association made giving simple and transparent. We saw exactly how our support helped the community. Highly recommended!', 'name' => 'Penelope Miller (Arjon)', 'role' => 'Sr. Volunteer', 'rating' => '5.0', 'play' => true],
-        ['image' => 'images/events/event-1-1.jpg', 'quote' => 'Great communication, clear deliverables, and a smooth process from start to finish.', 'name' => 'David Johnson (Brook)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
-        ['image' => 'images/events/event-1-3.jpg', 'quote' => 'The team showed real expertise and delivered measurable improvements quickly.', 'name' => 'Sophia Brown (Karis)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
-        ['image' => 'images/events/event-1-2.jpg', 'quote' => 'From planning to delivery, everything was handled professionally and on time.', 'name' => 'Emma Wilson (Nova)', 'role' => 'Volunteer', 'rating' => '5.0', 'play' => false],
+        [
+            'image' => 'images/events/event-1-1.jpg',
+            'quote' => 'When I joined a private hospital, management refused to return my original certificates. A friend suggested GNAT. An Executive Leader immediately intervened and helped get my certificates back. Real support when I needed it most!',
+            'name' => 'Rajesh',
+            'role' => 'GNAT Member',
+            'rating' => '5.0',
+            'play' => false,
+        ],
+        [
+            'image' => 'images/events/event-1-2.jpg',
+            'quote' => 'I was finding it hard to get a good job with the right salary. GNAT leaders supported me and helped me find a good job with good payment. Now I am working well and continuing my education. Thank you GNAT!',
+            'name' => 'Siva Sankari',
+            'role' => 'GNAT Member',
+            'rating' => '5.0',
+            'play' => false,
+        ],
     ],
 
     'about' => [

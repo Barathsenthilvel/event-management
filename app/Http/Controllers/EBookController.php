@@ -93,9 +93,9 @@ class EBookController extends Controller
             'description' => 'nullable|string',
             'pricing_type' => 'nullable|in:free',
             'price' => 'nullable|numeric|min:0',
-            'cover_image' => 'nullable|image|max:5120',
-            'banner_image' => 'nullable|image|max:5120',
-            'material' => 'nullable|file|mimes:pdf,doc,docx,zip|max:15360',
+            'cover_image' => 'nullable|image|max:10240',
+            'banner_image' => 'nullable|image|max:10240',
+            'material' => 'nullable|file|mimes:pdf,doc,docx,zip|max:204800',
             'is_active' => 'nullable|boolean',
         ]);
     }

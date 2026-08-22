@@ -33,11 +33,7 @@
     $publishedLabel = $isModel && $publishedAt
         ? $publishedAt->format('d M Y')
         : (($day || $month || $year) ? trim(implode(' ', array_filter([$day, $month, $year]))) : '');
-    $readMoreMeta = array_values(array_filter([
-        ['label' => 'Tag', 'value' => $tag ?? ''],
-        ['label' => 'Published', 'value' => $publishedLabel],
-        ['label' => 'Comments', 'value' => isset($commentsCount) ? (string) $commentsCount : ''],
-    ], fn ($item) => ($item['value'] ?? '') !== ''));
+    $readMoreMeta = [];
     $readMorePopupContent = $readMoreContent !== ''
         ? $readMoreContent
         : 'Full details for this post will be available soon.';
@@ -52,7 +48,7 @@
 ])>
     <div class="relative h-56">
         <img src="{{ $imageUrl }}" alt="{{ $title }}" class="h-full w-full object-cover" loading="lazy" />
-        <span class="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[#351c42]">{{ $tag }}</span>
+        <span class="absolute left-4 top-4 rounded-full bg-[#351c42]/90 backdrop-blur-md px-3.5 py-1 text-xs font-bold text-[#fddc6a] shadow-md border border-white/20">{{ $tag }}</span>
         @if($isModel && $publishedAt)
             <div class="absolute right-0 bottom-0 rounded-tl-2xl bg-[#351c42] text-[#fddc6a] text-center px-4 py-2 min-w-[4.5rem]">
                 <div class="text-4xl font-extrabold leading-none">{{ $publishedAt->format('d') }}</div>
@@ -95,15 +91,6 @@
                 </span>
                 <span class="click-btn__label">Read More</span>
             </button>
-            <span class="text-sm font-semibold text-[#351c42]/70 inline-flex items-center gap-1.5 shrink-0">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 8L20 10L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M6 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M6 16L4 14L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M4 14H18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                {{ $commentsCount }}
-            </span>
         </div>
     </div>
 </article>

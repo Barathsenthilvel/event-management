@@ -166,12 +166,23 @@
                                 <path d="M10 11l2 2 3-3" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </div>
-                        <span class="text-xs font-medium text-slate-700">Replace with Word, PDF, or Zip</span>
+                        <span class="text-xs font-medium text-slate-700">Upload Word, PDF, or Zip (up to 200 MB)</span>
                         <input id="ebook_material_input" type="file" name="material" class="hidden" accept=".pdf,.doc,.docx,.zip">
                     </label>
                 </div>
                 @error('material')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress Bar Container -->
+    <div id="ebook_upload_progress_wrap" class="hidden mt-6 p-4 rounded-xl border border-indigo-100 bg-indigo-50/70 space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-indigo-900">
+            <span id="ebook_upload_status_text">Uploading file to server... Please wait.</span>
+            <span id="ebook_upload_percent">0%</span>
+        </div>
+        <div class="w-full h-3 bg-indigo-200/80 rounded-full overflow-hidden">
+            <div id="ebook_upload_progress_bar" class="h-full bg-indigo-600 rounded-full transition-all duration-150" style="width: 0%"></div>
         </div>
     </div>
 
@@ -181,9 +192,9 @@
            class="inline-flex items-center justify-center px-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm rounded-xl transition-colors text-center border border-slate-200 sm:min-w-[140px]">
             Cancel
         </a>
-        <button type="submit"
+        <button id="ebook_submit_btn" type="submit"
                 class="inline-flex items-center justify-center px-6 py-3 bg-[#0f172a] hover:bg-indigo-600 text-white font-bold text-sm rounded-xl shadow-lg transition-all sm:min-w-[180px]">
-            {{ $isEdit ? 'Update E-Book' : 'Create E-Book' }}
+            <span id="ebook_submit_btn_text">{{ $isEdit ? 'Update E-Book' : 'Create E-Book' }}</span>
         </button>
     </div>
 </form>
@@ -277,8 +288,75 @@
                     matSelected.textContent = '';
                     return;
                 }
-                matSelected.textContent = 'Selected: ' + file.name;
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                matSelected.textContent = 'Selected: ' + file.name + ' (' + sizeMB + ' MB)';
                 matSelected.classList.remove('hidden');
+            });
+        }
+
+        const form = matInput ? matInput.closest('form') : null;
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const hasFile = (matInput && matInput.files && matInput.files.length > 0) ||
+                               (document.getElementById('ebook_cover_image_input')?.files?.length > 0) ||
+                               (document.getElementById('ebook_banner_image_input')?.files?.length > 0);
+
+                if (!hasFile) return; // Normal form submit if no new files attached
+
+                const submitBtn = document.getElementById('ebook_submit_btn');
+                const btnText = document.getElementById('ebook_submit_btn_text');
+                const progressWrap = document.getElementById('ebook_upload_progress_wrap');
+                const progressBar = document.getElementById('ebook_upload_progress_bar');
+                const percentText = document.getElementById('ebook_upload_percent');
+                const statusText = document.getElementById('ebook_upload_status_text');
+
+                if (submitBtn) submitBtn.disabled = true;
+                if (btnText) btnText.textContent = 'Uploading...';
+                if (progressWrap) progressWrap.classList.remove('hidden');
+
+                // Custom XHR upload for real-time progress
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.addEventListener('progress', function (event) {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        if (progressBar) progressBar.style.width = percent + '%';
+                        if (percentText) percentText.textContent = percent + '%';
+                        if (statusText) {
+                            const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1);
+                            const totalMB = (event.total / (1024 * 1024)).toFixed(1);
+                            statusText.textContent = 'Uploading: ' + loadedMB + ' MB of ' + totalMB + ' MB...';
+                        }
+                    }
+                });
+
+                xhr.addEventListener('load', function () {
+                    if (xhr.status >= 200 && xhr.status < 400) {
+                        if (statusText) statusText.textContent = 'Upload complete! Processing...';
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (percentText) percentText.textContent = '100%';
+                        window.location.href = "{{ route('admin.ebooks.index') }}";
+                    } else if (xhr.status === 413) {
+                        alert('Error 413: The server rejected this file as too large. Please check Nginx client_max_body_size setting.');
+                        if (submitBtn) submitBtn.disabled = false;
+                        if (btnText) btnText.textContent = 'Retry Upload';
+                    } else {
+                        // If Laravel validation error returned, reload form page or submit natively
+                        form.submit();
+                    }
+                });
+
+                xhr.addEventListener('error', function () {
+                    alert('Network error occurred during file upload. Please check your network connection.');
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (btnText) btnText.textContent = 'Retry Upload';
+                });
+
+                xhr.open('POST', form.action, true);
+                xhr.send(formData);
             });
         }
     })();
