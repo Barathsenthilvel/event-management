@@ -640,6 +640,16 @@
                 var root = Alpine.$data(document.querySelector('body'));
                 if (!root || typeof root.addToast !== 'function') return false;
                 window.__adminFlashConsumed = true;
+
+                try {
+                    var pendingToast = sessionStorage.getItem('pending_admin_toast');
+                    if (pendingToast) {
+                        sessionStorage.removeItem('pending_admin_toast');
+                        var parsed = JSON.parse(pendingToast);
+                        root.addToast(parsed.msg, parsed.type || 'success');
+                    }
+                } catch (e) {}
+
                 @if(session('success'))
                 root.addToast(@json(session('success')), 'success');
                 @elseif(session('error'))

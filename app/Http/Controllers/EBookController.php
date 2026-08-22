@@ -38,9 +38,19 @@ class EBookController extends Controller
 
         EBook::create($this->buildPayload($request, $validated, true));
 
+        $msg = 'E-Book created successfully.';
+        if ($request->expectsJson()) {
+            session()->flash('success', $msg);
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'redirect' => route('admin.ebooks.index'),
+            ]);
+        }
+
         return redirect()
             ->route('admin.ebooks.index')
-            ->with('success', 'E-Book created successfully.');
+            ->with('success', $msg);
     }
 
     public function edit(EBook $e_book)
@@ -53,9 +63,19 @@ class EBookController extends Controller
         $validated = $this->validatePayload($request, $e_book->id);
         $e_book->update($this->buildPayload($request, $validated, false, $e_book));
 
+        $msg = 'E-Book updated successfully.';
+        if ($request->expectsJson()) {
+            session()->flash('success', $msg);
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'redirect' => route('admin.ebooks.index'),
+            ]);
+        }
+
         return redirect()
             ->route('admin.ebooks.index')
-            ->with('success', 'E-Book updated successfully.');
+            ->with('success', $msg);
     }
 
     public function destroy(EBook $e_book)

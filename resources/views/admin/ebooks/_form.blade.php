@@ -309,6 +309,7 @@
                 const progressBar = document.getElementById('ebook_upload_progress_bar');
                 const percentText = document.getElementById('ebook_upload_percent');
                 const statusText = document.getElementById('ebook_upload_status_text');
+                const originalBtnText = btnText ? btnText.textContent : 'Save E-Book';
 
                 if (submitBtn) submitBtn.disabled = true;
                 if (btnText) btnText.textContent = 'Uploading...';
@@ -328,34 +329,97 @@
                         if (statusText) {
                             const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1);
                             const totalMB = (event.total / (1024 * 1024)).toFixed(1);
-                            statusText.textContent = 'Uploading: ' + loadedMB + ' MB of ' + totalMB + ' MB...';
+                            if (percent < 100) {
+                                statusText.textContent = 'Uploading: ' + loadedMB + ' MB of ' + totalMB + ' MB...';
+                            } else {
+                                statusText.textContent = 'Upload 100% complete! Saving E-Book...';
+                            }
                         }
                     }
                 });
 
                 xhr.addEventListener('load', function () {
-                    if (xhr.status >= 200 && xhr.status < 400) {
-                        if (statusText) statusText.textContent = 'Upload complete! Processing...';
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        let redirectUrl = "{{ route('admin.ebooks.index') }}";
+                        let successMsg = 'E-Book saved successfully.';
+
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data.redirect) redirectUrl = data.redirect;
+                            if (data.message) successMsg = data.message;
+                        } catch (err) {}
+
                         if (progressBar) progressBar.style.width = '100%';
                         if (percentText) percentText.textContent = '100%';
-                        window.location.href = "{{ route('admin.ebooks.index') }}";
-                    } else if (xhr.status === 413) {
-                        alert('Error 413: The server rejected this file as too large. Please check Nginx client_max_body_size setting.');
+                        if (statusText) statusText.textContent = 'Complete! Redirecting to list page...';
+
+                        try {
+                            sessionStorage.setItem('pending_admin_toast', JSON.stringify({ msg: successMsg, type: 'success' }));
+                        } catch (e) {}
+
+                        setTimeout(function () {
+                            window.location.href = redirectUrl;
+                        }, 500);
+
+                    } else if (xhr.status === 422) {
+                        if (progressWrap) progressWrap.classList.add('hidden');
                         if (submitBtn) submitBtn.disabled = false;
-                        if (btnText) btnText.textContent = 'Retry Upload';
+                        if (btnText) btnText.textContent = originalBtnText;
+
+                        let errorMsg = 'Validation failed. Please check form inputs.';
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data.errors) {
+                                const firstKey = Object.keys(data.errors)[0];
+                                errorMsg = data.errors[firstKey][0] || errorMsg;
+                            } else if (data.message) {
+                                errorMsg = data.message;
+                            }
+                        } catch (err) {}
+
+                        if (window.adminShowToast) {
+                            window.adminShowToast(errorMsg, 'error');
+                        } else {
+                            alert(errorMsg);
+                        }
+                    } else if (xhr.status === 413) {
+                        if (progressWrap) progressWrap.classList.add('hidden');
+                        if (submitBtn) submitBtn.disabled = false;
+                        if (btnText) btnText.textContent = originalBtnText;
+                        const msg = 'File too large for the server limits. Maximum allowed upload size exceeded.';
+                        if (window.adminShowToast) {
+                            window.adminShowToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
                     } else {
-                        // If Laravel validation error returned, reload form page or submit natively
-                        form.submit();
+                        if (progressWrap) progressWrap.classList.add('hidden');
+                        if (submitBtn) submitBtn.disabled = false;
+                        if (btnText) btnText.textContent = originalBtnText;
+                        let errMsg = 'An error occurred during upload (Status: ' + xhr.status + ').';
+                        if (window.adminShowToast) {
+                            window.adminShowToast(errMsg, 'error');
+                        } else {
+                            alert(errMsg);
+                        }
                     }
                 });
 
                 xhr.addEventListener('error', function () {
-                    alert('Network error occurred during file upload. Please check your network connection.');
+                    if (progressWrap) progressWrap.classList.add('hidden');
                     if (submitBtn) submitBtn.disabled = false;
-                    if (btnText) btnText.textContent = 'Retry Upload';
+                    if (btnText) btnText.textContent = originalBtnText;
+                    const netErr = 'Network error occurred during file upload. Please check your network connection.';
+                    if (window.adminShowToast) {
+                        window.adminShowToast(netErr, 'error');
+                    } else {
+                        alert(netErr);
+                    }
                 });
 
                 xhr.open('POST', form.action, true);
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                 xhr.send(formData);
             });
         }
