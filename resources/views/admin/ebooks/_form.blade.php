@@ -166,8 +166,8 @@
                                 <path d="M10 11l2 2 3-3" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </div>
-                        <span class="text-xs font-medium text-slate-700">Upload Word, PDF, or Zip (up to 200 MB)</span>
-                        <input id="ebook_material_input" type="file" name="material" class="hidden" accept=".pdf,.doc,.docx,.zip">
+                        <span class="text-xs font-medium text-slate-700">Upload PDF, Word, Zip, or EPUB (up to 200 MB)</span>
+                        <input id="ebook_material_input" type="file" name="material" class="hidden" accept=".pdf,.doc,.docx,.zip,.rar,.7z,.ppt,.pptx,.xls,.xlsx,.txt,.epub,.mobi">
                     </label>
                 </div>
                 @error('material')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
@@ -216,6 +216,13 @@
 
 <script>
     (function () {
+        function showFormError(msg) {
+            if (window.adminShowToast && window.adminShowToast(msg, 'error')) {
+                return;
+            }
+            alert(msg);
+        }
+
         window.ebookZoomFrom = function (src) {
             const modal = document.getElementById('ebook-zoom-modal');
             const img = document.getElementById('ebook-zoom-img');
@@ -288,8 +295,14 @@
                     matSelected.textContent = '';
                     return;
                 }
-                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-                matSelected.textContent = 'Selected: ' + file.name + ' (' + sizeMB + ' MB)';
+                const sizeMB = file.size / (1024 * 1024);
+                if (sizeMB > 200) {
+                    matSelected.textContent = 'Selected: ' + file.name + ' (' + sizeMB.toFixed(1) + ' MB) — Warning: Exceeds 200 MB limit!';
+                    matSelected.classList.remove('hidden');
+                    showFormError('Selected file (' + sizeMB.toFixed(1) + ' MB) exceeds the 200 MB maximum file limit.');
+                    return;
+                }
+                matSelected.textContent = 'Selected: ' + file.name + ' (' + sizeMB.toFixed(1) + ' MB)';
                 matSelected.classList.remove('hidden');
             });
         }
@@ -377,31 +390,19 @@
                             }
                         } catch (err) {}
 
-                        if (window.adminShowToast) {
-                            window.adminShowToast(errorMsg, 'error');
-                        } else {
-                            alert(errorMsg);
-                        }
+                        showFormError(errorMsg);
                     } else if (xhr.status === 413) {
                         if (progressWrap) progressWrap.classList.add('hidden');
                         if (submitBtn) submitBtn.disabled = false;
                         if (btnText) btnText.textContent = originalBtnText;
-                        const msg = 'File too large for the server limits. Maximum allowed upload size exceeded.';
-                        if (window.adminShowToast) {
-                            window.adminShowToast(msg, 'error');
-                        } else {
-                            alert(msg);
-                        }
+                        const msg = 'File too large for server limits. Maximum allowed upload size exceeded.';
+                        showFormError(msg);
                     } else {
                         if (progressWrap) progressWrap.classList.add('hidden');
                         if (submitBtn) submitBtn.disabled = false;
                         if (btnText) btnText.textContent = originalBtnText;
                         let errMsg = 'An error occurred during upload (Status: ' + xhr.status + ').';
-                        if (window.adminShowToast) {
-                            window.adminShowToast(errMsg, 'error');
-                        } else {
-                            alert(errMsg);
-                        }
+                        showFormError(errMsg);
                     }
                 });
 
@@ -410,11 +411,7 @@
                     if (submitBtn) submitBtn.disabled = false;
                     if (btnText) btnText.textContent = originalBtnText;
                     const netErr = 'Network error occurred during file upload. Please check your network connection.';
-                    if (window.adminShowToast) {
-                        window.adminShowToast(netErr, 'error');
-                    } else {
-                        alert(netErr);
-                    }
+                    showFormError(netErr);
                 });
 
                 xhr.open('POST', form.action, true);
