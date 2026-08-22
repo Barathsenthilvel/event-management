@@ -115,7 +115,7 @@ class EBookController extends Controller
             'price' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
             'banner_image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,svg|max:10240',
-            'material' => 'nullable|file|max:204800|mimes:pdf,doc,docx,zip,rar,7z,ppt,pptx,xls,xlsx,txt,epub,mobi,bin,octet-stream|extensions:pdf,doc,docx,zip,rar,7z,ppt,pptx,xls,xlsx,txt,epub,mobi',
+            'material' => 'nullable|file|max:204800|extensions:pdf,doc,docx,zip,rar,7z,ppt,pptx,xls,xlsx,txt,epub,mobi,bin',
             'is_active' => 'nullable|boolean',
         ]);
     }

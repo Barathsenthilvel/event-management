@@ -167,7 +167,7 @@
                             </svg>
                         </div>
                         <span class="text-xs font-medium text-slate-700">Upload PDF, Word, Zip, or EPUB (up to 200 MB)</span>
-                        <input id="ebook_material_input" type="file" name="material" class="hidden" accept=".pdf,.doc,.docx,.zip,.rar,.7z,.ppt,.pptx,.xls,.xlsx,.txt,.epub,.mobi">
+                        <input id="ebook_material_input" type="file" name="material" class="hidden" accept=".pdf,.doc,.docx,.zip,.rar,.7z,.ppt,.pptx,.xls,.xlsx,.txt,.epub,.mobi,.bin">
                     </label>
                 </div>
                 @error('material')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
