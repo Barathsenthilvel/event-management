@@ -227,12 +227,6 @@ return [
         'default_amount' => 100,
         'bar_percent_demo' => 52,
         'amounts' => [10, 25, 50, 100, 250],
-        'campaigns' => [
-            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Child health program', 'title' => 'Promoting the rights of every child', 'excerpt' => 'Healthcare, education, and safe spaces for children in our communities.'],
-            ['image' => 'images/events/event-1-1.jpg', 'alt' => 'Community children', 'title' => 'There are many ways you can help today', 'excerpt' => 'Join workshops, fundraisers, and outreach programs that change lives.'],
-            ['image' => 'images/events/event-1-3.jpg', 'alt' => 'Volunteer event', 'title' => 'Clean water & nutrition programs', 'excerpt' => 'Your gift funds sustainable access to essentials for families in need.'],
-            ['image' => 'images/events/event-1-2.jpg', 'alt' => 'Youth support', 'title' => 'Youth mentorship & skills training', 'excerpt' => 'Building brighter futures through coaching, courses, and community.'],
-        ],
     ],
 
     'activities' => [

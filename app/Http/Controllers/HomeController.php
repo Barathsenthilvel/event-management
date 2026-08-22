@@ -65,12 +65,7 @@ class HomeController extends Controller
         $interestedEventIds = $this->resolveInterestedEventIdsForHome($homeEvents);
         $guestInterestedEventIds = $this->resolveGuestInterestedEventIds();
 
-        $homeDonations = Donation::query()
-            ->where('is_active', true)
-            ->orderByDesc('promote_front')
-            ->latest('id')
-            ->limit(12)
-            ->get();
+        $homeDonations = $this->resolveHomepageDonations();
 
         $blog = $this->resolveHomepageBlog();
         $gallery = $this->resolveHomepageGallery();
@@ -689,6 +684,35 @@ class HomeController extends Controller
             'section_button_text' => $section?->section_button_text ?? 'Explore All Posts',
             'posts' => $posts,
         ];
+    }
+
+    /**
+     * Featured donation campaigns for the homepage carousel (admin → Donations).
+     *
+     * @return \Illuminate\Support\Collection<int, Donation>
+     */
+    private function resolveHomepageDonations(): Collection
+    {
+        if (! Schema::hasTable('donations')) {
+            return collect();
+        }
+
+        $featured = Donation::query()
+            ->where('is_active', true)
+            ->where('promote_front', true)
+            ->latest('id')
+            ->limit(12)
+            ->get();
+
+        if ($featured->isNotEmpty()) {
+            return $featured;
+        }
+
+        return Donation::query()
+            ->where('is_active', true)
+            ->latest('id')
+            ->limit(12)
+            ->get();
     }
 
     /**
