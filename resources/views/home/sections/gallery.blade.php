@@ -16,7 +16,7 @@
                         {{ $gallery['section_badge'] ?? 'Impact in pictures' }}
                     </div>
                     <h2 class="mt-3 text-3xl md:text-4xl font-extrabold leading-tight text-[#351c42]">
-                        @if($galleryTitleMatch)
+                        @if($galleryTitleMatch && isset($galleryTitleParts[1], $galleryTitleParts[2]))
                             {{ trim($galleryTitleParts[1]) }}
                             <span class="relative inline-block">{{ $galleryTitleParts[2] }}
                                 <span class="absolute -bottom-1 left-0 right-0 h-2.5 rounded-full bg-[#fddc6a]/90 -z-10" aria-hidden="true"></span>
