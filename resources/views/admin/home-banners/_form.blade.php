@@ -105,7 +105,7 @@
                           class="{{ $imageUrl ? '' : 'hidden' }} text-[10px] font-medium text-indigo-600">Click to change image</span>
                     <input type="file" id="home-banner-image" name="image" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp" @if(!$isEdit) required @endif>
                 </label>
-                <p class="mt-2 text-[11px] font-medium text-slate-500">JPEG, PNG, GIF, or WebP. Maximum size: 5&nbsp;MB.</p>
+                <p class="mt-2 text-[11px] font-medium text-slate-500">Recommended size: <span class="font-bold text-slate-700">1200 × 400 px</span> (3:1 ratio) or <span class="font-bold text-slate-700">1920 × 600 px</span>. Formats: JPEG, PNG, GIF, or WebP (Max 5 MB).</p>
                 @error('image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 

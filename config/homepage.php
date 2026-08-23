@@ -105,7 +105,7 @@ return [
     'banners' => [
         [
             'href' => '/campaign',
-            'src' => 'images/events/event-1-1.jpg',
+            'src' => 'gnat-images/b1.png',
             'alt' => 'Community education and outreach',
             'eyebrow' => 'EVENTS',
             'title' => 'Together we go further',
@@ -113,7 +113,7 @@ return [
         ],
         [
             'href' => '/give',
-            'src' => 'images/events/event-1-2.jpg',
+            'src' => 'gnat-images/b2.png',
             'alt' => 'Programs and fundraising support',
             'eyebrow' => 'PROGRAMS',
             'title' => 'Support that reaches every family',
@@ -121,7 +121,7 @@ return [
         ],
         [
             'href' => '/photos',
-            'src' => 'images/events/event-1-3.jpg',
+            'src' => 'gnat-images/1000989137.png',
             'alt' => 'Volunteers at community events',
             'eyebrow' => 'COMMUNITY',
             'title' => 'Moments that inspire action',
@@ -184,10 +184,11 @@ return [
     ],
 
     'about' => [
-        'main_image' => 'images/events/event-1-2.jpg',
-        'accent_image' => 'images/events/event-1-1.jpg',
+        'main_image' => 'gnat-images/1000989135.png',
+        'accent_image' => 'gnat-images/1000989136.png',
+        'third_image' => 'gnat-images/1000989137.png',
         'eyebrow' => 'ABOUT GNAT ASSOCIATION',
-        'title_lines' => ['Empowering Nurses,', 'Transforming Care', 'Across Tamil Nadu'],
+        'title_lines' => ['Empowering Nurses,', 'Across Tamil Nadu'],
         'title_highlight' => 'Transforming Care',
         'intro_lines' => [
             'Graduate Nurses Association of Tamil Nadu believes that qualified nurses are the backbone of the healthcare delivery system; they function as the orbit of the caring process by shouldering major care needs in hospitals and communities.',

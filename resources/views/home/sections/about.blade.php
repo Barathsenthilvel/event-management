@@ -4,25 +4,20 @@
 
     <div class="mx-auto max-w-7xl px-4">
         <div class="grid gap-12 lg:grid-cols-2 lg:gap-14 items-center">
-            <div class="relative">
-                <div class="relative max-w-[430px]">
-                    <div
-                        class="about2-img-main overflow-hidden border-4 border-white shadow-xl bg-white"
-                        style="clip-path: ellipse(47% 50% at 50% 50%);"
-                    >
-                        <img
-                            src="{{ asset($about['main_image']) }}"
-                            alt="GNAT Association community support"
-                            class="h-[320px] w-full object-cover"
-                        />
-                    </div>
+            <div class="relative py-2 flex justify-center lg:justify-start">
+                <!-- Ambient background glow -->
+                <div class="pointer-events-none absolute -inset-4 rounded-[40px] bg-gradient-to-tr from-[#965995]/25 via-[#fddc6a]/15 to-transparent blur-3xl opacity-80" aria-hidden="true"></div>
 
-                    <div class="about2-img-accent absolute -right-8 -top-2 w-44 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg">
-                        <img
-                            src="{{ asset($about['accent_image']) }}"
-                            alt="GNAT Association team"
-                            class="h-32 w-full object-cover"
-                        />
+                <div class="relative max-w-[480px] w-full">
+                    <!-- Main Full Image Card (No cropping - natural height & full image display) -->
+                    <div class="group relative overflow-hidden rounded-3xl border-2 border-white/20 bg-white/10 p-2 shadow-2xl backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_65px_rgba(0,0,0,0.5)] hover:border-white/40">
+                        <div class="overflow-hidden rounded-2xl bg-white/5">
+                            <img
+                                src="{{ asset($about['main_image'] ?? 'gnat-images/1000989135.png') }}"
+                                alt="GNAT Association"
+                                class="h-auto w-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -34,11 +29,20 @@
                 </div>
 
                 <h2 class="mt-4 text-3xl md:text-4xl font-extrabold leading-tight text-white">
-                    {{ $about['title_lines'][0] }}<br />
-                    {{ $about['title_lines'][1] }} <span class="relative inline-block">{{ $about['title_highlight'] }}
-                        <span class="absolute left-0 right-0 -bottom-2 h-2 bg-[#fddc6a] rounded-full"></span>
-                    </span><br />
-                    {{ $about['title_lines'][2] }}
+                    @if(!empty($about['title_lines'][0]))
+                        {{ $about['title_lines'][0] }}<br />
+                    @endif
+                    @if(!empty($about['title_lines'][1]))
+                        {{ $about['title_lines'][1] }}
+                    @endif
+                    @if(!empty($about['title_highlight']))
+                        <span class="relative inline-block">{{ $about['title_highlight'] }}
+                            <span class="absolute left-0 right-0 -bottom-2 h-2 bg-[#fddc6a] rounded-full"></span>
+                        </span>
+                    @endif
+                    @if(!empty($about['title_lines'][2]))
+                        <br />{{ $about['title_lines'][2] }}
+                    @endif
                 </h2>
 
                 <div class="mt-6 max-w-xl space-y-4 text-sm md:text-base leading-7 text-white/80">

@@ -19,14 +19,17 @@
                                 ? $rawHref
                                 : url('/').'/'.ltrim($rawHref, '/');
                         @endphp
+                        @php
+                            $hasCaption = !empty($banner['eyebrow']) || !empty($banner['title']) || !empty($banner['text']);
+                        @endphp
                         <a
                             href="{{ $slideHref }}"
-                            class="banner-slide group relative block h-[160px] shrink-0 overflow-hidden sm:h-[200px] md:h-[240px] lg:h-[280px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
+                            class="banner-slide group relative block w-full shrink-0 overflow-hidden aspect-[2.2/1] min-[450px]:aspect-[2.4/1] sm:aspect-[2.7/1] md:aspect-[2.9/1] lg:aspect-[3.1/1] max-h-[520px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
                         >
                             <img
                                 src="{{ asset($banner['src']) }}"
                                 alt="{{ $banner['alt'] }}"
-                                class="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.02]"
+                                class="h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.01]"
                                 width="1200"
                                 height="600"
                                 sizes="100vw"
@@ -34,9 +37,8 @@
                                 decoding="async"
                                 data-banner-photo
                             />
-                            <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a0f24]/80 via-transparent to-[#351c42]/15 opacity-90" aria-hidden="true"></span>
-
-                            @if(!empty($banner['eyebrow']) || !empty($banner['title']) || !empty($banner['text']))
+                            @if($hasCaption)
+                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a0f24]/80 via-transparent to-[#351c42]/15 opacity-90" aria-hidden="true"></span>
                                 <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-4 pb-16 pt-8 sm:px-6 sm:pb-20">
                                     <div class="max-w-2xl">
                                         @if(!empty($banner['eyebrow']))
@@ -54,6 +56,8 @@
                                         @endif
                                     </div>
                                 </div>
+                            @else
+                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-30" aria-hidden="true"></span>
                             @endif
                         </a>
                     @endforeach
@@ -90,7 +94,7 @@
 
                 {{-- Bottom dock: counter + dots --}}
                 <div
-                    class="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex flex-col items-center gap-3 bg-gradient-to-t from-black/55 via-black/20 to-transparent px-4 pb-5 pt-20 sm:flex-row sm:justify-between sm:px-6"
+                    class="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex flex-col items-center gap-2 bg-gradient-to-t from-black/35 via-transparent to-transparent px-4 pb-3 pt-8 sm:flex-row sm:justify-between sm:px-6"
                 >
                     <p
                         id="bannerSlideLabel"
