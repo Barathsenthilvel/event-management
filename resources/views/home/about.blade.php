@@ -66,25 +66,15 @@
             </div>
 
             <!-- Right Column: Visual Showcase Frame -->
-            <div class="lg:col-span-5 relative">
-                <div class="aspect-[4/3] sm:aspect-[14/10] overflow-hidden rounded-[26px] border border-[#351c42]/10 bg-white shadow-sm">
-                    <img
-                        src="{{ asset(($about['main_image'] ?? 'images/events/event-1-2.jpg')) }}"
-                        alt="About GNAT Association"
-                        class="h-full w-full object-cover"
-                        loading="lazy"
-                    />
-                </div>
-                <div class="absolute -bottom-6 -left-6 hidden md:block w-48 overflow-hidden rounded-[22px] border border-[#351c42]/10 bg-white shadow-lg">
-                    <img
-                        src="{{ asset(($about['accent_image'] ?? 'images/events/event-1-1.jpg')) }}"
-                        alt="GNAT Association community"
-                        class="h-32 w-full object-cover"
-                        loading="lazy"
-                    />
-                    <div class="p-3">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#965995]">Trusted work</p>
-                        <p class="mt-1 text-xs font-bold text-[#351c42]/80">Programs with clear outcomes</p>
+            <div class="lg:col-span-5 relative flex justify-center">
+                <div class="group relative w-full overflow-hidden rounded-[28px] border border-[#351c42]/10 bg-[#f8f6fa] p-2 shadow-sm transition-all duration-500 hover:shadow-lg">
+                    <div class="overflow-hidden rounded-[22px] bg-white">
+                        <img
+                            src="{{ asset(($about['main_image'] ?? 'gnat-images/1000989135.png')) }}"
+                            alt="About GNAT Association"
+                            class="h-auto w-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                            loading="lazy"
+                        />
                     </div>
                 </div>
             </div>
