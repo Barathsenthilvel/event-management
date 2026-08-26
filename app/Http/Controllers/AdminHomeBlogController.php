@@ -110,7 +110,7 @@ class AdminHomeBlogController extends Controller
             'tag' => ['nullable', 'string', 'max:100'],
             'published_at' => ['nullable', 'date'],
             'title' => ['required', 'string', 'max:255'],
-            'excerpt' => ['nullable', 'string', 'max:1000'],
+            'excerpt' => ['nullable', 'string'],
             'comments_count' => ['nullable', 'integer', 'min:0'],
             'read_more_url' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
