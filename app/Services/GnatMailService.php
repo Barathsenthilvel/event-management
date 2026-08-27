@@ -1454,10 +1454,35 @@ class GnatMailService
     /**
      * @param  array<string, array{status: string, error?: ?string}>  $channels
      */
-    private function recordBroadcastChannels(?int $broadcastBatchId, int $userId, array $channels): void
+    private function recordBroadcastChannels(?int $broadcastBatchId, int $userId, array $channels, string $scenarioKey = 'transactional'): void
     {
         if ($broadcastBatchId === null) {
-            return;
+            $user = User::query()->find($userId);
+            if (! $user) {
+                return;
+            }
+
+            $subject = self::MEMBER_SUBJECTS[$scenarioKey] ?? self::ADMIN_SUBJECTS[$scenarioKey] ?? $scenarioKey;
+            $name = $this->memberDisplayName($user);
+
+            $hasFailure = ($channels['email']['status'] ?? '') === 'failed'
+                || ($channels['sms']['status'] ?? '') === 'failed'
+                || ($channels['whatsapp']['status'] ?? '') === 'failed';
+
+            $batch = \App\Models\GnatNotificationBatch::create([
+                'initiated_by_admin_id' => auth('admin')->id(),
+                'notification_type' => $scenarioKey,
+                'entity_id' => $user->id,
+                'entity_label' => mb_substr($subject.' — '.$name, 0, 255),
+                'total_recipients' => 1,
+                'chunk_size' => 1,
+                'chunks_total' => 1,
+                'chunks_finished' => 1,
+                'status' => $hasFailure ? \App\Models\GnatNotificationBatch::STATUS_FAILED : \App\Models\GnatNotificationBatch::STATUS_COMPLETED,
+                'completed_at' => now(),
+            ]);
+
+            $broadcastBatchId = $batch->id;
         }
 
         GnatNotificationDeliveryLog::recordChannelResults($broadcastBatchId, $userId, $channels);
