@@ -22,6 +22,22 @@
             color: #351c42;
             outline: none;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            text-align: left;
+        }
+        input[type="date"].ml-inp,
+        input[type="date"] {
+            text-align: left !important;
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 2.75rem;
+            box-sizing: border-box;
+        }
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left !important;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            margin-left: auto;
+            cursor: pointer;
         }
         .ml-inp:focus {
             border-color: rgba(150, 89, 149, 0.55);
@@ -29,9 +45,9 @@
             box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
         }
         .ml-inp.is-invalid {
-            border-color: rgba(220, 38, 38, 0.55);
-            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
-            background: #fff;
+            border-color: rgba(220, 38, 38, 0.6) !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14) !important;
+            background: #fff !important;
         }
         .ml-help {
             margin-top: 0.4rem;
@@ -75,6 +91,12 @@
             border-radius: 1rem;
             border: 2px dashed rgba(150, 89, 149, 0.28);
             background: linear-gradient(180deg, rgba(150, 89, 149, 0.04) 0%, rgba(255, 255, 255, 0.6) 100%);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .ml-upload-zone.is-invalid {
+            border-color: rgba(220, 38, 38, 0.6) !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14) !important;
+            background: linear-gradient(180deg, rgba(254, 242, 242, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
         }
         .ml-upload-zone input[type="file"]::file-selector-button {
             margin-right: 0.75rem;
@@ -146,8 +168,23 @@
 
                 @include('member.partials.profile-upload-error-modal')
 
-                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" data-upload-max-bytes="{{ $profileUploadMaxBytes }}" data-upload-max-label="{{ $profileUploadMaxLabel }}" @if($profileLocked) data-profile-locked @endif>
+                <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" novalidate data-upload-max-bytes="{{ $profileUploadMaxBytes }}" data-upload-max-label="{{ $profileUploadMaxLabel }}" @if($profileLocked) data-profile-locked @endif>
                     @csrf
+
+                    <div id="form-validation-summary" class="hidden rounded-2xl border border-red-300 bg-red-50 p-4 sm:p-5 shadow-sm text-red-800" role="alert">
+                        <div class="flex items-start gap-3">
+                            <div class="shrink-0 mt-0.5 text-red-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-red-900">Please fix the missing or invalid details highlighted in red below:</h4>
+                                <ul id="form-validation-summary-list" class="mt-2 list-inside list-disc text-xs font-semibold space-y-1 text-red-700">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="space-y-8">
                         <section class="space-y-5">
@@ -157,11 +194,13 @@
                             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 <div>
                                     <label class="ml-label">First name <span class="text-red-500">*</span></label>
-                                    <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" @disabled($profileLocked) />
+                                    <input name="first_name" value="{{ old('first_name', $user->first_name) }}" required class="ml-inp" data-validate="required" data-label="First name" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="first_name"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Last name <span class="text-red-500">*</span></label>
-                                    <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" @disabled($profileLocked) />
+                                    <input name="last_name" value="{{ old('last_name', $user->last_name) }}" required class="ml-inp" data-validate="required" data-label="Last name" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="last_name"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Email ID</label>
@@ -174,17 +213,19 @@
                                 </div>
                                 <div>
                                     <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" max="{{ now()->format('Y-m-d') }}" @disabled($profileLocked) />
+                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" max="{{ now()->format('Y-m-d') }}" data-validate="required|past_date" data-label="Date of birth" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="dob"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Gender <span class="text-red-500">*</span></label>
                                     @php($gender = old('gender', $user->gender))
-                                    <x-member.profile-select-field name="gender" :required="true" :disabled="$profileLocked">
+                                    <x-member.profile-select-field name="gender" :required="true" :disabled="$profileLocked" data-validate="required" data-label="Gender">
                                         <option value="">Select</option>
                                         <option value="Male" @selected($gender === 'Male')>Male</option>
                                         <option value="Female" @selected($gender === 'Female')>Female</option>
                                         <option value="Other" @selected($gender === 'Other')>Other</option>
                                     </x-member.profile-select-field>
+                                    <p class="ml-help" data-error-for="gender"></p>
                                 </div>
                             </div>
                         </section>
@@ -197,12 +238,13 @@
                                 <div>
                                     <label class="ml-label">Type of profile <span class="text-red-500">*</span></label>
                                     @php($profileType = old('profile_type', $user->profile_type))
-                                    <x-member.profile-select-field name="profile_type" :required="true" :disabled="$profileLocked" data-profile-type-select>
+                                    <x-member.profile-select-field name="profile_type" :required="true" :disabled="$profileLocked" data-profile-type-select data-validate="required" data-label="Type of profile">
                                         <option value="">Select</option>
                                         <option value="registered_nurse" @selected($profileType === 'registered_nurse')>Registered Nurse</option>
                                         <option value="student_nurse" @selected($profileType === 'student_nurse')>Student Nurse</option>
                                         <option value="volunteer" @selected($profileType === 'volunteer')>Volunteer</option>
                                     </x-member.profile-select-field>
+                                    <p class="ml-help" data-error-for="profile_type"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Referred by</label>
@@ -217,7 +259,7 @@
                                 <div>
                                     <label class="ml-label">Qualification <span class="text-red-500">*</span></label>
                                     @php($qualification = old('qualification', $user->qualification))
-                                    <x-member.profile-select-field name="qualification" :required="true" :disabled="$profileLocked">
+                                    <x-member.profile-select-field name="qualification" :required="true" :disabled="$profileLocked" data-validate="required" data-label="Qualification">
                                         <option value="">Select</option>
                                         <option value="Diploma" @selected($qualification === 'Diploma')>Diploma</option>
                                         <option value="B.Sc" @selected($qualification === 'B.Sc')>B.Sc</option>
@@ -227,32 +269,38 @@
                                         <option value="PhD" @selected($qualification === 'PhD')>PhD</option>
                                         <option value="Other" @selected($qualification === 'Other')>Other</option>
                                     </x-member.profile-select-field>
+                                    <p class="ml-help" data-error-for="qualification"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Blood group <span class="text-red-500">*</span></label>
                                     @php($blood = old('blood_group', $user->blood_group))
-                                    <x-member.profile-select-field name="blood_group" :required="true" :disabled="$profileLocked">
+                                    <x-member.profile-select-field name="blood_group" :required="true" :disabled="$profileLocked" data-validate="required" data-label="Blood group">
                                         <option value="">Select</option>
                                         @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
                                             <option value="{{ $bg }}" @selected($blood === $bg)>{{ $bg }}</option>
                                         @endforeach
                                     </x-member.profile-select-field>
+                                    <p class="ml-help" data-error-for="blood_group"></p>
                                 </div>
-                                <div>
+                                <div data-profile-show="registered_nurse">
                                     <label class="ml-label">RNRM No <span class="text-red-500" data-profile-required="registered_nurse">*</span></label>
-                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" class="ml-inp" data-profile-show="registered_nurse" @disabled($profileLocked) />
+                                    <input name="rnrm_number_with_date" value="{{ old('rnrm_number_with_date', $user->rnrm_number_with_date) }}" class="ml-inp" data-profile-show="registered_nurse" data-validate="required_if:registered_nurse" data-label="RNRM No" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="rnrm_number_with_date"></p>
                                 </div>
-                                <div>
+                                <div data-profile-show="student_nurse">
                                     <label class="ml-label">Student ID <span class="text-red-500" data-profile-required="student_nurse">*</span></label>
-                                    <input name="student_id" value="{{ old('student_id', $user->student_id) }}" class="ml-inp" data-profile-show="student_nurse" @disabled($profileLocked) />
+                                    <input name="student_id" value="{{ old('student_id', $user->student_id) }}" class="ml-inp" data-profile-show="student_nurse" data-validate="required_if:student_nurse" data-label="Student ID" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="student_id"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">College name <span class="text-red-500">*</span></label>
-                                    <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" @disabled($profileLocked) />
+                                    <input name="college_name" value="{{ old('college_name', $user->college_name) }}" required class="ml-inp" data-validate="required" data-label="College name" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="college_name"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Door no <span class="text-red-500">*</span></label>
-                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" @disabled($profileLocked) />
+                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" data-validate="required" data-label="Door no" @disabled($profileLocked) />
+                                    <p class="ml-help" data-error-for="door_no"></p>
                                 </div>
                                 <div>
                                     <label class="ml-label">Locality / area <span class="text-red-500">*</span></label>
@@ -306,7 +354,7 @@
                                 <span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span> Documents
                             </h3>
                             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                <div class="ml-upload-zone p-4">
+                                <div class="ml-upload-zone p-4" data-doc-zone="educational_certificate" data-has-file="{{ ($user->educational_certificate_path || !empty($pendingProfileDocs['educational_certificate'])) ? 'true' : 'false' }}">
                                     <label class="ml-label">
                                         Educational certificate
                                         <span class="text-red-500" data-profile-required="student_nurse,volunteer">*</span>
@@ -322,9 +370,10 @@
                                     @endif
                                     <input type="file" name="educational_certificate" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
                                     <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
+                                    <p class="ml-help mt-1" data-error-for="educational_certificate"></p>
                                     @error('educational_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
-                                <div class="ml-upload-zone p-4" data-profile-show="registered_nurse">
+                                <div class="ml-upload-zone p-4" data-profile-show="registered_nurse" data-doc-zone="rnrm_certificate" data-has-file="{{ ($user->rnrm_certificate_path || !empty($pendingProfileDocs['rnrm_certificate'])) ? 'true' : 'false' }}">
                                     <label class="ml-label">RNRM certificate copy <span class="text-red-500" data-profile-required="registered_nurse">*</span></label>
                                     @if($user->rnrm_certificate_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->rnrm_certificate_path) }}">View current</a>
@@ -337,9 +386,10 @@
                                     @endif
                                     <input type="file" name="rnrm_certificate" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
                                     <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
+                                    <p class="ml-help mt-1" data-error-for="rnrm_certificate"></p>
                                     @error('rnrm_certificate')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
-                                <div class="ml-upload-zone p-4" data-profile-show="student_nurse">
+                                <div class="ml-upload-zone p-4" data-profile-show="student_nurse" data-doc-zone="student_id_card" data-has-file="{{ ($user->student_id_card_path || !empty($pendingProfileDocs['student_id_card'])) ? 'true' : 'false' }}">
                                     <label class="ml-label">Student ID (card) <span class="text-red-500" data-profile-required="student_nurse">*</span></label>
                                     @if($user->student_id_card_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->student_id_card_path) }}">View current</a>
@@ -352,9 +402,10 @@
                                     @endif
                                     <input type="file" name="student_id_card" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
                                     <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
+                                    <p class="ml-help mt-1" data-error-for="student_id_card"></p>
                                     @error('student_id_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
-                                <div class="ml-upload-zone p-4">
+                                <div class="ml-upload-zone p-4" data-doc-zone="aadhar_card" data-has-file="{{ ($user->aadhar_card_path || !empty($pendingProfileDocs['aadhar_card'])) ? 'true' : 'false' }}">
                                     <label class="ml-label">Aadhar card <span class="text-red-500">*</span></label>
                                     @if($user->aadhar_card_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->aadhar_card_path) }}">View current</a>
@@ -367,9 +418,10 @@
                                     @endif
                                     <input type="file" name="aadhar_card" accept="{{ $documentAccept }}" class="w-full text-sm" @disabled($profileLocked) />
                                     <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">PDF, Office documents, or images. Maximum size: {{ $profileUploadMaxLabel }}.</p>
+                                    <p class="ml-help mt-1" data-error-for="aadhar_card"></p>
                                     @error('aadhar_card')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
-                                <div class="ml-upload-zone p-4">
+                                <div class="ml-upload-zone p-4" data-doc-zone="passport_photo" data-has-file="{{ ($user->passport_photo_path || !empty($pendingProfileDocs['passport_photo'])) ? 'true' : 'false' }}">
                                     <label class="ml-label">Passport size photo <span class="text-red-500">*</span></label>
                                     @if($user->passport_photo_path)
                                         <a class="mb-2 inline-block text-xs font-semibold text-[#965995]" target="_blank" href="{{ asset('storage/' . $user->passport_photo_path) }}">View current</a>
@@ -382,6 +434,7 @@
                                     @endif
                                     <input type="file" name="passport_photo" accept="image/*,.heic,.heif" class="w-full text-sm" @disabled($profileLocked) />
                                     <p class="mt-2 text-[11px] font-medium text-[#351c42]/55">Image files only. Maximum size: {{ $profileUploadMaxLabel }}.</p>
+                                    <p class="ml-help mt-1" data-error-for="passport_photo"></p>
                                     @error('passport_photo')<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                                 </div>
                             </div>
@@ -488,7 +541,12 @@
             }
 
             setVisibility(typeSelect?.value || "");
-            typeSelect?.addEventListener("change", () => setVisibility(typeSelect.value));
+            typeSelect?.addEventListener("change", () => {
+                setVisibility(typeSelect.value);
+                if (!isProfileLocked) {
+                    checkDocumentRules();
+                }
+            });
 
             // Keep type-based visibility active even in read-only mode.
             if (isProfileLocked) return;
@@ -500,16 +558,43 @@
                 const rules = (field.dataset.validate || "").split("|");
                 const label = field.dataset.label || "This field";
                 const value = (field.value || "").trim();
+                const currentProfileType = typeSelect?.value || "";
 
                 for (const rule of rules) {
-                    if (rule === "required" && !value) return `${label} is required.`;
+                    if (!rule) continue;
+
+                    if (rule === "required" && !value) {
+                        return `${label} is required.`;
+                    }
+
+                    if (rule.startsWith("required_if:")) {
+                        const targetType = rule.split(":")[1];
+                        if (currentProfileType === targetType && !value) {
+                            return `${label} is required.`;
+                        }
+                    }
+
+                    if (rule === "past_date" && value) {
+                        const selectedDate = new Date(value);
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999);
+                        if (selectedDate > today) {
+                            return `${label} cannot be in the future.`;
+                        }
+                    }
+
                     if (rule.startsWith("min:")) {
                         const min = Number(rule.split(":")[1] || 0);
-                        if (value && value.length < min) return `${label} must be at least ${min} characters.`;
+                        if (value && value.length < min) {
+                            return `${label} must be at least ${min} characters.`;
+                        }
                     }
+
                     if (rule.startsWith("digits:")) {
                         const count = Number(rule.split(":")[1] || 0);
-                        if (!new RegExp(`^\\d{${count}}$`).test(value)) return `${label} must be ${count} digits.`;
+                        if (value && !new RegExp(`^\\d{${count}}$`).test(value)) {
+                            return `${label} must be ${count} digits.`;
+                        }
                     }
                 }
                 return "";
@@ -534,20 +619,110 @@
                 });
             });
 
+            const isDocUploaded = (fieldName) => {
+                const zone = form.querySelector(`[data-doc-zone="${fieldName}"]`);
+                const hasExisting = zone?.getAttribute("data-has-file") === "true";
+                const input = form.querySelector(`input[name="${fieldName}"]`);
+                const hasSelected = Boolean(input?.files && input.files.length > 0);
+                return hasExisting || hasSelected;
+            };
+
+            const checkDocumentRules = () => {
+                const currentProfileType = typeSelect?.value || "";
+                const docErrors = [];
+
+                const setDocError = (fieldName, message) => {
+                    const zone = form.querySelector(`[data-doc-zone="${fieldName}"]`);
+                    const errorEl = getErrorEl(fieldName);
+                    const hasError = Boolean(message);
+                    if (zone) zone.classList.toggle("is-invalid", hasError);
+                    if (errorEl) errorEl.textContent = message;
+                    if (message) docErrors.push({ fieldName, message });
+                };
+
+                ["educational_certificate", "rnrm_certificate", "student_id_card", "aadhar_card", "passport_photo"].forEach(f => setDocError(f, ""));
+
+                if (!isDocUploaded("aadhar_card")) {
+                    setDocError("aadhar_card", "Aadhar card document is required.");
+                }
+
+                if (!isDocUploaded("passport_photo")) {
+                    setDocError("passport_photo", "Passport size photo is required.");
+                }
+
+                if (currentProfileType === "student_nurse") {
+                    if (!isDocUploaded("educational_certificate")) {
+                        setDocError("educational_certificate", "Educational certificate is required for Student Nurse.");
+                    }
+                    if (!isDocUploaded("student_id_card")) {
+                        setDocError("student_id_card", "Student ID (card) is required for Student Nurse.");
+                    }
+                } else if (currentProfileType === "volunteer") {
+                    if (!isDocUploaded("educational_certificate")) {
+                        setDocError("educational_certificate", "Educational certificate is required for Volunteer.");
+                    }
+                } else if (currentProfileType === "registered_nurse") {
+                    const hasRnrm = isDocUploaded("rnrm_certificate");
+                    const hasEdu = isDocUploaded("educational_certificate");
+                    if (!hasRnrm && !hasEdu) {
+                        setDocError("rnrm_certificate", "RNRM certificate OR Educational certificate is required.");
+                        setDocError("educational_certificate", "RNRM certificate OR Educational certificate is required.");
+                    }
+                }
+
+                return docErrors;
+            };
+
+            const profileFileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+            profileFileInputs.forEach((input) => {
+                input.addEventListener("change", () => {
+                    const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
+                    const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
+                    const file = input.files?.[0];
+                    if (file && maxBytes && file.size > maxBytes) {
+                        const label = input.closest(".ml-upload-zone")?.querySelector(".ml-label")?.textContent?.replace("*", "").trim() || "This file";
+                        showProfileUploadClientError(`${label} is too large. Each document must not be larger than ${maxLabel}.`);
+                        input.value = "";
+                    }
+                    checkDocumentRules();
+                });
+            });
+
             form.addEventListener("submit", (e) => {
-                let hasError = false;
+                const errorList = [];
+                let firstInvalidEl = null;
+
                 fields.forEach((field) => {
                     if (field.name === "pin_code") field.value = field.value.replace(/\D/g, "").slice(0, 6);
                     if (field.name === "mobile") field.value = field.value.replace(/\D/g, "").slice(0, 10);
+
+                    const parentSection = field.closest("[data-profile-show]");
+                    if (parentSection && parentSection.classList.contains("hidden")) {
+                        paintValidation(field, "");
+                        return;
+                    }
+
                     const message = checkRules(field);
                     paintValidation(field, message);
-                    if (message) hasError = true;
+                    if (message) {
+                        errorList.push(message);
+                        if (!firstInvalidEl) {
+                            firstInvalidEl = getChoicesRoot(field) || field;
+                        }
+                    }
+                });
+
+                const docErrors = checkDocumentRules();
+                docErrors.forEach(err => {
+                    errorList.push(err.message);
+                    if (!firstInvalidEl) {
+                        firstInvalidEl = form.querySelector(`[data-doc-zone="${err.fieldName}"]`);
+                    }
                 });
 
                 const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
                 const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
-                const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
-                for (const input of fileInputs) {
+                for (const input of profileFileInputs) {
                     const file = input.files?.[0];
                     if (!file || !maxBytes) continue;
                     if (file.size > maxBytes) {
@@ -561,9 +736,25 @@
                     }
                 }
 
-                if (hasError) {
+                const summaryBox = document.getElementById("form-validation-summary");
+                const summaryList = document.getElementById("form-validation-summary-list");
+
+                if (errorList.length > 0) {
                     e.preventDefault();
-                    form.querySelector(".is-invalid")?.focus();
+
+                    if (summaryBox && summaryList) {
+                        summaryList.innerHTML = errorList.map(err => `<li>${err}</li>`).join("");
+                        summaryBox.classList.remove("hidden");
+                    }
+
+                    if (firstInvalidEl) {
+                        firstInvalidEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                        if (typeof firstInvalidEl.focus === "function") {
+                            firstInvalidEl.focus();
+                        }
+                    }
+                } else {
+                    if (summaryBox) summaryBox.classList.add("hidden");
                 }
             });
 
@@ -595,19 +786,6 @@
 
             bindModal(document.getElementById("profile-upload-error-modal"), "[data-close-profile-upload-error-modal]");
             bindModal(clientModal, "[data-close-profile-upload-client-error-modal]");
-
-            const profileFileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
-            profileFileInputs.forEach((input) => {
-                input.addEventListener("change", () => {
-                    const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
-                    const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
-                    const file = input.files?.[0];
-                    if (!file || !maxBytes || file.size <= maxBytes) return;
-                    const label = input.closest(".ml-upload-zone")?.querySelector(".ml-label")?.textContent?.replace("*", "").trim() || "This file";
-                    showProfileUploadClientError(`${label} is too large. Each document must not be larger than ${maxLabel}.`);
-                    input.value = "";
-                });
-            });
 
             if (new URLSearchParams(window.location.search).has("upload_error")) {
                 const cleanUrl = new URL(window.location.href);
