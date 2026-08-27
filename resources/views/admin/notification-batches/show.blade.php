@@ -58,12 +58,20 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-100">
-            <h2 class="text-sm font-extrabold text-slate-900">Per-member delivery</h2>
-            <p class="text-[10px] font-bold text-slate-500 mt-1">Email, SMS, and WhatsApp (WhatsApp uses the configured MSG91 flow when enabled).</p>
+        <div class="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-extrabold text-slate-900">Per-member delivery</h2>
+                <p class="text-[10px] font-bold text-slate-500 mt-0.5">Email, SMS, and WhatsApp (WhatsApp uses the configured MSG91 flow when enabled).</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('admin.notification-batches.show', $batch->id) }}" class="px-3 py-1.5 rounded-lg border text-xs font-extrabold {{ empty($statusFilter) ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200' }}">All</a>
+                <a href="{{ route('admin.notification-batches.show', ['id' => $batch->id, 'status' => 'failed']) }}" class="px-3 py-1.5 rounded-lg border text-xs font-extrabold {{ ($statusFilter ?? '') === 'failed' ? 'bg-rose-600 text-white border-rose-600' : 'bg-rose-50 text-rose-700 border-rose-200' }}">Failed only</a>
+            </div>
         </div>
         @if($logs->count() === 0)
-            <div class="p-10 text-center text-sm font-bold text-slate-500">No delivery rows yet — wait for the queue worker to process this batch.</div>
+            <div class="p-10 text-center text-sm font-bold text-slate-500">
+                {{ ($statusFilter ?? '') === 'failed' ? 'No failed notification logs found for this batch.' : 'No delivery rows yet — wait for the queue worker to process this batch.' }}
+            </div>
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left text-xs">

@@ -303,6 +303,16 @@
             @endforeach
 
             {{-- Default static sidebar items (not managed via Menu Management) --}}
+            @if(\Illuminate\Support\Facades\Route::has('admin.notification-batches.index'))
+            <a href="{{ route('admin.notification-batches.index') }}"
+                class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.notification-batches.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.notification-batches.*') ? 'text-indigo-400' : 'group-hover:text-indigo-400' }} transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Notification Logs</span>
+            </a>
+            @endif
+
             @if($admin && $admin->hasPermission('menu.view') && \Illuminate\Support\Facades\Route::has('admin.menus.index'))
             <a href="{{ route('admin.menus.index') }}"
                 class="flex items-center gap-3 p-3 {{ request()->routeIs('admin.menus.*') ? 'nav-item-active' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl transition-all group">

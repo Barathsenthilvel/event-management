@@ -8,10 +8,16 @@
                 <h1 class="text-xl font-extrabold text-slate-900">Member notification logs</h1>
                 <p class="text-xs font-bold text-slate-500 mt-1">Bulk sends from events, meetings, nominations, jobs, and polling — per member email, SMS, and WhatsApp status.</p>
             </div>
-            <form method="GET" class="flex items-center gap-2 w-full md:max-w-md">
+            <form method="GET" class="flex flex-wrap items-center gap-2 w-full md:max-w-xl">
                 <input type="search" name="q" value="{{ $q }}" placeholder="Search type or subject…"
-                    class="flex-1 min-w-0 pl-3 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
-                <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Search</button>
+                    class="flex-1 min-w-[160px] pl-3 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-200">
+                <select name="status" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-indigo-200">
+                    <option value="">All statuses</option>
+                    <option value="failed" {{ ($status ?? '') === 'failed' ? 'selected' : '' }}>Failed batches</option>
+                    <option value="completed" {{ ($status ?? '') === 'completed' ? 'selected' : '' }}>Completed batches</option>
+                    <option value="processing" {{ ($status ?? '') === 'processing' ? 'selected' : '' }}>Processing</option>
+                </select>
+                <button type="submit" class="shrink-0 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-extrabold">Filter</button>
             </form>
         </div>
     </div>

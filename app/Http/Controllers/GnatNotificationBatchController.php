@@ -28,9 +28,13 @@ class GnatNotificationBatchController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('status', ''));
 
         $batches = GnatNotificationBatch::query()
             ->with('initiator:id,name')
+            ->when($status !== '', function ($query) use ($status) {
+                $query->where('status', $status);
+            })
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($inner) use ($q) {
                     $inner->where('entity_label', 'like', '%'.$q.'%')
@@ -44,24 +48,43 @@ class GnatNotificationBatchController extends Controller
         return view('admin.notification-batches.index', [
             'batches' => $batches,
             'q' => $q,
+            'status' => $status,
         ]);
     }
 
-    public function show(int $id)
+    public function show(Request $request, int $id)
     {
+        $status = trim((string) $request->query('status', ''));
+
         $batch = GnatNotificationBatch::query()
             ->with('initiator:id,name')
             ->findOrFail($id);
 
-        $logs = $batch->deliveryLogs()
-            ->with('user:id,name,email,mobile')
-            ->latest('id')
+        $logsQuery = $batch->deliveryLogs()
+            ->with('user:id,name,email,mobile');
+
+        if ($status === 'failed') {
+            $logsQuery->where(function ($q) {
+                $q->where('email_status', 'failed')
+                    ->orWhere('sms_status', 'failed')
+                    ->orWhere('whatsapp_status', 'failed');
+            });
+        } elseif ($status !== '') {
+            $logsQuery->where(function ($q) use ($status) {
+                $q->where('email_status', $status)
+                    ->orWhere('sms_status', $status)
+                    ->orWhere('whatsapp_status', $status);
+            });
+        }
+
+        $logs = $logsQuery->latest('id')
             ->paginate(50)
             ->withQueryString();
 
         return view('admin.notification-batches.show', [
             'batch' => $batch,
             'logs' => $logs,
+            'statusFilter' => $status,
         ]);
     }
 }
