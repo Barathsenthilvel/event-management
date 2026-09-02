@@ -19,9 +19,10 @@ trait DispatchesGnatNotificationScenarios
         $this->sendScenario('s02_profile_submitted', $mobile, [$memberName]);
     }
 
-    public function profileVerified(?string $mobile, string $memberName): void
+    public function profileVerified(?string $mobile, string $memberName, ?string $subscriptionUrl = null): void
     {
-        $this->sendScenario('s03_profile_verified', $mobile, [$memberName]);
+        $url = $subscriptionUrl ?: route('member.subscription.index');
+        $this->sendScenario('s03_profile_verified', $mobile, [$memberName, $url]);
     }
 
     public function profileRejected(?string $mobile, string $memberName): void

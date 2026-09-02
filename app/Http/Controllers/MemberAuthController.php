@@ -196,7 +196,7 @@ class MemberAuthController extends Controller
             return redirect()->to($return);
         }
 
-        return redirect()->to($this->memberHomeAfterAuth($user));
+        return redirect()->intended($this->memberHomeAfterAuth($user));
     }
 
     /**

@@ -272,14 +272,17 @@ class GnatMailService
     public function sendProfileApproved(User $user): void
     {
         $name = $this->memberDisplayName($user);
+        $subscriptionUrl = route('member.subscription.index');
+
         $this->sendMember($user->email, 'm03_profile_approved_subscription', [
             'memberName' => $name,
             'heroHeadline' => 'Profile Verified',
             'heroSubtext' => 'You may now complete your membership subscription.',
             'showPortalCta' => true,
+            'portalUrl' => $subscriptionUrl,
         ]);
-        $this->sms()->profileVerified($user->mobile, $name);
-        $this->whatsapp()->profileVerified($user->mobile, $name);
+        $this->sms()->profileVerified($user->mobile, $name, $subscriptionUrl);
+        $this->whatsapp()->profileVerified($user->mobile, $name, $subscriptionUrl);
     }
 
     public function sendProfileRejected(User $user): void
