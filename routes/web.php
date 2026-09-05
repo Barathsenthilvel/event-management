@@ -33,8 +33,12 @@ use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NominationController;
 use App\Http\Controllers\PollingController;
+use App\Http\Controllers\RazorpayWebhookController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+
+// Razorpay Webhook Endpoint
+Route::post('/api/gnat/webhook', [RazorpayWebhookController::class, 'handleWebhook'])->name('razorpay.webhook');
 
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');

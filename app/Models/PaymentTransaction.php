@@ -11,6 +11,8 @@ class PaymentTransaction extends Model
         'membership_subscription_setting_id',
         'razorpay_payment_id',
         'razorpay_order_id',
+        'razorpay_payment_link_id',
+        'reference_id',
         'razorpay_signature',
         'payment_method',
         'amount',

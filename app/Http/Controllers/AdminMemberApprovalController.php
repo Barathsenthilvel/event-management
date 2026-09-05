@@ -50,7 +50,8 @@ class AdminMemberApprovalController extends Controller
         $user->save();
 
         try {
-            app(GnatMailService::class)->sendProfileApproved($user);
+            $paymentLinkUrl = app(\App\Services\RazorpayPaymentLinkService::class)->createPaymentLinkForUser($user);
+            app(GnatMailService::class)->sendProfileApproved($user, $paymentLinkUrl);
         } catch (Throwable $e) {
             // Approval should succeed even if mail/SMS provider is unavailable.
         }
