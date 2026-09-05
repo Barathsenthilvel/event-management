@@ -106,17 +106,6 @@ class DonationPaymentController extends Controller
             'razorpay_signature' => ['required', 'string'],
         ]);
 
-        $expectedOrderId = $request->session()->get('public_donation.razorpay_order_id');
-        $amountInr = (float) $request->session()->get('public_donation.amount_inr', 0);
-        $paymentId = $request->session()->get('public_donation.donation_payment_id');
-
-        if (!$expectedOrderId || $expectedOrderId !== $data['razorpay_order_id']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This payment session is no longer valid. Please start again.',
-            ], 422);
-        }
-
         $secret = config('services.razorpay.secret');
         if (!$secret) {
             return response()->json(['success' => false, 'message' => 'Payment verification is unavailable.'], 503);
@@ -134,10 +123,19 @@ class DonationPaymentController extends Controller
             ], 422);
         }
 
+        $paymentId = $request->session()->get('public_donation.donation_payment_id');
         $payment = DonationPayment::query()
-            ->where('id', $paymentId)
+            ->when($paymentId, fn ($q) => $q->where('id', $paymentId))
             ->where('order_id', $data['razorpay_order_id'])
+            ->latest('id')
             ->first();
+
+        if (!$payment) {
+            $payment = DonationPayment::query()
+                ->where('order_id', $data['razorpay_order_id'])
+                ->latest('id')
+                ->first();
+        }
 
         if (!$payment) {
             return response()->json([
@@ -145,6 +143,8 @@ class DonationPaymentController extends Controller
                 'message' => 'We could not match this payment to your donation. Please contact us with your payment ID.',
             ], 422);
         }
+
+        $amountInr = (float) ($payment->amount ?? $request->session()->get('public_donation.amount_inr', 0));
 
         $meta = $payment->meta ?? [];
         $meta['verified_at'] = now()->toIso8601String();

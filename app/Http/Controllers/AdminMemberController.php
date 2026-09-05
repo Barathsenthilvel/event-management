@@ -19,6 +19,11 @@ class AdminMemberController extends Controller
         $tab = (string) $request->query('tab', 'all');
         $q = trim((string) $request->query('q', ''));
 
+        if (! $user->activeSubscription()->exists()) {
+            app(\App\Services\RazorpayPaymentLinkService::class)->checkAndSyncPendingForUser($user);
+            $user->refresh();
+        }
+
         $this->membershipLifecycle->syncUser($user);
 
         $query = ['tab' => $tab];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MemberSubscription;
 use App\Models\MembershipSubscriptionSetting;
 use App\Models\PaymentTransaction;
+use App\Models\User;
 use App\Services\GnatMailService;
 use App\Services\MembershipLifecycleService;
 use App\Support\MembershipPeriod;
@@ -20,12 +21,44 @@ class MemberSubscriptionController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $activeSubscription = $user?->activeSubscription;
 
         if (!$user->profile_completed || !$user->is_approved) {
             return redirect()->route('member.dashboard')
                 ->with('error', 'Your profile is awaiting admin approval. Subscription plans will be visible after approval.');
         }
+
+        $paymentLinkService = app(\App\Services\RazorpayPaymentLinkService::class);
+
+        // Handle Razorpay Payment Link redirect callback
+        $plinkId = $request->query('razorpay_payment_link_id');
+        $paymentId = $request->query('razorpay_payment_id');
+        if (filled($plinkId) || filled($paymentId)) {
+            $tx = PaymentTransaction::query()
+                ->where('user_id', $user->id)
+                ->when(filled($plinkId), fn ($q) => $q->where('razorpay_payment_link_id', $plinkId))
+                ->when(filled($paymentId), fn ($q) => $q->orWhere('razorpay_payment_id', $paymentId))
+                ->latest('id')
+                ->first();
+
+            if ($tx) {
+                $paymentLinkService->syncPaymentLinkStatus($tx);
+                if ($tx->fresh()->status === 'successful') {
+                    return redirect()->route('member.subscription.index')
+                        ->with('success', 'Payment successful! Your membership subscription is now active.');
+                }
+            }
+        }
+
+        // Auto-sync any pending payment links for this user if no active subscription
+        if (! $user->activeSubscription()->exists()) {
+            $activatedSub = $paymentLinkService->checkAndSyncPendingForUser($user);
+            if ($activatedSub) {
+                $user->refresh();
+                session()->flash('success', 'Payment verified! Your membership subscription has been activated.');
+            }
+        }
+
+        $activeSubscription = $user?->activeSubscription;
 
         $query = MembershipSubscriptionSetting::query()
             ->where('is_active', true)
@@ -210,6 +243,49 @@ class MemberSubscriptionController extends Controller
             'transaction_id' => $transaction->id,
         ]);
     }
+    /**
+     * Public callback handler for Razorpay Payment Link (mobile web and desktop web).
+     */
+    public function handlePaymentLinkCallback(Request $request)
+    {
+        $plinkId = $request->query('razorpay_payment_link_id');
+        $paymentId = $request->query('razorpay_payment_id');
+        $referenceId = $request->query('razorpay_payment_link_reference_id');
+
+        $tx = null;
+        if (filled($plinkId)) {
+            $tx = PaymentTransaction::where('razorpay_payment_link_id', $plinkId)->latest('id')->first();
+        }
+        if (! $tx && filled($referenceId)) {
+            $tx = PaymentTransaction::where('reference_id', $referenceId)->latest('id')->first();
+        }
+        if (! $tx && filled($paymentId)) {
+            $tx = PaymentTransaction::where('razorpay_payment_id', $paymentId)->latest('id')->first();
+        }
+
+        if ($tx) {
+            $service = app(\App\Services\RazorpayPaymentLinkService::class);
+            $service->syncPaymentLinkStatus($tx);
+
+            $user = User::find($tx->user_id);
+            if ($user && ! Auth::check()) {
+                Auth::login($user);
+            }
+
+            if ($tx->fresh()->status === 'successful') {
+                return redirect()->route('member.subscription.index')
+                    ->with('success', 'Payment of INR ' . number_format((float) $tx->amount, 2) . ' completed successfully! Your membership is active.');
+            }
+        }
+
+        if (Auth::check()) {
+            return redirect()->route('member.subscription.index');
+        }
+
+        return redirect()->route('member.login')
+            ->with('success', 'Payment completed successfully! Please log in to view your membership.');
+    }
+
     public function verifyPayment(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -218,43 +294,49 @@ class MemberSubscriptionController extends Controller
             'razorpay_signature'  => 'required|string',
         ]);
 
-        $settingId = $request->session()->get('member.selected_membership_setting_id');
-        $expectedOrderId = $request->session()->get('member.razorpay_order_id');
-        $payableAmount = (float) $request->session()->get('member.selected_membership_payable_amount', 0);
-
-        $plan = MembershipSubscriptionSetting::query()
-            ->where('id', $settingId)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$plan) {
-            return response()->json(['success' => false, 'message' => 'Subscription plan not found.'], 400);
-        }
-
-        if (!$expectedOrderId || $expectedOrderId !== $data['razorpay_order_id']) {
-            return response()->json(['success' => false, 'message' => 'Invalid order context.'], 422);
-        }
-
         $secret = config('services.razorpay.secret');
         $computedSignature = hash_hmac('sha256', $data['razorpay_order_id'] . '|' . $data['razorpay_payment_id'], $secret);
         if (!hash_equals($computedSignature, $data['razorpay_signature'])) {
             return response()->json(['success' => false, 'message' => 'Payment signature verification failed.'], 422);
         }
 
+        // Find transaction by order_id
         $transaction = PaymentTransaction::query()
-            ->where('user_id', Auth::id())
             ->where('razorpay_order_id', $data['razorpay_order_id'])
-            ->latest()
+            ->latest('id')
             ->first();
+
+        $userId = Auth::id() ?? $transaction?->user_id;
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'User context not found.'], 422);
+        }
+
+        // If mobile browser lost auth session during app switch (UPI/GPay/PhonePe), re-authenticate user
+        if (!Auth::check() && $userId) {
+            Auth::loginUsingId($userId);
+        }
+
+        $settingId = $transaction?->membership_subscription_setting_id 
+            ?? $request->session()->get('member.selected_membership_setting_id');
+        $payableAmount = (float) ($transaction?->amount 
+            ?? $request->session()->get('member.selected_membership_payable_amount', 0));
+
+        $plan = MembershipSubscriptionSetting::query()
+            ->where('id', $settingId)
+            ->first();
+
+        if (!$plan && $transaction) {
+            $plan = $transaction->subscriptionPlan;
+        }
 
         if (!$transaction) {
             $transaction = PaymentTransaction::create([
-                'user_id' => Auth::id(),
-                'membership_subscription_setting_id' => $plan->id,
+                'user_id' => $userId,
+                'membership_subscription_setting_id' => $plan?->id,
                 'razorpay_order_id' => $data['razorpay_order_id'],
-                'amount' => $payableAmount > 0 ? $payableAmount : (float) $plan->membership_fee,
+                'amount' => $payableAmount > 0 ? $payableAmount : (float) ($plan?->membership_fee ?? 0),
                 'status' => 'pending',
-                'type' => $plan->subscription_type === 'New' ? 'new' : 'renewal',
+                'type' => ($plan?->subscription_type === 'New') ? 'new' : 'renewal',
             ]);
         }
 
@@ -273,53 +355,8 @@ class MemberSubscriptionController extends Controller
         $transaction->raw_payload = $payload;
         $transaction->save();
 
-        $user = Auth::user();
-        $currentActive = $user?->activeSubscription;
-        $period = MembershipPeriod::buildPeriod($plan, $currentActive);
-        $start = $period['start'];
-        $end = $period['end'];
-        $normalizedPaymentType = $period['payment_type'];
-
-        // Expire any previous active subscriptions. Send expiry mail only for natural lapse
-        // (end date already passed), not when an active plan is merely superseded early.
-        $today = Carbon::today()->toDateString();
-        $superseded = MemberSubscription::query()
-            ->where('user_id', Auth::id())
-            ->where('status', 'active')
-            ->get();
-
-        foreach ($superseded as $old) {
-            $oldEnd = $old->end_date?->toDateString();
-            if ($oldEnd !== null && $oldEnd < $today && $old->expiry_notification_sent_at === null && $user) {
-                app(GnatMailService::class)->sendMembershipExpiredNotice($user->fresh(), $old);
-                $old->forceFill(['expiry_notification_sent_at' => now()])->save();
-            }
-        }
-
-        MemberSubscription::query()
-            ->where('user_id', Auth::id())
-            ->where('status', 'active')
-            ->update(['status' => 'expired']);
-
-        $subscription = MemberSubscription::create([
-            'user_id' => Auth::id(),
-            'membership_subscription_setting_id' => $plan->id,
-            'subscription_type' => $plan->subscription_type,
-            'payment_type' => $normalizedPaymentType ?? MembershipPeriod::normalizePaymentType($plan->payment_type),
-            'amount' => $transaction->amount,
-            'currency' => 'INR',
-            'start_date' => $start,
-            'end_date' => $end,
-            'status' => 'active',
-            'razorpay_order_id' => $data['razorpay_order_id'],
-            'last_razorpay_payment_id' => $data['razorpay_payment_id'],
-        ]);
-
-        if ($user) {
-            $transaction->refresh();
-            app(GnatMailService::class)->sendMembershipActivated($user, $subscription, $transaction);
-            app(MembershipLifecycleService::class)->syncUser($user->fresh());
-        }
+        // Centralized activation in member_subscriptions and users tables
+        $subscription = app(\App\Services\RazorpayPaymentLinkService::class)->activateSubscriptionForTransaction($transaction, $payload);
 
         $request->session()->forget([
             'member.selected_membership_setting_id',
@@ -330,9 +367,9 @@ class MemberSubscriptionController extends Controller
         return response()->json([
             'success' => true,
             'transaction_id' => $transaction->id,
-            'subscription_id' => $subscription->id,
+            'subscription_id' => $subscription?->id,
             'message' => 'Payment successful',
-            'plan' => [
+            'plan' => $plan ? [
                 'id' => $plan->id,
                 'subscription_type' => $plan->subscription_type,
                 'payment_type' => (string) $plan->payment_type,
@@ -340,15 +377,15 @@ class MemberSubscriptionController extends Controller
                 'registration_fee' => (float) $plan->registration_fee,
                 'registration_fee_enabled' => (bool) $plan->registration_fee_enabled,
                 'grace_period' => (int) ($plan->grace_period ?? 0),
-            ],
-            'subscription' => [
+            ] : null,
+            'subscription' => $subscription ? [
                 'start_date' => $subscription->formattedStartDate(),
                 'end_date' => $subscription->formattedValidTillDate(),
                 'access_until' => $subscription->formattedEndDate(),
                 'grace_days' => $subscription->graceDays(),
                 'amount' => (float) $subscription->amount,
                 'currency' => $subscription->currency,
-            ],
+            ] : null,
         ]);
     }
 

@@ -40,6 +40,9 @@ use Illuminate\Support\Facades\Route;
 // Razorpay Webhook Endpoint
 Route::post('/api/gnat/webhook', [RazorpayWebhookController::class, 'handleWebhook'])->name('razorpay.webhook');
 
+// Razorpay Payment Link Callback (works for mobile web and desktop web, guest or authenticated)
+Route::get('/payment-link/callback', [MemberSubscriptionController::class, 'handlePaymentLinkCallback'])->name('payment.link.callback');
+
 // Public marketing site
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -226,9 +229,13 @@ Route::prefix('admin')->group(function () {
         Route::put('/designations/{designation}', [AdminDesignationController::class, 'update'])->name('admin.designations.update');
         Route::delete('/designations/{designation}', [AdminDesignationController::class, 'destroy'])->name('admin.designations.destroy');
 
-        // Subscription List (view only)
+        // Subscription List & Sync
         Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])
             ->name('admin.subscriptions.index');
+        Route::post('/subscriptions/sync-pending', [AdminSubscriptionController::class, 'syncAllPending'])
+            ->name('admin.subscriptions.sync-pending');
+        Route::post('/subscriptions/{transaction}/sync', [AdminSubscriptionController::class, 'sync'])
+            ->name('admin.subscriptions.sync');
 
         // Events Management
         Route::get('/events', [EventController::class, 'index'])->name('admin.events.index');

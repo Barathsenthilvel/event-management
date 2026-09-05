@@ -58,6 +58,11 @@ class MemberDashboardController extends Controller
             $user->refresh();
         }
 
+        if ($user && ! $user->activeSubscription()->exists()) {
+            app(\App\Services\RazorpayPaymentLinkService::class)->checkAndSyncPendingForUser($user);
+            $user->refresh();
+        }
+
         $canSeeMembership = $user && $user->profile_completed && $user->is_approved;
         $hasActiveSubscription = $user?->activeSubscription()->exists();
         if ($canSeeMembership && ! $hasActiveSubscription) {
