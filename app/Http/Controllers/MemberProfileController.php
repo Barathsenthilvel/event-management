@@ -132,7 +132,7 @@ class MemberProfileController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'mobile' => ['required', 'digits:10'],
-            'dob' => ['required', 'date', 'before_or_equal:today'],
+            'dob' => ['required', 'date', 'before_or_equal:' . now()->subYears(18)->format('Y-m-d')],
             'gender' => ['required', 'string', 'max:30'],
             'qualification' => ['required', 'string', 'max:120'],
             'blood_group' => ['required', 'string', 'max:30'],
@@ -147,6 +147,8 @@ class MemberProfileController extends Controller
             'currently_working' => ['nullable', 'string', 'max:190'],
             'current_password' => ['nullable', 'required_with:new_password', 'current_password'],
             'new_password' => ['nullable', 'string', 'min:6', 'confirmed'],
+        ], [
+            'dob.before_or_equal' => 'Date of birth must indicate an age of at least 18 years.',
         ]);
 
         $profileType = (string) $data['profile_type'];

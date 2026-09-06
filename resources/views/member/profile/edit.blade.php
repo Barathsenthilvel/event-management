@@ -176,21 +176,6 @@
                 <form method="POST" action="{{ route('member.profile.update') }}" enctype="multipart/form-data" class="space-y-8" id="member-profile-form" novalidate data-upload-max-bytes="{{ $profileUploadMaxBytes }}" data-upload-max-label="{{ $profileUploadMaxLabel }}" @if($profileLocked) data-profile-locked @endif>
                     @csrf
 
-                    <div id="form-validation-summary" class="hidden rounded-2xl border border-red-300 bg-red-50 p-4 sm:p-5 shadow-sm text-red-800" role="alert">
-                        <div class="flex items-start gap-3">
-                            <div class="shrink-0 mt-0.5 text-red-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-bold text-red-900">Please fix the missing or invalid details highlighted in red below:</h4>
-                                <ul id="form-validation-summary-list" class="mt-2 list-inside list-disc text-xs font-semibold space-y-1 text-red-700">
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="space-y-8">
                         <section class="space-y-5">
                             <h3 class="flex items-center gap-2 border-b border-[#351c42]/10 pb-3 text-xs font-bold uppercase tracking-widest text-[#965995]">
@@ -218,7 +203,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp min-w-0 max-w-full w-full" max="{{ now()->format('Y-m-d') }}" data-validate="required|past_date" data-label="Date of birth" @disabled($profileLocked) />
+                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp min-w-0 max-w-full w-full" max="{{ now()->subYears(18)->format('Y-m-d') }}" data-validate="required|dob_min_age:18" data-label="Date of birth" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="dob"></p>
                                 </div>
                                 <div>
@@ -581,8 +566,25 @@
 
                     if (rule === "past_date" && value) {
                         const todayStr = new Date().toISOString().split("T")[0];
-                        if (value > todayStr) {
-                            return `${label} cannot be in the future.`;
+                        if (value >= todayStr) {
+                            return `${label} must be before today.`;
+                        }
+                    }
+
+                    if (rule.startsWith("dob_min_age:") && value) {
+                        const minAge = Number(rule.split(":")[1] || 18);
+                        const parts = value.split("-");
+                        if (parts.length === 3) {
+                            const birthDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                            const today = new Date();
+                            let age = today.getFullYear() - birthDate.getFullYear();
+                            const m = today.getMonth() - birthDate.getMonth();
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                age--;
+                            }
+                            if (age < minAge) {
+                                return `${label} must indicate an age of at least ${minAge} years.`;
+                            }
                         }
                     }
 
@@ -618,11 +620,10 @@
                         if (field.name === "pin_code") field.value = field.value.replace(/\D/g, "").slice(0, 6);
                         if (field.name === "mobile") field.value = field.value.replace(/\D/g, "").slice(0, 10);
                         if (field.name === "dob" && field.value) {
-                            const todayStr = new Date().toISOString().split("T")[0];
-                            field.max = todayStr;
-                            if (field.value > todayStr) {
-                                field.value = "";
-                            }
+                            const maxD = new Date();
+                            maxD.setFullYear(maxD.getFullYear() - 18);
+                            const maxDateStr = maxD.toISOString().split("T")[0];
+                            field.max = maxDateStr;
                         }
                         paintValidation(field, checkRules(field));
                     });
@@ -746,28 +747,17 @@
                     }
                 }
 
-                const summaryBox = document.getElementById("form-validation-summary");
-                const summaryList = document.getElementById("form-validation-summary-list");
-
-                if (errorList.length > 0) {
+                if (errorList.length > 0 || firstInvalidEl) {
                     e.preventDefault();
 
-                    if (summaryBox && summaryList) {
-                        summaryList.innerHTML = errorList.map(err => `<li>${err}</li>`).join("");
-                        summaryBox.classList.remove("hidden");
+                    if (firstInvalidEl) {
+                        firstInvalidEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                        if (typeof firstInvalidEl.focus === "function") {
+                            setTimeout(() => {
+                                try { firstInvalidEl.focus({ preventScroll: true }); } catch (e) {}
+                            }, 300);
+                        }
                     }
-
-                    const targetToScroll = summaryBox || firstInvalidEl;
-                    if (targetToScroll) {
-                        targetToScroll.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }
-                    if (firstInvalidEl && typeof firstInvalidEl.focus === "function") {
-                        setTimeout(() => {
-                            try { firstInvalidEl.focus({ preventScroll: true }); } catch (e) {}
-                        }, 300);
-                    }
-                } else {
-                    if (summaryBox) summaryBox.classList.add("hidden");
                 }
             });
 
