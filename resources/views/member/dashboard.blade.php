@@ -877,7 +877,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#351c42]/50">Donations</p>
                             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#351c42] text-[#fddc6a]" aria-hidden="true">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3h12M6 8h12m-6 5l8.5 8M6 13h3a4 4 0 0 0 0-8H6"/></svg>
                             </span>
                         </div>
                         <p class="mt-2 font-mono text-3xl font-extrabold tabular-nums tracking-tight text-[#351c42]">₹{{ number_format((float) ($memberDonationsTotal ?? 0), 0) }}</p>
@@ -915,14 +915,8 @@
                                         <p class="mt-0.5 truncate text-[11px] text-white/75">{{ $member->designation->name }}</p>
                                     @endif
                                     <p class="mt-1 font-mono text-[11px] font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
-                                    @php
-                                        $idGraceDays = $sub ? $sub->graceDays() : 0;
-                                    @endphp
                                     <p class="mt-0.5 text-[10px] text-white/75">
                                         Valid till: {{ $sub ? $sub->formattedValidTillDate() : '—' }}
-                                        @if($sub && $idGraceDays > 0)
-                                            <span class="block text-[9px] text-white/60">+{{ $idGraceDays }}d grace · access until {{ $sub->formattedEndDate() }}</span>
-                                        @endif
                                     </p>
                                 </div>
                                 <div class="flex h-[4.25rem] flex-col justify-between rounded-sm bg-black/20 px-1 py-1">

@@ -189,7 +189,17 @@ class MemberAuthController extends Controller
             return redirect()->route('member.dashboard');
         }
 
-        app(GnatMailService::class)->sendRegistrationSuccessful($user);
+        try {
+            app(GnatMailService::class)->sendRegistrationSuccessful($user);
+        } catch (\Throwable $e) {
+            Log::warning('Registration welcome notification failed: ' . $e->getMessage());
+        }
+        try {
+            $sms = app(GnatSmsService::class);
+            $sms->registrationComplete($user->mobile, $sms->memberDisplayName($user));
+        } catch (\Throwable $e) {
+            Log::warning('Registration SMS direct dispatch failed: ' . $e->getMessage());
+        }
 
         $return = $request->session()->pull('member_return_url');
         if (is_string($return) && $this->isSafeMemberRedirectUrl($return)) {
@@ -266,7 +276,11 @@ class MemberAuthController extends Controller
         $whatsapp = app(GnatWhatsAppService::class);
         $result = $sms->sendLoginOtp($user?->mobile, $otp, $sms->memberDisplayName($user));
         $whatsappResult = $whatsapp->sendLoginOtp($user?->mobile, $otp, $whatsapp->memberDisplayName($user));
-        app(GnatMailService::class)->sendLoginOtp($user, $otp);
+        try {
+            app(GnatMailService::class)->sendLoginOtp($user, $otp);
+        } catch (\Throwable $e) {
+            Log::warning('Member login OTP mail dispatch failed: ' . $e->getMessage());
+        }
 
         if ($result['status'] !== 'success') {
             Log::warning('Member login OTP SMS not sent', [

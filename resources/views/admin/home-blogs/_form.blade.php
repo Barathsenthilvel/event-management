@@ -111,6 +111,9 @@
                     </span>
                     <input id="home_blog_image_input" type="file" name="image" class="hidden" accept="image/*" @if(!$isEdit) required @endif>
                 </label>
+                <p class="mt-2 text-[11px] font-medium text-slate-500 text-center">
+                    Recommended: <strong class="text-slate-700">800×600 px (4:3)</strong> or <strong class="text-slate-700">1200×675 px (16:9)</strong>. JPG, PNG, or WebP. Max: <strong class="text-slate-700">5 MB</strong>.
+                </p>
                 <p id="home_blog_image_filename" class="hidden mt-2 text-xs font-semibold text-indigo-600 truncate"></p>
                 @error('image')<p class="mt-2 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>

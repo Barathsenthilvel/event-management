@@ -30,7 +30,11 @@
             -webkit-appearance: none;
             appearance: none;
             min-height: 2.75rem;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
             box-sizing: border-box;
+            display: block;
         }
         input[type="date"]::-webkit-date-and-time-value {
             text-align: left !important;
@@ -38,6 +42,7 @@
         input[type="date"]::-webkit-calendar-picker-indicator {
             margin-left: auto;
             cursor: pointer;
+            padding-right: 0.25rem;
         }
         .ml-inp:focus {
             border-color: rgba(150, 89, 149, 0.55);
@@ -211,9 +216,9 @@
                                     <input name="mobile" value="{{ old('mobile', $user->mobile) }}" required class="ml-inp" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" data-validate="required|digits:10" data-label="Mobile" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="mobile"></p>
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp" max="{{ now()->format('Y-m-d') }}" data-validate="required|past_date" data-label="Date of birth" @disabled($profileLocked) />
+                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp min-w-0 max-w-full w-full" max="{{ now()->format('Y-m-d') }}" data-validate="required|past_date" data-label="Date of birth" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="dob"></p>
                                 </div>
                                 <div>
@@ -575,10 +580,8 @@
                     }
 
                     if (rule === "past_date" && value) {
-                        const selectedDate = new Date(value);
-                        const today = new Date();
-                        today.setHours(23, 59, 59, 999);
-                        if (selectedDate > today) {
+                        const todayStr = new Date().toISOString().split("T")[0];
+                        if (value > todayStr) {
                             return `${label} cannot be in the future.`;
                         }
                     }
@@ -614,6 +617,13 @@
                     field.addEventListener(eventName, () => {
                         if (field.name === "pin_code") field.value = field.value.replace(/\D/g, "").slice(0, 6);
                         if (field.name === "mobile") field.value = field.value.replace(/\D/g, "").slice(0, 10);
+                        if (field.name === "dob" && field.value) {
+                            const todayStr = new Date().toISOString().split("T")[0];
+                            field.max = todayStr;
+                            if (field.value > todayStr) {
+                                field.value = "";
+                            }
+                        }
                         paintValidation(field, checkRules(field));
                     });
                 });
@@ -747,11 +757,14 @@
                         summaryBox.classList.remove("hidden");
                     }
 
-                    if (firstInvalidEl) {
-                        firstInvalidEl.scrollIntoView({ behavior: "smooth", block: "center" });
-                        if (typeof firstInvalidEl.focus === "function") {
-                            firstInvalidEl.focus();
-                        }
+                    const targetToScroll = summaryBox || firstInvalidEl;
+                    if (targetToScroll) {
+                        targetToScroll.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                    if (firstInvalidEl && typeof firstInvalidEl.focus === "function") {
+                        setTimeout(() => {
+                            try { firstInvalidEl.focus({ preventScroll: true }); } catch (e) {}
+                        }, 300);
                     }
                 } else {
                     if (summaryBox) summaryBox.classList.add("hidden");

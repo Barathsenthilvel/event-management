@@ -12,51 +12,62 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans p-6 md:p-12">
+<body class="bg-slate-50 text-slate-900 font-sans p-3 sm:p-6 md:p-12">
     @php
         $periodLabel = '—';
         if ($subscription?->start_date) {
             $periodLabel = $subscription->formattedStartDate() . ' – ' . $subscription->formattedValidTillDate();
         }
     @endphp
-    <div class="max-w-3xl mx-auto bg-white p-8 md:p-12 rounded-[28px] shadow-sm border border-slate-100 relative">
-        <div class="absolute top-8 right-8 no-print flex gap-3">
-            <button onclick="window.print()" class="px-5 py-2.5 bg-indigo-600 text-white text-xs font-extrabold rounded-xl shadow-md hover:bg-indigo-700 transition">
+    <div class="max-w-3xl mx-auto bg-white p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-[28px] shadow-sm border border-slate-100 relative">
+        <div class="no-print mb-6 flex flex-wrap items-center justify-end gap-2.5">
+            <button onclick="window.print()" class="px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white text-xs font-extrabold rounded-xl shadow-md hover:bg-indigo-700 transition">
                 Print / Save PDF
             </button>
-            <button onclick="window.close()" class="px-5 py-2.5 bg-slate-100 text-slate-700 text-xs font-extrabold rounded-xl hover:bg-slate-200 transition">
+            <button onclick="window.close()" class="px-4 py-2 sm:px-5 sm:py-2.5 bg-slate-100 text-slate-700 text-xs font-extrabold rounded-xl hover:bg-slate-200 transition">
                 Close
             </button>
         </div>
 
-        <div class="flex items-start justify-between border-b border-slate-100 pb-8 mb-8 gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b border-slate-100 pb-6 mb-6 sm:pb-8 sm:mb-8 gap-4 sm:gap-6">
             <div>
-                <h1 class="text-3xl font-black text-slate-900 tracking-tight">INVOICE</h1>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">INVOICE</h1>
                 <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Receipt for Membership</p>
             </div>
-            <div class="text-right max-w-xs shrink-0">
-                <p class="text-xl font-black text-indigo-600">{{ $company['name'] ?? 'GNAT Association' }}</p>
+            <div class="text-left sm:text-right max-w-full sm:max-w-xs shrink-0">
+                <p class="text-lg sm:text-xl font-black text-indigo-600">{{ $company['name'] ?? 'GNAT Association' }}</p>
                 @if(!empty($company['address']))
-                    <p class="text-sm text-slate-500 mt-1 leading-snug">{{ $company['address'] }}</p>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-snug break-words">{{ $company['address'] }}</p>
                 @endif
                 @if(!empty($company['email']))
-                    <p class="text-sm text-slate-500">{{ $company['email'] }}</p>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5 break-all">{{ $company['email'] }}</p>
                 @endif
             </div>
         </div>
 
-        <div class="flex flex-col gap-8 sm:flex-row sm:justify-between sm:items-start mb-10">
+        <div class="flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-10">
             <div>
                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Billed To</p>
                 <p class="text-sm font-extrabold text-slate-900 mt-1">{{ $user->name ?? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) }}</p>
-                <p class="text-sm text-slate-500">{{ $user->email }}</p>
+                <p class="text-sm text-slate-500 break-all">{{ $user->email }}</p>
                 @if($user->mobile)
                     <p class="text-sm text-slate-500">{{ $user->mobile }}</p>
                 @endif
+                @php
+                    $memberAddressParts = array_filter([
+                        $user->door_no,
+                        $user->locality_area,
+                        $user->state,
+                        $user->pin_code ? ('PIN: ' . $user->pin_code) : null,
+                    ]);
+                @endphp
+                @if(!empty($memberAddressParts))
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ implode(', ', $memberAddressParts) }}</p>
+                @endif
             </div>
-            <div class="text-right sm:shrink-0">
+            <div class="text-left sm:text-right sm:shrink-0">
                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Invoice Details</p>
-                <table class="mt-1 text-sm text-right ml-auto">
+                <table class="mt-1 text-sm text-left sm:text-right sm:ml-auto">
                     <tr>
                         <td class="pr-4 font-bold text-slate-500">Invoice Date:</td>
                         <td class="font-extrabold text-slate-900">{{ ($transaction->paid_at ?? $transaction->created_at)->format('M d, Y') }}</td>

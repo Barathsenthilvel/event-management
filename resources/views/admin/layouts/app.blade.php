@@ -93,6 +93,8 @@
     ],
     toasts: [],
     addToast(msg, type = 'success') {
+        if (!msg) return;
+        if (this.toasts.some(t => t.msg === msg)) return;
         const id = Date.now() + Math.random();
         this.toasts.push({ id, msg, type: type === 'error' ? 'error' : 'success' });
         setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 4500);

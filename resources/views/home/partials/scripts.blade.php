@@ -1542,7 +1542,11 @@
         const viewport = document.querySelector("[data-blog-viewport]");
         const track = document.querySelector("[data-blog-track]");
         const progress = document.querySelector("[data-blog-progress]");
+        const prevBtn = document.querySelector("[data-blog-prev]");
+        const nextBtn = document.querySelector("[data-blog-next]");
         if (!viewport || !track || !progress) return;
+
+        viewport.style.touchAction = "pan-y";
 
         const originals = Array.from(track.children);
         const slideCount = originals.length;
@@ -1556,9 +1560,12 @@
 
         let pos = 0;
         let timer = null;
+        let isTransitioning = false;
         let isDragging = false;
         let dragStartX = 0;
+        let dragStartY = 0;
         let dragStartPos = 0;
+        let isHorizontalSwipe = null;
 
         function getStep() {
             const items = track.children;
@@ -1573,8 +1580,11 @@
         }
 
         function setTransformPx(x, instant) {
-            if (instant) track.style.transition = "none";
-            else track.style.transition = "";
+            if (instant) {
+                track.style.transition = "none";
+            } else {
+                track.style.transition = "transform 500ms cubic-bezier(0.25, 1, 0.5, 1)";
+            }
             track.style.transform = `translateX(${-x}px)`;
             if (instant) {
                 void track.offsetWidth;
@@ -1582,44 +1592,55 @@
             }
         }
 
-        function wrapPosInstant() {
-            const w = getSetWidth();
-            if (w <= 0) return;
-            let wrapped = false;
-            while (pos >= w) { pos -= w; wrapped = true; }
-            while (pos < 0) { pos += w; wrapped = true; }
-            if (wrapped) setTransformPx(pos, true);
-        }
-
         function updateProgress() {
             const w = getSetWidth();
             if (w <= 0) return;
             const p = ((pos % w) + w) % w;
             const pct = (p / w) * 100;
-            progress.style.width = `${Math.min(100, Math.max(6, pct + 6))}%`;
+            progress.style.width = `${Math.min(100, Math.max(8, pct + 8))}%`;
         }
 
         function render() {
-            wrapPosInstant();
             setTransformPx(pos, false);
             updateProgress();
         }
 
-        function next() {
-            pos += getStep();
+        function goNext() {
             const w = getSetWidth();
-            if (w > 0) {
-                let wrapped = false;
-                while (pos >= w) { pos -= w; wrapped = true; }
-                if (wrapped) setTransformPx(pos, true);
-                setTransformPx(pos, false);
+            const step = getStep();
+            if (step <= 0) return;
+
+            pos += step;
+            setTransformPx(pos, false);
+            updateProgress();
+
+            if (w > 0 && pos >= w) {
+                setTimeout(() => {
+                    pos -= w;
+                    setTransformPx(pos, true);
+                    updateProgress();
+                }, 510);
             }
+        }
+
+        function goPrev() {
+            const w = getSetWidth();
+            const step = getStep();
+            if (step <= 0) return;
+
+            if (pos <= 0 && w > 0) {
+                pos += w;
+                setTransformPx(pos, true);
+            }
+
+            pos -= step;
+            setTransformPx(pos, false);
             updateProgress();
         }
 
         function start() {
             stop();
-            timer = setInterval(next, 2800);
+            timer = setInterval(goNext, 3400);
         }
 
         function stop() {
@@ -1629,39 +1650,73 @@
 
         viewport.addEventListener("mouseenter", stop);
         viewport.addEventListener("mouseleave", () => { if (!isDragging) start(); });
-        window.addEventListener("resize", () => { pos = 0; render(); });
+        prevBtn?.addEventListener("click", () => { stop(); goPrev(); start(); });
+        nextBtn?.addEventListener("click", () => { stop(); goNext(); start(); });
+
+        window.addEventListener("resize", () => {
+            pos = 0;
+            setTransformPx(0, true);
+            updateProgress();
+        });
 
         function isInteractiveBlogTarget(target) {
             return !!target.closest("button, a, input, textarea, select, label, [data-read-more]");
         }
 
-        viewport.addEventListener("pointerdown", (e) => {
+        viewport.addEventListener("touchstart", (e) => {
             if (isInteractiveBlogTarget(e.target)) return;
+            const touch = e.touches[0];
+            if (!touch) return;
             isDragging = true;
-            dragStartX = e.clientX;
+            isHorizontalSwipe = null;
+            dragStartX = touch.clientX;
+            dragStartY = touch.clientY;
             dragStartPos = pos;
             stop();
-            viewport.setPointerCapture(e.pointerId);
-        });
-        viewport.addEventListener("pointermove", (e) => {
+        }, { passive: true });
+
+        viewport.addEventListener("touchmove", (e) => {
             if (!isDragging) return;
-            const delta = e.clientX - dragStartX;
-            pos = dragStartPos - delta;
-            wrapPosInstant();
+            const touch = e.touches[0];
+            if (!touch) return;
+            const deltaX = touch.clientX - dragStartX;
+            const deltaY = touch.clientY - dragStartY;
+
+            if (isHorizontalSwipe === null) {
+                if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+                    isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+                }
+            }
+
+            if (!isHorizontalSwipe) return;
+
+            pos = dragStartPos - deltaX;
             setTransformPx(pos, true);
             updateProgress();
-        });
-        function endDrag() {
+        }, { passive: true });
+
+        function endTouchDrag() {
             if (!isDragging) return;
             isDragging = false;
-            const step = getStep();
-            if (step > 0) pos = Math.round(pos / step) * step;
-            wrapPosInstant();
-            render();
+            if (isHorizontalSwipe) {
+                const step = getStep();
+                if (step > 0) {
+                    pos = Math.round(pos / step) * step;
+                }
+                const w = getSetWidth();
+                if (w > 0) {
+                    while (pos >= w) pos -= w;
+                    while (pos < 0) pos += w;
+                }
+                setTransformPx(pos, false);
+                updateProgress();
+            }
+            isHorizontalSwipe = null;
             start();
         }
-        viewport.addEventListener("pointerup", endDrag);
-        viewport.addEventListener("pointercancel", endDrag);
+
+        viewport.addEventListener("touchend", endTouchDrag, { passive: true });
+        viewport.addEventListener("touchcancel", endTouchDrag, { passive: true });
 
         render();
         start();

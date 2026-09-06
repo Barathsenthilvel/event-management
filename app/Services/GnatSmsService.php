@@ -441,6 +441,9 @@ class GnatSmsService
     private function sendLoginOtpViaMsg91Flow(string $flowId, string $normalizedMobile, string $memberName, string $otp): ?string
     {
         $payload = $this->buildMsg91Payload($flowId, $normalizedMobile, [$memberName, $otp]);
+        $payload['name'] = $memberName;
+        $payload['member_name'] = $memberName;
+        $payload['otp'] = $otp;
 
         Log::info('GNAT SMS login OTP MSG91 Flow request', [
             'flow_id' => $flowId,

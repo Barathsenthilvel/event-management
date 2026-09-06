@@ -35,8 +35,18 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 h-1.5 bg-[#351c42]/15 rounded-full overflow-hidden">
-                        <div class="h-full bg-[#351c42] rounded-full transition-all duration-500" style="width: 25%;" data-blog-progress></div>
+                    <div class="mt-5 flex items-center justify-between gap-4">
+                        <div class="h-1.5 flex-1 bg-[#351c42]/15 rounded-full overflow-hidden">
+                            <div class="h-full bg-[#351c42] rounded-full transition-all duration-500" style="width: 25%;" data-blog-progress></div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" data-blog-prev class="carousel-nav-btn" aria-label="Previous blog post" title="Previous">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <button type="button" data-blog-next class="carousel-nav-btn" aria-label="Next blog post" title="Next">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
                     </div>
                 @else
                     <div class="rounded-2xl border border-dashed border-[#351c42]/20 bg-white px-6 py-12 text-center">

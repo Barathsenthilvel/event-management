@@ -118,6 +118,7 @@
 
     function resetForm(form) {
         if (!form) return;
+        delete form.dataset.formSubmitting;
         form.querySelectorAll('[data-submit-loading="1"]').forEach(reset);
         form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (el) {
             el.disabled = false;
@@ -134,9 +135,24 @@
             var submitter = event.submitter || null;
             if (submitter && submitter.dataset.noSubmitSpinner !== undefined) return;
 
+            // Synchronously block duplicate submission
+            if (form.dataset.formSubmitting === '1') {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                return;
+            }
+
+            form.dataset.formSubmitting = '1';
+
             setTimeout(function () {
-                if (event.defaultPrevented) return;
-                if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+                if (event.defaultPrevented) {
+                    delete form.dataset.formSubmitting;
+                    return;
+                }
                 activateForm(form, submitter);
             }, 0);
         },
@@ -144,7 +160,9 @@
     );
 
     window.addEventListener('pageshow', function (event) {
-        if (!event.persisted) return;
+        document.querySelectorAll('form').forEach(function (f) {
+            delete f.dataset.formSubmitting;
+        });
         document.querySelectorAll('[data-submit-loading="1"]').forEach(reset);
     });
 

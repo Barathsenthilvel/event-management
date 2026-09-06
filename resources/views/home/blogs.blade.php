@@ -44,7 +44,7 @@
             </div>
 
             <section class="mt-6 rounded-2xl border border-[#351c42]/10 bg-white p-4">
-                {{ $posts->links() }}
+                {{ $posts->links('pagination.public-tailwind') }}
             </section>
         @endif
     </main>

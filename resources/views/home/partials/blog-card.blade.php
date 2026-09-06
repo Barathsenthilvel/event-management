@@ -43,7 +43,7 @@
 
 <article @class([
     'rounded-2xl bg-white border border-[#351c42]/10 overflow-hidden shadow-md',
-    'w-[320px] shrink-0 min-w-[320px] max-w-[320px]' => $carousel ?? false,
+    'w-[min(320px,calc(100vw-3rem))] sm:w-[320px] shrink-0 min-w-[min(320px,calc(100vw-3rem))] sm:min-w-[320px] max-w-[320px]' => $carousel ?? false,
     'w-full' => ! ($carousel ?? false),
 ])>
     <div class="relative h-56">

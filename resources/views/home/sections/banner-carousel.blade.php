@@ -24,7 +24,7 @@
                         @endphp
                         <a
                             href="{{ $slideHref }}"
-                            class="banner-slide group relative block w-full shrink-0 overflow-hidden aspect-[2.2/1] min-[450px]:aspect-[2.4/1] sm:aspect-[2.7/1] md:aspect-[2.9/1] lg:aspect-[3.1/1] max-h-[520px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
+                            class="banner-slide group relative block w-full shrink-0 overflow-hidden min-h-[180px] aspect-[16/9] min-[450px]:aspect-[2.1/1] sm:aspect-[2.5/1] md:aspect-[2.8/1] lg:aspect-[3.1/1] max-h-[520px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fddc6a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0f24]"
                         >
                             <img
                                 src="{{ asset($banner['src']) }}"
@@ -38,26 +38,26 @@
                                 data-banner-photo
                             />
                             @if($hasCaption)
-                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a0f24]/80 via-transparent to-[#351c42]/15 opacity-90" aria-hidden="true"></span>
-                                <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-4 pb-16 pt-8 sm:px-6 sm:pb-20">
+                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a0f24]/80 via-transparent to-[#351c42]/15 opacity-60 sm:opacity-90" aria-hidden="true"></span>
+                                <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-3 pb-12 pt-4 sm:px-6 sm:pb-20 sm:pt-8">
                                     <div class="max-w-2xl">
                                         @if(!empty($banner['eyebrow']))
-                                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#fddc6a] sm:text-xs">{{ $banner['eyebrow'] }}</p>
+                                            <p class="text-[9px] font-black uppercase tracking-[0.18em] text-[#fddc6a] sm:text-xs">{{ $banner['eyebrow'] }}</p>
                                         @endif
                                         @if(!empty($banner['title']))
-                                            <h3 class="mt-1 text-base font-extrabold tracking-tight text-white drop-shadow-md sm:text-xl md:text-2xl">
+                                            <h3 class="mt-0.5 text-xs font-extrabold tracking-tight text-white drop-shadow-md sm:mt-1 sm:text-xl md:text-2xl line-clamp-1 sm:line-clamp-none">
                                                 {{ $banner['title'] }}
                                             </h3>
                                         @endif
                                         @if(!empty($banner['text']))
-                                            <p class="mt-1 max-w-xl text-xs font-medium leading-relaxed text-white/90 drop-shadow sm:text-sm">
+                                            <p class="mt-0.5 hidden max-w-xl text-xs font-medium leading-relaxed text-white/90 drop-shadow sm:mt-1 sm:block sm:text-sm">
                                                 {{ $banner['text'] }}
                                             </p>
                                         @endif
                                     </div>
                                 </div>
                             @else
-                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-30" aria-hidden="true"></span>
+                                <span class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-20 sm:opacity-30" aria-hidden="true"></span>
                             @endif
                         </a>
                     @endforeach
