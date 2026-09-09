@@ -6,6 +6,7 @@ use App\Models\MemberSubscription;
 use App\Models\PaymentTransaction;
 use App\Services\RazorpayPaymentLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class AdminSubscriptionController extends Controller
 {
@@ -14,20 +15,30 @@ class AdminSubscriptionController extends Controller
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', ''));
 
+        $hasPaymentLinkCol = Schema::hasColumn('payment_transactions', 'razorpay_payment_link_id');
+        $hasReferenceIdCol = Schema::hasColumn('payment_transactions', 'reference_id');
+
         $transactions = PaymentTransaction::query()
             ->with(['user:id,name,email,mobile', 'subscriptionPlan:id,subscription_type,payment_type'])
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
+            ->when($q !== '', function ($query) use ($q, $hasPaymentLinkCol, $hasReferenceIdCol) {
+                $query->where(function ($sub) use ($q, $hasPaymentLinkCol, $hasReferenceIdCol) {
                     $sub->where('id', $q)
                         ->orWhere('razorpay_payment_id', 'like', '%' . $q . '%')
-                        ->orWhere('razorpay_order_id', 'like', '%' . $q . '%')
-                        ->orWhere('razorpay_payment_link_id', 'like', '%' . $q . '%')
-                        ->orWhere('reference_id', 'like', '%' . $q . '%')
-                        ->orWhereHas('user', function ($userQuery) use ($q) {
-                            $userQuery->where('name', 'like', '%' . $q . '%')
-                                ->orWhere('email', 'like', '%' . $q . '%')
-                                ->orWhere('mobile', 'like', '%' . $q . '%');
-                        });
+                        ->orWhere('razorpay_order_id', 'like', '%' . $q . '%');
+
+                    if ($hasPaymentLinkCol) {
+                        $sub->orWhere('razorpay_payment_link_id', 'like', '%' . $q . '%');
+                    }
+
+                    if ($hasReferenceIdCol) {
+                        $sub->orWhere('reference_id', 'like', '%' . $q . '%');
+                    }
+
+                    $sub->orWhereHas('user', function ($userQuery) use ($q) {
+                        $userQuery->where('name', 'like', '%' . $q . '%')
+                            ->orWhere('email', 'like', '%' . $q . '%')
+                            ->orWhere('mobile', 'like', '%' . $q . '%');
+                    });
                 });
             })
             ->when($status !== '', function ($query) use ($status) {
@@ -41,10 +52,13 @@ class AdminSubscriptionController extends Controller
             ->whereIn('user_id', $transactions->pluck('user_id')->filter()->unique()->values())
             ->get();
 
-        $pendingCount = PaymentTransaction::query()
-            ->where('status', 'pending')
-            ->whereNotNull('razorpay_payment_link_id')
-            ->count();
+        $pendingCount = 0;
+        if ($hasPaymentLinkCol) {
+            $pendingCount = PaymentTransaction::query()
+                ->where('status', 'pending')
+                ->whereNotNull('razorpay_payment_link_id')
+                ->count();
+        }
 
         return view('admin.subscriptions.index', [
             'transactions' => $transactions,
@@ -69,6 +83,11 @@ class AdminSubscriptionController extends Controller
 
     public function syncAllPending()
     {
+        $hasPaymentLinkCol = Schema::hasColumn('payment_transactions', 'razorpay_payment_link_id');
+        if (! $hasPaymentLinkCol) {
+            return back()->with('info', 'Payment link column is not yet migrated in the database.');
+        }
+
         $pending = PaymentTransaction::query()
             ->where('status', 'pending')
             ->whereNotNull('razorpay_payment_link_id')

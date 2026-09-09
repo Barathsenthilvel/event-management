@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\MembershipPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Razorpay\Api\Api;
 use Throwable;
 
@@ -58,7 +59,7 @@ class RazorpayPaymentLinkService
                 'amount'          => (int) round($payableAmount * 100), // in paise
                 'currency'        => 'INR',
                 'accept_partial'  => false,
-                'description'     => 'Membership Subscription - ' . $plan->name,
+                'description'     => 'Membership Subscription - ' . ($plan->subscription_type ?? 'Membership'),
                 'customer'        => [
                     'name'    => $user->name,
                     'email'   => $user->email,
@@ -317,6 +318,10 @@ class RazorpayPaymentLinkService
      */
     public function checkAndSyncPendingForUser(User $user): ?MemberSubscription
     {
+        if (! Schema::hasColumn('payment_transactions', 'razorpay_payment_link_id')) {
+            return null;
+        }
+
         $pending = PaymentTransaction::query()
             ->where('user_id', $user->id)
             ->where('status', 'pending')
