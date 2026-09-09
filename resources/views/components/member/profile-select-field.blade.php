@@ -8,7 +8,7 @@
     <select
         name="{{ $name }}"
         @if($required) required @endif
-        class="mp-searchable-select"
+        class="ml-inp mp-searchable-select"
         @disabled($disabled)
         {{ $attributes->whereStartsWith('data-') }}
     >

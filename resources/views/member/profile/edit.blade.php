@@ -481,7 +481,7 @@
                 wrap.appendChild(searchInput);
             };
 
-            const getChoicesRoot = (selectEl) => selectEl.closest(".choices");
+            const getChoicesRoot = (selectEl) => (selectEl && typeof selectEl.closest === "function" ? selectEl.closest(".choices") : null);
 
             const syncChoicesValidation = (field, hasError) => {
                 const choicesRoot = getChoicesRoot(field);
@@ -490,26 +490,34 @@
                 }
             };
 
-            form.querySelectorAll("select.mp-searchable-select").forEach((selectEl) => {
-                if (selectEl.dataset.searchableInit === "1") return;
-                if ((selectEl.options?.length || 0) <= 1) return;
-                selectEl.dataset.searchableInit = "1";
-                const instance = new Choices(selectEl, {
-                    searchEnabled: true,
-                    searchFloor: 0,
-                    searchPlaceholderValue: "Search options…",
-                    searchResultLimit: 50,
-                    shouldSort: false,
-                    itemSelectText: "",
-                    noResultsText: "No matching options",
-                    noChoicesText: "No options",
-                    position: "auto",
-                    allowHTML: false,
-                });
-                const choicesRoot = resolveChoicesRoot(selectEl, instance);
-                wrapSelectSearchInput(choicesRoot);
-                selectEl.addEventListener("showDropdown", () => wrapSelectSearchInput(resolveChoicesRoot(selectEl, instance)));
-            });
+            // On mobile devices (phones/tablets), native OS select pickers are superior, responsive, and 100% reliable.
+            // On desktop (>= 1024px), use Choices.js if available.
+            if (typeof Choices === "function" && window.innerWidth >= 1024) {
+                try {
+                    form.querySelectorAll("select.mp-searchable-select").forEach((selectEl) => {
+                        if (selectEl.dataset.searchableInit === "1") return;
+                        if ((selectEl.options?.length || 0) <= 1) return;
+                        selectEl.dataset.searchableInit = "1";
+                        const instance = new Choices(selectEl, {
+                            searchEnabled: true,
+                            searchFloor: 0,
+                            searchPlaceholderValue: "Search options…",
+                            searchResultLimit: 50,
+                            shouldSort: false,
+                            itemSelectText: "",
+                            noResultsText: "No matching options",
+                            noChoicesText: "No options",
+                            position: "auto",
+                            allowHTML: false,
+                        });
+                        const choicesRoot = resolveChoicesRoot(selectEl, instance);
+                        wrapSelectSearchInput(choicesRoot);
+                        selectEl.addEventListener("showDropdown", () => wrapSelectSearchInput(resolveChoicesRoot(selectEl, instance)));
+                    });
+                } catch (err) {
+                    console.warn("Choices dropdown initialization skipped:", err);
+                }
+            }
 
             const typeSelect = form.querySelector("[data-profile-type-select]");
             const showEls = Array.from(form.querySelectorAll("[data-profile-show]"));
@@ -573,9 +581,19 @@
 
                     if (rule.startsWith("dob_min_age:") && value) {
                         const minAge = Number(rule.split(":")[1] || 18);
-                        const parts = value.split("-");
-                        if (parts.length === 3) {
-                            const birthDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                        let birthDate = null;
+                        if (value.includes("-")) {
+                            const parts = value.split("-");
+                            if (parts.length === 3) {
+                                birthDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                            }
+                        } else if (value.includes("/")) {
+                            const parts = value.split("/");
+                            if (parts.length === 3) {
+                                birthDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                            }
+                        }
+                        if (birthDate && !isNaN(birthDate.getTime())) {
                             const today = new Date();
                             let age = today.getFullYear() - birthDate.getFullYear();
                             const m = today.getMonth() - birthDate.getMonth();
@@ -684,22 +702,75 @@
                 return docErrors;
             };
 
+            const readFileAsArrayBuffer = (file) => {
+                if (typeof file.arrayBuffer === "function") {
+                    return file.arrayBuffer();
+                }
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsArrayBuffer(file);
+                });
+            };
+
+            let activeFileReads = 0;
             const profileFileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
             profileFileInputs.forEach((input) => {
-                input.addEventListener("change", () => {
+                input.addEventListener("change", async () => {
+                    const file = input.files?.[0];
+                    if (!file) {
+                        checkDocumentRules();
+                        return;
+                    }
+
                     const maxBytes = Number(form.dataset.uploadMaxBytes || 0);
                     const maxLabel = form.dataset.uploadMaxLabel || "5 MB";
-                    const file = input.files?.[0];
-                    if (file && maxBytes && file.size > maxBytes) {
+                    if (maxBytes && file.size > maxBytes) {
                         const label = input.closest(".ml-upload-zone")?.querySelector(".ml-label")?.textContent?.replace("*", "").trim() || "This file";
                         showProfileUploadClientError(`${label} is too large. Each document must not be larger than ${maxLabel}.`);
                         input.value = "";
+                        checkDocumentRules();
+                        return;
                     }
+
+                    // Protect against Android Chrome ERR_UPLOAD_FILE_CHANGED:
+                    // Read file into RAM immediately so background OS cache/temp cleanup or camera moves do not corrupt the upload.
+                    if (typeof window.DataTransfer === "function") {
+                        activeFileReads++;
+                        try {
+                            const buffer = await readFileAsArrayBuffer(file);
+                            const safeFile = new File([buffer], file.name, {
+                                type: file.type || "application/octet-stream",
+                                lastModified: Date.now(),
+                            });
+                            const dt = new DataTransfer();
+                            dt.items.add(safeFile);
+                            input.files = dt.files;
+                        } catch (err) {
+                            console.warn("Could not cache file into memory:", err);
+                        } finally {
+                            activeFileReads--;
+                        }
+                    }
+
                     checkDocumentRules();
                 });
             });
 
             form.addEventListener("submit", (e) => {
+                if (activeFileReads > 0) {
+                    e.preventDefault();
+                    setTimeout(() => {
+                        if (typeof form.requestSubmit === "function") {
+                            form.requestSubmit();
+                        } else {
+                            form.submit();
+                        }
+                    }, 250);
+                    return;
+                }
+
                 const errorList = [];
                 let firstInvalidEl = null;
 

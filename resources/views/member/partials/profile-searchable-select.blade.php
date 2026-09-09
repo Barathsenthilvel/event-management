@@ -8,7 +8,49 @@
         width: 100%;
         min-height: 48px;
     }
-    #member-profile-form .mp-select-field > select.mp-searchable-select {
+    #member-profile-form .mp-select-field > select.mp-searchable-select,
+    #member-profile-form select.ml-inp {
+        display: block;
+        width: 100%;
+        min-height: 48px;
+        border-radius: 1rem;
+        border: 1px solid rgba(53, 28, 66, 0.12);
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 0.65rem 2.5rem 0.65rem 1rem;
+        font-size: 0.9375rem;
+        font-family: inherit;
+        color: #351c42;
+        line-height: 1.35;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23351c42' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1.1rem 1.1rem;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    #member-profile-form .mp-select-field > select.mp-searchable-select:focus,
+    #member-profile-form select.ml-inp:focus {
+        border-color: rgba(150, 89, 149, 0.55);
+        background-color: #fff;
+        box-shadow: 0 0 0 4px rgba(150, 89, 149, 0.14);
+    }
+    #member-profile-form .mp-select-field > select.mp-searchable-select.is-invalid,
+    #member-profile-form select.ml-inp.is-invalid {
+        border-color: rgba(220, 38, 38, 0.55);
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+    }
+    #member-profile-form .mp-select-field > select.mp-searchable-select:disabled,
+    #member-profile-form select.ml-inp:disabled {
+        background-color: #f1f5f9;
+        color: rgba(53, 28, 66, 0.65);
+        cursor: not-allowed;
+    }
+    /* Only hide native select if Choices.js has initialized and wrapped it inside .choices */
+    #member-profile-form .mp-select-field .choices select.mp-searchable-select {
         position: absolute;
         width: 1px;
         height: 1px;
