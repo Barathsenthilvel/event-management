@@ -50,6 +50,7 @@ class AdminMemberApprovalController extends Controller
         $user->save();
 
         try {
+            app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user, force: true);
             $paymentLinkUrl = app(\App\Services\RazorpayPaymentLinkService::class)->createPaymentLinkForUser($user);
             app(GnatMailService::class)->sendProfileApproved($user, $paymentLinkUrl);
         } catch (Throwable $e) {

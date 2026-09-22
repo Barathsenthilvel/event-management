@@ -41,6 +41,9 @@
 <p>We are pleased to inform you that your profile verification has been completed successfully.</p>
 <p>You are now eligible to activate your GNAT membership account by completing the membership subscription process.</p>
 <p>As an active member, you will gain access to meetings, networking opportunities, events, and member-exclusive activities.</p>
+<p style="margin-top:14px;padding:12px;background:#f5f8fa;border-left:4px solid #0e355c;border-radius:4px;font-size:13px;color:#134261;">
+    <strong>Member ID Card Attached:</strong> Your official digital GNAT Member ID Card has been generated and attached to this email. You can also view and download it anytime from your Member Dashboard.
+</p>
 <p>Warm Regards,<br><strong>GNAT Association</strong></p>
 @break
 

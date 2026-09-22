@@ -274,13 +274,23 @@ class GnatMailService
         $name = $this->memberDisplayName($user);
         $url = $subscriptionUrl ?: route('member.subscription.index');
 
+        $attachments = [];
+        try {
+            $attachments = app(\App\Services\MemberIdCardService::class)->getMailAttachments($user);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to attach member ID card on profile approval mail', [
+                'userId' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         $this->sendMember($user->email, 'm03_profile_approved_subscription', [
             'memberName' => $name,
             'heroHeadline' => 'Profile Verified',
             'heroSubtext' => 'You may now complete your membership subscription.',
             'showPortalCta' => true,
             'portalUrl' => $url,
-        ]);
+        ], $attachments);
         $this->sms()->profileVerified($user->mobile, $name, $url);
         $this->whatsapp()->profileVerified($user->mobile, $name, $url);
     }

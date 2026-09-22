@@ -23,6 +23,7 @@ use App\Models\PollingPosition;
 use App\Models\PollingVote;
 use App\Services\EventScheduleStatusService;
 use App\Services\GnatMailService;
+use App\Services\MemberIdCardService;
 use App\Support\EventInterestErrorFlash;
 use App\Services\MembershipLifecycleService;
 use App\Support\MembershipPeriod;
@@ -247,7 +248,18 @@ class MemberDashboardController extends Controller
             $pollingResultStats = $portalPolling['pollingResultStats'];
         }
 
+        $idCardUrls = null;
+        $memberCode = null;
+        if ($user) {
+            $cardService = app(MemberIdCardService::class);
+            $cardService->ensureCardGenerated($user);
+            $idCardUrls = $cardService->getCardUrls($user);
+            $memberCode = $cardService->memberCode($user);
+        }
+
         return view('member.dashboard', [
+            'idCardUrls' => $idCardUrls,
+            'memberCode' => $memberCode,
             'activeSubscription' => $user?->activeSubscription()->with('plan')->first(),
             'latestReceiptTransaction' => $latestReceiptTransaction,
             'memberDonationsTotal' => $memberDonationsTotal,
@@ -270,6 +282,43 @@ class MemberDashboardController extends Controller
                 ->latest('id')
                 ->limit(10)
                 ->get(),
+        ]);
+    }
+
+    public function downloadIdCard(Request $request, string $side = 'combined')
+    {
+        $user = Auth::user();
+        if (!$user) {
+            abort(403);
+        }
+
+        $service = app(MemberIdCardService::class);
+        $paths = $service->ensureCardGenerated($user);
+
+        if (!$paths) {
+            return back()->with('error', 'Unable to generate ID Card. Please try again later.');
+        }
+
+        $side = strtolower($side);
+        $targetPath = match ($side) {
+            'front' => $paths['front'],
+            'back' => $paths['back'],
+            default => $paths['combined'],
+        };
+
+        if (!file_exists($targetPath)) {
+            return back()->with('error', 'ID Card image file not found.');
+        }
+
+        $memberCode = $service->memberCode($user);
+        $filename = match ($side) {
+            'front' => "GNAT-ID-Card-Front-{$memberCode}.png",
+            'back' => "GNAT-ID-Card-Back-{$memberCode}.png",
+            default => "GNAT-ID-Card-{$memberCode}.png",
+        };
+
+        return response()->download($targetPath, $filename, [
+            'Content-Type' => 'image/png',
         ]);
     }
 
