@@ -19,12 +19,15 @@ def find_font(candidates, default_size=40):
 
 def get_font(path_list, size):
     for p in path_list:
-        if os.path.exists(p):
+        if p and os.path.exists(p):
             try:
                 return ImageFont.truetype(p, size)
             except Exception:
                 pass
-    return ImageFont.load_default()
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
 
 def generate_id_card(data):
     template_front_path = data.get("template_front")
@@ -37,12 +40,25 @@ def generate_id_card(data):
     out_back_path = os.path.join(output_dir, "id_card_back.png")
     out_combined_path = os.path.join(output_dir, "id_card_combined.png")
 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     bold_fonts = [
+        # Linux standard font paths (Debian / Ubuntu / RHEL / CentOS / Alpine)
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+        "/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+        # Windows standard font paths
         r"C:\Windows\Fonts\arialbd.ttf",
         r"C:\Windows\Fonts\segoeuib.ttf",
         r"C:\Windows\Fonts\calibrib.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        # Project local fonts
+        os.path.join(script_dir, "fonts", "DejaVuSans-Bold.ttf"),
+        os.path.join(os.path.dirname(script_dir), "fonts", "DejaVuSans-Bold.ttf"),
     ]
 
     # --- 1. FRONT CARD ---

@@ -901,6 +901,37 @@
                     </div>
 
                     <div class="grid gap-4 lg:grid-cols-2">
+                        <article class="md-id-card-classic p-0 text-white shadow-md">
+                            <div class="relative z-[1] border-b border-white/15 bg-[#4c2b5d] px-4 py-1.5 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.2em] text-white/95">ID Card</p>
+                            </div>
+                            <div class="relative z-[1] grid grid-cols-[4.5rem_minmax(0,1fr)_2rem] items-center gap-3 px-4 py-3">
+                                <div class="relative h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-full border-2 border-[#fddc6a]/50 bg-[#0d9488]/30">
+                                    @include('partials.user-letter-avatar', ['user' => $member, 'class' => 'h-full w-full text-lg sm:text-xl border-0'])
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[13px] font-extrabold leading-snug text-white">{{ $member->name }}</p>
+                                    @if($member->designation?->name)
+                                        <p class="mt-0.5 truncate text-[11px] text-white/75">{{ $member->designation->name }}</p>
+                                    @endif
+                                    <p class="mt-1 font-mono text-[11px] font-bold tracking-wide text-[#fddc6a]">GNAT-{{ str_pad((string) $member->id, 6, '0', STR_PAD_LEFT) }}</p>
+                                    <p class="mt-0.5 text-[10px] text-white/75">
+                                        Valid till: {{ $sub ? $sub->formattedValidTillDate() : '—' }}
+                                    </p>
+                                </div>
+                                <div class="flex h-[4.25rem] flex-col justify-between rounded-sm bg-black/20 px-1 py-1">
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                    <span class="block h-[2px] w-full bg-[#fddc6a]/85"></span>
+                                </div>
+                            </div>
+                        </article>
                         @include('member.partials.dashboard-id-card')
 
                         <article class="rounded-xl border border-[#351c42]/10 bg-white p-4 shadow-md sm:p-5">

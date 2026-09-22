@@ -386,6 +386,7 @@ Route::prefix('member')->name('member.')->group(function () {
     Route::middleware(['auth', 'gnat.membership.lifecycle'])->group(function () {
         Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
         Route::get('/id-card/download/{side?}', [MemberDashboardController::class, 'downloadIdCard'])->name('id-card.download');
+        Route::get('/id-card/preview/{side?}', [MemberDashboardController::class, 'previewIdCard'])->name('id-card.preview');
         Route::post('/dashboard/announcements/dismiss', [MemberDashboardController::class, 'dismissDashboardAnnouncement'])
             ->name('dashboard.announcements.dismiss');
         Route::get('/jobs', [MemberDashboardController::class, 'jobsPage'])->name('jobs.index');

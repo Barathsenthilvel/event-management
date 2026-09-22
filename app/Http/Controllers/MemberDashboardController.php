@@ -250,9 +250,11 @@ class MemberDashboardController extends Controller
 
         $idCardUrls = null;
         $memberCode = null;
+        $hasCards = false;
         if ($user) {
             $cardService = app(MemberIdCardService::class);
             $cardService->ensureCardGenerated($user);
+            $hasCards = $cardService->cardsExist($user);
             $idCardUrls = $cardService->getCardUrls($user);
             $memberCode = $cardService->memberCode($user);
         }
@@ -260,6 +262,7 @@ class MemberDashboardController extends Controller
         return view('member.dashboard', [
             'idCardUrls' => $idCardUrls,
             'memberCode' => $memberCode,
+            'hasCards' => $hasCards,
             'activeSubscription' => $user?->activeSubscription()->with('plan')->first(),
             'latestReceiptTransaction' => $latestReceiptTransaction,
             'memberDonationsTotal' => $memberDonationsTotal,
@@ -282,6 +285,37 @@ class MemberDashboardController extends Controller
                 ->latest('id')
                 ->limit(10)
                 ->get(),
+        ]);
+    }
+
+    public function previewIdCard(Request $request, string $side = 'front')
+    {
+        $user = Auth::user();
+        if (!$user) {
+            abort(403);
+        }
+
+        $service = app(MemberIdCardService::class);
+        $paths = $service->ensureCardGenerated($user);
+
+        if (!$paths) {
+            abort(404, 'ID Card image could not be generated.');
+        }
+
+        $side = strtolower($side);
+        $targetPath = match ($side) {
+            'back' => $paths['back'] ?? null,
+            'combined' => $paths['combined'] ?? null,
+            default => $paths['front'] ?? null,
+        };
+
+        if (!$targetPath || !file_exists($targetPath)) {
+            abort(404, 'ID Card image file not found.');
+        }
+
+        return response()->file($targetPath, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 

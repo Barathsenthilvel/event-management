@@ -1,6 +1,8 @@
 @php
     $formattedCode = $memberCode ?? ('GNAT-9715-' . str_pad((string) ($member->id ?? 1), 4, '0', STR_PAD_LEFT));
-    $hasCards = !empty($idCardUrls['front']) && !empty($idCardUrls['back']);
+    $hasCards = (!empty($hasCards) || (!empty($member) && app(\App\Services\MemberIdCardService::class)->cardsExist($member)))
+        && !empty($idCardUrls['front']) 
+        && !empty($idCardUrls['back']);
 @endphp
 
 <article class="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#351c42]/15 bg-gradient-to-br from-[#132c48] via-[#0d2238] to-[#081726] p-4 text-white shadow-xl sm:p-5"

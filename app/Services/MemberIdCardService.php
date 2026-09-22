@@ -38,15 +38,111 @@ class MemberIdCardService
     }
 
     /**
+     * Resolve the Python binary across Linux, macOS, and Windows.
+     */
+    public function resolvePythonBinary(): ?string
+    {
+        $configured = env('PYTHON_BINARY') ?: config('services.python.binary');
+        if (!empty($configured) && is_string($configured)) {
+            return $configured;
+        }
+
+        $candidates = [
+            'python3',
+            'python',
+            '/usr/bin/python3',
+            '/usr/local/bin/python3',
+            'C:\\Python314\\python.exe',
+            'C:\\Python313\\python.exe',
+            'C:\\Python312\\python.exe',
+            'C:\\Python311\\python.exe',
+            'C:\\Python310\\python.exe',
+        ];
+
+        $firstWorking = null;
+        foreach ($candidates as $cmd) {
+            try {
+                $process = Process::run([$cmd, '--version']);
+                if ($process->successful()) {
+                    if (!$firstWorking) {
+                        $firstWorking = $cmd;
+                    }
+                    // Prefer the binary where PIL and qrcode are already installed
+                    $depCheck = Process::run([$cmd, '-c', 'import PIL, qrcode; print("OK")']);
+                    if ($depCheck->successful() && trim($depCheck->output()) === 'OK') {
+                        return $cmd;
+                    }
+                }
+            } catch (Throwable $e) {
+                continue;
+            }
+        }
+
+        return $firstWorking;
+    }
+
+    /**
+     * Test whether Python and its dependencies (PIL, qrcode) are operational.
+     *
+     * @return array{ok: bool, binary?: string, error?: string, detail?: string}
+     */
+    public function testPythonEnvironment(): array
+    {
+        $binary = $this->resolvePythonBinary();
+        if (!$binary) {
+            return [
+                'ok' => false,
+                'error' => 'No Python binary found (tested python3, python, /usr/bin/python3). Please install python3 on the server or specify PYTHON_BINARY in .env.',
+            ];
+        }
+
+        try {
+            $process = Process::run([$binary, '-c', 'import PIL, qrcode; print("OK")']);
+            if (!$process->successful() || trim($process->output()) !== 'OK') {
+                return [
+                    'ok' => false,
+                    'binary' => $binary,
+                    'error' => 'Python is found, but Pillow or qrcode package is missing. Run: pip3 install Pillow qrcode --break-system-packages',
+                    'detail' => $process->errorOutput() ?: $process->output(),
+                ];
+            }
+
+            return [
+                'ok' => true,
+                'binary' => $binary,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'ok' => false,
+                'binary' => $binary,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Public URLs for member ID card files.
      *
      * @return array{front: string, back: string, combined: string}
      */
     public function getCardUrls(User $user): array
     {
-        $version = file_exists($this->getCardPaths($user)['combined']) 
-            ? '?' . filemtime($this->getCardPaths($user)['combined']) 
-            : '';
+        $paths = $this->getCardPaths($user);
+        $exists = file_exists($paths['combined']) || file_exists($paths['front']);
+        $version = $exists && file_exists($paths['combined']) 
+            ? '?' . filemtime($paths['combined']) 
+            : ($exists ? '?' . time() : '');
+
+        // If public/storage is not created or inaccessible on server, use Laravel controller preview route
+        $storageLinked = file_exists(public_path('storage'));
+        if (!$storageLinked && \Illuminate\Support\Facades\Route::has('member.id-card.preview')) {
+            $qs = $version ? '&v=' . ltrim($version, '?') : '';
+            return [
+                'front' => route('member.id-card.preview', ['side' => 'front']) . $qs,
+                'back' => route('member.id-card.preview', ['side' => 'back']) . $qs,
+                'combined' => route('member.id-card.preview', ['side' => 'combined']) . $qs,
+            ];
+        }
 
         return [
             'front' => asset("storage/id-cards/{$user->id}/id_card_front.png") . $version,
@@ -132,15 +228,22 @@ class MemberIdCardService
             $tempFile = $tempDir . DIRECTORY_SEPARATOR . 'id_card_payload_' . $user->id . '_' . uniqid() . '.json';
             file_put_contents($tempFile, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
+            $python = $this->resolvePythonBinary();
+            if (!$python) {
+                Log::error('MemberIdCardService: No Python binary found. Ensure python3 is installed on the server or set PYTHON_BINARY in .env');
+                return $this->cardsExist($user) ? $paths : null;
+            }
+
             $scriptPath = base_path('app/Scripts/generate_id_card.py');
 
             try {
                 $result = Process::path(base_path())
                     ->timeout(30)
-                    ->run(['python', $scriptPath, '--payload-file', $tempFile]);
+                    ->run([$python, $scriptPath, '--payload-file', $tempFile]);
 
                 if (!$result->successful()) {
                     Log::error('MemberIdCardService: Python script failed', [
+                        'binary' => $python,
                         'exitCode' => $result->exitCode(),
                         'errorOutput' => $result->errorOutput(),
                         'output' => $result->output(),
