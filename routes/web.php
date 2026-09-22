@@ -421,6 +421,7 @@ Route::prefix('member')->name('member.')->group(function () {
                 ->name('nominations.not-interested');
             Route::post('/pollings/{polling}/vote', [MemberDashboardController::class, 'submitPollingVote'])
                 ->name('pollings.vote');
+                // 
         });
     });
 });
