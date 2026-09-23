@@ -30,12 +30,16 @@ use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\MemberResetPasswordController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MemberSubscriptionController;
+use App\Http\Controllers\MemberVerificationController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NominationController;
 use App\Http\Controllers\PollingController;
 use App\Http\Controllers\RazorpayWebhookController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
+
+// Public QR Code Member Verification Endpoint
+Route::get('/verify-member/{code?}', [MemberVerificationController::class, 'verify'])->name('member.verify');
 
 // Razorpay Webhook Endpoint
 Route::post('/api/gnat/webhook', [RazorpayWebhookController::class, 'handleWebhook'])->name('razorpay.webhook');

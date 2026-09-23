@@ -310,6 +310,12 @@ class RazorpayPaymentLinkService
             Log::warning('Membership lifecycle sync failed: ' . $e->getMessage());
         }
 
+        try {
+            app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user->fresh(), true);
+        } catch (Throwable $e) {
+            Log::warning('ID card regeneration on subscription update failed: ' . $e->getMessage());
+        }
+
         return $subscription;
     }
 

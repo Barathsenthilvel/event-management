@@ -38,6 +38,26 @@ class MemberIdCardService
     }
 
     /**
+     * Get environment variables for Python process, including user site-packages.
+     */
+    protected function getPythonEnv(): array
+    {
+        $userSitePackages = array_filter(array_merge(
+            glob('/home/*/.local/lib/python*/site-packages') ?: [],
+            glob('/root/.local/lib/python*/site-packages') ?: [],
+            glob('/var/www/.local/lib/python*/site-packages') ?: []
+        ), 'is_dir');
+
+        if (!empty($userSitePackages)) {
+            $existing = env('PYTHONPATH');
+            $combined = implode(PATH_SEPARATOR, array_unique(array_merge($userSitePackages, $existing ? explode(PATH_SEPARATOR, $existing) : [])));
+            return ['PYTHONPATH' => $combined];
+        }
+
+        return [];
+    }
+
+    /**
      * Resolve the Python binary across Linux, macOS, and Windows.
      */
     public function resolvePythonBinary(): ?string
@@ -59,16 +79,17 @@ class MemberIdCardService
             'C:\\Python310\\python.exe',
         ];
 
+        $env = $this->getPythonEnv();
         $firstWorking = null;
         foreach ($candidates as $cmd) {
             try {
-                $process = Process::run([$cmd, '--version']);
+                $process = Process::env($env)->run([$cmd, '--version']);
                 if ($process->successful()) {
                     if (!$firstWorking) {
                         $firstWorking = $cmd;
                     }
                     // Prefer the binary where PIL and qrcode are already installed
-                    $depCheck = Process::run([$cmd, '-c', 'import PIL, qrcode; print("OK")']);
+                    $depCheck = Process::env($env)->run([$cmd, '-c', 'import PIL, qrcode; print("OK")']);
                     if ($depCheck->successful() && trim($depCheck->output()) === 'OK') {
                         return $cmd;
                     }
@@ -97,7 +118,8 @@ class MemberIdCardService
         }
 
         try {
-            $process = Process::run([$binary, '-c', 'import PIL, qrcode; print("OK")']);
+            $env = $this->getPythonEnv();
+            $process = Process::env($env)->run([$binary, '-c', 'import PIL, qrcode; print("OK")']);
             if (!$process->successful() || trim($process->output()) !== 'OK') {
                 return [
                     'ok' => false,
@@ -176,7 +198,7 @@ class MemberIdCardService
         }
 
         try {
-            $user->loadMissing('designation');
+            $user->loadMissing(['designation', 'activeSubscription.plan', 'subscriptions']);
 
             $templateFront = public_path('images/id-card/template_front.png');
             $templateBack = public_path('images/id-card/template_back.png');
@@ -191,6 +213,17 @@ class MemberIdCardService
 
             $outputDir = storage_path("app/public/id-cards/{$user->id}");
             File::ensureDirectoryExists($outputDir);
+            @chmod(dirname($outputDir), 0777);
+            @chmod($outputDir, 0777);
+            foreach (['id_card_front.png', 'id_card_back.png', 'id_card_combined.png'] as $file) {
+                $targetFile = $outputDir . DIRECTORY_SEPARATOR . $file;
+                if (file_exists($targetFile)) {
+                    @chmod($targetFile, 0666);
+                    if ($force) {
+                        @unlink($targetFile);
+                    }
+                }
+            }
 
             // Resolve photo if available
             $photoPath = null;
@@ -201,6 +234,9 @@ class MemberIdCardService
                 }
             }
 
+            $activeSub = $user->activeSubscription ?: $user->subscriptions()->latest('id')->first();
+            $validTill = $activeSub ? $activeSub->formattedValidTillDate() : '—';
+
             $designation = $user->designation?->name;
             if (empty($designation)) {
                 $designation = !empty($user->profile_type) ? (string) $user->profile_type : 'MEMBER';
@@ -208,6 +244,15 @@ class MemberIdCardService
 
             $memberCode = $this->memberCode($user);
             $verificationUrl = url("/verify-member/{$memberCode}");
+
+            // Resolve signature if available
+            $signaturePath = public_path('images/id-card/sign.jpeg');
+            if (!file_exists($signaturePath)) {
+                $signaturePath = public_path('images/id-card/sign.jpg');
+            }
+            if (!file_exists($signaturePath)) {
+                $signaturePath = public_path('images/id-card/sign.png');
+            }
 
             $payload = [
                 'template_front' => $templateFront,
@@ -217,14 +262,24 @@ class MemberIdCardService
                 'designation' => $designation,
                 'member_id' => $memberCode,
                 'photo_path' => $photoPath,
+                'signature_path' => file_exists($signaturePath) ? $signaturePath : null,
                 'blood_group' => (string) ($user->blood_group ?? '—'),
                 'mobile' => (string) ($user->mobile ?? '—'),
                 'rnrm_no' => (string) ($user->rnrm_number_with_date ?? '—'),
+                'valid_till' => (string) $validTill,
                 'qr_data' => $verificationUrl,
             ];
 
             $tempDir = storage_path('app/temp');
-            File::ensureDirectoryExists($tempDir);
+            if (!file_exists($tempDir)) {
+                @mkdir($tempDir, 0777, true);
+            }
+            @chmod($tempDir, 0777);
+
+            if (!is_writable($tempDir)) {
+                $tempDir = sys_get_temp_dir();
+            }
+
             $tempFile = $tempDir . DIRECTORY_SEPARATOR . 'id_card_payload_' . $user->id . '_' . uniqid() . '.json';
             file_put_contents($tempFile, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
@@ -238,6 +293,7 @@ class MemberIdCardService
 
             try {
                 $result = Process::path(base_path())
+                    ->env($this->getPythonEnv())
                     ->timeout(30)
                     ->run([$python, $scriptPath, '--payload-file', $tempFile]);
 
@@ -304,4 +360,3 @@ class MemberIdCardService
         return $attachments;
     }
 }
-

@@ -3,6 +3,8 @@
     $hasCards = (!empty($hasCards) || (!empty($member) && app(\App\Services\MemberIdCardService::class)->cardsExist($member)))
         && !empty($idCardUrls['front']) 
         && !empty($idCardUrls['back']);
+    $subCard = $activeSubscription ?? ($member?->activeSubscription ?? $member?->subscriptions()->latest('id')->first());
+    $validTillStr = $subCard ? $subCard->formattedValidTillDate() : '—';
 @endphp
 
 <article class="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#351c42]/15 bg-gradient-to-br from-[#132c48] via-[#0d2238] to-[#081726] p-4 text-white shadow-xl sm:p-5"
@@ -99,7 +101,7 @@
                     </span>
                     <span class="font-mono text-xs font-extrabold tracking-wide text-[#fddc6a]">{{ $formattedCode }}</span>
                 </div>
-                <p class="text-[10px] text-white/60">Verified Official GNAT Credential</p>
+                <p class="text-[10px] text-white/60">Verified Official GNAT Credential · Valid till: <span class="font-semibold text-[#fddc6a]">{{ $validTillStr }}</span></p>
             </div>
 
             {{-- Download Actions --}}
