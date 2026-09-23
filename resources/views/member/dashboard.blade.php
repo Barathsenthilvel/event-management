@@ -883,68 +883,117 @@
                         <p class="text-[11px] text-[#351c42]/50">Show your ID and latest plan details</p>
                     </div>
 
-                    <div class="grid gap-4 lg:grid-cols-2">
+                    <div class="grid gap-4 lg:grid-cols-2 items-stretch">
                         @include('member.partials.dashboard-id-card')
 
-                        <article class="rounded-xl border border-[#351c42]/10 bg-white p-4 shadow-md sm:p-5">
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#965995]">Subscription purchased</p>
-                                    <h3 class="mt-1 text-base font-extrabold text-[#351c42]">Current plan</h3>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $sub ? 'bg-emerald-100 text-emerald-800' : 'bg-[#965995]/15 text-[#351c42]/80' }}">
-                                        {{ $sub ? 'Active' : 'No plan' }}
-                                    </span>
-                                    <div class="md-kebab-menu" data-sub-menu-wrap>
-                                        <button type="button" class="rounded-lg p-1.5 text-[#351c42]/60 hover:bg-[#351c42]/5" aria-label="Subscription actions" data-sub-menu-btn>⋮</button>
-                                        <div class="md-kebab-dropdown" data-sub-menu>
-                                            @if($latestReceiptTransaction)
-                                                <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener" class="block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
-                                                    Download receipt
-                                                </a>
+                        <article class="flex flex-col justify-between h-full rounded-2xl border border-[#351c42]/12 bg-white p-5 shadow-lg shadow-[#351c42]/5">
+                            <div>
+                                <div class="flex items-start justify-between gap-3 border-b border-[#351c42]/10 pb-4">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#965995]">Subscription purchased</p>
+                                        <h3 class="mt-1 text-lg font-extrabold text-[#351c42]">Current plan</h3>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wide {{ $sub ? 'bg-emerald-100 text-emerald-800' : 'bg-[#965995]/15 text-[#351c42]/80' }}">
+                                            @if($sub)
+                                                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                Active
                                             @else
-                                                <span class="block rounded-lg px-3 py-2 text-sm text-[#351c42]/45">No receipt yet</span>
+                                                No plan
                                             @endif
-                                            @if($showFullMemberMenu && $canSeeMembership)
-                                                <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="mt-0.5 block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
-                                                    Pay &amp; renew
-                                                </a>
-                                            @endif
+                                        </span>
+                                        <div class="md-kebab-menu" data-sub-menu-wrap>
+                                            <button type="button" class="rounded-lg p-1.5 text-[#351c42]/60 hover:bg-[#351c42]/5" aria-label="Subscription actions" data-sub-menu-btn>⋮</button>
+                                            <div class="md-kebab-dropdown" data-sub-menu>
+                                                @if($latestReceiptTransaction)
+                                                    <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener" class="block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
+                                                        Download receipt
+                                                    </a>
+                                                @else
+                                                    <span class="block rounded-lg px-3 py-2 text-sm text-[#351c42]/45">No receipt yet</span>
+                                                @endif
+                                                @if($showFullMemberMenu && $canSeeMembership)
+                                                    <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="mt-0.5 block rounded-lg px-3 py-2 text-sm font-semibold text-[#351c42] hover:bg-[#351c42]/5">
+                                                        Pay &amp; renew
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                <dl class="mt-5 grid gap-3.5 text-sm text-[#351c42] sm:grid-cols-2">
+                                    <div class="rounded-xl bg-[#faf9fc] p-3.5 border border-[#351c42]/08">
+                                        <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/50">Plan purchased</dt>
+                                        <dd class="mt-1 font-extrabold text-[#351c42]">
+                                            @if($sub)
+                                                {{ $sub->subscription_type }} · {{ ucfirst(str_replace('_', ' ', (string) $sub->payment_type)) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </dd>
+                                    </div>
+                                    <div class="rounded-xl bg-[#faf9fc] p-3.5 border border-[#351c42]/08">
+                                        <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/50">Valid till</dt>
+                                        <dd class="mt-1 font-extrabold text-[#351c42] tabular-nums">
+                                            {{ $sub ? $sub->formattedValidTillDate() : '—' }}
+                                            @if($sub && $sub->graceDays() > 0)
+                                                <span class="mt-0.5 block text-[10px] font-medium text-[#351c42]/60">+{{ $sub->graceDays() }}d grace · access until {{ $sub->formattedEndDate() }}</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                    <div class="rounded-xl bg-[#faf9fc] p-3.5 border border-[#351c42]/08">
+                                        <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/50">Purchased on</dt>
+                                        <dd class="mt-1 font-extrabold text-[#351c42] tabular-nums">{{ $sub ? $sub->formattedStartDate() : '—' }}</dd>
+                                    </div>
+                                    <div class="rounded-xl bg-[#faf9fc] p-3.5 border border-[#351c42]/08">
+                                        <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/50">Member since</dt>
+                                        <dd class="mt-1 font-extrabold text-[#351c42]">{{ $member->created_at?->format('M Y') ?? '—' }}</dd>
+                                    </div>
+                                </dl>
+
+                                {{-- Active Subscription Benefits --}}
+                                <div class="mt-5 rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-4">
+                                    <p class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-900">Included Member Privileges</p>
+                                    <ul class="mt-2.5 space-y-2 text-xs font-semibold text-emerald-950">
+                                        <li class="flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Official Print-Ready High Resolution Digital ID Credential</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Full Access to GNAT E-Books &amp; Professional Publications</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Voting Rights in GNAT Association Elections &amp; Polling Alerts</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Member Discounts on State &amp; National Association Events</span>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
 
-                            <dl class="mt-4 grid gap-3 text-sm text-[#351c42] sm:grid-cols-2">
-                                <div>
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Plan purchased</dt>
-                                    <dd class="mt-1 font-semibold">
-                                        @if($sub)
-                                            {{ $sub->subscription_type }} · {{ ucfirst(str_replace('_', ' ', (string) $sub->payment_type)) }}
-                                        @else
-                                            —
-                                        @endif
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Valid till</dt>
-                                    <dd class="mt-1 font-semibold tabular-nums">
-                                        {{ $sub ? $sub->formattedValidTillDate() : '—' }}
-                                        @if($sub && $sub->graceDays() > 0)
-                                            <span class="mt-0.5 block text-[10px] font-medium text-[#351c42]/55">+{{ $sub->graceDays() }}d grace · access until {{ $sub->formattedEndDate() }}</span>
-                                        @endif
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Purchased on</dt>
-                                    <dd class="mt-1 font-semibold tabular-nums">{{ $sub ? $sub->formattedStartDate() : '—' }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-[#351c42]/45">Member since</dt>
-                                    <dd class="mt-1 font-semibold">{{ $member->created_at?->format('M Y') ?? '—' }}</dd>
-                                </div>
-                            </dl>
+                            {{-- Footer Actions --}}
+                            <div class="mt-6 border-t border-[#351c42]/10 pt-4 flex flex-wrap items-center justify-between gap-3">
+                                @if($latestReceiptTransaction)
+                                    <a href="{{ route('member.subscription.invoice', $latestReceiptTransaction->id) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-xl border border-[#351c42]/20 bg-[#faf9fc] px-4 py-2.5 text-xs font-bold text-[#351c42] shadow-sm transition hover:bg-[#f0ebf5]">
+                                        <svg class="h-4 w-4 text-[#965995]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        <span>Download Receipt</span>
+                                    </a>
+                                @else
+                                    <div></div>
+                                @endif
+
+                                @if($showFullMemberMenu && $canSeeMembership)
+                                    <a href="{{ route('member.subscription.index', ['type' => 'Renewal']) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#351c42] to-[#4d2a5c] px-5 py-2.5 text-xs font-bold text-[#fddc6a] shadow-md transition hover:brightness-110">
+                                        <span>Renew / Change Plan</span>
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                    </a>
+                                @endif
+                            </div>
                         </article>
                     </div>
                 </section>

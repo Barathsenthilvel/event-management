@@ -178,59 +178,28 @@ def generate_id_card(data):
     bg_text = f"BLOOD GROUP: {blood_group}".upper()
     bbox1 = bdraw.textbbox((0, 0), bg_text, font=info_font)
     w1 = bbox1[2] - bbox1[0]
-    bdraw.text(((1845 - w1) / 2, 680), bg_text, font=info_font, fill=(14, 43, 69, 255))
+    bdraw.text(((1845 - w1) / 2, 750), bg_text, font=info_font, fill=(14, 43, 69, 255))
 
     # Mobile
     mobile = data.get("mobile") or "—"
     mob_text = f"MOBILE: {mobile}".upper()
     bbox2 = bdraw.textbbox((0, 0), mob_text, font=info_font)
     w2 = bbox2[2] - bbox2[0]
-    bdraw.text(((1845 - w2) / 2, 780), mob_text, font=info_font, fill=(14, 43, 69, 255))
+    bdraw.text(((1845 - w2) / 2, 845), mob_text, font=info_font, fill=(14, 43, 69, 255))
 
     # RN / RM NO
     rnrm = data.get("rnrm_no") or "—"
     rnrm_text = f"RN / RM NO: {rnrm}".upper()
     bbox3 = bdraw.textbbox((0, 0), rnrm_text, font=info_font)
     w3 = bbox3[2] - bbox3[0]
-    bdraw.text(((1845 - w3) / 2, 880), rnrm_text, font=info_font, fill=(14, 43, 69, 255))
+    bdraw.text(((1845 - w3) / 2, 940), rnrm_text, font=info_font, fill=(14, 43, 69, 255))
 
     # VALID TILL
     valid_till = data.get("valid_till") or "—"
     valid_text = f"VALID TILL: {valid_till}".upper()
     bbox4 = bdraw.textbbox((0, 0), valid_text, font=info_font)
     w4 = bbox4[2] - bbox4[0]
-    bdraw.text(((1845 - w4) / 2, 980), valid_text, font=info_font, fill=(14, 43, 69, 255))
-
-    # PRESIDENT SIGNATURE
-    sig_path = data.get("signature_path")
-    if sig_path and os.path.exists(sig_path):
-        try:
-            raw_sig = Image.open(sig_path).convert("RGBA")
-            sig_pixels = raw_sig.getdata()
-            new_sig_pixels = []
-            for item in sig_pixels:
-                avg = (item[0] + item[1] + item[2]) / 3.0
-                if avg > 210:
-                    new_sig_pixels.append((255, 255, 255, 0))
-                else:
-                    alpha = int(255 * (1.0 - (avg / 255.0)))
-                    alpha = min(255, int(alpha * 1.6))
-                    new_sig_pixels.append((item[0], item[1], item[2], alpha))
-            raw_sig.putdata(new_sig_pixels)
-
-            target_w = 540
-            aspect = raw_sig.height / raw_sig.width
-            target_h = int(target_w * aspect)
-            if target_h > 240:
-                target_h = 240
-                target_w = int(target_h / aspect)
-
-            sig_resized = raw_sig.resize((target_w, target_h), Image.Resampling.LANCZOS)
-            sig_x = int((1845 - target_w) / 2)
-            sig_y = 2540
-            back.paste(sig_resized, (sig_x, sig_y), sig_resized)
-        except Exception:
-            pass
+    bdraw.text(((1845 - w4) / 2, 1035), valid_text, font=info_font, fill=(14, 43, 69, 255))
 
     back.save(out_back_path, "PNG", optimize=True)
 
