@@ -254,10 +254,10 @@ return [
         'intro_title' => 'Featured campaigns',
         'intro_kicker' => 'Association',
         'intro_text' => 'Explore active GNAT Association programs—swipe or use the arrows. Every project is designed for transparent, accountable community support.',
-        'goal' => 500,
-        'default_amount' => 100,
+        'goal' => 10000,
+        'default_amount' => 500,
         'bar_percent_demo' => 52,
-        'amounts' => [10, 25, 50, 100, 250],
+        'amounts' => [500, 1000, 2000, 5000, 10000],
     ],
 
     'activities' => [

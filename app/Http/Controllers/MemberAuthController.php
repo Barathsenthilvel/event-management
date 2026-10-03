@@ -75,18 +75,22 @@ class MemberAuthController extends Controller
             ]);
         }
 
-        $request->session()->put('member_otp_remember', $request->boolean('remember'));
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
 
-        $this->issueOtp($request, (int) $user->id);
+        $return = $request->session()->pull('member_return_url');
+        $redirectUrl = (is_string($return) && $this->isSafeMemberRedirectUrl($return))
+            ? $return
+            : $this->memberHomeAfterAuth($user);
 
         if ($this->wantsJsonResponse($request)) {
             return response()->json([
                 'ok' => true,
-                'redirect' => route('member.otp'),
+                'redirect' => $redirectUrl,
             ]);
         }
 
-        return redirect()->route('member.otp');
+        return redirect()->to($redirectUrl);
     }
 
     public function register(Request $request)

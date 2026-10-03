@@ -66,13 +66,6 @@ class MemberProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        $hasActiveSubscription = $user?->activeSubscription()->exists();
-
-        if ($user->profile_completed && $user->is_approved && !$hasActiveSubscription) {
-            return redirect()
-                ->route('member.subscription.index', ['type' => 'New'])
-                ->with('success', 'Your profile is approved. Please purchase a subscription plan.');
-        }
 
         if ($user->profile_completed || $user->is_approved) {
             session()->forget(self::PENDING_SESSION_KEY);
@@ -106,23 +99,6 @@ class MemberProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-        $hasActiveSubscription = $user?->activeSubscription()->exists();
-
-        if ($user->profile_completed && $user->is_approved && !$hasActiveSubscription) {
-            return redirect()
-                ->route('member.subscription.index', ['type' => 'New'])
-                ->with('success', 'Your profile is approved. Please purchase a subscription plan.');
-        }
-
-        if ($user->profile_completed || $user->is_approved) {
-            $message = $user->is_approved
-                ? 'Approved profiles cannot be updated. Please contact admin.'
-                : 'Your profile was already submitted and cannot be changed. Please contact admin if you need a correction.';
-
-            return redirect()
-                ->route('member.profile.edit')
-                ->withErrors(['profile' => $message]);
-        }
 
         $pending = $this->stageNewUploads($request, $user);
 
@@ -139,7 +115,7 @@ class MemberProfileController extends Controller
             'rnrm_number_with_date' => ['nullable', 'string', 'max:120'],
             'student_id' => ['nullable', 'string', 'max:120'],
             'college_name' => ['required', 'string', 'max:190'],
-            'door_no' => ['required', 'string', 'max:80'],
+            'door_no' => ['nullable', 'string', 'max:80'],
             'locality_area' => ['required', 'string', 'max:190'],
             'state' => ['required', 'string', 'max:120'],
             'pin_code' => ['required', 'string', 'max:20'],
@@ -210,7 +186,7 @@ class MemberProfileController extends Controller
         $user->rnrm_number_with_date = $data['rnrm_number_with_date'] ?? null;
         $user->student_id = $data['student_id'] ?? null;
         $user->college_name = $data['college_name'];
-        $user->door_no = $data['door_no'];
+        $user->door_no = $data['door_no'] ?? null;
         $user->locality_area = $data['locality_area'];
         $user->state = $data['state'];
         $user->pin_code = $data['pin_code'];
@@ -357,7 +333,6 @@ class MemberProfileController extends Controller
             && !empty($user?->qualification)
             && !empty($user?->blood_group)
             && !empty($user?->college_name)
-            && !empty($user?->door_no)
             && !empty($user?->locality_area)
             && !empty($user?->state)
             && !empty($user?->pin_code)

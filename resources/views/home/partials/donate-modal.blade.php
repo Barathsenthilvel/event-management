@@ -92,12 +92,12 @@
             <div class="flex flex-col gap-3">
                 <span class="text-sm font-bold text-white/95">Choose amount:</span>
                 <div class="flex flex-wrap items-center gap-2">
-                    @foreach ($dm['amounts'] ?? [10, 25, 50, 100, 250] as $amt)
+                    @foreach ($dm['amounts'] ?? [500, 1000, 2000, 5000, 10000] as $amt)
                         <button
                             type="button"
                             data-donate-amt="{{ $amt }}"
-                            class="donate-amt-btn rounded-full bg-white/[0.07] hover:bg-white/15 px-4 py-2.5 text-sm font-bold border border-white/20 text-white transition-colors {{ (int) $amt === (int) ($dm['default_amount'] ?? 100) ? 'is-selected' : '' }}"
-                        >₹{{ $amt }}</button>
+                            class="donate-amt-btn rounded-full bg-white/[0.07] hover:bg-white/15 px-4 py-2.5 text-sm font-bold border border-white/20 text-white transition-colors {{ (int) $amt === (int) ($dm['default_amount'] ?? 500) ? 'is-selected' : '' }}"
+                        >₹{{ number_format($amt) }}</button>
                     @endforeach
                     <button type="button" data-donate-custom class="rounded-full border-2 border-[#fcd34d] text-[#fcd34d] px-4 py-2 text-sm font-bold inline-flex items-center gap-2 hover:bg-[#fcd34d]/10 transition-colors">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -124,7 +124,7 @@
                 <div class="flex flex-col sm:flex-row gap-3 sm:items-stretch">
                 <label class="relative flex-1 flex items-center rounded-2xl bg-white pl-12 pr-4 py-3.5 shadow-inner ring-1 ring-black/5">
                     <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#351c42]/10 text-[#351c42] font-bold text-base leading-none" aria-hidden="true">₹</span>
-                    <input type="number" min="1" step="1" value="{{ (int) ($dm['default_amount'] ?? 100) }}" data-donate-input class="w-full min-w-0 border-0 bg-transparent text-[#351c42] text-lg font-bold outline-none focus:ring-0" />
+                    <input type="number" min="1" step="1" value="{{ (int) ($dm['default_amount'] ?? 500) }}" data-donate-input class="w-full min-w-0 border-0 bg-transparent text-[#351c42] text-lg font-bold outline-none focus:ring-0" />
                 </label>
                 <button type="button" data-donate-submit data-loading-text="Please wait…" class="click-btn btn-style506 shrink-0 justify-center sm:min-w-[200px]">
                     <span class="gnat-submit-idle inline-flex w-full items-center justify-center">

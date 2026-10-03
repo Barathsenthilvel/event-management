@@ -46,10 +46,14 @@
                                 Approve member
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('admin.members.pending-approvals.reject', $m->id) }}">
+                        <form method="POST" action="{{ route('admin.members.pending-approvals.reject', $m->id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.querySelector('[data-reject-spinner]')?.classList.remove('hidden'); b.querySelector('[data-reject-label]').textContent='Rejecting...';">
                             @csrf
-                            <button type="submit" class="rounded-xl border border-white/30 bg-white/10 px-5 py-2.5 text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/20">
-                                Reject
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-2.5 text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-75 disabled:cursor-not-allowed">
+                                <svg class="hidden h-4 w-4 animate-spin text-white" data-reject-spinner viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span data-reject-label>Reject</span>
                             </button>
                         </form>
                     </div>
@@ -164,7 +168,13 @@
         </div>
         <div class="flex flex-col gap-2 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end">
             <button type="button" data-close-approve-modal class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Cancel</button>
-            <button type="button" data-confirm-approve-member class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-400">Approve member</button>
+            <button type="button" data-confirm-approve-member class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-400 disabled:opacity-75 disabled:cursor-not-allowed">
+                <svg class="hidden h-4 w-4 animate-spin text-white" data-approve-spinner viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span data-approve-label>Approve member</span>
+            </button>
         </div>
     </div>
 </div>
@@ -183,6 +193,8 @@
         const backdrop = modal.querySelector("[data-approve-member-backdrop]");
         const closeEls = modal.querySelectorAll("[data-close-approve-modal]");
         const confirmBtn = modal.querySelector("[data-confirm-approve-member]");
+        const spinner = confirmBtn?.querySelector("[data-approve-spinner]");
+        const label = confirmBtn?.querySelector("[data-approve-label]");
         let lastActive = null;
 
         function setOpen(open) {
@@ -190,6 +202,13 @@
             modal.classList.toggle("flex", open);
             modal.setAttribute("aria-hidden", open ? "false" : "true");
             document.body.style.overflow = open ? "hidden" : "";
+
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                if (spinner) spinner.classList.add("hidden");
+                if (label) label.textContent = "Approve member";
+            }
+
             if (!open && lastActive && typeof lastActive.focus === "function") {
                 lastActive.focus();
             }
@@ -203,7 +222,12 @@
 
         closeEls.forEach((el) => el.addEventListener("click", () => setOpen(false)));
         backdrop?.addEventListener("click", () => setOpen(false));
-        confirmBtn?.addEventListener("click", () => form.submit());
+        confirmBtn?.addEventListener("click", () => {
+            if (confirmBtn) confirmBtn.disabled = true;
+            if (spinner) spinner.classList.remove("hidden");
+            if (label) label.textContent = "Approving...";
+            form.submit();
+        });
 
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape" && !modal.classList.contains("hidden")) {

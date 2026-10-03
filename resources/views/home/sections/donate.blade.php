@@ -127,7 +127,7 @@
                                     type="button"
                                     data-donate-amt="{{ $amt }}"
                                     class="donate-amt-btn rounded-full bg-white/10 hover:bg-white/20 px-4 py-2 text-sm font-semibold border border-white/15 transition-colors {{ (int) $amt === (int) $donate['default_amount'] ? 'is-selected' : '' }}"
-                                >₹{{ $amt }}</button>
+                                >₹{{ number_format($amt) }}</button>
                             @endforeach
                             <button type="button" data-donate-custom class="rounded-full border-2 border-[#fddc6a] text-[#fddc6a] px-4 py-2 text-sm font-semibold inline-flex items-center gap-2 hover:bg-[#fddc6a]/10 transition-colors">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M9 10h6M16 14h-5"/></svg>

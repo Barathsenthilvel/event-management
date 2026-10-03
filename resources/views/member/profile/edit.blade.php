@@ -121,7 +121,7 @@
 @section('content')
     @php
         $isApproved = (bool) $user->is_approved;
-        $profileLocked = (bool) $user->profile_completed || $isApproved;
+        $profileLocked = false;
         $pendingProfileDocs = $pendingProfileDocs ?? [];
         $profileUploadMaxBytes = $profileUploadMaxBytes ?? \App\Http\Controllers\MemberProfileController::maxFileSizeBytes();
         $profileUploadMaxLabel = $profileUploadMaxLabel ?? \App\Http\Controllers\MemberProfileController::maxFileSizeLabel();
@@ -140,7 +140,7 @@
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#965995]">Account</p>
                         <h1 class="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">My profile</h1>
-                        <p class="mt-2 text-sm text-[#351c42]/65">{{ $profileLocked ? 'Your submitted details are shown below (read-only).' : 'Complete your details to activate your membership.' }}</p>
+                        <p class="mt-2 text-sm text-[#351c42]/65">Update your profile details below.</p>
                     </div>
                     <span class="rounded-full bg-[#351c42] px-4 py-2 text-xs font-bold text-[#fddc6a]">Required fields marked *</span>
                 </div>
@@ -162,12 +162,12 @@
                 @endif
 
                 @if($isApproved)
-                    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                        Your profile is already approved and cannot be updated now. Please contact admin for any correction.
+                    <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                        Your profile is approved. You can update your details anytime below.
                     </div>
                 @elseif($user->profile_completed)
                     <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                        Please wait for admin approval. You can review your submitted profile details below.
+                        Your profile is submitted and pending admin approval. You can update your details below if needed.
                     </div>
                 @endif
 
@@ -288,8 +288,8 @@
                                     <p class="ml-help" data-error-for="college_name"></p>
                                 </div>
                                 <div>
-                                    <label class="ml-label">Door no <span class="text-red-500">*</span></label>
-                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" required class="ml-inp" data-validate="required" data-label="Door no" @disabled($profileLocked) />
+                                    <label class="ml-label">Door no <span class="text-xs text-slate-400 font-normal">(Optional)</span></label>
+                                    <input name="door_no" value="{{ old('door_no', $user->door_no) }}" class="ml-inp" data-label="Door no" @disabled($profileLocked) />
                                     <p class="ml-help" data-error-for="door_no"></p>
                                 </div>
                                 <div>
@@ -433,11 +433,7 @@
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t border-[#351c42]/10 pt-6 sm:flex-row sm:justify-end sm:gap-4">
-                        @if($profileLocked)
-                            <button type="button" disabled class="ml-btn-primary w-full sm:w-auto cursor-not-allowed opacity-55" aria-disabled="true">Save &amp; continue</button>
-                        @else
-                            <button type="submit" class="ml-btn-primary w-full sm:w-auto">Save &amp; continue</button>
-                        @endif
+                        <button type="submit" class="ml-btn-primary w-full sm:w-auto">Save profile</button>
                     </div>
                 </form>
             </div>

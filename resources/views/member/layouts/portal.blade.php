@@ -44,7 +44,7 @@
     </div>
 
     @php
-        $donate = config('homepage.donate', ['goal' => 500, 'default_amount' => 100]);
+        $donate = config('homepage.donate', ['goal' => 10000, 'default_amount' => 500]);
     @endphp
     @include('home.partials.donate-modal')
     @include('home.partials.donate-payment-modals')
