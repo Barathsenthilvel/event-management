@@ -8,6 +8,10 @@
     $backUrl = $backUrl ?? route('admin.members.pending-approvals.index', request()->only('q'));
     $backLabel = $backLabel ?? 'Back to pending list';
     $statusTitle = $m->is_approved ? 'Approved member' : 'Pending approval';
+
+    $idCardService = app(\App\Services\MemberIdCardService::class);
+    $memberCode = $idCardService->memberCode($m);
+    $verifyUrl = route('member.verify', ['code' => $memberCode]);
 @endphp
 <div class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6">
     {{-- Modal-style frame: unique GNAT-inspired panel --}}
@@ -34,7 +38,10 @@
                         </div>
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-[0.25em] text-[#fddc6a]/90">{{ $statusTitle }}</p>
-                            <h1 class="mt-1 text-xl font-extrabold tracking-tight sm:text-2xl">{{ $m->name }}</h1>
+                            <h1 class="mt-1 text-xl font-extrabold tracking-tight sm:text-2xl flex flex-wrap items-center gap-2.5">
+                                <span>{{ $m->name }}</span>
+                                <span class="rounded-lg bg-[#fddc6a]/20 border border-[#fddc6a]/40 px-2.5 py-0.5 text-xs font-black tracking-wider text-[#fddc6a] font-mono">{{ $memberCode }}</span>
+                            </h1>
                             <p class="mt-1 text-xs font-semibold text-white/80">{{ $m->email }}</p>
                         </div>
                     </div>
@@ -62,6 +69,43 @@
             </div>
 
             <div class="grid gap-6 p-6 sm:p-8 lg:grid-cols-2">
+                {{-- Member Verification QR Code Section --}}
+                <section class="rounded-2xl border border-[#351c42]/15 bg-gradient-to-br from-[#faf8fc] via-white to-slate-50 p-6 shadow-sm lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div class="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+                            <div class="relative p-3 bg-white rounded-2xl border border-slate-200/90 shadow-md shrink-0">
+                                <div id="admin-member-qr-code" data-qr-value="{{ $verifyUrl }}" class="flex items-center justify-center min-w-[130px] min-h-[130px]"></div>
+                                <div class="mt-2 text-center">
+                                    <span class="inline-block text-[10px] font-black uppercase tracking-wider text-slate-600 font-mono">{{ $memberCode }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="inline-flex items-center gap-2 rounded-full bg-[#965995]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-[#965995]">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                    </svg>
+                                    Member QR Verification
+                                </div>
+                                <h3 class="mt-2 text-lg font-extrabold text-[#351c42] tracking-tight">Official Member QR Code</h3>
+                                <p class="mt-1 text-xs leading-relaxed text-slate-600 max-w-xl">
+                                    Scan this QR code using any smartphone camera or reader to verify authentic membership credentials and view live verification status.
+                                </p>
+                                <div class="mt-4 flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                                    <a href="{{ $verifyUrl }}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-2 rounded-xl bg-[#351c42] px-4 py-2.5 text-xs font-extrabold text-[#fddc6a] shadow-sm hover:bg-[#4a2660] transition">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        Open Verification Page
+                                    </a>
+                                    <button type="button" data-open-qr-modal
+                                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-[#965995]/40 transition">
+                                        <svg class="h-4 w-4 text-[#965995]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                                        Expand QR Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <section class="rounded-2xl border border-slate-100 bg-gradient-to-b from-slate-50/80 to-white p-5 shadow-sm">
                     <h2 class="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[#965995]">
                         <span class="h-1.5 w-1.5 rounded-full bg-[#965995]"></span>
@@ -179,9 +223,80 @@
     </div>
 </div>
 @endif
+{{-- Member QR Modal --}}
+<div id="member-qr-modal" class="fixed inset-0 z-[170] hidden items-center justify-center bg-[#111827]/60 p-4 backdrop-blur-[2px]" aria-hidden="true" role="dialog" aria-modal="true">
+    <div data-close-qr-modal class="absolute inset-0" aria-hidden="true"></div>
+    <div class="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl p-6 text-center">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-extrabold text-[#351c42]">Official Member QR Code</h3>
+            <button type="button" data-close-qr-modal class="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition">✕</button>
+        </div>
+        <p class="text-sm font-extrabold text-slate-900">{{ $m->name }}</p>
+        <p class="text-xs font-bold text-[#965995] font-mono mt-0.5">{{ $memberCode }}</p>
+        <div class="my-5 p-4 bg-white rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center">
+            <div id="admin-member-modal-qr" data-qr-value="{{ $verifyUrl }}" class="mx-auto flex items-center justify-center"></div>
+        </div>
+        <a href="{{ $verifyUrl }}" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#351c42] py-2.5 text-xs font-extrabold text-[#fddc6a] hover:bg-[#4a2660] transition">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            Verify Member Online
+        </a>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+    (() => {
+        const qrEl = document.getElementById("admin-member-qr-code");
+        const modalQrEl = document.getElementById("admin-member-modal-qr");
+        const modal = document.getElementById("member-qr-modal");
+        const openModalBtn = document.querySelector("[data-open-qr-modal]");
+        const closeModalEls = document.querySelectorAll("[data-close-qr-modal]");
+
+        if (qrEl && typeof QRCode !== "undefined") {
+            const val = qrEl.getAttribute("data-qr-value");
+            if (val) {
+                qrEl.innerHTML = "";
+                new QRCode(qrEl, {
+                    text: val,
+                    width: 130,
+                    height: 130,
+                    colorDark: "#351c42",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+        }
+
+        if (openModalBtn && modal) {
+            openModalBtn.addEventListener("click", () => {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                if (modalQrEl && typeof QRCode !== "undefined") {
+                    const val = modalQrEl.getAttribute("data-qr-value");
+                    if (val && !modalQrEl.hasChildNodes()) {
+                        new QRCode(modalQrEl, {
+                            text: val,
+                            width: 220,
+                            height: 220,
+                            colorDark: "#351c42",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    }
+                }
+            });
+
+            closeModalEls.forEach((el) => {
+                el.addEventListener("click", () => {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                });
+            });
+        }
+    })();
+</script>
 @if($showApprovalActions)
 <script>
     (() => {
