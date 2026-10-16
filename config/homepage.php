@@ -56,6 +56,8 @@ return [
         // 'description_html' => '<strong class="text-white">GNAT Association</strong> brings people together to create meaningful impact across communities.',
         'registered_count' => 2603,
         'registered_label' => 'Members Registered',
+        'join_button_text' => 'Join as Member',
+        'join_button_route' => 'member.register',
         'avatar_image' => 'images/testimonials-images/thumb-10.2.webp',
     ],
 

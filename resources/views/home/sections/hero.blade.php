@@ -15,22 +15,33 @@
                     {!! $hero['description_html'] !!}
                 </div>
 
-                <div class="mt-7 flex items-center gap-4" aria-label="{{ number_format($hero['registered_count']) }} members registered with GNAT Association">
-                    <div class="flex shrink-0 items-center">
-                        <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
-                            @include('partials.user-letter-avatar', ['letter' => 'G', 'class' => 'h-full w-full text-sm sm:text-base'])
+                <div class="mt-7 flex flex-wrap items-center gap-5 sm:gap-6">
+                    <div class="flex items-center gap-4" aria-label="{{ number_format($hero['registered_count']) }} members registered with GNAT Association">
+                        <div class="flex shrink-0 items-center">
+                            <div class="relative z-[1] h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
+                                @include('partials.user-letter-avatar', ['letter' => 'G', 'class' => 'h-full w-full text-sm sm:text-base'])
+                            </div>
+                            <div class="relative z-[2] -ml-3 h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
+                                @include('partials.user-letter-avatar', ['letter' => 'N', 'class' => 'h-full w-full text-sm sm:text-base'])
+                            </div>
+                            <div class="relative z-[3] -ml-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#115e59] bg-[#0d9488] ring-2 ring-[#351c42]">
+                                <span class="text-xl font-semibold leading-none text-white" aria-hidden="true">+</span>
+                            </div>
                         </div>
-                        <div class="relative z-[2] -ml-3 h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-[#115e59] ring-2 ring-[#351c42]">
-                            @include('partials.user-letter-avatar', ['letter' => 'N', 'class' => 'h-full w-full text-sm sm:text-base'])
-                        </div>
-                        <div class="relative z-[3] -ml-3 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#115e59] bg-[#0d9488] ring-2 ring-[#351c42]">
-                            <span class="text-xl font-semibold leading-none text-white" aria-hidden="true">+</span>
+                        <div class="min-w-0 border-l border-white/15 pl-4">
+                            <p class="text-2xl font-extrabold leading-none tracking-tight text-white sm:text-[1.65rem]">{{ number_format($hero['registered_count']) }}</p>
+                            <p class="mt-1.5 text-xs font-medium leading-tight text-white/65">{{ $hero['registered_label'] }}</p>
                         </div>
                     </div>
-                    <div class="min-w-0 border-l border-white/15 pl-4">
-                        <p class="text-2xl font-extrabold leading-none tracking-tight text-white sm:text-[1.65rem]">{{ number_format($hero['registered_count']) }}</p>
-                        <p class="mt-1.5 text-xs font-medium leading-tight text-white/65">{{ $hero['registered_label'] }}</p>
-                    </div>
+
+                    <a href="{{ Auth::check() ? route('member.dashboard') : route($hero['join_button_route'] ?? 'member.register') }}" class="click-btn click-btn--nav btn-style506 shadow-lg shadow-black/20">
+                        <span class="click-btn__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" fill="none" aria-hidden="true">
+                                <path d="M8 8l3 4-3 4M13 8l3 4-3 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="click-btn__label">{{ $hero['join_button_text'] ?? 'Join as Member' }}</span>
+                    </a>
                 </div>
             </div>
 
