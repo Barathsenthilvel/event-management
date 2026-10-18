@@ -359,9 +359,10 @@
         </div>
     </div>
 
-    <p class="text-center text-[11px] text-slate-400 pb-2">
-        &copy; {{ date('Y') }} Ghana National Association of Teachers (GNAT). Systems & Operations Audit Control Registry.
-    </p>
+    <div class="text-center text-[11px] text-slate-400 pb-2 space-y-1">
+        <p>&copy; {{ date('Y') }} Graduate Nurses Association of Tamil Nadu (GNAT). Systems & Operations Audit Control Registry.</p>
+        <p>Design and Developed by <a href="https://witglobalsolutions.com" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-500 hover:text-indigo-600 transition-colors underline">WITGLOBALSOLUTIONS</a></p>
+    </div>
 </div>
 @endsection
 

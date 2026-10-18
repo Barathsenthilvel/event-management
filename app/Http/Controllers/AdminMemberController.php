@@ -31,12 +31,18 @@ class AdminMemberController extends Controller
             $query['q'] = $q;
         }
 
+        $designations = Designation::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.members.pending-approval-show', [
             'member' => $user->load([
                 'designation',
                 'activeSubscription.plan',
                 'paymentTransactions' => fn ($q) => $q->orderByDesc('id')->limit(5),
             ]),
+            'designations' => $designations,
             'showApprovalActions' => ! $user->is_approved,
             'backUrl' => route('admin.members.index', $query),
             'backLabel' => 'Back to members list',
@@ -129,9 +135,33 @@ class AdminMemberController extends Controller
         $user->designation_id = $validated['designation_id'];
         $user->save();
 
+        // Refresh relations and force re-generate the ID card immediately with new designation
+        $user->unsetRelation('designation');
+        $user->load(['designation', 'activeSubscription.plan', 'subscriptions']);
+
+        app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user, force: true);
+
         return redirect()
             ->back()
-            ->with('success', 'Member designation updated.');
+            ->with('success', 'Member designation updated and ID card refreshed.');
+    }
+
+    public function regenerateIdCard(User $user)
+    {
+        $user->unsetRelation('designation');
+        $user->load(['designation', 'activeSubscription.plan', 'subscriptions']);
+
+        $res = app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user, force: true);
+
+        if (!$res) {
+            return redirect()
+                ->back()
+                ->with('error', 'Unable to regenerate ID card. Please check server logs or diagnostic command.');
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'Member ID card regenerated successfully with latest details.');
     }
 
     public function removed(Request $request)

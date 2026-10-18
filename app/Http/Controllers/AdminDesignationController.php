@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Designation;
+use App\Models\User;
+use App\Services\MemberIdCardService;
 use Illuminate\Http\Request;
 
 class AdminDesignationController extends Controller
@@ -50,17 +52,38 @@ class AdminDesignationController extends Controller
 
         $designation->update($validated);
 
+        // Regenerate ID cards for all members holding this designation
+        $users = User::where('designation_id', $designation->id)->get();
+        $cardService = app(MemberIdCardService::class);
+        foreach ($users as $user) {
+            $user->setRelation('designation', $designation);
+            $user->load(['activeSubscription.plan', 'subscriptions']);
+            $cardService->ensureCardGenerated($user, force: true);
+        }
+
         return redirect()
             ->route('admin.designations.index')
-            ->with('success', 'Designation updated.');
+            ->with('success', 'Designation updated and member ID cards refreshed.');
     }
 
     public function destroy(Designation $designation)
     {
+        $userIds = User::where('designation_id', $designation->id)->pluck('id');
+
         $designation->delete();
+
+        if ($userIds->isNotEmpty()) {
+            $users = User::whereIn('id', $userIds)->get();
+            $cardService = app(MemberIdCardService::class);
+            foreach ($users as $user) {
+                $user->unsetRelation('designation');
+                $user->load(['activeSubscription.plan', 'subscriptions']);
+                $cardService->ensureCardGenerated($user, force: true);
+            }
+        }
 
         return redirect()
             ->route('admin.designations.index')
-            ->with('success', 'Designation removed. Members with this designation were cleared.');
+            ->with('success', 'Designation removed. Members with this designation were cleared and ID cards refreshed.');
     }
 }

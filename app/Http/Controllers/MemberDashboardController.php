@@ -315,7 +315,7 @@ class MemberDashboardController extends Controller
 
         return response()->file($targetPath, [
             'Content-Type' => 'image/png',
-            'Cache-Control' => 'public, max-age=3600',
+            'Cache-Control' => 'no-cache, must-revalidate',
         ]);
     }
 

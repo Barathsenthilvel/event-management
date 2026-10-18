@@ -42,6 +42,13 @@
                         </span>
                         <span class="click-btn__label">{{ $hero['join_button_text'] ?? 'Join as Member' }}</span>
                     </a>
+
+                    <a href="{{ route('member.benefits') }}" class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 backdrop-blur-sm px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-white/20 hover:border-[#fddc6a] transition-all shadow-sm" aria-label="Explore GNAT Member Benefits">
+                        <span>Member Benefits</span>
+                        <svg class="h-4 w-4 text-[#fddc6a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
 

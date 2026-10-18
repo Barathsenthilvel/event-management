@@ -39,6 +39,7 @@ return [
 
     'nav' => [
         ['label' => 'Home', 'href' => '/home'],
+        ['label' => 'Member Benefits', 'href' => '/member-benefits'],
         ['label' => 'Activity', 'href' => '/activity'],
         ['label' => 'About Us', 'href' => '/about'],
         ['label' => 'Events', 'href' => '/campaign'],
@@ -151,7 +152,7 @@ return [
             'stars' => 5,
         ],
         [
-            'name' => 'Rajesh',
+            'name' => 'Barath Senthilvel',
             'role' => 'GNAT Member',
             'text' => 'I strongly recommend every nurse to become a member of GNAT. It is a place where you get real support and guidance, even beyond your job. Thank you, GNAT.',
             'stars' => 5,
@@ -360,5 +361,190 @@ return [
         'eyebrow' => 'Careers',
         'title' => 'Build a Career with Purpose',
         'text' => 'Explore opportunities to work with a team dedicated to strengthening communities. Together, we create lasting impact. Email your résumé to',
+    ],
+
+    'member_benefits' => [
+        'intro' => [
+            'badge' => 'GNAT Member Privileges',
+            'title' => 'Comprehensive Benefits of GNAT Membership',
+            'subtitle' => 'The Graduate Nurses Association of Tamilnadu (GNAT) is committed to empowering its members with a wide range of benefits that enhance their professional growth, personal well-being, and networking opportunities. As a valued member of GNAT, you can avail of the following benefits:',
+        ],
+        'categories' => [
+            [
+                'id' => 'professional-development',
+                'title' => 'Professional Development',
+                'badge' => 'Career & Learning',
+                'icon' => 'academic-cap',
+                'color' => '#7c3aed',
+                'description' => 'Continuous skill upgrades, higher studies sponsorship, and professional advancement pathways.',
+                'items' => [
+                    [
+                        'title' => 'Professional Growth and Development',
+                        'desc' => 'GNAT ensures your professional growth through conferences, workshops, hands-on skills training, and networking opportunities with senior officials.',
+                    ],
+                    [
+                        'title' => 'Higher Education Support and Sponsorship',
+                        'desc' => 'Avail sponsorship opportunities for higher education, subject to a minimum of 2 years of active membership.',
+                        'badge' => '2 Yrs Active Membership Required',
+                    ],
+                    [
+                        'title' => 'Government Exam Preparation and Guidelines',
+                        'desc' => 'Receive expert guidance and updates on state and central government examinations, free of cost.',
+                        'badge' => '100% Free of Cost',
+                    ],
+                    [
+                        'title' => 'Free Career Counseling',
+                        'desc' => 'GNAT offers career counseling and guidance for nursing students, members, and their children, ensuring the right job opportunities.',
+                    ],
+                    [
+                        'title' => 'Nursing Council Registration and Renewal Guidance',
+                        'desc' => 'Get guidance on Nursing Council updates, registration, and license renewal, including support for NRI members.',
+                        'badge' => 'NRI Support Included',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'networking',
+                'title' => 'Networking and Community Engagement',
+                'badge' => 'Camaraderie & Culture',
+                'icon' => 'user-group',
+                'color' => '#0d9488',
+                'description' => 'Fostering unity, friendship, and collective strength across the state and beyond.',
+                'items' => [
+                    [
+                        'title' => 'Networking Opportunities',
+                        'desc' => 'Connect with nursing professionals across India and abroad through GNAT\'s extensive network.',
+                    ],
+                    [
+                        'title' => 'Annual Tour',
+                        'desc' => 'Enjoy an annual trip with family members, fostering camaraderie and relaxation.',
+                        'badge' => 'Family Friendly',
+                    ],
+                    [
+                        'title' => 'Extra Curriculum Support',
+                        'desc' => 'Develop your interests in cultural and sports activities through GNAT\'s support.',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'support-assistance',
+                'title' => 'Support and Assistance',
+                'badge' => 'Legal, Medical & Emergency',
+                'icon' => 'shield-check',
+                'color' => '#d97706',
+                'description' => 'Round-the-clock legal defense, medical aid, financial emergency funding, and blood support.',
+                'items' => [
+                    [
+                        'title' => 'Legal Support and Guidance',
+                        'desc' => 'Receive legal consultation and guidance for issues related to your current or previous workplace.',
+                        'badge' => 'Workplace Protection Cell',
+                        'subpoints' => [
+                            'Legal Advice for Workplace Issues',
+                            'Salary / PF / ESI / Contract Dispute Support',
+                            'Wrongful Termination Support',
+                            'Harassment Complaint Support',
+                            'Workplace Safety Complaint Cell',
+                            'Duty Hours / Overtime Rights Awareness',
+                            'Maternity Rights Guidance',
+                            'Labour Law Awareness for Nurses',
+                            'Documentation Support for Complaints',
+                            'Professional Indemnity Guidance',
+                        ],
+                    ],
+                    [
+                        'title' => 'Medical Assistance',
+                        'desc' => 'Avail medical assistance for you and your family, with 100% coverage in Tamil Nadu and extended coverage across India and abroad.',
+                        'badge' => '100% Coverage in Tamil Nadu',
+                    ],
+                    [
+                        'title' => 'Monetary Support',
+                        'desc' => 'Receive financial assistance in case of accidents or medical emergencies through GNAT\'s fundraising efforts.',
+                    ],
+                    [
+                        'title' => 'Free Blood Donation',
+                        'desc' => 'Access blood donation services for you and your family, free of cost, through GNAT\'s network.',
+                        'badge' => '24/7 Free Helpline',
+                    ],
+                    [
+                        'title' => 'Safe Hotels/Rooms Assistance',
+                        'desc' => 'Enjoy safe and secure accommodation arrangements while traveling, with GNAT\'s support.',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'information-resources',
+                'title' => 'Information and Resources',
+                'badge' => 'Knowledge & Research',
+                'icon' => 'book-open',
+                'color' => '#2563eb',
+                'description' => 'Academic journals, medical books, research grants, and verified healthcare news.',
+                'items' => [
+                    [
+                        'title' => 'Latest Nursing/Medical News and Updates',
+                        'desc' => 'Stay informed about the latest developments in the nursing and medical fields.',
+                    ],
+                    [
+                        'title' => 'E-Nursing and Medical Books',
+                        'desc' => 'Download free e-books and resources for professional reference.',
+                        'badge' => 'Free Digital Library',
+                    ],
+                    [
+                        'title' => 'Journal and Patent Publication Support',
+                        'desc' => 'Get guidance on journal and patent publication from experts in India and abroad.',
+                    ],
+                    [
+                        'title' => 'Research Funding Support',
+                        'desc' => 'Avail assistance for research funding opportunities.',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'job-opportunities',
+                'title' => 'Job Opportunities',
+                'badge' => 'Employment & Migration',
+                'icon' => 'briefcase',
+                'color' => '#059669',
+                'description' => 'Direct recruitment in leading hospitals and authorized global migration pathways.',
+                'items' => [
+                    [
+                        'title' => '100% Job Opportunity',
+                        'desc' => 'Avail assured job opportunities, limited to active members.',
+                        'badge' => 'Active Members Only',
+                    ],
+                    [
+                        'title' => 'Job Placement Assistance',
+                        'desc' => 'Get support for job placements in top hospitals and healthcare institutions.',
+                    ],
+                    [
+                        'title' => 'Hospital Tie-up Recruitment',
+                        'desc' => 'Benefit from GNAT\'s tie-ups with hospitals for exclusive job opportunities.',
+                    ],
+                    [
+                        'title' => 'Abroad Job Guidance',
+                        'desc' => 'Get expert guidance for job opportunities in UK, Germany, Ireland, Gulf, and other countries.',
+                        'badge' => 'UK • Germany • Ireland • Gulf',
+                    ],
+                    [
+                        'title' => 'Abroad Processing and Guidance',
+                        'desc' => 'Get guided on abroad processing through proper channels and associated organizations.',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'communication',
+                'title' => 'Communication and Expression',
+                'badge' => 'Voice & Community',
+                'icon' => 'chat-bubble-left-right',
+                'color' => '#db2777',
+                'description' => 'A collective voice and platform to publish ideas, stories, and nursing advocacy.',
+                'items' => [
+                    [
+                        'title' => 'Share Your Thoughts and Ideas',
+                        'desc' => 'Express yourself through GNAT\'s official blogs, Vlogs, and social media platforms.',
+                        'badge' => 'Blogs & Vlogs',
+                    ],
+                ],
+            ],
+        ],
     ],
 ];

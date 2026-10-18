@@ -541,6 +541,62 @@
             renderDots();
         }
 
+        const avatarPalette = [
+            '#965995', // GNAT Purple
+            '#1a73e8', // Google Blue
+            '#0d9488', // Teal
+            '#e11d48', // Rose
+            '#7c3aed', // Violet
+            '#059669', // Emerald
+            '#d97706', // Amber / Orange
+            '#2563eb', // Royal Blue
+            '#db2777', // Pink
+            '#4f46e5', // Indigo
+            '#ea580c', // Coral
+            '#0891b2', // Cyan
+        ];
+
+        function getAvatarColor(name) {
+            if (!name) return avatarPalette[0];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % avatarPalette.length;
+            return avatarPalette[index];
+        }
+
+        function getInitials(name) {
+            if (!name) return "G";
+            const cleanName = name.replace(/^(dr|mr|mrs|ms|prof)\.?\s+/i, "").trim();
+            const parts = (cleanName || name).trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return "G";
+            if (parts.length === 1) {
+                return parts[0].charAt(0).toUpperCase();
+            }
+            return (parts[0].charAt(0) + " " + parts[1].charAt(0)).toUpperCase();
+        }
+
+        function renderAvatar(t) {
+            if (t.image && !t.image.includes("thumb-10.2.webp")) {
+                return `
+                  <div class="h-12 w-12 rounded-full overflow-hidden border border-purple-100 bg-purple-50 shrink-0 flex items-center justify-center shadow-sm">
+                    <img src="${t.image}" alt="${t.name}" class="h-full w-full object-cover" />
+                  </div>`;
+            }
+            const initials = getInitials(t.name);
+            const bgColor = getAvatarColor(t.name);
+            const isSingle = !initials.includes(" ");
+
+            return `
+              <div class="h-12 w-12 rounded-full shrink-0 flex items-center justify-center font-bold text-white shadow-sm ring-2 ring-white/80 select-none transition-transform duration-300 hover:scale-105"
+                   style="background-color: ${bgColor};"
+                   aria-hidden="true"
+                   title="${t.name}">
+                <span class="${isSingle ? 'text-lg font-bold' : 'text-sm font-bold tracking-wider'} leading-none">${initials}</span>
+              </div>`;
+        }
+
         function renderSlides() {
             track.innerHTML = "";
             const extended = buildExtendedSlides();
@@ -561,9 +617,7 @@
                 }).join("");
                 slide.innerHTML = `
                   <div class="flex items-start gap-4">
-                    <div class="h-12 w-12 rounded-full overflow-hidden border border-purple-100 bg-purple-50 flex items-center justify-center">
-                      <img src="${profileImg}" alt="${t.name}" class="h-full w-full object-cover" />
-                    </div>
+                    ${renderAvatar(t)}
                     <div class="min-w-0">
                       <div class="font-bold text-gray-900 truncate">${t.name}</div>
                       <div class="text-sm text-gray-500 mt-0.5 truncate">${t.role}</div>

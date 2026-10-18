@@ -66,6 +66,7 @@
                 <span class="absolute left-0 bottom-0 h-0.5 w-12 bg-[#fddc6a] rounded-full" aria-hidden="true"></span>
             </h3>
             <ul class="space-y-2.5 text-sm font-medium">
+                <li><a href="{{ route('member.benefits') }}" class="text-[#fddc6a] hover:underline font-semibold transition-colors">Member Benefits</a></li>
                 <li><a href="{{ route('about') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">About Us</a></li>
                 <li><button type="button" data-open-donate-modal class="text-white/80 hover:text-[#fddc6a] transition-colors text-left bg-transparent border-0 p-0 cursor-pointer font-medium">Give Donation</button></li>
                 <li><a href="{{ route('activity') }}" class="text-white/80 hover:text-[#fddc6a] transition-colors">Activity</a></li>
@@ -92,9 +93,14 @@
             <a href="{{ route('home') }}" class="shrink-0">
                 <img src="{{ asset($logo['src']) }}" alt="{{ $logo['alt'] }}" class="h-10 sm:h-11 w-auto max-w-[200px] object-contain object-left" width="200" height="48" loading="lazy" />
             </a>
-            <p class="text-sm font-semibold text-center order-last md:order-none">
-                © Copyright <span id="footer-year">{{ date('Y') }}</span> GNAT Association. All Rights Reserved.
-            </p>
+            <div class="text-center order-last md:order-none space-y-1">
+                <p class="text-sm font-semibold">
+                    © Copyright <span id="footer-year">{{ date('Y') }}</span> GNAT Association. All Rights Reserved.
+                </p>
+                <p class="text-xs font-semibold text-[#351c42]/85">
+                    Design and Developed by <a href="https://witglobalsolutions.com" target="_blank" rel="noopener noreferrer" class="font-extrabold underline decoration-[#351c42]/40 hover:decoration-[#351c42] hover:text-[#1a0e20] transition-colors">WITGLOBALSOLUTIONS</a>
+                </p>
+            </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="#" class="h-9 w-9 rounded-full bg-[#351c42]/10 flex items-center justify-center text-[#351c42] hover:bg-[#351c42] hover:text-[#fddc6a] transition-colors" aria-label="Facebook">
                     <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>

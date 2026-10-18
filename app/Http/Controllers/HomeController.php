@@ -244,6 +244,11 @@ class HomeController extends Controller
         return view('home.about', config('homepage', []));
     }
 
+    public function memberBenefits()
+    {
+        return view('home.member-benefits', config('homepage', []));
+    }
+
     public function contact()
     {
         return view('home.contact', config('homepage', []));

@@ -62,6 +62,8 @@ Route::redirect('/give', '/?section=donate', 302)->name('home.give');
 Route::redirect('/more-about', '/?section=about2', 302)->name('home.more-about');
 
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/member-benefits', [HomeController::class, 'memberBenefits'])->name('member.benefits');
+Route::redirect('/benefits', '/member-benefits', 301);
 Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('legal.privacy');
 Route::get('/terms-and-conditions', [HomeController::class, 'termsAndConditions'])->name('legal.terms');
 Route::get('/disclaimer', [HomeController::class, 'disclaimer'])->name('legal.disclaimer');
@@ -222,6 +224,8 @@ Route::prefix('admin')->group(function () {
         Route::delete('/members/{id}/force-delete', [AdminMemberController::class, 'forceDelete'])->name('admin.members.force-delete');
         Route::get('/members/{user}/details', [AdminMemberController::class, 'show'])->name('admin.members.show');
         Route::patch('/members/{user}/designation', [AdminMemberController::class, 'updateDesignation']) ->name('admin.members.designation.update');
+        Route::post('/members/{user}/regenerate-id-card', [AdminMemberController::class, 'regenerateIdCard'])
+            ->name('admin.members.id-card.regenerate');
         Route::patch('/members/{user}/membership-status', [AdminMemberController::class, 'updateMembershipStatus'])
             ->name('admin.members.membership-status.update');
         Route::delete('/members/{user}', [AdminMemberController::class, 'destroy'])->name('admin.members.destroy');

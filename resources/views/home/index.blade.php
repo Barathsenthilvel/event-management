@@ -13,6 +13,7 @@
     @include('home.sections.hero')
     @include('home.sections.service')
     @include('home.sections.banner-carousel')
+    @include('home.sections.member-benefits')
     @include('home.sections.about')
     @include('home.sections.jobs')
     @include('home.sections.testimonials')

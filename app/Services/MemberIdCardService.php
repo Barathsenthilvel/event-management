@@ -194,11 +194,20 @@ class MemberIdCardService
         $paths = $this->getCardPaths($user);
 
         if (!$force && $this->cardsExist($user)) {
+            $frontMtime = @filemtime($paths['front']) ?: 0;
+            $userMtime = $user->updated_at?->timestamp ?? 0;
+            $desigMtime = $user->designation?->updated_at?->timestamp ?? 0;
+
+            // If user record or designation was updated after the card was created, regenerate automatically
+            if ($userMtime > $frontMtime || $desigMtime > $frontMtime) {
+                return $this->ensureCardGenerated($user, force: true);
+            }
+
             return $paths;
         }
 
         try {
-            $user->loadMissing(['designation', 'activeSubscription.plan', 'subscriptions']);
+            $user->load(['designation', 'activeSubscription.plan', 'subscriptions']);
 
             $templateFront = public_path('images/id-card/template_front.png');
             $templateBack = public_path('images/id-card/template_back.png');
@@ -239,7 +248,9 @@ class MemberIdCardService
 
             $designation = $user->designation?->name;
             if (empty($designation)) {
-                $designation = !empty($user->profile_type) ? (string) $user->profile_type : 'MEMBER';
+                $designation = !empty($user->profile_type)
+                    ? ucwords(str_replace('_', ' ', (string) $user->profile_type))
+                    : 'MEMBER';
             }
 
             $memberCode = $this->memberCode($user);

@@ -125,9 +125,23 @@
                                 <dd class="max-w-[60%] text-right font-semibold text-slate-900">{{ $val ?: '—' }}</dd>
                             </div>
                         @endforeach
-                        <div class="flex justify-between gap-4 border-t border-slate-100/80 pt-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-100/80 pt-3">
                             <dt class="font-bold text-slate-500">Designation</dt>
-                            <dd class="max-w-[60%] text-right font-semibold text-slate-900">{{ $m->designation?->name ?? '—' }}</dd>
+                            <dd class="text-right">
+                                <form method="POST" action="{{ route('admin.members.designation.update', $m) }}" class="inline-flex items-center gap-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <select name="designation_id" class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-[#965995]/30">
+                                        <option value="">— None (Member) —</option>
+                                        @foreach(($designations ?? \App\Models\Designation::orderBy('sort_order')->orderBy('name')->get()) as $d)
+                                            <option value="{{ $d->id }}" @selected($m->designation_id == $d->id)>{{ $d->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-[#351c42] hover:bg-[#4a2660] text-white text-[11px] font-bold shadow-sm transition">
+                                        Update
+                                    </button>
+                                </form>
+                            </dd>
                         </div>
                     </dl>
                 </section>
@@ -190,6 +204,71 @@
                         @endforeach
                     </div>
                 </section>
+
+                {{-- Official GNAT ID Card Preview & Actions --}}
+                @php
+                    $cardService = app(\App\Services\MemberIdCardService::class);
+                    $hasCards = $cardService->cardsExist($m);
+                    $cardUrls = $cardService->getCardUrls($m);
+                @endphp
+                @if($m->is_approved)
+                <section class="rounded-2xl border border-[#351c42]/20 bg-gradient-to-br from-[#faf8fc] via-white to-slate-50 p-6 shadow-sm lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#351c42] text-[#fddc6a]">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 2a1 1 0 00-.894.553L7.382 6H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V8a1 1 0 000-2h-3.382l-1.724-3.447A1 1 0 0010 2zm0 8a2 2 0 100 4 2 2 0 000-4z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="text-sm font-extrabold text-[#351c42]">Official Digital ID Card</h3>
+                                <p class="text-[11px] font-medium text-slate-500">Reflects current designation, QR code, and credentials</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <form method="POST" action="{{ route('admin.members.id-card.regenerate', $m) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-[#351c42]/30">
+                                    <svg class="h-3.5 w-3.5 text-[#965995]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Regenerate ID Card
+                                </button>
+                            </form>
+                            @if($hasCards)
+                                <a href="{{ $cardUrls['combined'] }}" target="_blank" download="GNAT-ID-Card-{{ $memberCode }}.png"
+                                   class="inline-flex items-center gap-1.5 rounded-xl bg-[#351c42] px-4 py-2 text-xs font-extrabold text-[#fddc6a] shadow-sm transition hover:bg-[#4a2660]">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Download Full ID Card
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($hasCards)
+                        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Front Side</span>
+                                <div class="max-w-[240px] rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white">
+                                    <img src="{{ $cardUrls['front'] }}" alt="ID Card Front — {{ $m->name }}" class="w-full h-auto" loading="lazy">
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Back Side</span>
+                                <div class="max-w-[240px] rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white">
+                                    <img src="{{ $cardUrls['back'] }}" alt="ID Card Back — {{ $m->name }}" class="w-full h-auto" loading="lazy">
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800">
+                            ID card images are not generated yet. Click "Regenerate ID Card" above to build them.
+                        </div>
+                    @endif
+                </section>
+                @endif
             </div>
         </div>
     </div>

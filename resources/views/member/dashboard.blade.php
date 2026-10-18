@@ -997,7 +997,10 @@
                         </article>
                     </div>
                 </section>
-            @endif
+            <footer class="mt-12 border-t border-[#351c42]/10 pt-6 pb-4 text-center text-xs text-[#351c42]/60 space-y-1">
+                <p>&copy; {{ date('Y') }} Graduate Nurses Association of Tamil Nadu (GNAT). All rights reserved.</p>
+                <p class="text-[11px]">Design and Developed by <a href="https://witglobalsolutions.com" target="_blank" rel="noopener noreferrer" class="font-bold text-[#351c42] hover:text-[#965995] underline">WITGLOBALSOLUTIONS</a></p>
+            </footer>
         </main>
     </div>
 

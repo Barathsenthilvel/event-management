@@ -127,14 +127,24 @@ def generate_id_card(data):
     fdraw.text(((1845 - nw) / 2, 1850), raw_name, font=name_font, fill=(14, 43, 69, 255))
 
     # Designation Pill
-    designation = (data.get("designation") or "MEMBER").strip().upper()
+    designation = " ".join((data.get("designation") or "MEMBER").strip().split()).upper()
     desig_size = 70
-    if len(designation) > 24:
+    if len(designation) > 32:
+        desig_size = 46
+    elif len(designation) > 22:
         desig_size = 56
     desig_font = get_font(bold_fonts, desig_size)
     dbbox = fdraw.textbbox((0, 0), designation, font=desig_font)
     dw, dh = dbbox[2] - dbbox[0], dbbox[3] - dbbox[1]
-    pill_w = max(dw + 160, 600)
+
+    # Auto-scale font if designation is particularly long so it always fits comfortably
+    while dw > 1450 and desig_size > 28:
+        desig_size -= 4
+        desig_font = get_font(bold_fonts, desig_size)
+        dbbox = fdraw.textbbox((0, 0), designation, font=desig_font)
+        dw, dh = dbbox[2] - dbbox[0], dbbox[3] - dbbox[1]
+
+    pill_w = min(max(dw + 160, 600), 1680)
     pill_h = 146
     pill_x1 = (1845 - pill_w) / 2
     pill_y1 = 1995

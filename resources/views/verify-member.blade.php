@@ -294,9 +294,10 @@
         </div>
     </main>
 
-    <footer class="border-t border-white/10 bg-slate-900/80 py-6 text-center text-xs text-slate-400">
+    <footer class="border-t border-white/10 bg-slate-900/80 py-6 text-center text-xs text-slate-400 space-y-1">
         <p>© {{ date('Y') }} Graduate Nurses Association of Tamil Nadu (GNAT). All rights reserved.</p>
-        <p class="mt-1 text-[11px] text-slate-500">Official Membership Verification &amp; Security Portal · www.gnat.in</p>
+        <p class="text-[11px] text-slate-500">Official Membership Verification &amp; Security Portal · www.gnat.in</p>
+        <p class="pt-1 text-[11px] text-slate-400">Design and Developed by <a href="https://witglobalsolutions.com" target="_blank" rel="noopener noreferrer" class="font-bold text-[#fddc6a] hover:underline">WITGLOBALSOLUTIONS</a></p>
     </footer>
 
 </body>
