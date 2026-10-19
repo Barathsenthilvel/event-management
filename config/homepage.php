@@ -64,35 +64,11 @@ return [
 
     'volunteer_cards' => [
         [
-            'title' => 'Community Impact',
+            'title' => 'Legal Support',
             'bullets' => [
-                'Support real people with hands-on help.',
-                'Build stronger neighborhoods through teamwork.',
-                'Turn ideas into measurable outcomes.',
-            ],
-        ],
-        [
-            'title' => 'Skill Growth',
-            'bullets' => [
-                'Learn through workshops and mentorship.',
-                'Get hands-on experience with real tasks.',
-                'Improve communication and leadership.',
-            ],
-        ],
-        [
-            'title' => 'Sustainable Work',
-            'bullets' => [
-                'Help create eco-friendly initiatives.',
-                'Use resources wisely and efficiently.',
-                'Track impact and improve over time.',
-            ],
-        ],
-        [
-            'title' => 'Team Support',
-            'bullets' => [
-                'Work with friendly, motivated teammates.',
-                'Get clear guidance and quick feedback.',
-                'Share ideas and improve together.',
+                'Get legal guidance and protection in professional matters.',
+                'Support during workplace issues and grievances.',
+                'Stand strong with association backing.',
             ],
         ],
         [
@@ -101,6 +77,14 @@ return [
                 'Take responsibility in real projects.',
                 'Build confidence through guided challenges.',
                 'Grow from volunteer to mentor.',
+            ],
+        ],
+        [
+            'title' => 'Professional Growth',
+            'bullets' => [
+                'Learn through workshops and mentorship.',
+                'Get hands-on experience with real tasks.',
+                'Improve communication and leadership.',
             ],
         ],
     ],
