@@ -370,6 +370,12 @@ Route::prefix('admin')->group(function () {
 
 // Member (User Site) Routes
 Route::prefix('member')->name('member.')->group(function () {
+    Route::get('/', function () {
+        return Auth::check()
+            ? redirect()->route('member.dashboard')
+            : redirect()->route('member.login');
+    })->name('index');
+
     Route::get('/donations', function (\Illuminate\Http\Request $request) {
         return redirect()->route('donations.index', $request->query());
     });
