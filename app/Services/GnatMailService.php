@@ -274,23 +274,13 @@ class GnatMailService
         $name = $this->memberDisplayName($user);
         $url = $subscriptionUrl ?: route('member.subscription.index');
 
-        $attachments = [];
-        try {
-            $attachments = app(\App\Services\MemberIdCardService::class)->getMailAttachments($user);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed to attach member ID card on profile approval mail', [
-                'userId' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
         $this->sendMember($user->email, 'm03_profile_approved_subscription', [
             'memberName' => $name,
             'heroHeadline' => 'Profile Verified',
             'heroSubtext' => 'You may now complete your membership subscription.',
             'showPortalCta' => true,
             'portalUrl' => $url,
-        ], $attachments);
+        ], []);
         $this->sms()->profileVerified($user->mobile, $name, $url);
         $this->whatsapp()->profileVerified($user->mobile, $name, $url);
     }
@@ -312,12 +302,22 @@ class GnatMailService
         $planLabel = $subscription->subscription_type.' • '.str_replace('_', ' ', (string) $subscription->payment_type);
         $name = $this->memberDisplayName($user);
 
+        $attachments = [];
+        try {
+            $attachments = app(\App\Services\MemberIdCardService::class)->getMailAttachments($user);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to attach member ID card on activation mail', [
+                'userId' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         $this->sendMember($user->email, 'm05_membership_activated', [
             'memberName' => $name,
             'heroHeadline' => 'Membership Active',
             'heroSubtext' => 'Thank you — your GNAT membership is now active.',
             'showPortalCta' => true,
-        ]);
+        ], $attachments);
 
         $txnId = $transaction->razorpay_payment_id ?: ('TXN-'.$transaction->id);
 

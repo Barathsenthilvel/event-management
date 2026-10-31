@@ -74,11 +74,11 @@
             <button
                 type="button"
                 data-read-more
-                data-read-more-title="{{ e($title) }}"
+                data-read-more-title="{{ $title }}"
                 data-read-more-content='@json($readMorePopupContent)'
                 data-read-more-meta='@json($readMoreMeta)'
                 @if($hasExternalReadMoreUrl)
-                    data-read-more-document-url="{{ e($externalReadMoreUrl) }}"
+                    data-read-more-document-url="{{ $externalReadMoreUrl }}"
                     data-read-more-document-label="Open article"
                 @endif
                 class="click-btn click-btn--sm btn-style506 shrink-0"

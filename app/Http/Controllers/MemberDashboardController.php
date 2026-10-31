@@ -251,7 +251,7 @@ class MemberDashboardController extends Controller
         $idCardUrls = null;
         $memberCode = null;
         $hasCards = false;
-        if ($user) {
+        if ($user && $hasActiveSubscription) {
             $cardService = app(MemberIdCardService::class);
             $cardService->ensureCardGenerated($user);
             $hasCards = $cardService->cardsExist($user);
@@ -291,8 +291,8 @@ class MemberDashboardController extends Controller
     public function previewIdCard(Request $request, string $side = 'front')
     {
         $user = Auth::user();
-        if (!$user) {
-            abort(403);
+        if (!$user || !$user->activeSubscription()->exists()) {
+            abort(403, 'Active membership subscription required.');
         }
 
         $service = app(MemberIdCardService::class);
@@ -322,8 +322,8 @@ class MemberDashboardController extends Controller
     public function downloadIdCard(Request $request, string $side = 'combined')
     {
         $user = Auth::user();
-        if (!$user) {
-            abort(403);
+        if (!$user || !$user->activeSubscription()->exists()) {
+            abort(403, 'Active membership subscription required.');
         }
 
         $service = app(MemberIdCardService::class);

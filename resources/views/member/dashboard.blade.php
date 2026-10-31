@@ -873,7 +873,7 @@
                  Members can vote/view polling from the Pollings page; winners are shown via the trophy popup. --}}
             @endif
 
-            @if($showFullMemberMenu || ($member && $member->is_approved))
+            @if($showFullMemberMenu)
                 <section aria-labelledby="digital-id-heading" class="scroll-mt-28">
                     <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
                         <div>

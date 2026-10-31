@@ -1869,6 +1869,17 @@
             }
         }
 
+        function decodeHtmlEntities(str) {
+            if (!str || typeof str !== "string") return str || "";
+            const doc = new DOMParser().parseFromString(str, "text/html");
+            let result = doc.documentElement.textContent || str;
+            if (result.includes("&amp;") || result.includes("&quot;") || result.includes("&#039;") || result.includes("&lt;") || result.includes("&gt;")) {
+                const doc2 = new DOMParser().parseFromString(result, "text/html");
+                result = doc2.documentElement.textContent || result;
+            }
+            return result;
+        }
+
         function readMoreParseBody(raw) {
             if (!raw) return "";
             try {
@@ -1883,8 +1894,8 @@
         function openFromTrigger(btn) {
             if (!btn) return;
             lastActive = btn;
-            const title = btn.getAttribute("data-read-more-title") || "Details";
-            const content = readMoreParseBody(btn.getAttribute("data-read-more-content"));
+            const title = decodeHtmlEntities(btn.getAttribute("data-read-more-title") || "Details");
+            const content = decodeHtmlEntities(readMoreParseBody(btn.getAttribute("data-read-more-content")));
             const metaRaw = btn.getAttribute("data-read-more-meta") || "";
             const documentUrl = btn.getAttribute("data-read-more-document-url") || "";
             const documentLabel = btn.getAttribute("data-read-more-document-label") || "Download file";
@@ -1908,7 +1919,7 @@
 
                         const dt = document.createElement("dt");
                         dt.className = "shrink-0 font-bold uppercase tracking-wide text-[#965995]";
-                        dt.textContent = String(item.label);
+                        dt.textContent = decodeHtmlEntities(String(item.label));
 
                         const dd = document.createElement("dd");
                         dd.className = "flex items-center justify-end gap-2 text-right font-semibold text-[#351c42]";
@@ -1925,7 +1936,7 @@
                         }
 
                         const valueSpan = document.createElement("span");
-                        valueSpan.textContent = String(item.value);
+                        valueSpan.textContent = decodeHtmlEntities(String(item.value));
                         dd.appendChild(valueSpan);
 
                         row.appendChild(dt);

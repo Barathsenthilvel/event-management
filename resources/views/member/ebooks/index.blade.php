@@ -73,8 +73,8 @@
                             <button
                                 type="button"
                                 data-read-more
-                                data-read-more-title="{{ e($book->title) }}"
-                                data-read-more-content="{{ e($readMoreText) }}"
+                                data-read-more-title="{{ $book->title }}"
+                                data-read-more-content="{{ $readMoreText }}"
                                 data-read-more-meta='@json($readMoreMeta)'
                                 class="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                                 title="View full description"

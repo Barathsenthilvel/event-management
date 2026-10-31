@@ -157,7 +157,7 @@
                                     type="button"
                                     class="mt-3 inline-flex items-center gap-1 text-sm font-extrabold text-[#965995] underline decoration-[#965995]/35 underline-offset-2 transition hover:text-[#351c42] hover:decoration-[#351c42]/40"
                                     data-read-more
-                                    data-read-more-title="{{ e($job->title) }}"
+                                    data-read-more-title="{{ $job->title }}"
                                     data-read-more-meta='@json($jobReadMoreMeta)'
                                     data-read-more-content='@json($jobReadMoreBody)'
                                     data-read-more-job-id="{{ $job->id }}"

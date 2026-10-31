@@ -59,9 +59,9 @@
                                         <button
                                             type="button"
                                             data-read-more
-                                            data-read-more-title="{{ e($donation->purpose) }}"
-                                            data-read-more-content="{{ e($readMoreText) }}"
-                                            data-read-more-document-url="{{ !empty($donation->document_pdf_path) ? e(asset('storage/' . $donation->document_pdf_path)) : '' }}"
+                                            data-read-more-title="{{ $donation->purpose }}"
+                                            data-read-more-content="{{ $readMoreText }}"
+                                            data-read-more-document-url="{{ !empty($donation->document_pdf_path) ? asset('storage/' . $donation->document_pdf_path) : '' }}"
                                             data-read-more-donation-id="{{ $donation->id }}"
                                             class="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                                             title="View full details"

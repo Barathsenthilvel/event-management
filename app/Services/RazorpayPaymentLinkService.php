@@ -290,6 +290,12 @@ class RazorpayPaymentLinkService
         ]);
 
         try {
+            app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user->fresh(), true);
+        } catch (Throwable $e) {
+            Log::warning('ID card generation on subscription activation failed: ' . $e->getMessage());
+        }
+
+        try {
             $transaction->refresh();
             app(GnatMailService::class)->sendMembershipActivated($user, $subscription, $transaction);
         } catch (Throwable $e) {
@@ -308,12 +314,6 @@ class RazorpayPaymentLinkService
             app(MembershipLifecycleService::class)->syncUser($user->fresh());
         } catch (Throwable $e) {
             Log::warning('Membership lifecycle sync failed: ' . $e->getMessage());
-        }
-
-        try {
-            app(\App\Services\MemberIdCardService::class)->ensureCardGenerated($user->fresh(), true);
-        } catch (Throwable $e) {
-            Log::warning('ID card regeneration on subscription update failed: ' . $e->getMessage());
         }
 
         return $subscription;

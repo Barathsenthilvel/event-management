@@ -27,8 +27,6 @@
         input[type="date"].ml-inp,
         input[type="date"] {
             text-align: left !important;
-            -webkit-appearance: none;
-            appearance: none;
             min-height: 2.75rem;
             width: 100%;
             max-width: 100%;
@@ -43,6 +41,124 @@
             margin-left: auto;
             cursor: pointer;
             padding-right: 0.25rem;
+        }
+        .flatpickr-input[readonly] {
+            cursor: pointer !important;
+            background-color: #ffffff !important;
+        }
+        /* Custom Flatpickr styling matching GNAT purple theme */
+        .flatpickr-calendar {
+            background: #ffffff;
+            border: 1px solid rgba(53, 28, 66, 0.12);
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 40px -10px rgba(53, 28, 66, 0.22), 0 0 1px 1px rgba(53, 28, 66, 0.06);
+            font-family: inherit;
+            padding: 0.5rem;
+            z-index: 99999 !important;
+            overflow: hidden;
+        }
+        .flatpickr-calendar::before,
+        .flatpickr-calendar::after {
+            display: none !important;
+        }
+        .flatpickr-months {
+            background: linear-gradient(135deg, #351c42 0%, #4d2a5c 100%);
+            border-radius: 0.875rem 0.875rem 0 0;
+            color: #ffffff;
+            padding: 0.65rem 0.5rem;
+            position: relative;
+        }
+        .flatpickr-months .flatpickr-month {
+            color: #ffffff;
+            fill: #ffffff;
+            height: 38px;
+        }
+        .flatpickr-current-month {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            padding: 0.25rem 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months option {
+            background-color: #351c42;
+            color: #ffffff;
+        }
+        .flatpickr-current-month input.cur-year {
+            color: #fddc6a;
+            font-weight: 800;
+            padding: 0.2rem;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+            border-bottom-color: #fddc6a;
+        }
+        .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+            border-top-color: #fddc6a;
+        }
+        .flatpickr-months .flatpickr-prev-month,
+        .flatpickr-months .flatpickr-next-month {
+            color: #fddc6a;
+            fill: #fddc6a;
+            padding: 0.65rem;
+        }
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg {
+            fill: #ffffff;
+        }
+        .flatpickr-weekdays {
+            padding: 0.35rem 0;
+            background: #faf8fc;
+            border-bottom: 1px solid rgba(53, 28, 66, 0.06);
+        }
+        span.flatpickr-weekday {
+            color: rgba(53, 28, 66, 0.7);
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        .flatpickr-day {
+            border-radius: 0.75rem;
+            color: #351c42;
+            font-weight: 600;
+            height: 36px;
+            line-height: 36px;
+            margin: 2px 0;
+            transition: all 0.15s ease;
+        }
+        .flatpickr-day:hover {
+            background: rgba(150, 89, 149, 0.15);
+            border-color: transparent;
+        }
+        .flatpickr-day.today {
+            border-color: #965995;
+            color: #965995;
+            font-weight: 800;
+        }
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: linear-gradient(135deg, #351c42 0%, #965995 100%) !important;
+            border-color: transparent !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(150, 89, 149, 0.35);
+        }
+        .flatpickr-day.flatpickr-disabled,
+        .flatpickr-day.flatpickr-disabled:hover {
+            color: rgba(53, 28, 66, 0.22) !important;
         }
         .ml-inp:focus {
             border-color: rgba(150, 89, 149, 0.55);
@@ -116,6 +232,8 @@
         }
     </style>
 @include('member.partials.profile-searchable-select')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}" />
 @endpush
 
 @section('content')
@@ -202,8 +320,31 @@
                                     <p class="ml-help" data-error-for="mobile"></p>
                                 </div>
                                 <div class="min-w-0">
-                                    <label class="ml-label">DOB <span class="text-red-500">*</span></label>
-                                    <input type="date" name="dob" value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}" required class="ml-inp min-w-0 max-w-full w-full" max="{{ now()->subYears(18)->format('Y-m-d') }}" data-validate="required|dob_min_age:18" data-label="Date of birth" @disabled($profileLocked) />
+                                    <label class="ml-label" for="member-dob-input">Date of birth (DOB) <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <input type="text"
+                                            id="member-dob-input"
+                                            name="dob"
+                                            value="{{ old('dob', optional($user->dob)->format('Y-m-d')) }}"
+                                            placeholder="DD-MM-YYYY"
+                                            required
+                                            class="ml-inp min-w-0 max-w-full w-full pr-11 cursor-pointer bg-white"
+                                            max="{{ now()->subYears(18)->format('Y-m-d') }}"
+                                            data-validate="required|dob_min_age:18"
+                                            data-label="Date of birth"
+                                            readonly
+                                            @disabled($profileLocked) />
+                                        <button type="button"
+                                            id="member-dob-picker-btn"
+                                            tabindex="-1"
+                                            aria-label="Select date of birth"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#965995] hover:text-[#351c42] transition p-1"
+                                            @disabled($profileLocked)>
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <p class="ml-help" data-error-for="dob"></p>
                                 </div>
                                 <div>
@@ -442,6 +583,12 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    if (typeof flatpickr === "undefined") {
+        document.write('<script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}"><\/script>');
+    }
+</script>
 <script>
         (() => {
             const form = document.getElementById("member-profile-form");
@@ -624,9 +771,79 @@
                 const hasError = Boolean(message);
                 field.classList.toggle("is-invalid", hasError);
                 field.setAttribute("aria-invalid", hasError ? "true" : "false");
+                if (field._flatpickr && field._flatpickr.altInput) {
+                    field._flatpickr.altInput.classList.toggle("is-invalid", hasError);
+                    field._flatpickr.altInput.setAttribute("aria-invalid", hasError ? "true" : "false");
+                }
                 syncChoicesValidation(field, hasError);
                 if (errorEl) errorEl.textContent = message;
             };
+
+            // Date of birth (DOB) interactive calendar picker
+            const dobField = document.getElementById("member-dob-input");
+            const dobPickerBtn = document.getElementById("member-dob-picker-btn");
+
+            if (dobField) {
+                const maxDobStr = dobField.getAttribute("max") || "{{ now()->subYears(18)->format('Y-m-d') }}";
+                const initialDob = dobField.value || "";
+
+                if (typeof flatpickr === "function") {
+                    const fp = flatpickr(dobField, {
+                        dateFormat: "Y-m-d",
+                        altInput: true,
+                        altFormat: "d-m-Y",
+                        altInputClass: "ml-inp min-w-0 max-w-full w-full pr-11 cursor-pointer bg-white",
+                        maxDate: maxDobStr,
+                        minDate: "1920-01-01",
+                        defaultDate: initialDob || null,
+                        allowInput: false,
+                        disableMobile: true,
+                        monthSelectorType: "dropdown",
+                        onOpen: function(selectedDates, dateStr, instance) {
+                            if (!selectedDates || selectedDates.length === 0) {
+                                const suggestYear = new Date().getFullYear() - 22;
+                                instance.jumpToDate(new Date(suggestYear, 0, 1));
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr) {
+                            dobField.value = dateStr;
+                            dobField.dispatchEvent(new Event("change", { bubbles: true }));
+                            dobField.dispatchEvent(new Event("input", { bubbles: true }));
+                            paintValidation(dobField, checkRules(dobField));
+                        },
+                        onClose: function() {
+                            dobField.dispatchEvent(new Event("blur", { bubbles: true }));
+                            paintValidation(dobField, checkRules(dobField));
+                        }
+                    });
+
+                    if (dobPickerBtn) {
+                        dobPickerBtn.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            fp.open();
+                        });
+                    }
+                } else {
+                    // Fallback to native datepicker if Flatpickr script is unavailable
+                    dobField.type = "date";
+                    dobField.removeAttribute("readonly");
+                    dobField.addEventListener("click", function() {
+                        if (typeof this.showPicker === "function") {
+                            try { this.showPicker(); } catch (_) {}
+                        }
+                    });
+                    if (dobPickerBtn) {
+                        dobPickerBtn.addEventListener("click", () => {
+                            if (typeof dobField.showPicker === "function") {
+                                try { dobField.showPicker(); } catch (_) {}
+                            } else {
+                                dobField.focus();
+                            }
+                        });
+                    }
+                }
+            }
 
             fields.forEach((field) => {
                 ["input", "change", "blur"].forEach((eventName) => {
@@ -785,7 +1002,7 @@
                     if (message) {
                         errorList.push(message);
                         if (!firstInvalidEl) {
-                            firstInvalidEl = getChoicesRoot(field) || field;
+                            firstInvalidEl = field._flatpickr?.altInput || getChoicesRoot(field) || field;
                         }
                     }
                 });

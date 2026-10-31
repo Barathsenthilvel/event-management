@@ -84,8 +84,8 @@
                                 <button
                                     type="button"
                                     data-read-more
-                                    data-read-more-title="{{ e($nom->title) }}"
-                                    data-read-more-content="{{ e($termsText) }}"
+                                    data-read-more-title="{{ $nom->title }}"
+                                    data-read-more-content="{{ $termsText }}"
                                     class="inline-flex cursor-pointer items-center gap-1 text-xs font-extrabold text-[#965995] hover:text-[#351c42]"
                                     title="View full terms"
                                 >
