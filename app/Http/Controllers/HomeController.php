@@ -809,12 +809,14 @@ class HomeController extends Controller
             return $this->spamSuccessResponse($request);
         }
 
-        // 2. Submission speed check (humans take at least 2 seconds to complete form)
+        // 2. Submission speed check: _form_rendered_at must be present and within a valid human window (3s to 24h)
         $renderedAt = (int) $request->input('_form_rendered_at', 0);
-        if ($renderedAt > 0 && (time() - $renderedAt) < 2) {
-            Log::warning('Contact form bot blocked by submission speed', [
+        $duration = time() - $renderedAt;
+        if ($renderedAt <= 0 || $duration < 3 || $duration > 86400) {
+            Log::warning('Contact form bot blocked by submission speed window', [
                 'ip' => $request->ip(),
-                'duration' => time() - $renderedAt,
+                'rendered_at' => $renderedAt,
+                'duration' => $duration,
             ]);
             return $this->spamSuccessResponse($request);
         }
@@ -842,9 +844,11 @@ class HomeController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:190'],
-            'phone' => ['nullable', 'string', 'max:40'],
+            'phone' => ['nullable', 'string', 'max:40', 'regex:/^[+]?[0-9\s\-()]{7,20}$/'],
             'subject' => ['required', 'string', 'in:General,Feedbacks,Grievance,Others'],
             'message' => ['required', 'string', 'max:4000'],
+        ], [
+            'phone.regex' => 'Please enter a valid phone number (7 to 20 digits, spaces, hyphens, parentheses, or a leading +).',
         ]);
 
         $recipient = config('homepage.contact_form_to')
@@ -879,11 +883,16 @@ class HomeController extends Controller
                 ]);
         }
 
+        // Only dispatch SMS/WhatsApp confirmations to authenticated members with a registered mobile number
+        $supportPhone = (Auth::check() && !empty(Auth::user()?->mobile))
+            ? trim((string) Auth::user()->mobile)
+            : null;
+
         try {
             $gnatMail->sendSupportConfirmation(
                 $data['email'],
                 trim((string) $data['name']),
-                isset($data['phone']) ? trim((string) $data['phone']) : null
+                $supportPhone
             );
         } catch (\Throwable $e) {
             Log::warning('Contact form sender acknowledgment email failed', [
