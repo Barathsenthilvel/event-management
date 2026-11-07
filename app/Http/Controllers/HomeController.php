@@ -803,6 +803,42 @@ class HomeController extends Controller
 
     public function submitContact(Request $request)
     {
+        // 1. Honeypot check (hidden field only bots fill)
+        if (!empty($request->input('contact_hp_website'))) {
+            Log::warning('Contact form bot blocked by honeypot', ['ip' => $request->ip()]);
+            return $this->spamSuccessResponse($request);
+        }
+
+        // 2. Submission speed check (humans take at least 2 seconds to complete form)
+        $renderedAt = (int) $request->input('_form_rendered_at', 0);
+        if ($renderedAt > 0 && (time() - $renderedAt) < 2) {
+            Log::warning('Contact form bot blocked by submission speed', [
+                'ip' => $request->ip(),
+                'duration' => time() - $renderedAt,
+            ]);
+            return $this->spamSuccessResponse($request);
+        }
+
+        // 3. Name anti-spam check (block URLs, suspicious domains, and Cyrillic/Russian scam patterns)
+        $rawName = (string) $request->input('name', '');
+        if (
+            preg_match('/(https?:\/\/|www\.|\.ru\b|\.com\b|\.xyz\b|\.top\b|\.link\b|tinyurl|bit\.ly|t\.me)/i', $rawName) ||
+            preg_match('/\p{Cyrillic}/u', $rawName)
+        ) {
+            Log::warning('Contact form bot blocked by name filter', [
+                'ip' => $request->ip(),
+                'name' => $rawName,
+            ]);
+            return $this->spamSuccessResponse($request);
+        }
+
+        // 4. Message Cyrillic / link-spam check
+        $rawMessage = (string) $request->input('message', '');
+        if (preg_match('/\p{Cyrillic}/u', $rawMessage)) {
+            Log::warning('Contact form bot blocked by message filter', ['ip' => $request->ip()]);
+            return $this->spamSuccessResponse($request);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:190'],
@@ -877,5 +913,25 @@ class HomeController extends Controller
         return redirect()
             ->route('contact')
             ->with('success', $successMessage);
+    }
+
+    /**
+     * Return a fake success response to spam bots so they stop retrying,
+     * without actually processing or sending any emails.
+     */
+    private function spamSuccessResponse(Request $request)
+    {
+        $fakeSuccess = 'Thanks! Your message has been sent to our team.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $fakeSuccess,
+            ]);
+        }
+
+        return redirect()
+            ->route('contact')
+            ->with('success', $fakeSuccess);
     }
 }

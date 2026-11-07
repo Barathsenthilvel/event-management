@@ -69,7 +69,7 @@ Route::get('/terms-and-conditions', [HomeController::class, 'termsAndConditions'
 Route::get('/disclaimer', [HomeController::class, 'disclaimer'])->name('legal.disclaimer');
 Route::get('/cancellation-refund-policy', [HomeController::class, 'cancellationRefundPolicy'])->name('legal.cancellation-refund');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
+Route::post('/contact', [HomeController::class, 'submitContact'])->middleware('throttle:5,1')->name('contact.submit');
 Route::get('/blogs', [HomeController::class, 'blogs'])->name('blogs.index');
 Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery.index');
 Route::get('/events', [HomeController::class, 'events'])->name('events.index');

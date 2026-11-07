@@ -74,6 +74,13 @@
             <form method="POST" action="{{ route('contact.submit') }}" class="mt-6 space-y-4" data-contact-form>
                 @csrf
 
+                {{-- Anti-Spam Honeypot Fields (Invisible to humans, trapped by bots) --}}
+                <div style="position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
+                    <label for="contact_hp_website">Do not fill this</label>
+                    <input type="text" id="contact_hp_website" name="contact_hp_website" tabindex="-1" autocomplete="off" value="" />
+                    <input type="hidden" name="_form_rendered_at" value="{{ time() }}" />
+                </div>
+
                 <div id="contact-form-errors" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-rose-900">
                     <p class="text-sm font-extrabold">Please fix the errors</p>
                     <ul id="contact-form-errors-list" class="mt-2 space-y-1 text-sm text-rose-900/80 list-disc list-inside"></ul>
